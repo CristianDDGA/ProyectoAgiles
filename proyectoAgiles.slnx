@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="ProyectoAgiles.Api/ProyectoAgiles.Api.csproj" />
+  <Project Path="ProyectoAgiles.Application/ProyectoAgiles.Application.csproj" />
+  <Project Path="ProyectoAgiles.Domain/ProyectoAgiles.Domain.csproj" />
+  <Project Path="ProyectoAgiles.Infrastructure/ProyectoAgiles.Infrastructure.csproj" />
+  <Project Path="proyectoAgiles/proyectoAgiles.csproj" />
+</Solution>
