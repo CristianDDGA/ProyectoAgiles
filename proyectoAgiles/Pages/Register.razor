@@ -1,0 +1,138 @@
+@page "/register"
+@using Microsoft.AspNetCore.Components.Web
+
+<PageTitle>Registrarse - UTA</PageTitle>
+
+<div class="auth-page">
+    <div class="auth-container">
+        <div class="auth-card">
+            <!-- Logo UTA -->
+            <div class="auth-logo">
+                <img src="images/uta-logo.png" alt="Universidad Técnica de Ambato" class="logo-uta">
+                <h2 class="auth-title">Crear Cuenta</h2>
+                <p class="auth-subtitle">Universidad Técnica de Ambato</p>
+            </div>
+
+            <!-- Formulario de Registro -->
+            <form class="auth-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="firstName" class="form-label">
+                            <i class="fas fa-user"></i>
+                            Nombres
+                        </label>
+                        <input type="text" id="firstName" class="form-control" placeholder="Ingresa tus nombres" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="lastName" class="form-label">
+                            <i class="fas fa-user"></i>
+                            Apellidos
+                        </label>
+                        <input type="text" id="lastName" class="form-control" placeholder="Ingresa tus apellidos" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="email" class="form-label">
+                        <i class="fas fa-envelope"></i>
+                        Correo Electrónico
+                    </label>
+                    <input type="email" id="email" class="form-control" placeholder="Ingresa tu correo electrónico" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="cedula" class="form-label">
+                        <i class="fas fa-id-card"></i>
+                        Cédula de Identidad
+                    </label>
+                    <input type="text" id="cedula" class="form-control" placeholder="Ingresa tu número de cédula" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="phone" class="form-label">
+                        <i class="fas fa-phone"></i>
+                        Teléfono
+                    </label>
+                    <input type="tel" id="phone" class="form-control" placeholder="Ingresa tu número de teléfono" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="password" class="form-label">
+                            <i class="fas fa-lock"></i>
+                            Contraseña
+                        </label>
+                        <input type="password" id="password" class="form-control" placeholder="Crea una contraseña" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="confirmPassword" class="form-label">
+                            <i class="fas fa-lock"></i>
+                            Confirmar
+                        </label>
+                        <input type="password" id="confirmPassword" class="form-control" placeholder="Confirma tu contraseña" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="career" class="form-label">
+                        <i class="fas fa-graduation-cap"></i>
+                        Carrera de Interés
+                    </label>
+                    <select id="career" class="form-control" required>
+                        <option value="">Selecciona una carrera</option>
+                        <option value="ingenieria-sistemas">Ingeniería en Sistemas Computacionales e Informáticos</option>
+                        <option value="ingenieria-software">Ingeniería de Software</option>
+                        <option value="ingenieria-industrial">Ingeniería Industrial</option>
+                        <option value="ingenieria-mecanica">Ingeniería Mecánica</option>
+                        <option value="medicina">Medicina</option>
+                        <option value="enfermeria">Enfermería</option>
+                        <option value="psicologia">Psicología</option>
+                        <option value="derecho">Derecho</option>
+                        <option value="administracion">Administración de Empresas</option>
+                        <option value="contabilidad">Contabilidad y Auditoría</option>
+                    </select>
+                </div>
+
+                <div class="form-options">
+                    <div class="form-check">
+                        <input type="checkbox" id="terms" class="form-check-input" required>
+                        <label for="terms" class="form-check-label">
+                            Acepto los <a href="#" class="terms-link">términos y condiciones</a>
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input type="checkbox" id="newsletter" class="form-check-input">
+                        <label for="newsletter" class="form-check-label">
+                            Deseo recibir información sobre eventos y noticias
+                        </label>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-register">
+                    <i class="fas fa-user-plus"></i>
+                    Crear Cuenta
+                </button>
+            </form>
+
+            <!-- Enlaces adicionales -->
+            <div class="auth-links">
+                <p>¿Ya tienes una cuenta? <a href="/login" class="login-link">Inicia sesión aquí</a></p>
+                <div class="divider">
+                    <span>o</span>
+                </div>
+                <a href="/" class="back-home">
+                    <i class="fas fa-home"></i>
+                    Volver al inicio
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Background decorativo -->
+    <div class="auth-background">
+        <div class="bg-shape shape-1"></div>
+        <div class="bg-shape shape-2"></div>
+        <div class="bg-shape shape-3"></div>
+        <div class="bg-shape shape-4"></div>
+    </div>
+</div>

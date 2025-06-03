@@ -1,0 +1,70 @@
+@page "/login"
+@using Microsoft.AspNetCore.Components.Web
+
+<PageTitle>Iniciar Sesión - UTA</PageTitle>
+
+<div class="auth-page">
+    <div class="auth-container">
+        <div class="auth-card">
+            <!-- Logo UTA -->
+            <div class="auth-logo">
+                <img src="images/uta-logo.png" alt="Universidad Técnica de Ambato" class="logo-uta">
+                <h2 class="auth-title">Iniciar Sesión</h2>
+                <p class="auth-subtitle">Universidad Técnica de Ambato</p>
+            </div>
+
+            <!-- Formulario de Login -->
+            <form class="auth-form">
+                <div class="form-group">
+                    <label for="email" class="form-label">
+                        <i class="fas fa-envelope"></i>
+                        Correo Electrónico
+                    </label>
+                    <input type="email" id="email" class="form-control" placeholder="Ingresa tu correo electrónico" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="password" class="form-label">
+                        <i class="fas fa-lock"></i>
+                        Contraseña
+                    </label>
+                    <input type="password" id="password" class="form-control" placeholder="Ingresa tu contraseña" required>
+                </div>
+
+                <div class="form-options">
+                    <div class="form-check">
+                        <input type="checkbox" id="remember" class="form-check-input">
+                        <label for="remember" class="form-check-label">
+                            Recordarme
+                        </label>
+                    </div>
+                    <a href="#" class="forgot-password">¿Olvidaste tu contraseña?</a>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-login">
+                    <i class="fas fa-sign-in-alt"></i>
+                    Iniciar Sesión
+                </button>
+            </form>
+
+            <!-- Enlaces adicionales -->
+            <div class="auth-links">
+                <p>¿No tienes una cuenta? <a href="/register" class="register-link">Regístrate aquí</a></p>
+                <div class="divider">
+                    <span>o</span>
+                </div>
+                <a href="/" class="back-home">
+                    <i class="fas fa-home"></i>
+                    Volver al inicio
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Background decorativo -->
+    <div class="auth-background">
+        <div class="bg-shape shape-1"></div>
+        <div class="bg-shape shape-2"></div>
+        <div class="bg-shape shape-3"></div>
+    </div>
+</div>
