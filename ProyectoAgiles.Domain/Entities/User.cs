@@ -25,9 +25,13 @@ public class User : BaseEntity
 
     [Required]
     [MaxLength(10)]
-    public string Cedula { get; set; } = string.Empty;
+    public string Cedula { get; set; } = string.Empty;    public bool IsActive { get; set; } = true;
 
-    public bool IsActive { get; set; } = true;
+    // Campos para control de intentos fallidos
+    public int FailedLoginAttempts { get; set; } = 0;
+    public bool IsLocked { get; set; } = false;
+    public DateTime? LockoutEnd { get; set; }
+    public DateTime? LastFailedLogin { get; set; }
 
     public string FullName => $"{FirstName} {LastName}";
 }

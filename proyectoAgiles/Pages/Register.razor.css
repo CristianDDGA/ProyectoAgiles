@@ -791,10 +791,8 @@ select.form-control option {
 
 .file-drop-zone.drag-over {
     border-color: #ff4757;
-    background: linear-gradient(135deg, rgba(255, 71, 87, 0.1), rgba(255, 71, 87, 0.05));
-    border-style: solid;
+    background-color: rgba(255, 71, 87, 0.05);
     transform: scale(1.02);
-    box-shadow: 0 8px 30px rgba(255, 71, 87, 0.2);
 }
 
 .file-input-hidden {
@@ -803,6 +801,9 @@ select.form-control option {
     width: 0;
     height: 0;
     pointer-events: none;
+    visibility: hidden;
+    z-index: -1;
+    left: -9999px;
 }
 
 .drop-zone-content {
@@ -1093,4 +1094,151 @@ select.form-control option {
 
 .auth-card::-webkit-scrollbar-thumb:hover {
     background: rgba(255, 71, 87, 0.8);
+}
+
+/* Estilos para el botón de selección alternativo */
+.file-select-alternative {
+    margin-top: 12px;
+    text-align: center;
+}
+
+.btn-select-file {
+    background: linear-gradient(135deg, #ff4757 0%, #ff3742 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(255, 71, 87, 0.3);
+}
+
+.btn-select-file:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(255, 71, 87, 0.4);
+    background: linear-gradient(135deg, #ff3742 0%, #ff2b37 100%);
+}
+
+.btn-select-file:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(255, 71, 87, 0.3);
+}
+
+.btn-select-file i {
+    font-size: 0.9rem;
+}
+
+/* Actualizar el cursor del área de drag and drop */
+.file-drop-zone {
+    cursor: default; /* Cambio de cursor pointer a default */
+}
+
+/* Ocultar cualquier input file que pueda aparecer */
+input[type="file"] {
+    position: absolute !important;
+    opacity: 0 !important;
+    width: 0 !important;
+    height: 0 !important;
+    pointer-events: none !important;
+    visibility: hidden !important;
+    z-index: -1 !important;
+    left: -9999px !important;
+    overflow: hidden !important;
+}
+
+/* Asegurar que el área de drag and drop sea la única zona interactiva */
+.file-drop-zone {
+    position: relative;
+    overflow: hidden;
+}
+
+/* Estilos mejorados para el input file nativo */
+.file-input-hidden {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #e1e8ed;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 0.9rem;
+    color: #495057;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.file-input-hidden:hover {
+    border-color: #ff4757;
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    box-shadow: 0 4px 16px rgba(255, 71, 87, 0.15);
+    transform: translateY(-1px);
+}
+
+.file-input-hidden:focus {
+    outline: none;
+    border-color: #ff4757;
+    box-shadow: 0 0 0 3px rgba(255, 71, 87, 0.1);
+}
+
+.file-input-hidden::file-selector-button {
+    background: linear-gradient(135deg, #ff4757 0%, #ff3742 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 16px;
+    margin-right: 12px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(255, 71, 87, 0.2);
+}
+
+.file-input-hidden::file-selector-button:hover {
+    background: linear-gradient(135deg, #ff3742 0%, #ff2838 100%);
+    box-shadow: 0 4px 12px rgba(255, 71, 87, 0.3);
+    transform: translateY(-1px);
+}
+
+/* Estilos para el contenedor del input file */
+.file-input-container {
+    position: relative;
+    margin-top: 12px;
+}
+
+.file-input-container::before {
+    content: "";
+    position: absolute;
+    top: -6px;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent 0%, #e1e8ed 50%, transparent 100%);
+}
+
+/* Estilos adicionales para navegadores Webkit */
+.file-input-hidden::-webkit-file-upload-button {
+    background: linear-gradient(135deg, #ff4757 0%, #ff3742 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 16px;
+    margin-right: 12px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(255, 71, 87, 0.2);
+}
+
+.file-input-hidden::-webkit-file-upload-button:hover {
+    background: linear-gradient(135deg, #ff3742 0%, #ff2838 100%);
+    box-shadow: 0 4px 12px rgba(255, 71, 87, 0.3);
+    transform: translateY(-1px);
 }

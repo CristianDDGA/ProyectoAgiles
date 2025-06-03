@@ -105,9 +105,7 @@ public class AuthController : ControllerBase
         {
             return StatusCode(500, new { message = "Error interno del servidor", details = ex.Message });
         }
-    }
-
-    [HttpPost("forgot-password")]
+    }    [HttpPost("forgot-password")]
     public async Task<ActionResult<ForgotPasswordResponse>> ForgotPassword([FromBody] ForgotPasswordDto forgotPasswordDto)
     {
         try
@@ -118,6 +116,12 @@ public class AuthController : ControllerBase
             }
 
             var result = await _authService.ForgotPasswordAsync(forgotPasswordDto.Email);
+            
+            if (!result.Success)
+            {
+                return BadRequest(result);
+            }
+            
             return Ok(result);
         }
         catch (Exception ex)

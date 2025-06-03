@@ -95,18 +95,82 @@ namespace proyectoAgiles.Services
             {
                 return new RegisterResponse { IsSuccess = false, ErrorMessage = ex.Message };
             }
-        }        public async Task<LoginResponse?> Login(LoginRequest request)
+        }        public async Task<LoginResponse> Login(LoginRequest request)
         {
-            var response = await _httpClient.PostAsJsonAsync($"{_apiBaseUrl}/api/auth/login", request);
-            
-            if (response.IsSuccessStatusCode)
+            try
             {
-                return await response.Content.ReadFromJsonAsync<LoginResponse>();
+                var response = await _httpClient.PostAsJsonAsync($"{_apiBaseUrl}/api/auth/login", request);
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    var loginResponse = await response.Content.ReadFromJsonAsync<LoginResponse>();
+                    return loginResponse ?? new LoginResponse { Success = false, Message = "Error desconocido al procesar la respuesta." };
+                }
+                
+                // Manejar errores estructurados del backend
+                var errorContent = await response.Content.ReadAsStringAsync();
+                
+                try
+                {
+                    var errorJson = JsonSerializer.Deserialize<JsonElement>(errorContent);
+                    
+                    // Buscar el mensaje de error en diferentes propiedades
+                    string errorMessage = "Error al iniciar sesión";
+                    bool isAccountLocked = false;
+                    
+                    if (errorJson.TryGetProperty("details", out var detailsProperty))
+                    {
+                        var details = detailsProperty.GetString();
+                        if (!string.IsNullOrEmpty(details))
+                        {
+                            errorMessage = details;
+                            isAccountLocked = details.Contains("bloqueada") || details.Contains("locked");
+                        }
+                    }
+                    else if (errorJson.TryGetProperty("message", out var messageProperty))
+                    {
+                        var message = messageProperty.GetString();
+                        if (!string.IsNullOrEmpty(message))
+                        {
+                            errorMessage = message;
+                            isAccountLocked = message.Contains("bloqueada") || message.Contains("locked");
+                        }
+                    }
+                    
+                    // Mejorar el mensaje para cuentas bloqueadas
+                    if (isAccountLocked)
+                    {
+                        errorMessage = "🔒 Tu cuenta está temporalmente bloqueada por múltiples intentos fallidos de inicio de sesión.\n\n" +
+                                     "Para desbloquear tu cuenta:\n" +
+                                     "• Utiliza la opción \"¿Olvidaste tu contraseña?\" para restablecer tu contraseña\n" +
+                                     "• O contacta al administrador del sistema\n\n" +
+                                     "Tu cuenta se desbloqueará automáticamente después del restablecimiento de contraseña.";
+                    }
+                    
+                    return new LoginResponse { Success = false, Message = errorMessage, IsAccountLocked = isAccountLocked };
+                }
+                catch
+                {
+                    // Si no se puede parsear el JSON, intentar manejar casos comunes
+                    bool isAccountLocked = errorContent.Contains("bloqueada") || errorContent.Contains("locked");
+                    
+                    if (isAccountLocked)
+                    {
+                        errorContent = "🔒 Tu cuenta está temporalmente bloqueada por múltiples intentos fallidos de inicio de sesión.\n\n" +
+                                     "Para desbloquear tu cuenta:\n" +
+                                     "• Utiliza la opción \"¿Olvidaste tu contraseña?\" para restablecer tu contraseña\n" +
+                                     "• O contacta al administrador del sistema\n\n" +
+                                     "Tu cuenta se desbloqueará automáticamente después del restablecimiento de contraseña.";
+                    }
+                    
+                    return new LoginResponse { Success = false, Message = errorContent, IsAccountLocked = isAccountLocked };
+                }
             }
-            
-            var errorContent = await response.Content.ReadAsStringAsync();
-            throw new Exception($"Error al iniciar sesión: {errorContent}");
-        }        public async Task<bool> CheckEmailExists(string email)
+            catch (Exception ex)
+            {
+                return new LoginResponse { Success = false, Message = ex.Message };
+            }
+        }public async Task<bool> CheckEmailExists(string email)
         {
             var response = await _httpClient.GetAsync($"{_apiBaseUrl}/api/auth/check-email/{email}");
             if (response.IsSuccessStatusCode)
@@ -126,9 +190,7 @@ namespace proyectoAgiles.Services
                 return result?.exists ?? false;
             }
             return false;
-        }
-
-        public async Task<ForgotPasswordResponse> ForgotPasswordAsync(string email)
+        }        public async Task<ForgotPasswordResponse> ForgotPasswordAsync(string email)
         {
             try
             {
@@ -139,6 +201,16 @@ namespace proyectoAgiles.Services
                 {
                     var result = await response.Content.ReadFromJsonAsync<ForgotPasswordResponse>();
                     return result ?? new ForgotPasswordResponse { Success = false, Message = "Error desconocido" };
+                }
+                else if (response.StatusCode == System.Net.HttpStatusCode.BadRequest)
+                {
+                    // Manejar respuestas BadRequest que contienen información del error
+                    var errorResult = await response.Content.ReadFromJsonAsync<ForgotPasswordResponse>();
+                    return errorResult ?? new ForgotPasswordResponse 
+                    { 
+                        Success = false, 
+                        Message = "El correo electrónico no está registrado en nuestro sistema." 
+                    };
                 }
                 
                 var errorContent = await response.Content.ReadAsStringAsync();
@@ -237,7 +309,8 @@ namespace proyectoAgiles.Services
         public string Message { get; set; } = string.Empty;
         public UserDto? User { get; set; }
         public string Token { get; set; } = string.Empty;
-    }    public class UserDto
+        public bool IsAccountLocked { get; set; } = false;
+    }public class UserDto
     {
         public int Id { get; set; }
         public string FirstName { get; set; } = string.Empty;

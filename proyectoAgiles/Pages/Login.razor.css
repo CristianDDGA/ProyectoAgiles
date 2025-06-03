@@ -246,6 +246,23 @@
     border-left: 4px solid #e74c3c;
 }
 
+.alert-warning {
+    background: linear-gradient(135deg, #ffa726, #ff9800);
+    color: white;
+    border-left: 4px solid #f57f17;
+}
+
+.alert-warning .alert-link {
+    color: white;
+    text-decoration: underline;
+    font-weight: 600;
+}
+
+.alert-warning .alert-link:hover {
+    color: #fff3e0;
+    text-decoration: none;
+}
+
 .text-danger {
     color: #ff4757 !important;
     font-size: 0.85rem;
@@ -441,4 +458,65 @@
     .auth-title {
         font-size: 1.4rem;
     }
+}
+
+/* Estilos específicos para mensajes de cuenta bloqueada */
+.account-locked-message {
+    width: 100%;
+}
+
+.account-locked-message .message-line {
+    margin-bottom: 8px;
+    line-height: 1.5;
+    word-wrap: break-word;
+}
+
+.account-locked-message .message-line:first-child {
+    font-weight: 600;
+    font-size: 1.05rem;
+}
+
+.unlock-action {
+    border-top: 1px solid rgba(255, 255, 255, 0.3);
+    padding-top: 15px;
+    text-align: center;
+}
+
+.unlock-action .btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    color: white;
+    font-weight: 600;
+    padding: 8px 16px;
+    border-radius: 8px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(5px);
+}
+
+.unlock-action .btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    color: white;
+    text-decoration: none;
+}
+
+/* Mejoras para alertas warning con cuenta bloqueada */
+.alert-warning .account-locked-message {
+    margin-left: 10px;
+}
+
+.alert-warning .unlock-action .btn {
+    background: rgba(255, 255, 255, 0.9);
+    color: #f57f17;
+    border-color: rgba(255, 255, 255, 0.8);
+}
+
+.alert-warning .unlock-action .btn:hover {
+    background: white;
+    color: #ef6c00;
 }

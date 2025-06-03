@@ -50,12 +50,49 @@ public class AuthService : IAuthService
 
         var createdUser = await _userRepository.AddAsync(user);
         return MapToDto(createdUser);
-    }
-
-    public async Task<UserDto?> LoginAsync(LoginDto loginDto)
+    }    public async Task<UserDto?> LoginAsync(LoginDto loginDto)
     {
-        var user = await _userRepository.ValidateUserAsync(loginDto.Email, loginDto.Password);
-        return user != null ? MapToDto(user) : null;
+        var user = await _userRepository.GetByEmailAsync(loginDto.Email);
+        
+        if (user == null)
+        {
+            return null; // Usuario no encontrado
+        }
+        
+        // Verificar si la cuenta está bloqueada
+        if (user.IsLocked)
+        {
+            // Si hay un tiempo de bloqueo definido, verificar si ya expiró
+            if (user.LockoutEnd.HasValue && user.LockoutEnd.Value <= DateTime.UtcNow)
+            {
+                // El bloqueo ha expirado, desbloquear la cuenta
+                await UnlockUserAccountAsync(user);
+            }
+            else
+            {
+                // La cuenta sigue bloqueada
+                throw new InvalidOperationException("Tu cuenta está bloqueada por múltiples intentos fallidos. Para desbloquearla, utiliza la opción 'Olvidé mi contraseña' o contacta al administrador.");
+            }
+        }
+        
+        // Validar la contraseña
+        var validatedUser = await _userRepository.ValidateUserAsync(loginDto.Email, loginDto.Password);
+        
+        if (validatedUser != null)
+        {
+            // Login exitoso - resetear contadores de fallos
+            if (user.FailedLoginAttempts > 0)
+            {
+                await ResetFailedLoginAttemptsAsync(user);
+            }
+            return MapToDto(validatedUser);
+        }
+        else
+        {
+            // Login fallido - incrementar contador
+            await IncrementFailedLoginAttemptsAsync(user);
+            return null;
+        }
     }
 
     public async Task<UserDto?> GetUserByIdAsync(int userId)
@@ -82,13 +119,21 @@ public class AuthService : IAuthService
     {
         var user = await _userRepository.GetByEmailAsync(email);
         
-        if (user == null || !user.IsActive)
+        if (user == null)
         {
-            // Por seguridad, siempre devolvemos el mismo mensaje
             return new ForgotPasswordResponse
             {
-                Success = true,
-                Message = "Si el email existe en nuestro sistema, recibirás un enlace de recuperación."
+                Success = false,
+                Message = "El correo electrónico no está registrado en nuestro sistema."
+            };
+        }
+        
+        if (!user.IsActive)
+        {
+            return new ForgotPasswordResponse
+            {
+                Success = false,
+                Message = "La cuenta está desactivada. Contacta al administrador."
             };
         }
 
@@ -163,11 +208,11 @@ public class AuthService : IAuthService
                     Success = false,
                     Message = "Usuario no encontrado o inactivo."
                 };
-            }
-
-            // Actualizar contraseña
+            }            // Actualizar contraseña
             user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(resetPasswordDto.NewPassword);
-            await _userRepository.UpdateAsync(user);
+            
+            // Desbloquear la cuenta automáticamente al restablecer la contraseña
+            await UnlockUserAccountAsync(user);
 
             // Marcar token como usado
             resetToken.IsUsed = true;
@@ -214,5 +259,40 @@ public class AuthService : IAuthService
             CreatedAt = user.CreatedAt,
             FullName = user.FullName
         };
+    }
+
+    private async Task IncrementFailedLoginAttemptsAsync(User user)
+    {
+        user.FailedLoginAttempts++;
+        user.LastFailedLogin = DateTime.UtcNow;
+        
+        // Si alcanza 3 intentos fallidos, bloquear la cuenta
+        if (user.FailedLoginAttempts >= 3)
+        {
+            user.IsLocked = true;
+            user.LockoutEnd = DateTime.UtcNow.AddHours(24); // Bloquear por 24 horas
+        }
+        
+        await _userRepository.UpdateAsync(user);
+    }
+    
+    private async Task ResetFailedLoginAttemptsAsync(User user)
+    {
+        user.FailedLoginAttempts = 0;
+        user.LastFailedLogin = null;
+        user.IsLocked = false;
+        user.LockoutEnd = null;
+        
+        await _userRepository.UpdateAsync(user);
+    }
+    
+    private async Task UnlockUserAccountAsync(User user)
+    {
+        user.IsLocked = false;
+        user.LockoutEnd = null;
+        user.FailedLoginAttempts = 0;
+        user.LastFailedLogin = null;
+        
+        await _userRepository.UpdateAsync(user);
     }
 }

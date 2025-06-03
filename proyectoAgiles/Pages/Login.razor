@@ -21,13 +21,30 @@
                 <img src="images/uta-logo.png" alt="Universidad Técnica de Ambato" class="logo-uta">
                 <h2 class="auth-title">Iniciar Sesión</h2>
                 <p class="auth-subtitle">Universidad Técnica de Ambato</p>
-            </div>
-
-            @if (!string.IsNullOrEmpty(errorMessage))
+            </div>            @if (!string.IsNullOrEmpty(errorMessage))
             {
-                <div class="alert alert-danger">
-                    <i class="fas fa-exclamation-circle"></i>
-                    @errorMessage
+                <div class="@GetAlertClass()">
+                    <i class="@GetAlertIcon()"></i>
+                    
+                    @if (isAccountLocked)
+                    {
+                        <div class="account-locked-message">
+                            @foreach (var line in errorMessage.Split('\n', StringSplitOptions.RemoveEmptyEntries))
+                            {
+                                <div class="message-line">@line</div>
+                            }
+                            <div class="unlock-action mt-3">
+                                <a href="/forgot-password" class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-key"></i>
+                                    Restablecer mi Contraseña
+                                </a>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        @errorMessage
+                    }
                 </div>
             }
 
@@ -96,6 +113,7 @@
     private LoginRequest loginRequest = new();
     private bool isLoading = false;
     private string errorMessage = string.Empty;
+    private bool isAccountLocked = false;
 
     private async Task HandleLogin()
     {
@@ -103,6 +121,7 @@
         {
             isLoading = true;
             errorMessage = string.Empty;
+            isAccountLocked = false;
 
             var response = await AuthService.Login(loginRequest);
             
@@ -111,18 +130,47 @@
                 // Guardar información de usuario en el localStorage o servicio de estado
                 // Redirigir al dashboard o página principal según el tipo de usuario
                 NavigationManager.NavigateTo("/dashboard");
-            }
-            else
+            }            else
             {
                 errorMessage = response.Message ?? "Error al iniciar sesión. Verifica tus credenciales.";
+                
+                // Usar la propiedad IsAccountLocked del response en lugar de detectar por texto
+                isAccountLocked = response.IsAccountLocked;
             }
-        }        catch (Exception ex)
+        }
+        catch (Exception ex)
         {
             errorMessage = ex.Message ?? "Error desconocido al procesar la solicitud.";
+            isAccountLocked = false;
         }
         finally
         {
             isLoading = false;
         }
+    }
+
+    private bool IsAccountLockedMessage(string message)
+    {
+        if (string.IsNullOrEmpty(message)) return false;
+        
+        return message.Contains("cuenta está bloqueada", StringComparison.OrdinalIgnoreCase) ||
+               message.Contains("account is locked", StringComparison.OrdinalIgnoreCase) ||
+               message.Contains("bloqueada por intentos", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private string GetAlertClass()
+    {
+        if (isAccountLocked)
+            return "alert alert-warning";
+        
+        return "alert alert-danger";
+    }
+
+    private string GetAlertIcon()
+    {
+        if (isAccountLocked)
+            return "fas fa-lock";
+        
+        return "fas fa-exclamation-circle";
     }
 }
