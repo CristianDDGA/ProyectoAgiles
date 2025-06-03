@@ -9,10 +9,12 @@ namespace ProyectoAgiles.Api.Controllers;
 public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
+    private readonly IFileService _fileService;
 
-    public AuthController(IAuthService authService)
+    public AuthController(IAuthService authService, IFileService fileService)
     {
         _authService = authService;
+        _fileService = fileService;
     }
 
     [HttpPost("register")]
@@ -147,5 +149,47 @@ public class AuthController : ControllerBase
         {
             return StatusCode(500, new { message = "Error interno del servidor", details = ex.Message });
         }
+    }
+
+    [HttpGet("health")]
+    public ActionResult Health()
+    {
+        return Ok(new { status = "healthy", timestamp = DateTime.UtcNow });
+    }
+    
+    [HttpGet("document/{fileName}")]
+    public ActionResult GetDocument(string fileName)
+    {
+        try
+        {
+            var filePath = Path.Combine("uploads/documents", fileName);
+            var fullPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", filePath);
+            
+            if (!System.IO.File.Exists(fullPath))
+            {
+                return NotFound(new { message = "Documento no encontrado" });
+            }
+            
+            var contentType = GetContentType(fileName);
+            return PhysicalFile(fullPath, contentType);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "Error al obtener el documento", details = ex.Message });
+        }
+    }
+    
+    private string GetContentType(string fileName)
+    {
+        var extension = Path.GetExtension(fileName).ToLowerInvariant();
+        return extension switch
+        {
+            ".jpg" or ".jpeg" => "image/jpeg",
+            ".png" => "image/png",
+            ".gif" => "image/gif",
+            ".bmp" => "image/bmp",
+            ".pdf" => "application/pdf",
+            _ => "application/octet-stream"
+        };
     }
 }

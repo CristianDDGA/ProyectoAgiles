@@ -20,6 +20,9 @@ builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IPasswordResetTokenRepository, PasswordResetTokenRepository>();
 
+// Servicio para manejo de archivos
+builder.Services.AddScoped<IFileService, FileService>();
+
 // Usar EmailService real para envío de correos
 builder.Services.AddScoped<IEmailService, EmailService>();
 

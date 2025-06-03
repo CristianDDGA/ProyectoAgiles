@@ -21,11 +21,15 @@ public class User : BaseEntity
     [Required]
     [MaxLength(255)]
     public string PasswordHash { get; set; } = string.Empty;    [Required]
-    public UserType UserType { get; set; }
-
-    [Required]
+    public UserType UserType { get; set; }    [Required]
     [MaxLength(10)]
-    public string Cedula { get; set; } = string.Empty;    public bool IsActive { get; set; } = true;
+    public string Cedula { get; set; } = string.Empty;
+
+    // Ruta del documento de identidad almacenado
+    [MaxLength(500)]
+    public string? IdentityDocumentPath { get; set; }
+
+    public bool IsActive { get; set; } = true;
 
     // Campos para control de intentos fallidos
     public int FailedLoginAttempts { get; set; } = 0;

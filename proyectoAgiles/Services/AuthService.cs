@@ -30,7 +30,11 @@ namespace proyectoAgiles.Services
                 Email = request.Email,
                 Password = request.Password,
                 ConfirmPassword = request.ConfirmPassword,
-                Cedula = request.Cedula
+                Cedula = request.Cedula,
+                // Enviar datos del documento si existen
+                IdentityDocument = request.DocumentFile,
+                IdentityDocumentFileName = request.DocumentFileName,
+                IdentityDocumentContentType = request.DocumentContentType
             };
 
             var response = await _httpClient.PostAsJsonAsync($"{_apiBaseUrl}/api/auth/register", registerDto);
@@ -42,9 +46,7 @@ namespace proyectoAgiles.Services
             
             var errorContent = await response.Content.ReadAsStringAsync();
             throw new Exception($"Error al registrar usuario: {errorContent}");
-        }
-
-        public async Task<RegisterResponse> RegisterAsync(RegisterRequest request)
+        }        public async Task<RegisterResponse> RegisterAsync(RegisterRequest request)
         {
             try
             {                // Mapear RegisterRequest a RegisterDto (formato del backend)
@@ -55,7 +57,11 @@ namespace proyectoAgiles.Services
                     Email = request.Email,
                     Password = request.Password,
                     ConfirmPassword = request.ConfirmPassword,
-                    Cedula = request.Cedula
+                    Cedula = request.Cedula,
+                    // Enviar datos del documento si existen
+                    IdentityDocument = request.DocumentFile,
+                    IdentityDocumentFileName = request.DocumentFileName,
+                    IdentityDocumentContentType = request.DocumentContentType
                 };
 
                 var response = await _httpClient.PostAsJsonAsync($"{_apiBaseUrl}/api/auth/register", registerDto);

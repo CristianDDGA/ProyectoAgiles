@@ -11,18 +11,19 @@ public class AuthService : IAuthService
     private readonly IUserRepository _userRepository;
     private readonly IEmailService _emailService;
     private readonly IPasswordResetTokenRepository _passwordResetTokenRepository;
+    private readonly IFileService _fileService;
 
     public AuthService(
         IUserRepository userRepository,
         IEmailService emailService,
-        IPasswordResetTokenRepository passwordResetTokenRepository)
+        IPasswordResetTokenRepository passwordResetTokenRepository,
+        IFileService fileService)
     {
         _userRepository = userRepository;
         _emailService = emailService;
         _passwordResetTokenRepository = passwordResetTokenRepository;
-    }
-
-    public async Task<UserDto?> RegisterAsync(RegisterDto registerDto)
+        _fileService = fileService;
+    }    public async Task<UserDto?> RegisterAsync(RegisterDto registerDto)
     {
         // Verificar si el email ya existe
         if (await _userRepository.EmailExistsAsync(registerDto.Email))
@@ -36,6 +37,27 @@ public class AuthService : IAuthService
             throw new InvalidOperationException("La cédula ya está registrada");
         }
 
+        // Procesar archivo de documento de identidad si existe
+        string? documentPath = null;
+        if (registerDto.IdentityDocument != null && 
+            !string.IsNullOrEmpty(registerDto.IdentityDocumentFileName) &&
+            !string.IsNullOrEmpty(registerDto.IdentityDocumentContentType))
+        {
+            try
+            {
+                documentPath = await _fileService.SaveFileAsync(
+                    registerDto.IdentityDocument,
+                    registerDto.IdentityDocumentFileName,
+                    registerDto.IdentityDocumentContentType,
+                    "uploads/documents"
+                );
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException($"Error al procesar el documento de identidad: {ex.Message}");
+            }
+        }
+
         // Crear nuevo usuario con rol de docente
         var user = new User
         {
@@ -45,12 +67,13 @@ public class AuthService : IAuthService
             PasswordHash = registerDto.Password, // Se hashea en el repositorio
             UserType = Domain.Enums.UserType.Docente, // Asignar automáticamente rol de docente
             Cedula = registerDto.Cedula.Trim(),
+            IdentityDocumentPath = documentPath,
             IsActive = true
         };
 
         var createdUser = await _userRepository.AddAsync(user);
         return MapToDto(createdUser);
-    }    public async Task<UserDto?> LoginAsync(LoginDto loginDto)
+    }public async Task<UserDto?> LoginAsync(LoginDto loginDto)
     {
         var user = await _userRepository.GetByEmailAsync(loginDto.Email);
         
@@ -243,9 +266,7 @@ public class AuthService : IAuthService
         var bytes = new byte[32];
         rng.GetBytes(bytes);
         return Convert.ToBase64String(bytes).Replace("+", "-").Replace("/", "_").Replace("=", "");
-    }
-
-    private static UserDto MapToDto(User user)
+    }    private static UserDto MapToDto(User user)
     {
         return new UserDto
         {
@@ -257,7 +278,8 @@ public class AuthService : IAuthService
             Cedula = user.Cedula,
             IsActive = user.IsActive,
             CreatedAt = user.CreatedAt,
-            FullName = user.FullName
+            FullName = user.FullName,
+            IdentityDocumentPath = user.IdentityDocumentPath
         };
     }
 
