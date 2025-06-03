@@ -204,8 +204,10 @@
                             <div class="drag-overlay-content">
                                 <i class="fas fa-download"></i>
                                 <p>Suelta el archivo aquí</p>
-                            </div>
-                        </div>                    </div>
+                            </div>                        </div>                    </div>
+                    
+                    <!-- Input file oculto necesario para el botón seleccionar -->
+                    <InputFile @ref="fileInput" OnChange="HandleFileSelected" style="display: none;" accept=".pdf,.jpg,.jpeg,.png,.gif,.bmp" multiple="false" />
                     
                     @if (!string.IsNullOrEmpty(fileErrorMessage))
                     {
