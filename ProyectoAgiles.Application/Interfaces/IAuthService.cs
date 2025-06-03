@@ -9,6 +9,7 @@ public interface IAuthService
     Task<UserDto?> GetUserByIdAsync(int userId);
     Task<UserDto?> GetUserByEmailAsync(string email);
     Task<bool> EmailExistsAsync(string email);
+    Task<bool> CedulaExistsAsync(string cedula);
 }
 
 public interface IUserService

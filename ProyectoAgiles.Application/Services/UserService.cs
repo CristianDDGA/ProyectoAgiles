@@ -29,14 +29,21 @@ public class UserService : IUserService
     {
         var user = await _userRepository.GetByIdAsync(id);
         if (user == null)
-            return null;
-
-        // Verificar si el email ya existe (excluyendo el usuario actual)
+            return null;        // Verificar si el email ya existe (excluyendo el usuario actual)
         var existingUser = await _userRepository.GetByEmailAsync(updateDto.Email);
         if (existingUser != null && existingUser.Id != id)
         {
             throw new InvalidOperationException("El email ya está registrado");
-        }        // Actualizar campos
+        }
+
+        // Verificar si la cédula ya existe (excluyendo el usuario actual)
+        var existingUserByCedula = await _userRepository.FindFirstAsync(u => u.Cedula == updateDto.Cedula);
+        if (existingUserByCedula != null && existingUserByCedula.Id != id)
+        {
+            throw new InvalidOperationException("La cédula ya está registrada");
+        }
+
+        // Actualizar campos
         user.FirstName = updateDto.FirstName.Trim();
         user.LastName = updateDto.LastName.Trim();
         user.Email = updateDto.Email.Trim().ToLower();

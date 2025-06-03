@@ -19,9 +19,7 @@ public class UserRepository : Repository<User>, IUserRepository
     public async Task<bool> EmailExistsAsync(string email)
     {
         return await _dbSet.AnyAsync(u => u.Email == email.ToLower());
-    }
-
-    public async Task<User?> ValidateUserAsync(string email, string password)
+    }    public async Task<User?> ValidateUserAsync(string email, string password)
     {
         var user = await GetByEmailAsync(email);
         
@@ -32,7 +30,14 @@ public class UserRepository : Repository<User>, IUserRepository
             return null;
 
         return user;
-    }    public override async Task<User> AddAsync(User entity)
+    }
+
+    public async Task<bool> CedulaExistsAsync(string cedula)
+    {
+        return await _dbSet.AnyAsync(u => u.Cedula == cedula);
+    }
+
+    public override async Task<User> AddAsync(User entity)
     {
         // Normalizar el email a minúsculas
         entity.Email = entity.Email.ToLower();

@@ -79,14 +79,26 @@ public class AuthController : ControllerBase
         {
             return StatusCode(500, new { message = "Error interno del servidor", details = ex.Message });
         }
-    }
-
-    [HttpGet("check-email/{email}")]
+    }    [HttpGet("check-email/{email}")]
     public async Task<ActionResult<bool>> CheckEmailExists(string email)
     {
         try
         {
             var exists = await _authService.EmailExistsAsync(email);
+            return Ok(new { exists });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "Error interno del servidor", details = ex.Message });
+        }
+    }
+
+    [HttpGet("check-cedula/{cedula}")]
+    public async Task<ActionResult<bool>> CheckCedulaExists(string cedula)
+    {
+        try
+        {
+            var exists = await _authService.CedulaExistsAsync(cedula);
             return Ok(new { exists });
         }
         catch (Exception ex)

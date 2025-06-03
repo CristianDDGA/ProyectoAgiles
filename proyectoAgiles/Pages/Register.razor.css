@@ -283,6 +283,27 @@ select.form-control option {
     display: block;
 }
 
+.text-success {
+    color: #2ed573 !important;
+    font-size: 0.85rem;
+    margin-top: 5px;
+    display: block;
+}
+
+.validation-message {
+    font-size: 0.85rem;
+    margin-top: 5px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.validation-message i {
+    font-size: 0.8rem;
+}
+
 /* Componente de carga de archivos */
 .file-upload-container {
     position: relative;

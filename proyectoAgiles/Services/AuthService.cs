@@ -106,7 +106,7 @@ namespace proyectoAgiles.Services
             
             var errorContent = await response.Content.ReadAsStringAsync();
             throw new Exception($"Error al iniciar sesión: {errorContent}");
-        }public async Task<bool> CheckEmailExists(string email)
+        }        public async Task<bool> CheckEmailExists(string email)
         {
             var response = await _httpClient.GetAsync($"{_apiBaseUrl}/api/auth/check-email/{email}");
             if (response.IsSuccessStatusCode)
@@ -116,7 +116,18 @@ namespace proyectoAgiles.Services
             }
             return false;
         }
-    }    public class RegisterRequest
+
+        public async Task<bool> CheckCedulaExists(string cedula)
+        {
+            var response = await _httpClient.GetAsync($"{_apiBaseUrl}/api/auth/check-cedula/{cedula}");
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<CheckEmailResponse>();
+                return result?.exists ?? false;
+            }
+            return false;
+        }
+    }public class RegisterRequest
     {
         [Required(ErrorMessage = "El nombre es requerido")]
         [MaxLength(100, ErrorMessage = "El nombre no puede exceder 100 caracteres")]

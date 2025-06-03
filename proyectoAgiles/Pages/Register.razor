@@ -2,6 +2,7 @@
 @using Microsoft.AspNetCore.Components.Forms
 @using Microsoft.AspNetCore.Components.Web
 @using System.ComponentModel.DataAnnotations
+@implements IDisposable
 @page "/register"
 @inject AuthService AuthService
 @inject NavigationManager Navigation
@@ -70,15 +71,20 @@
                         <InputText id="confirmPassword" @bind-Value="registerRequest.ConfirmPassword" type="password" class="form-control" placeholder="Confirma tu contraseña" />
                         <ValidationMessage For="@(() => registerRequest.ConfirmPassword)" class="text-danger" />
                     </div>
-                </div>
-
-                <div class="form-group">
+                </div>                <div class="form-group">
                     <label for="cedula" class="form-label">
                         <i class="fas fa-id-card"></i>
                         Cédula
                     </label>
-                    <InputText id="cedula" @bind-Value="registerRequest.Cedula" class="form-control" placeholder="Ingresa tu número de cédula" />
+                    <InputText id="cedula" @bind-Value="registerRequest.Cedula" @oninput="HandleCedulaInput" class="form-control" placeholder="Ingresa tu número de cédula" />
                     <ValidationMessage For="@(() => registerRequest.Cedula)" class="text-danger" />
+                    @if (!string.IsNullOrEmpty(cedulaValidationMessage))
+                    {
+                        <div class="validation-message @(cedulaExists ? "text-danger" : "text-success")">
+                            <i class="fas @(cedulaExists ? "fa-exclamation-triangle" : "fa-check-circle")"></i>
+                            @cedulaValidationMessage
+                        </div>
+                    }
                 </div>
 
                 <!-- Zona de selección de archivos -->
@@ -196,14 +202,95 @@
     private string imagePreview = string.Empty;
     private string errorMessage = string.Empty;
     private string successMessage = string.Empty;
+    private string cedulaValidationMessage = string.Empty;
+    private bool cedulaExists = false;
+    private System.Threading.Timer? cedulaValidationTimer;    private void HandleCedulaInput(ChangeEventArgs e)
+    {
+        var cedula = e.Value?.ToString() ?? string.Empty;
+        
+        // Cancelar timer anterior si existe
+        cedulaValidationTimer?.Dispose();
+        
+        // Solo validar si la cédula tiene al menos 10 dígitos
+        if (cedula.Length >= 10)
+        {
+            // Crear un timer para validar después de 500ms sin cambios
+            cedulaValidationTimer = new System.Threading.Timer(async _ =>
+            {
+                await InvokeAsync(async () =>
+                {
+                    await ValidateCedula(cedula);
+                    StateHasChanged();
+                });
+            }, null, 500, System.Threading.Timeout.Infinite);
+        }
+        else
+        {
+            cedulaValidationMessage = string.Empty;
+            cedulaExists = false;
+        }
+        
+        // Actualizar el valor del modelo
+        registerRequest.Cedula = cedula;
+    }
 
-    private async Task HandleRegistration()
+    private async Task ValidateCedula(string cedula)
+    {
+        if (string.IsNullOrEmpty(cedula) || cedula.Length != 10)
+        {
+            cedulaValidationMessage = string.Empty;
+            return;
+        }
+        
+        try
+        {
+            var exists = await AuthService.CheckCedulaExists(cedula);
+            cedulaExists = exists;
+            
+            if (exists)
+            {
+                cedulaValidationMessage = "Esta cédula ya está registrada";
+            }
+            else
+            {
+                cedulaValidationMessage = "Cédula disponible";
+            }
+        }
+        catch (Exception)
+        {
+            cedulaValidationMessage = "Error al validar la cédula";
+            cedulaExists = false;
+        }
+    }    private async Task HandleRegistration()
     {
         try
         {
             isLoading = true;
             errorMessage = string.Empty;
-            successMessage = string.Empty;
+            successMessage = string.Empty;            // Verificar si la cédula existe antes de proceder
+            if (cedulaExists)
+            {
+                errorMessage = "No se puede registrar con una cédula que ya está en uso";
+                return;
+            }
+
+            // Verificar que se haya subido un documento
+            if (selectedFile is null)
+            {
+                errorMessage = "Debe subir un documento de identidad para completar el registro";
+                return;
+            }
+
+            // Verificar la cédula una vez más antes del registro
+            if (!string.IsNullOrEmpty(registerRequest.Cedula))
+            {
+                var cedulaAlreadyExists = await AuthService.CheckCedulaExists(registerRequest.Cedula);
+                if (cedulaAlreadyExists)
+                {
+                    errorMessage = "La cédula ya está registrada en el sistema";
+                    return;
+                }
+            }
 
             // Procesar el archivo si existe
             if (selectedFile is not null)
@@ -338,9 +425,7 @@
         if (bytes < 1024) return $"{bytes} B";
         if (bytes < 1024 * 1024) return $"{bytes / 1024:F1} KB";
         return $"{bytes / (1024 * 1024):F1} MB";
-    }
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    }    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
@@ -351,5 +436,10 @@
                     }
                 };            ");
         }
+    }
+
+    public void Dispose()
+    {
+        cedulaValidationTimer?.Dispose();
     }
 }

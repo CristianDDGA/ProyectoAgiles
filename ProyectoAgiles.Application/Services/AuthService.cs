@@ -20,6 +20,12 @@ public class AuthService : IAuthService
             throw new InvalidOperationException("El email ya está registrado");
         }
 
+        // Verificar si la cédula ya existe
+        if (await _userRepository.CedulaExistsAsync(registerDto.Cedula))
+        {
+            throw new InvalidOperationException("La cédula ya está registrada");
+        }
+
         // Crear nuevo usuario con rol de docente
         var user = new User
         {
@@ -52,12 +58,17 @@ public class AuthService : IAuthService
     {
         var user = await _userRepository.GetByEmailAsync(email);
         return user != null ? MapToDto(user) : null;
-    }
-
-    public async Task<bool> EmailExistsAsync(string email)
+    }    public async Task<bool> EmailExistsAsync(string email)
     {
         return await _userRepository.EmailExistsAsync(email);
-    }    private static UserDto MapToDto(User user)
+    }
+
+    public async Task<bool> CedulaExistsAsync(string cedula)
+    {
+        return await _userRepository.CedulaExistsAsync(cedula);
+    }
+
+    private static UserDto MapToDto(User user)
     {
         return new UserDto
         {
