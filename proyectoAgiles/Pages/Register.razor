@@ -1,0 +1,158 @@
+@page "/register"
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.AspNetCore.Components.Forms
+@using System.ComponentModel.DataAnnotations
+@inject NavigationManager Navigation
+
+<PageTitle>Registrarse - UTA</PageTitle>
+
+<div class="register-container">
+    <div class="register-card">
+        <div class="register-header">
+            <img src="images/uta-logo.png" alt="UTA Logo" class="register-logo">
+            <h2>Crear Cuenta</h2>
+            <p class="text-muted">Universidad Técnica de Ambato</p>
+        </div>
+        
+        <div class="register-form">
+            <EditForm Model="@registerModel" OnValidSubmit="@HandleRegister">
+                <DataAnnotationsValidator />
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="firstName" class="form-label">Nombres</label>
+                            <InputText id="firstName" @bind-Value="registerModel.FirstName" class="form-control" placeholder="Juan Carlos" />
+                            <ValidationMessage For="@(() => registerModel.FirstName)" class="text-danger" />
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="lastName" class="form-label">Apellidos</label>
+                            <InputText id="lastName" @bind-Value="registerModel.LastName" class="form-control" placeholder="Pérez García" />
+                            <ValidationMessage For="@(() => registerModel.LastName)" class="text-danger" />
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="email" class="form-label">Correo Electrónico</label>
+                    <InputText id="email" @bind-Value="registerModel.Email" class="form-control" placeholder="correo@uta.edu.ec" />
+                    <ValidationMessage For="@(() => registerModel.Email)" class="text-danger" />
+                </div>
+                
+                <div class="form-group">
+                    <label for="studentId" class="form-label">Número de Cédula</label>
+                    <InputText id="studentId" @bind-Value="registerModel.StudentId" class="form-control" placeholder="1234567890" />
+                    <ValidationMessage For="@(() => registerModel.StudentId)" class="text-danger" />
+                </div>
+                
+                <div class="form-group">
+                    <label for="password" class="form-label">Contraseña</label>
+                    <InputText id="password" @bind-Value="registerModel.Password" type="password" class="form-control" placeholder="••••••••" />
+                    <ValidationMessage For="@(() => registerModel.Password)" class="text-danger" />
+                </div>
+                
+                <div class="form-group">
+                    <label for="confirmPassword" class="form-label">Confirmar Contraseña</label>
+                    <InputText id="confirmPassword" @bind-Value="registerModel.ConfirmPassword" type="password" class="form-control" placeholder="••••••••" />
+                    <ValidationMessage For="@(() => registerModel.ConfirmPassword)" class="text-danger" />
+                </div>
+                
+                <div class="form-check">
+                    <InputCheckbox id="terms" @bind-Value="registerModel.AcceptTerms" class="form-check-input" />
+                    <label for="terms" class="form-check-label">
+                        Acepto los <a href="#" class="terms-link">términos y condiciones</a>
+                    </label>
+                    <ValidationMessage For="@(() => registerModel.AcceptTerms)" class="text-danger" />
+                </div>
+                
+                <button type="submit" class="btn btn-primary btn-register w-100" disabled="@isLoading">
+                    @if (isLoading)
+                    {
+                        <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                        <span>Creando cuenta...</span>
+                    }
+                    else
+                    {
+                        <span>Crear Cuenta</span>
+                    }
+                </button>
+            </EditForm>
+            
+            <div class="register-footer">
+                <hr>
+                <div class="text-center">
+                    <p class="mb-0">¿Ya tienes una cuenta?</p>
+                    <a href="/login" class="btn btn-outline-primary btn-login-link">Iniciar Sesión</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private RegisterModel registerModel = new();
+    private bool isLoading = false;
+
+    private async Task HandleRegister()
+    {
+        isLoading = true;
+        
+        try
+        {
+            // Aquí iría la lógica de registro
+            await Task.Delay(2000); // Simular delay de registro
+            
+            // Por ahora solo mostramos un mensaje
+            Console.WriteLine($"Intentando registrar: {registerModel.Email}");
+            
+            // Redirigir al login después del registro exitoso
+            Navigation.NavigateTo("/login");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al registrar: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    public class RegisterModel : IValidatableObject
+    {
+        [Required(ErrorMessage = "Los nombres son requeridos")]
+        public string FirstName { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Los apellidos son requeridos")]
+        public string LastName { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "El correo electrónico es requerido")]
+        [EmailAddress(ErrorMessage = "Formato de correo electrónico inválido")]
+        public string Email { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "El número de cédula es requerido")]
+        [RegularExpression(@"^\d{10}$", ErrorMessage = "La cédula debe tener 10 dígitos")]
+        public string StudentId { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "La contraseña es requerida")]
+        [MinLength(8, ErrorMessage = "La contraseña debe tener al menos 8 caracteres")]
+        public string Password { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Debe confirmar la contraseña")]
+        public string ConfirmPassword { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Debe aceptar los términos y condiciones")]
+        [Range(typeof(bool), "true", "true", ErrorMessage = "Debe aceptar los términos y condiciones")]
+        public bool AcceptTerms { get; set; } = false;
+
+        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+        {
+            if (Password != ConfirmPassword)
+            {
+                yield return new ValidationResult("Las contraseñas no coinciden", new[] { nameof(ConfirmPassword) });
+            }
+        }
+    }
+}
