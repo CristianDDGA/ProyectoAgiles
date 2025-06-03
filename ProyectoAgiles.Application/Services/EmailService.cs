@@ -53,11 +53,17 @@ public class EmailService : IEmailService
 
             await smtpClient.SendMailAsync(mailMessage);
             return true;
-        }
-        catch (Exception ex)
+        }        catch (Exception ex)
         {
             // En producción, usar un logger aquí
-            Console.WriteLine($"Error enviando email: {ex.Message}");
+            Console.WriteLine($"=== ERROR ENVIANDO EMAIL ===");
+            Console.WriteLine($"Error: {ex.Message}");
+            Console.WriteLine($"Tipo: {ex.GetType().Name}");
+            Console.WriteLine($"InnerException: {ex.InnerException?.Message}");
+            Console.WriteLine($"Host: {_configuration["EmailSettings:SmtpHost"]}:{_configuration["EmailSettings:SmtpPort"]}");
+            Console.WriteLine($"Username: {_configuration["EmailSettings:SmtpUsername"]}");
+            Console.WriteLine($"EnableSsl: {_configuration["EmailSettings:EnableSsl"]}");
+            Console.WriteLine($"=============================");
             return false;
         }
     }
