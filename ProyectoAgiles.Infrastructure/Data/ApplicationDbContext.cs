@@ -38,13 +38,13 @@ public class ApplicationDbContext : DbContext
             entity.Property(e => e.PasswordHash)
                 .IsRequired()
                 .HasMaxLength(255);
-            
-            entity.Property(e => e.UserType)
+              entity.Property(e => e.UserType)
                 .IsRequired()
                 .HasConversion<int>();
             
-            entity.Property(e => e.PhoneNumber)
-                .HasMaxLength(20);
+            entity.Property(e => e.Cedula)
+                .IsRequired()
+                .HasMaxLength(10);
             
             entity.Property(e => e.CreatedAt)
                 .IsRequired();
@@ -62,8 +62,7 @@ public class ApplicationDbContext : DbContext
         // Datos semilla para el administrador por defecto
         SeedData(modelBuilder);
     }    private void SeedData(ModelBuilder modelBuilder)
-    {
-        // Crear un usuario administrador por defecto
+    {        // Crear un usuario administrador por defecto
         modelBuilder.Entity<User>().HasData(
             new User
             {
@@ -73,6 +72,7 @@ public class ApplicationDbContext : DbContext
                 Email = "admin@sistema.com",
                 PasswordHash = "$2a$11$xQVm8QpRGyV.rqm/JJt7p.3J7N6pC0qFb0q5RHbj6h8D2Cz0C.L9i", // Contraseña: Admin123!
                 UserType = Domain.Enums.UserType.Admin,
+                Cedula = "0000000000", // Cédula por defecto para admin
                 IsActive = true,
                 CreatedAt = new DateTime(2025, 6, 3, 0, 0, 0, DateTimeKind.Utc)
             }

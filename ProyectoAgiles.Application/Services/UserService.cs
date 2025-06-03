@@ -36,14 +36,12 @@ public class UserService : IUserService
         if (existingUser != null && existingUser.Id != id)
         {
             throw new InvalidOperationException("El email ya está registrado");
-        }
-
-        // Actualizar campos
+        }        // Actualizar campos
         user.FirstName = updateDto.FirstName.Trim();
         user.LastName = updateDto.LastName.Trim();
         user.Email = updateDto.Email.Trim().ToLower();
         user.UserType = updateDto.UserType;
-        user.PhoneNumber = updateDto.PhoneNumber?.Trim();
+        user.Cedula = updateDto.Cedula.Trim();
 
         // Solo actualizar contraseña si se proporciona
         if (!string.IsNullOrEmpty(updateDto.Password))
@@ -77,15 +75,14 @@ public class UserService : IUserService
     }
 
     private static UserDto MapToDto(Domain.Entities.User user)
-    {
-        return new UserDto
+    {        return new UserDto
         {
             Id = user.Id,
             FirstName = user.FirstName,
             LastName = user.LastName,
             Email = user.Email,
             UserType = user.UserType,
-            PhoneNumber = user.PhoneNumber,
+            Cedula = user.Cedula,
             IsActive = user.IsActive,
             CreatedAt = user.CreatedAt,
             FullName = user.FullName

@@ -1,0 +1,9 @@
+{
+  "firstName": "Carlos",
+  "lastName": "Martinez", 
+  "email": "carlos.martinez@test.com",
+  "password": "Password123!",
+  "confirmPassword": "Password123!",
+  "userType": 2,
+  "cedula": "1234567890"
+}

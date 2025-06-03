@@ -20,13 +20,12 @@ public class User : BaseEntity
 
     [Required]
     [MaxLength(255)]
-    public string PasswordHash { get; set; } = string.Empty;
-
-    [Required]
+    public string PasswordHash { get; set; } = string.Empty;    [Required]
     public UserType UserType { get; set; }
 
-    [MaxLength(20)]
-    public string? PhoneNumber { get; set; }
+    [Required]
+    [MaxLength(10)]
+    public string Cedula { get; set; } = string.Empty;
 
     public bool IsActive { get; set; } = true;
 

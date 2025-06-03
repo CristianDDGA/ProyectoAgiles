@@ -12,9 +12,7 @@ public class AuthService : IAuthService
     public AuthService(IUserRepository userRepository)
     {
         _userRepository = userRepository;
-    }
-
-    public async Task<UserDto?> RegisterAsync(RegisterDto registerDto)
+    }    public async Task<UserDto?> RegisterAsync(RegisterDto registerDto)
     {
         // Verificar si el email ya existe
         if (await _userRepository.EmailExistsAsync(registerDto.Email))
@@ -22,15 +20,15 @@ public class AuthService : IAuthService
             throw new InvalidOperationException("El email ya está registrado");
         }
 
-        // Crear nuevo usuario
+        // Crear nuevo usuario con rol de docente
         var user = new User
         {
             FirstName = registerDto.FirstName.Trim(),
             LastName = registerDto.LastName.Trim(),
             Email = registerDto.Email.Trim().ToLower(),
             PasswordHash = registerDto.Password, // Se hashea en el repositorio
-            UserType = registerDto.UserType,
-            PhoneNumber = registerDto.PhoneNumber?.Trim(),
+            UserType = Domain.Enums.UserType.Docente, // Asignar automáticamente rol de docente
+            Cedula = registerDto.Cedula.Trim(),
             IsActive = true
         };
 
@@ -59,9 +57,7 @@ public class AuthService : IAuthService
     public async Task<bool> EmailExistsAsync(string email)
     {
         return await _userRepository.EmailExistsAsync(email);
-    }
-
-    private static UserDto MapToDto(User user)
+    }    private static UserDto MapToDto(User user)
     {
         return new UserDto
         {
@@ -70,7 +66,7 @@ public class AuthService : IAuthService
             LastName = user.LastName,
             Email = user.Email,
             UserType = user.UserType,
-            PhoneNumber = user.PhoneNumber,
+            Cedula = user.Cedula,
             IsActive = user.IsActive,
             CreatedAt = user.CreatedAt,
             FullName = user.FullName

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ProyectoAgiles.Infrastructure.Data;
 
@@ -11,9 +12,11 @@ using ProyectoAgiles.Infrastructure.Data;
 namespace ProyectoAgiles.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250603161834_UpdatePhoneNumberToCedula")]
+    partial class UpdatePhoneNumberToCedula
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -29,11 +32,6 @@ namespace ProyectoAgiles.Infrastructure.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Cedula")
-                        .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("nvarchar(10)");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
@@ -68,6 +66,11 @@ namespace ProyectoAgiles.Infrastructure.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
+                    b.Property<string>("PhoneNumber")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
 
@@ -85,7 +88,6 @@ namespace ProyectoAgiles.Infrastructure.Migrations
                         new
                         {
                             Id = 1,
-                            Cedula = "0000000000",
                             CreatedAt = new DateTime(2025, 6, 3, 0, 0, 0, 0, DateTimeKind.Utc),
                             Email = "admin@sistema.com",
                             FirstName = "Admin",
@@ -93,6 +95,7 @@ namespace ProyectoAgiles.Infrastructure.Migrations
                             IsDeleted = false,
                             LastName = "Sistema",
                             PasswordHash = "$2a$11$xQVm8QpRGyV.rqm/JJt7p.3J7N6pC0qFb0q5RHbj6h8D2Cz0C.L9i",
+                            PhoneNumber = "",
                             UserType = 1
                         });
                 });

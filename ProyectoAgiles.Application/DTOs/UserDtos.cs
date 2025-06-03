@@ -25,14 +25,13 @@ public class RegisterDto
 
     [Required(ErrorMessage = "Confirma tu contraseña")]
     [Compare("Password", ErrorMessage = "Las contraseñas no coinciden")]
-    public string ConfirmPassword { get; set; } = string.Empty;
-
-    [Required(ErrorMessage = "El tipo de usuario es requerido")]
+    public string ConfirmPassword { get; set; } = string.Empty;    [Required(ErrorMessage = "El tipo de usuario es requerido")]
     public UserType UserType { get; set; }
 
-    [Phone(ErrorMessage = "El formato del teléfono no es válido")]
-    [MaxLength(20, ErrorMessage = "El teléfono no puede exceder 20 caracteres")]
-    public string? PhoneNumber { get; set; }
+    [Required(ErrorMessage = "La cédula es requerida")]
+    [RegularExpression(@"^\d{10}$", ErrorMessage = "La cédula debe tener exactamente 10 dígitos")]
+    [MaxLength(10, ErrorMessage = "La cédula debe tener 10 dígitos")]
+    public string Cedula { get; set; } = string.Empty;
 }
 
 public class LoginDto
@@ -52,7 +51,7 @@ public class UserDto
     public string LastName { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
     public UserType UserType { get; set; }
-    public string? PhoneNumber { get; set; }
+    public string Cedula { get; set; } = string.Empty;
     public bool IsActive { get; set; }
     public DateTime CreatedAt { get; set; }
     public string FullName { get; set; } = string.Empty;

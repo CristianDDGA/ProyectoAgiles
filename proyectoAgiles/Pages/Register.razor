@@ -1,70 +1,46 @@
-@page "/register"
-@using Microsoft.AspNetCore.Components.Web
-@using proyectoAgiles.Services
-@layout proyectoAgiles.Layout.AuthLayout
-@inject AuthService AuthService
-@inject NavigationManager NavigationManager
 
-<PageTitle>Registrarse - UTA</PageTitle>
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Components.Web
+@using System.ComponentModel.DataAnnotations
+@page "/register"
+@inject AuthService AuthService
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
 
 <div class="auth-page">
+    <!-- Fondo decorativo -->
+    <div class="auth-background">
+        <div class="bg-shape shape-1"></div>
+        <div class="bg-shape shape-2"></div>
+        <div class="bg-shape shape-3"></div>
+        <div class="bg-shape shape-4"></div>
+    </div>
+
     <!-- Botón de volver al inicio -->
     <a href="/" class="back-to-home-btn">
         <i class="fas fa-arrow-left"></i>
-        Volver al inicio
+        Volver al Inicio
     </a>
-    
+
     <div class="auth-container">
-        <div class="auth-card">
-            <!-- Logo UTA -->
+        <div class="auth-card">            <!-- Logo y títulos -->
             <div class="auth-logo">
                 <img src="images/uta-logo.png" alt="Universidad Técnica de Ambato" class="logo-uta">
-                <h2 class="auth-title">Crear Cuenta</h2>
+                <h1 class="auth-title">Crear Cuenta</h1>
                 <p class="auth-subtitle">Universidad Técnica de Ambato</p>
             </div>
 
-            @if (!string.IsNullOrEmpty(errorMessage))
-            {
-                <div class="alert alert-danger">
-                    <i class="fas fa-exclamation-circle"></i>
-                    @errorMessage
-                </div>
-            }
-
-            @if (successMessage != null)
-            {
-                <div class="alert alert-success">
-                    <i class="fas fa-check-circle"></i>
-                    @successMessage
-                    <div class="mt-2">
-                        <a href="/login" class="btn btn-outline-success btn-sm">Iniciar sesión ahora</a>
-                    </div>
-                </div>
-            }
-
             <!-- Formulario de Registro -->
-            <EditForm Model="registerRequest" OnValidSubmit="HandleRegister" class="auth-form">
+            <EditForm Model="@registerRequest" OnValidSubmit="@HandleRegistration" class="auth-form">
                 <DataAnnotationsValidator />
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="firstName" class="form-label">
-                            <i class="fas fa-user"></i>
-                            Nombres
-                        </label>
-                        <InputText id="firstName" class="form-control" placeholder="Ingresa tus nombres"
-                                 @bind-Value="registerRequest.FirstName" />
-                        <ValidationMessage For="@(() => registerRequest.FirstName)" class="text-danger" />
-                    </div>
-                    <div class="form-group">
-                        <label for="lastName" class="form-label">
-                            <i class="fas fa-user"></i>
-                            Apellidos
-                        </label>
-                        <InputText id="lastName" class="form-control" placeholder="Ingresa tus apellidos"
-                                 @bind-Value="registerRequest.LastName" />
-                        <ValidationMessage For="@(() => registerRequest.LastName)" class="text-danger" />
-                    </div>
+
+                <div class="form-group">
+                    <label for="name" class="form-label">
+                        <i class="fas fa-user"></i>
+                        Nombre Completo
+                    </label>
+                    <InputText id="name" @bind-Value="registerRequest.Name" class="form-control" placeholder="Ingresa tu nombre completo" />
+                    <ValidationMessage For="@(() => registerRequest.Name)" class="text-danger" />
                 </div>
 
                 <div class="form-group">
@@ -72,17 +48,8 @@
                         <i class="fas fa-envelope"></i>
                         Correo Electrónico
                     </label>
-                    <InputText id="email" class="form-control" placeholder="Ingresa tu correo electrónico"
-                             @bind-Value="registerRequest.Email" />
+                    <InputText id="email" @bind-Value="registerRequest.Email" class="form-control" placeholder="Ingresa tu correo electrónico" />
                     <ValidationMessage For="@(() => registerRequest.Email)" class="text-danger" />
-                </div>                <div class="form-group">
-                    <label for="cedula" class="form-label">
-                        <i class="fas fa-id-card"></i>
-                        Cédula
-                    </label>
-                    <InputText id="cedula" class="form-control" placeholder="Ingresa tu número de cédula"
-                             @bind-Value="registerRequest.PhoneNumber" />
-                    <ValidationMessage For="@(() => registerRequest.PhoneNumber)" class="text-danger" />
                 </div>
 
                 <div class="form-row">
@@ -91,60 +58,116 @@
                             <i class="fas fa-lock"></i>
                             Contraseña
                         </label>
-                        <InputText type="password" id="password" class="form-control" placeholder="Crea una contraseña"
-                                 @bind-Value="registerRequest.Password" />
+                        <InputText id="password" @bind-Value="registerRequest.Password" type="password" class="form-control" placeholder="Crea una contraseña segura" />
                         <ValidationMessage For="@(() => registerRequest.Password)" class="text-danger" />
                     </div>
+
                     <div class="form-group">
                         <label for="confirmPassword" class="form-label">
                             <i class="fas fa-lock"></i>
-                            Confirmar
+                            Confirmar Contraseña
                         </label>
-                        <InputText type="password" id="confirmPassword" class="form-control" placeholder="Confirma tu contraseña"
-                                 @bind-Value="registerRequest.ConfirmPassword" />
+                        <InputText id="confirmPassword" @bind-Value="registerRequest.ConfirmPassword" type="password" class="form-control" placeholder="Confirma tu contraseña" />
                         <ValidationMessage For="@(() => registerRequest.ConfirmPassword)" class="text-danger" />
-                    </div>                </div>                <div class="form-group">
-                    <label for="document" class="form-label">
-                        <i class="fas fa-file-upload"></i>
-                        Documento de Identidad
-                    </label>
-                    <div class="file-upload-container @(selectedFile != null ? "has-file" : "")">
-                        <InputFile id="document" class="file-input" OnChange="HandleFileChange" accept=".pdf,.jpg,.jpeg,.png" />
-                        <label for="document" class="file-upload-label">
-                            <i class="@(selectedFile != null ? "fas fa-check-circle" : "fas fa-cloud-upload-alt")"></i>
-                            <div class="file-upload-text">
-                                @if (selectedFile != null)
-                                {
-                                    <span class="main-text">✓ Archivo seleccionado</span>
-                                    <span class="sub-text">@selectedFile.Name</span>
-                                }
-                                else
-                                {
-                                    <span class="main-text">Seleccionar documento de identidad</span>
-                                    <span class="sub-text">Formatos aceptados: PDF, JPG, PNG (máx. 5MB)</span>
-                                }
-                            </div>
-                        </label>
-                        @if (selectedFile != null)
-                        {
-                            <div class="file-info">
-                                <small class="text-success">
-                                    <i class="fas fa-file-alt"></i>
-                                    <span>@selectedFile.Name • @Math.Round((double)selectedFile.Size / 1024, 1) KB</span>
-                                    <button type="button" class="btn btn-link btn-sm p-0 ms-2 text-danger" @onclick="ClearFile" title="Eliminar archivo">
-                                        <i class="fas fa-times"></i>
-                                    </button>
-                                </small>
-                            </div>
-                        }
                     </div>
                 </div>
 
-                <button type="submit" class="btn btn-primary btn-register" disabled="@isLoading">
+                <div class="form-group">
+                    <label for="cedula" class="form-label">
+                        <i class="fas fa-id-card"></i>
+                        Cédula
+                    </label>
+                    <InputText id="cedula" @bind-Value="registerRequest.Cedula" class="form-control" placeholder="Ingresa tu número de cédula" />
+                    <ValidationMessage For="@(() => registerRequest.Cedula)" class="text-danger" />
+                </div>
+
+                <!-- Zona de selección de archivos -->
+                <div class="form-group">
+                    <label class="form-label">
+                        <i class="fas fa-file-upload"></i>
+                        Documento de Identidad
+                    </label>
+                    <div class="file-drop-zone @(isDragOver ? "drag-over" : "")" 
+                         @onclick="TriggerFileSelect">
+                        
+                        @if (selectedFile is null)
+                        {
+                            <div class="drop-zone-content">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <div class="drop-zone-text">
+                                    <p class="main-text">Haz clic para seleccionar tu documento</p>
+                                    <small class="formats-text">Formatos soportados: PDF, JPG, PNG (Max. 10MB)</small>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="file-preview-container">
+                                <div class="file-preview-header">
+                                    <div class="file-info-preview">
+                                        @if (isImageFile)
+                                        {
+                                            <i class="fas fa-image"></i>
+                                        }
+                                        else if (isPdfFile)
+                                        {
+                                            <i class="fas fa-file-pdf"></i>
+                                        }
+                                        else
+                                        {
+                                            <i class="fas fa-file"></i>
+                                        }
+                                        <div class="file-details">
+                                            <span class="file-name">@selectedFile?.Name</span>
+                                            <span class="file-size">@FormatFileSize(selectedFile?.Size ?? 0)</span>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="btn-remove-file" @onclick="ClearFile" @onclick:stopPropagation="true">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                                
+                                @if (isImageFile && !string.IsNullOrEmpty(imagePreview))
+                                {
+                                    <div class="image-preview">
+                                        <img src="@imagePreview" alt="Vista previa" class="preview-image" />
+                                    </div>
+                                }
+                                else if (isPdfFile)
+                                {
+                                    <div class="pdf-preview">
+                                        <i class="fas fa-file-pdf"></i>
+                                        <span>@selectedFile?.Name</span>
+                                        <small>@selectedFile?.ContentType</small>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                    
+                    <!-- Input file oculto -->
+                    <InputFile @ref="fileInput" OnChange="HandleFileSelected" class="file-input-hidden" accept=".pdf,.jpg,.jpeg,.png,.gif,.bmp" />
+                </div>                @if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        @errorMessage
+                    </div>
+                }
+
+                @if (!string.IsNullOrEmpty(successMessage))
+                {
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle"></i>
+                        @successMessage
+                    </div>
+                }
+
+                <button type="submit" class="btn-register" disabled="@isLoading">
                     @if (isLoading)
                     {
-                        <span class="spinner-border spinner-border-sm mr-2" role="status" aria-hidden="true"></span>
-                        <span>Procesando...</span>
+                        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                        <span>Registrando...</span>
                     }
                     else
                     {
@@ -152,75 +175,181 @@
                         <span>Crear Cuenta</span>
                     }
                 </button>
-            </EditForm>            <!-- Enlaces adicionales -->
+            </EditForm>
+
+            <!-- Enlaces adicionales -->
             <div class="auth-links">
-                <p>¿Ya tienes una cuenta? <a href="/login" class="login-link">Inicia sesión aquí</a></p>
+                <p>¿Ya tienes una cuenta? <a href="/login" class="login-link">Inicia Sesión</a></p>
             </div>
         </div>
-    </div>
-    
-    <!-- Background decorativo -->
-    <div class="auth-background">
-        <div class="bg-shape shape-1"></div>
-        <div class="bg-shape shape-2"></div>
-        <div class="bg-shape shape-3"></div>
-        <div class="bg-shape shape-4"></div>
     </div>
 </div>
 
 @code {
-    private RegisterRequest registerRequest = new RegisterRequest();
+    private RegisterRequest registerRequest = new();
+    private InputFile? fileInput;
+    private IBrowserFile? selectedFile;
     private bool isLoading = false;
+    private bool isDragOver = false;
+    private bool isImageFile = false;
+    private bool isPdfFile = false;
+    private string imagePreview = string.Empty;
     private string errorMessage = string.Empty;
-    private string? successMessage = null;
-    private IBrowserFile? selectedFile = null;    private void HandleFileChange(InputFileChangeEventArgs e)
-    {
-        selectedFile = e.File;
-    }
+    private string successMessage = string.Empty;
 
-    private void ClearFile()
-    {
-        selectedFile = null;
-    }
-
-    private async Task HandleRegister()
+    private async Task HandleRegistration()
     {
         try
         {
             isLoading = true;
             errorMessage = string.Empty;
-            successMessage = null;
+            successMessage = string.Empty;
 
-            // Validar que las contraseñas coincidan
-            if (registerRequest.Password != registerRequest.ConfirmPassword)
+            // Procesar el archivo si existe
+            if (selectedFile is not null)
             {
-                errorMessage = "Las contraseñas no coinciden";
-                return;
+                using var stream = selectedFile.OpenReadStream(10 * 1024 * 1024); // Max 10MB
+                using var memoryStream = new MemoryStream();
+                await stream.CopyToAsync(memoryStream);
+                registerRequest.DocumentFile = memoryStream.ToArray();
+                registerRequest.DocumentFileName = selectedFile.Name;
+                registerRequest.DocumentContentType = selectedFile.ContentType;
             }
 
-            // Verificar si el email ya existe
-            bool emailExists = await AuthService.CheckEmailExists(registerRequest.Email);
-            if (emailExists)
+            var result = await AuthService.RegisterAsync(registerRequest);
+            
+            if (result.IsSuccess)
             {
-                errorMessage = "Este correo electrónico ya está registrado";
-                return;
+                successMessage = "¡Registro exitoso! Redirigiendo al login...";
+                await Task.Delay(2000);
+                Navigation.NavigateTo("/login");
             }
-
-            // Registrar al usuario
-            var result = await AuthService.Register(registerRequest);
-            if (result)
+            else
             {
-                successMessage = "¡Registro exitoso! Ahora puedes iniciar sesión.";
-                registerRequest = new RegisterRequest(); // Limpiar formulario
+                errorMessage = result.ErrorMessage ?? "Error durante el registro";
             }
         }
         catch (Exception ex)
         {
-            errorMessage = ex.Message;
+            errorMessage = $"Error: {ex.Message}";
         }
         finally
         {
             isLoading = false;
+        }
+    }
+
+    private async Task HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        if (e.File != null)
+        {
+            await ProcessFile(e.File);
+        }
+    }
+
+    private async Task ProcessFile(IBrowserFile file)
+    {
+        try
+        {
+            // Validar tamaño del archivo (10MB máximo)
+            if (file.Size > 10 * 1024 * 1024)
+            {
+                errorMessage = "El archivo es demasiado grande. Tamaño máximo: 10MB";
+                return;
+            }
+
+            // Validar tipo de archivo
+            var allowedTypes = new[] { "application/pdf", "image/jpeg", "image/jpg", "image/png", "image/gif", "image/bmp" };
+            if (!allowedTypes.Contains(file.ContentType.ToLower()))
+            {
+                errorMessage = "Tipo de archivo no válido. Solo se permiten: PDF, JPG, PNG, GIF, BMP";
+                return;
+            }
+
+            selectedFile = file;
+            isImageFile = file.ContentType.StartsWith("image/");
+            isPdfFile = file.ContentType == "application/pdf";
+
+            // Generar vista previa para imágenes
+            if (isImageFile)
+            {
+                await GenerateImagePreview(file);
+            }
+
+            errorMessage = string.Empty;
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error al procesar el archivo: {ex.Message}";
+        }
+    }
+
+    private async Task GenerateImagePreview(IBrowserFile file)
+    {
+        try
+        {
+            using var stream = file.OpenReadStream(10 * 1024 * 1024);
+            using var memoryStream = new MemoryStream();
+            await stream.CopyToAsync(memoryStream);
+            var base64 = Convert.ToBase64String(memoryStream.ToArray());
+            imagePreview = $"data:{file.ContentType};base64,{base64}";
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error al generar vista previa: {ex.Message}";
+        }
+    }
+
+    private void TriggerFileSelect()
+    {
+        _ = JSRuntime.InvokeVoidAsync("triggerFileInput", fileInput?.Element);
+    }
+
+    private void ClearFile()
+    {
+        selectedFile = null;
+        imagePreview = string.Empty;
+        isImageFile = false;
+        isPdfFile = false;
+        errorMessage = string.Empty;
+    }    private void HandleFileDrop(DragEventArgs e)
+    {
+        // Funcionalidad de drag and drop deshabilitada por compatibilidad
+        // Solo usar el selector de archivos por click
+    }
+
+    private void HandleDragOver(DragEventArgs e)
+    {
+        // Funcionalidad deshabilitada
+    }
+
+    private void HandleDragEnter(DragEventArgs e)
+    {
+        // Funcionalidad deshabilitada
+    }
+
+    private void HandleDragLeave(DragEventArgs e)
+    {
+        // Funcionalidad deshabilitada
+    }
+
+    private string FormatFileSize(long bytes)
+    {
+        if (bytes < 1024) return $"{bytes} B";
+        if (bytes < 1024 * 1024) return $"{bytes / 1024:F1} KB";
+        return $"{bytes / (1024 * 1024):F1} MB";
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JSRuntime.InvokeVoidAsync("eval", @"
+                window.triggerFileInput = (element) => {
+                    if (element) {
+                        element.click();
+                    }
+                };            ");
         }
     }
 }

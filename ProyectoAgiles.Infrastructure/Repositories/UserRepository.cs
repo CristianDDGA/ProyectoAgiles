@@ -32,9 +32,7 @@ public class UserRepository : Repository<User>, IUserRepository
             return null;
 
         return user;
-    }
-
-    public override async Task<User> AddAsync(User entity)
+    }    public override async Task<User> AddAsync(User entity)
     {
         // Normalizar el email a minúsculas
         entity.Email = entity.Email.ToLower();
