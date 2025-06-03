@@ -127,6 +127,57 @@ namespace proyectoAgiles.Services
             }
             return false;
         }
+
+        public async Task<ForgotPasswordResponse> ForgotPasswordAsync(string email)
+        {
+            try
+            {
+                var forgotPasswordDto = new { Email = email };
+                var response = await _httpClient.PostAsJsonAsync($"{_apiBaseUrl}/api/auth/forgot-password", forgotPasswordDto);
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    var result = await response.Content.ReadFromJsonAsync<ForgotPasswordResponse>();
+                    return result ?? new ForgotPasswordResponse { Success = false, Message = "Error desconocido" };
+                }
+                
+                var errorContent = await response.Content.ReadAsStringAsync();
+                return new ForgotPasswordResponse { Success = false, Message = $"Error: {errorContent}" };
+            }
+            catch (Exception ex)
+            {
+                return new ForgotPasswordResponse { Success = false, Message = ex.Message };
+            }
+        }
+
+        public async Task<ResetPasswordResponse> ResetPasswordAsync(ResetPasswordModel resetPasswordModel)
+        {
+            try
+            {
+                var resetPasswordDto = new
+                {
+                    Token = resetPasswordModel.Token,
+                    Email = resetPasswordModel.Email,
+                    NewPassword = resetPasswordModel.NewPassword,
+                    ConfirmPassword = resetPasswordModel.ConfirmPassword
+                };
+
+                var response = await _httpClient.PostAsJsonAsync($"{_apiBaseUrl}/api/auth/reset-password", resetPasswordDto);
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    var result = await response.Content.ReadFromJsonAsync<ResetPasswordResponse>();
+                    return result ?? new ResetPasswordResponse { Success = false, Message = "Error desconocido" };
+                }
+                
+                var errorContent = await response.Content.ReadAsStringAsync();
+                return new ResetPasswordResponse { Success = false, Message = $"Error: {errorContent}" };
+            }
+            catch (Exception ex)
+            {
+                return new ResetPasswordResponse { Success = false, Message = ex.Message };
+            }
+        }
     }public class RegisterRequest
     {
         [Required(ErrorMessage = "El nombre es requerido")]
@@ -205,5 +256,30 @@ namespace proyectoAgiles.Services
         public bool IsSuccess { get; set; }
         public string? Message { get; set; }
         public string? ErrorMessage { get; set; }
+    }    public class ForgotPasswordResponse
+    {
+        public bool Success { get; set; }
+        public string Message { get; set; } = string.Empty;
+    }    public class ResetPasswordModel
+    {
+        [Required(ErrorMessage = "El email es requerido")]
+        [EmailAddress(ErrorMessage = "El formato del email no es válido")]
+        public string Email { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "El token es requerido")]
+        public string Token { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "La nueva contraseña es requerida")]
+        [MinLength(6, ErrorMessage = "La contraseña debe tener al menos 6 caracteres")]
+        [MaxLength(100, ErrorMessage = "La contraseña no puede exceder 100 caracteres")]
+        public string NewPassword { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Confirma tu contraseña")]
+        [Compare("NewPassword", ErrorMessage = "Las contraseñas no coinciden")]
+        public string ConfirmPassword { get; set; } = string.Empty;
+    }    public class ResetPasswordResponse
+    {
+        public bool Success { get; set; }
+        public string Message { get; set; } = string.Empty;
     }
 }

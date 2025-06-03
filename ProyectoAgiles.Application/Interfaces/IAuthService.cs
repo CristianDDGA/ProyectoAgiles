@@ -10,6 +10,10 @@ public interface IAuthService
     Task<UserDto?> GetUserByEmailAsync(string email);
     Task<bool> EmailExistsAsync(string email);
     Task<bool> CedulaExistsAsync(string cedula);
+    
+    // Nuevos métodos para recuperación de contraseña
+    Task<ForgotPasswordResponse> ForgotPasswordAsync(string email);
+    Task<ResetPasswordResponse> ResetPasswordAsync(ResetPasswordDto resetPasswordDto);
 }
 
 public interface IUserService

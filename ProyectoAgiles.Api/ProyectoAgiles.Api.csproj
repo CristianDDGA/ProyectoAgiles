@@ -15,9 +15,9 @@
     </PackageReference>
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.5" />
   </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\ProyectoAgiles.Application\ProyectoAgiles.Application.csproj" />
+    <ProjectReference Include="..\ProyectoAgiles.Domain\ProyectoAgiles.Domain.csproj" />
     <ProjectReference Include="..\ProyectoAgiles.Infrastructure\ProyectoAgiles.Infrastructure.csproj" />
   </ItemGroup>
 

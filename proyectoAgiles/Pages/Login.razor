@@ -62,7 +62,7 @@
                             Recordarme
                         </label>
                     </div>
-                    <a href="#" class="forgot-password">¿Olvidaste tu contraseña?</a>
+                    <a href="/forgot-password" class="forgot-password">¿Olvidaste tu contraseña?</a>
                 </div>
 
                 <button type="submit" class="btn btn-primary btn-login" disabled="@isLoading">
@@ -116,10 +116,9 @@
             {
                 errorMessage = response.Message ?? "Error al iniciar sesión. Verifica tus credenciales.";
             }
-        }
-        catch (Exception ex)
+        }        catch (Exception ex)
         {
-            errorMessage = ex.Message;
+            errorMessage = ex.Message ?? "Error desconocido al procesar la solicitud.";
         }
         finally
         {

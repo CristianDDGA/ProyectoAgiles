@@ -57,3 +57,40 @@ public class UserDto
     public string FullName { get; set; } = string.Empty;
     public string UserTypeText => UserType.ToString();
 }
+
+public class ForgotPasswordDto
+{
+    [Required(ErrorMessage = "El email es requerido")]
+    [EmailAddress(ErrorMessage = "El formato del email no es válido")]
+    public string Email { get; set; } = string.Empty;
+}
+
+public class ResetPasswordDto
+{
+    [Required(ErrorMessage = "El token es requerido")]
+    public string Token { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "El email es requerido")]
+    [EmailAddress(ErrorMessage = "El formato del email no es válido")]
+    public string Email { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "La nueva contraseña es requerida")]
+    [MinLength(6, ErrorMessage = "La contraseña debe tener al menos 6 caracteres")]
+    public string NewPassword { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "Confirma tu nueva contraseña")]
+    [Compare("NewPassword", ErrorMessage = "Las contraseñas no coinciden")]
+    public string ConfirmPassword { get; set; } = string.Empty;
+}
+
+public class ForgotPasswordResponse
+{
+    public bool Success { get; set; }
+    public string Message { get; set; } = string.Empty;
+}
+
+public class ResetPasswordResponse
+{
+    public bool Success { get; set; }
+    public string Message { get; set; } = string.Empty;
+}

@@ -1643,6 +1643,7 @@
         "framework": ".NETCoreApp,Version=v9.0",
         "dependencies": {
           "BCrypt.Net-Next": "4.0.3",
+          "Microsoft.Extensions.Configuration.Abstractions": "9.0.5",
           "ProyectoAgiles.Domain": "1.0.0"
         },
         "compile": {
@@ -4841,6 +4842,7 @@
       "Microsoft.EntityFrameworkCore.Design >= 9.0.5",
       "Microsoft.EntityFrameworkCore.SqlServer >= 9.0.5",
       "ProyectoAgiles.Application >= 1.0.0",
+      "ProyectoAgiles.Domain >= 1.0.0",
       "ProyectoAgiles.Infrastructure >= 1.0.0"
     ]
   },
@@ -4871,6 +4873,9 @@
           "projectReferences": {
             "C:\\Users\\nixon\\OneDrive\\Escritorio\\proyectoAgiles\\ProyectoAgiles.Application\\ProyectoAgiles.Application.csproj": {
               "projectPath": "C:\\Users\\nixon\\OneDrive\\Escritorio\\proyectoAgiles\\ProyectoAgiles.Application\\ProyectoAgiles.Application.csproj"
+            },
+            "C:\\Users\\nixon\\OneDrive\\Escritorio\\proyectoAgiles\\ProyectoAgiles.Domain\\ProyectoAgiles.Domain.csproj": {
+              "projectPath": "C:\\Users\\nixon\\OneDrive\\Escritorio\\proyectoAgiles\\ProyectoAgiles.Domain\\ProyectoAgiles.Domain.csproj"
             },
             "C:\\Users\\nixon\\OneDrive\\Escritorio\\proyectoAgiles\\ProyectoAgiles.Infrastructure\\ProyectoAgiles.Infrastructure.csproj": {
               "projectPath": "C:\\Users\\nixon\\OneDrive\\Escritorio\\proyectoAgiles\\ProyectoAgiles.Infrastructure\\ProyectoAgiles.Infrastructure.csproj"

@@ -10,6 +10,7 @@ public class ApplicationDbContext : DbContext
     }
 
     public DbSet<User> Users { get; set; }
+    public DbSet<PasswordResetToken> PasswordResetTokens { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -57,6 +58,31 @@ public class ApplicationDbContext : DbContext
 
             // Filtro global para soft delete
             entity.HasQueryFilter(e => !e.IsDeleted);
+        });
+
+        // Configuración de la entidad PasswordResetToken
+        modelBuilder.Entity<PasswordResetToken>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            
+            entity.Property(e => e.Token)
+                .IsRequired()
+                .HasMaxLength(255);
+            
+            entity.Property(e => e.ExpiryDate)
+                .IsRequired();
+            
+            entity.Property(e => e.CreatedAt)
+                .IsRequired();
+            
+            entity.Property(e => e.IsUsed)
+                .HasDefaultValue(false);
+            
+            // Configurar relación con User
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         // Datos semilla para el administrador por defecto
