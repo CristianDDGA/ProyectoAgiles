@@ -32,6 +32,10 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = X0ltcG9ydHMucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
+[C:/Users/nixon/OneDrive/Escritorio/proyectoAgiles/proyectoAgiles/Layout/AuthLayout.razor]
+build_metadata.AdditionalFiles.TargetPath = TGF5b3V0XEF1dGhMYXlvdXQucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = b-qhs3kcj66y
+
 [C:/Users/nixon/OneDrive/Escritorio/proyectoAgiles/proyectoAgiles/Layout/MainLayout.razor]
 build_metadata.AdditionalFiles.TargetPath = TGF5b3V0XE1haW5MYXlvdXQucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = b-np7fwh6rym
@@ -51,3 +55,7 @@ build_metadata.AdditionalFiles.CssScope = b-w25nqwcr4j
 [C:/Users/nixon/OneDrive/Escritorio/proyectoAgiles/proyectoAgiles/Pages/Register.razor]
 build_metadata.AdditionalFiles.TargetPath = UGFnZXNcUmVnaXN0ZXIucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = b-uwm6zmo0nc
+
+[C:/Users/nixon/OneDrive/Escritorio/proyectoAgiles/proyectoAgiles/Shared/AuthLayout.razor]
+build_metadata.AdditionalFiles.TargetPath = U2hhcmVkXEF1dGhMYXlvdXQucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = b-gczj4j3thf

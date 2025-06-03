@@ -1,0 +1,42 @@
+### Pruebas de la API de Autenticación
+
+### 1. Registrar un nuevo docente
+POST http://localhost:5200/api/auth/register
+Content-Type: application/json
+
+{
+  "firstName": "Juan",
+  "lastName": "Pérez",
+  "email": "juan.perez@correo.com",
+  "password": "Password123!",
+  "confirmPassword": "Password123!",
+  "userType": 2,
+  "phoneNumber": "123456789"
+}
+
+### 2. Login con el usuario administrador por defecto
+POST http://localhost:5200/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@sistema.com",
+  "password": "Admin123!"
+}
+
+### 3. Login con el docente creado
+POST http://localhost:5200/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "juan.perez@correo.com",
+  "password": "Password123!"
+}
+
+### 4. Obtener todos los usuarios
+GET http://localhost:5200/api/users
+
+### 5. Verificar si un email existe
+GET http://localhost:5200/api/auth/check-email/admin@sistema.com
+
+### 6. Obtener usuario por ID
+GET http://localhost:5200/api/auth/user/1

@@ -1,9 +1,19 @@
 @page "/register"
 @using Microsoft.AspNetCore.Components.Web
+@using proyectoAgiles.Services
+@layout proyectoAgiles.Layout.AuthLayout
+@inject AuthService AuthService
+@inject NavigationManager NavigationManager
 
 <PageTitle>Registrarse - UTA</PageTitle>
 
 <div class="auth-page">
+    <!-- Botón de volver al inicio -->
+    <a href="/" class="back-to-home-btn">
+        <i class="fas fa-arrow-left"></i>
+        Volver al inicio
+    </a>
+    
     <div class="auth-container">
         <div class="auth-card">
             <!-- Logo UTA -->
@@ -13,22 +23,47 @@
                 <p class="auth-subtitle">Universidad Técnica de Ambato</p>
             </div>
 
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-circle"></i>
+                    @errorMessage
+                </div>
+            }
+
+            @if (successMessage != null)
+            {
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle"></i>
+                    @successMessage
+                    <div class="mt-2">
+                        <a href="/login" class="btn btn-outline-success btn-sm">Iniciar sesión ahora</a>
+                    </div>
+                </div>
+            }
+
             <!-- Formulario de Registro -->
-            <form class="auth-form">
+            <EditForm Model="registerRequest" OnValidSubmit="HandleRegister" class="auth-form">
+                <DataAnnotationsValidator />
+                
                 <div class="form-row">
                     <div class="form-group">
                         <label for="firstName" class="form-label">
                             <i class="fas fa-user"></i>
                             Nombres
                         </label>
-                        <input type="text" id="firstName" class="form-control" placeholder="Ingresa tus nombres" required>
+                        <InputText id="firstName" class="form-control" placeholder="Ingresa tus nombres"
+                                 @bind-Value="registerRequest.FirstName" />
+                        <ValidationMessage For="@(() => registerRequest.FirstName)" class="text-danger" />
                     </div>
                     <div class="form-group">
                         <label for="lastName" class="form-label">
                             <i class="fas fa-user"></i>
                             Apellidos
                         </label>
-                        <input type="text" id="lastName" class="form-control" placeholder="Ingresa tus apellidos" required>
+                        <InputText id="lastName" class="form-control" placeholder="Ingresa tus apellidos"
+                                 @bind-Value="registerRequest.LastName" />
+                        <ValidationMessage For="@(() => registerRequest.LastName)" class="text-danger" />
                     </div>
                 </div>
 
@@ -37,23 +72,17 @@
                         <i class="fas fa-envelope"></i>
                         Correo Electrónico
                     </label>
-                    <input type="email" id="email" class="form-control" placeholder="Ingresa tu correo electrónico" required>
-                </div>
-
-                <div class="form-group">
+                    <InputText id="email" class="form-control" placeholder="Ingresa tu correo electrónico"
+                             @bind-Value="registerRequest.Email" />
+                    <ValidationMessage For="@(() => registerRequest.Email)" class="text-danger" />
+                </div>                <div class="form-group">
                     <label for="cedula" class="form-label">
                         <i class="fas fa-id-card"></i>
-                        Cédula de Identidad
+                        Cédula
                     </label>
-                    <input type="text" id="cedula" class="form-control" placeholder="Ingresa tu número de cédula" required>
-                </div>
-
-                <div class="form-group">
-                    <label for="phone" class="form-label">
-                        <i class="fas fa-phone"></i>
-                        Teléfono
-                    </label>
-                    <input type="tel" id="phone" class="form-control" placeholder="Ingresa tu número de teléfono" required>
+                    <InputText id="cedula" class="form-control" placeholder="Ingresa tu número de cédula"
+                             @bind-Value="registerRequest.PhoneNumber" />
+                    <ValidationMessage For="@(() => registerRequest.PhoneNumber)" class="text-danger" />
                 </div>
 
                 <div class="form-row">
@@ -62,68 +91,70 @@
                             <i class="fas fa-lock"></i>
                             Contraseña
                         </label>
-                        <input type="password" id="password" class="form-control" placeholder="Crea una contraseña" required>
+                        <InputText type="password" id="password" class="form-control" placeholder="Crea una contraseña"
+                                 @bind-Value="registerRequest.Password" />
+                        <ValidationMessage For="@(() => registerRequest.Password)" class="text-danger" />
                     </div>
                     <div class="form-group">
                         <label for="confirmPassword" class="form-label">
                             <i class="fas fa-lock"></i>
                             Confirmar
                         </label>
-                        <input type="password" id="confirmPassword" class="form-control" placeholder="Confirma tu contraseña" required>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label for="career" class="form-label">
-                        <i class="fas fa-graduation-cap"></i>
-                        Carrera de Interés
+                        <InputText type="password" id="confirmPassword" class="form-control" placeholder="Confirma tu contraseña"
+                                 @bind-Value="registerRequest.ConfirmPassword" />
+                        <ValidationMessage For="@(() => registerRequest.ConfirmPassword)" class="text-danger" />
+                    </div>                </div>                <div class="form-group">
+                    <label for="document" class="form-label">
+                        <i class="fas fa-file-upload"></i>
+                        Documento de Identidad
                     </label>
-                    <select id="career" class="form-control" required>
-                        <option value="">Selecciona una carrera</option>
-                        <option value="ingenieria-sistemas">Ingeniería en Sistemas Computacionales e Informáticos</option>
-                        <option value="ingenieria-software">Ingeniería de Software</option>
-                        <option value="ingenieria-industrial">Ingeniería Industrial</option>
-                        <option value="ingenieria-mecanica">Ingeniería Mecánica</option>
-                        <option value="medicina">Medicina</option>
-                        <option value="enfermeria">Enfermería</option>
-                        <option value="psicologia">Psicología</option>
-                        <option value="derecho">Derecho</option>
-                        <option value="administracion">Administración de Empresas</option>
-                        <option value="contabilidad">Contabilidad y Auditoría</option>
-                    </select>
+                    <div class="file-upload-container @(selectedFile != null ? "has-file" : "")">
+                        <InputFile id="document" class="file-input" OnChange="HandleFileChange" accept=".pdf,.jpg,.jpeg,.png" />
+                        <label for="document" class="file-upload-label">
+                            <i class="@(selectedFile != null ? "fas fa-check-circle" : "fas fa-cloud-upload-alt")"></i>
+                            <div class="file-upload-text">
+                                @if (selectedFile != null)
+                                {
+                                    <span class="main-text">✓ Archivo seleccionado</span>
+                                    <span class="sub-text">@selectedFile.Name</span>
+                                }
+                                else
+                                {
+                                    <span class="main-text">Seleccionar documento de identidad</span>
+                                    <span class="sub-text">Formatos aceptados: PDF, JPG, PNG (máx. 5MB)</span>
+                                }
+                            </div>
+                        </label>
+                        @if (selectedFile != null)
+                        {
+                            <div class="file-info">
+                                <small class="text-success">
+                                    <i class="fas fa-file-alt"></i>
+                                    <span>@selectedFile.Name • @Math.Round((double)selectedFile.Size / 1024, 1) KB</span>
+                                    <button type="button" class="btn btn-link btn-sm p-0 ms-2 text-danger" @onclick="ClearFile" title="Eliminar archivo">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </small>
+                            </div>
+                        }
+                    </div>
                 </div>
 
-                <div class="form-options">
-                    <div class="form-check">
-                        <input type="checkbox" id="terms" class="form-check-input" required>
-                        <label for="terms" class="form-check-label">
-                            Acepto los <a href="#" class="terms-link">términos y condiciones</a>
-                        </label>
-                    </div>
-                    <div class="form-check">
-                        <input type="checkbox" id="newsletter" class="form-check-input">
-                        <label for="newsletter" class="form-check-label">
-                            Deseo recibir información sobre eventos y noticias
-                        </label>
-                    </div>
-                </div>
-
-                <button type="submit" class="btn btn-primary btn-register">
-                    <i class="fas fa-user-plus"></i>
-                    Crear Cuenta
+                <button type="submit" class="btn btn-primary btn-register" disabled="@isLoading">
+                    @if (isLoading)
+                    {
+                        <span class="spinner-border spinner-border-sm mr-2" role="status" aria-hidden="true"></span>
+                        <span>Procesando...</span>
+                    }
+                    else
+                    {
+                        <i class="fas fa-user-plus"></i>
+                        <span>Crear Cuenta</span>
+                    }
                 </button>
-            </form>
-
-            <!-- Enlaces adicionales -->
+            </EditForm>            <!-- Enlaces adicionales -->
             <div class="auth-links">
                 <p>¿Ya tienes una cuenta? <a href="/login" class="login-link">Inicia sesión aquí</a></p>
-                <div class="divider">
-                    <span>o</span>
-                </div>
-                <a href="/" class="back-home">
-                    <i class="fas fa-home"></i>
-                    Volver al inicio
-                </a>
             </div>
         </div>
     </div>
@@ -136,3 +167,60 @@
         <div class="bg-shape shape-4"></div>
     </div>
 </div>
+
+@code {
+    private RegisterRequest registerRequest = new RegisterRequest();
+    private bool isLoading = false;
+    private string errorMessage = string.Empty;
+    private string? successMessage = null;
+    private IBrowserFile? selectedFile = null;    private void HandleFileChange(InputFileChangeEventArgs e)
+    {
+        selectedFile = e.File;
+    }
+
+    private void ClearFile()
+    {
+        selectedFile = null;
+    }
+
+    private async Task HandleRegister()
+    {
+        try
+        {
+            isLoading = true;
+            errorMessage = string.Empty;
+            successMessage = null;
+
+            // Validar que las contraseñas coincidan
+            if (registerRequest.Password != registerRequest.ConfirmPassword)
+            {
+                errorMessage = "Las contraseñas no coinciden";
+                return;
+            }
+
+            // Verificar si el email ya existe
+            bool emailExists = await AuthService.CheckEmailExists(registerRequest.Email);
+            if (emailExists)
+            {
+                errorMessage = "Este correo electrónico ya está registrado";
+                return;
+            }
+
+            // Registrar al usuario
+            var result = await AuthService.Register(registerRequest);
+            if (result)
+            {
+                successMessage = "¡Registro exitoso! Ahora puedes iniciar sesión.";
+                registerRequest = new RegisterRequest(); // Limpiar formulario
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}
