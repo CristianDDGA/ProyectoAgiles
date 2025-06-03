@@ -28,10 +28,6 @@ build_property.EnableCodeStyleSeverity =
 build_metadata.AdditionalFiles.TargetPath = QXBwLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/nixon/OneDrive/Escritorio/proyectoAgiles/proyectoAgiles/Pages/Home.razor]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXNcSG9tZS5yYXpvcg==
-build_metadata.AdditionalFiles.CssScope = 
-
 [C:/Users/nixon/OneDrive/Escritorio/proyectoAgiles/proyectoAgiles/_Imports.razor]
 build_metadata.AdditionalFiles.TargetPath = X0ltcG9ydHMucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
@@ -43,3 +39,7 @@ build_metadata.AdditionalFiles.CssScope = b-np7fwh6rym
 [C:/Users/nixon/OneDrive/Escritorio/proyectoAgiles/proyectoAgiles/Layout/NavMenu.razor]
 build_metadata.AdditionalFiles.TargetPath = TGF5b3V0XE5hdk1lbnUucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = b-kfu1zhtaup
+
+[C:/Users/nixon/OneDrive/Escritorio/proyectoAgiles/proyectoAgiles/Pages/Home.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcSG9tZS5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = b-wszzagomql

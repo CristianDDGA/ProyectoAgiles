@@ -1,0 +1,57 @@
+/* Estilos para el carrusel */
+#carouselPrincipal {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.carousel-inner img {
+    height: 400px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.carousel-control-prev,
+.carousel-control-next {
+    width: 5%;
+}
+
+.carousel-control-prev:hover,
+.carousel-control-next:hover {
+    background-color: rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+}
+
+.carousel-indicators {
+    bottom: -50px;
+}
+
+.carousel-indicators button {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: #6c757d;
+    border: none;
+    margin: 0 5px;
+}
+
+.carousel-indicators button.active {
+    background-color: #0d6efd;
+}
+
+/* Responsive para móviles */
+@media (max-width: 768px) {
+    .carousel-inner img {
+        height: 250px;
+    }
+    
+    .carousel-indicators {
+        bottom: -40px;
+    }
+}
+
+@media (max-width: 576px) {
+    .carousel-inner img {
+        height: 200px;
+    }
+}
