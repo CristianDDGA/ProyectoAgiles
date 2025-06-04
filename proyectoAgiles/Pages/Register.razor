@@ -205,9 +205,8 @@
                                 <i class="fas fa-download"></i>
                                 <p>Suelta el archivo aquí</p>
                             </div>                        </div>                    </div>
-                    
-                    <!-- Input file oculto necesario para el botón seleccionar -->
-                    <InputFile @ref="fileInput" OnChange="HandleFileSelected" style="display: none;" accept=".pdf,.jpg,.jpeg,.png,.gif,.bmp" multiple="false" />
+                      <!-- Input file oculto necesario para el botón seleccionar -->
+                    <InputFile @ref="fileInput" OnChange="HandleFileSelected" class="file-input-hidden" style="display: none;" accept=".pdf,.jpg,.jpeg,.png,.gif,.bmp" multiple="false" />
                     
                     @if (!string.IsNullOrEmpty(fileErrorMessage))
                     {
@@ -601,9 +600,7 @@
                     dropZone.addEventListener('dragover', (e) => {
                         e.preventDefault();
                         dropZone.classList.add('drag-over');
-                    }, false);
-
-                    // Manejar el drop de archivos
+                    }, false);                    // Manejar el drop de archivos
                     dropZone.addEventListener('drop', handleDrop, false);
 
                     function handleDrop(e) {
@@ -620,49 +617,79 @@
                         if (files.length > 0) {
                             const file = files[0];
                             
-                            // Validar tipo de archivo
-                            const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/bmp'];
-                            const allowedExtensions = ['.pdf', '.jpg', '.jpeg', '.png', '.gif', '.bmp'];
+                            // Usar la función de validación del archivo externo si está disponible
+                            let validation;
+                            if (window.validateDroppedFile) {
+                                validation = window.validateDroppedFile(file);
+                            } else {
+                                // Validación fallback
+                                const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/bmp'];
+                                const allowedExtensions = ['.pdf', '.jpg', '.jpeg', '.png', '.gif', '.bmp'];
+                                const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
+                                const isValidType = allowedTypes.includes(file.type.toLowerCase()) || allowedExtensions.includes(fileExtension);
+                                
+                                if (!isValidType) {
+                                    validation = { valid: false, message: 'Tipo de archivo no válido. Solo se permiten: PDF, JPG, PNG, GIF, BMP' };
+                                } else if (file.size > 10 * 1024 * 1024) {
+                                    validation = { valid: false, message: 'El archivo es demasiado grande. Tamaño máximo: 10MB' };
+                                } else if (file.size === 0) {
+                                    validation = { valid: false, message: 'El archivo está vacío. Por favor selecciona un archivo válido.' };
+                                } else {
+                                    validation = { valid: true, message: 'Archivo válido' };
+                                }
+                            }
                             
-                            // Verificar por tipo MIME y extensión
-                            const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
-                            const isValidType = allowedTypes.includes(file.type.toLowerCase()) || allowedExtensions.includes(fileExtension);
-                            
-                            if (!isValidType) {
-                                showErrorMessage('Tipo de archivo no válido. Solo se permiten: PDF, JPG, PNG, GIF, BMP');
+                            if (!validation.valid) {
+                                if (window.showFileError) {
+                                    window.showFileError(validation.message);
+                                } else {
+                                    showErrorMessage(validation.message);
+                                }
                                 return;
                             }
                             
-                            // Validar tamaño (10MB máximo)
-                            if (file.size > 10 * 1024 * 1024) {
-                                showErrorMessage('El archivo es demasiado grande. Tamaño máximo: 10MB');
-                                return;
-                            }
-
-                            // Validar que no sea un archivo vacío
-                            if (file.size === 0) {
-                                showErrorMessage('El archivo está vacío. Por favor selecciona un archivo válido.');
-                                return;
+                            // Intentar transferir usando la función externa, luego fallback
+                            let success = false;
+                            if (window.transferFileToInput) {
+                                success = window.transferFileToInput(file);
                             }
                             
-                            // Simular clic en el input file para activar el procesamiento nativo
-                            const fileInput = document.querySelector('.file-input-hidden');
-                            if (fileInput) {
-                                try {
-                                    // Crear un nuevo DataTransfer para asignar el archivo
-                                    const dataTransfer = new DataTransfer();
-                                    dataTransfer.items.add(file);
-                                    fileInput.files = dataTransfer.files;
-                                    
-                                    // Disparar el evento change
-                                    const event = new Event('change', { bubbles: true });
-                                    fileInput.dispatchEvent(event);
-                                    
-                                    // Mostrar feedback visual de éxito
+                            if (!success) {
+                                // Fallback: método original
+                                const fileInput = document.querySelector('.file-input-hidden');
+                                if (fileInput) {
+                                    try {
+                                        const dataTransfer = new DataTransfer();
+                                        dataTransfer.items.add(file);
+                                        fileInput.files = dataTransfer.files;
+                                        
+                                        const event = new Event('change', { bubbles: true });
+                                        fileInput.dispatchEvent(event);
+                                        success = true;
+                                    } catch (error) {
+                                        console.error('Error al procesar el archivo:', error);
+                                    }
+                                }
+                            }
+                            
+                            if (success) {
+                                // Mostrar feedback de éxito
+                                if (window.showFileDropFeedback) {
+                                    window.showFileDropFeedback('success', 'Archivo cargado correctamente');
+                                } else {
                                     showSuccessMessage('Archivo cargado correctamente');
-                                } catch (error) {
-                                    console.error('Error al procesar el archivo:', error);
-                                    showErrorMessage('Error al procesar el archivo. Inténtalo de nuevo.');
+                                }
+                                
+                                // Ocultar mensajes de error previos
+                                if (window.hideFileError) {
+                                    window.hideFileError();
+                                }
+                            } else {
+                                const errorMsg = 'Error al procesar el archivo. Inténtalo de nuevo.';
+                                if (window.showFileError) {
+                                    window.showFileError(errorMsg);
+                                } else {
+                                    showErrorMessage(errorMsg);
                                 }
                             }
                         }
