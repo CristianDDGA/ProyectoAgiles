@@ -152,21 +152,21 @@
     width: 15px;
     height: 15px;
     border-radius: 50%;
-    background-color: rgba(255, 71, 87, 0.4);
-    border: 3px solid rgba(255, 71, 87, 0.8);
+    background-color: rgba(114, 47, 55, 0.4);
+    border: 3px solid rgba(114, 47, 55, 0.8);
     margin: 0 8px;
     transition: all 0.4s ease;
     filter: drop-shadow(0 0 5px rgba(0, 0, 0, 0.8));
 }
 
 .carousel-indicators button.active {
-    background-color: #ff4757;
+    background-color: #722f37;
     transform: scale(1.4);
-    box-shadow: 0 0 15px rgba(255, 71, 87, 0.9);
+    box-shadow: 0 0 15px rgba(114, 47, 55, 0.9);
 }
 
 .carousel-indicators button:hover {
-    background-color: rgba(255, 71, 87, 0.8);
+    background-color: rgba(114, 47, 55, 0.8);
     transform: scale(1.2);
 }
 
@@ -179,7 +179,7 @@
     width: 100%;
     position: relative;
     flex-shrink: 0;
-    border-top: 3px solid #ff4757;
+    border-top: 3px solid #722f37;
     box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.1);
 }
 
@@ -200,7 +200,7 @@
 }
 
 .footer-subtitle {
-    color: #ff4757;
+    color: #722f37;
     font-weight: 600;
     margin-bottom: 20px;
     font-size: 1.1rem;
@@ -226,8 +226,8 @@
     justify-content: center;
     width: 40px;
     height: 40px;
-    background: #ff4757;
-    border: 2px solid #ff4757;
+    background: #722f37;
+    border: 2px solid #722f37;
     border-radius: 50%;
     color: white;
     text-decoration: none;
@@ -235,11 +235,11 @@
 }
 
 .social-link:hover {
-    background: #ff3742;
-    border-color: #ff3742;
+    background: #5a252b;
+    border-color: #5a252b;
     transform: translateY(-2px);
     color: white;
-    box-shadow: 0 4px 15px rgba(255, 71, 87, 0.3);
+    box-shadow: 0 4px 15px rgba(114, 47, 55, 0.3);
 }
 
 .footer-links {
@@ -260,7 +260,7 @@
 }
 
 .footer-links a:hover {
-    color: #ff4757;
+    color: #722f37;
     padding-left: 5px;
 }
 
@@ -277,7 +277,7 @@
 }
 
 .contact-item i {
-    color: #ff6b8a;
+    color: #722f37;
     margin-right: 12px;
     margin-top: 2px;
     width: 16px;
@@ -314,7 +314,7 @@
 
 /* Estilos específicos para el botón Postularse */
 .postularse-btn {
-    background: linear-gradient(135deg, #ff4757 0%, #ff3742 100%);
+    background: linear-gradient(135deg, #722f37 0%, #5a252b 100%);
     border: 3px solid rgba(255, 255, 255, 0.3);
     color: white;
     font-weight: 700;
@@ -324,7 +324,7 @@
     text-decoration: none;
     display: inline-block;
     transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    box-shadow: 0 10px 30px rgba(255, 71, 87, 0.5);
+    box-shadow: 0 10px 30px rgba(114, 47, 55, 0.5);
     text-shadow: none;
     letter-spacing: 1.5px;
     text-transform: uppercase;
@@ -350,8 +350,8 @@
 
 .postularse-btn:hover {
     transform: translateY(-4px) scale(1.08);
-    box-shadow: 0 20px 40px rgba(255, 71, 87, 0.7);
-    background: linear-gradient(135deg, #ff3742 0%, #ff4757 100%);
+    box-shadow: 0 20px 40px rgba(114, 47, 55, 0.7);
+    background: linear-gradient(135deg, #5a252b 0%, #722f37 100%);
     color: white;
     text-decoration: none;
     border-color: rgba(255, 255, 255, 0.5);
