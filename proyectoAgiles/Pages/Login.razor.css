@@ -402,64 +402,6 @@
     }
 }
 
-/* Responsive */
-@media (max-width: 768px) {
-    .auth-page {
-        padding: 15px;
-        align-items: center;
-        justify-content: center;
-    }
-    
-    .auth-card {
-        padding: 30px 25px;
-        border-radius: 15px;
-    }
-    
-    .back-to-home-btn {
-        top: 10px;
-        left: 10px;
-    }
-    
-    .auth-logo .logo-uta {
-        height: 70px;
-        max-width: 250px;
-    }
-    
-    .auth-title {
-        font-size: 1.6rem;
-    }
-    
-    .auth-subtitle {
-        font-size: 0.9rem;
-    }
-    
-    .form-options {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 15px;
-    }
-    
-    .btn-login {
-        padding: 12px 18px;
-        font-size: 1rem;
-    }
-}
-
-@media (max-width: 480px) {
-    .auth-card {
-        padding: 25px 20px;
-    }
-    
-    .auth-logo .logo-uta {
-        height: 60px;
-        max-width: 200px;
-    }
-    
-    .auth-title {
-        font-size: 1.4rem;
-    }
-}
-
 /* Estilos específicos para mensajes de cuenta bloqueada */
 .account-locked-message {
     width: 100%;
@@ -505,18 +447,273 @@
     text-decoration: none;
 }
 
-/* Mejoras para alertas warning con cuenta bloqueada */
-.alert-warning .account-locked-message {
+/* Estilos específicos para cuenta bloqueada */
+.locked-icon {
+    background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%) !important;
+}
+
+.unlock-instructions {
+    margin: 20px 0;
+    text-align: left;
+}
+
+.unlock-instructions p {
+    margin-bottom: 15px;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.unlock-instructions ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.unlock-instructions li {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 10px;
+    padding-left: 20px;
+    position: relative;
+    color: #495057;
+    line-height: 1.6;
+}
+
+.unlock-instructions li::before {
+    content: "•";
+    color: #f39c12;
+    font-weight: bold;
+    position: absolute;
+    left: 0;
+    top: 0;
+    font-size: 1.2rem;
+}
+
+.unlock-note {
+    font-style: italic;
+    color: #6c757d !important;
+    font-size: 0.95rem !important;
+    margin-top: 15px !important;
+}
+
+/* Botón secundario para volver a intentar */
+.btn-secondary {
+    background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 16px 32px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
     margin-left: 10px;
 }
 
-.alert-warning .unlock-action .btn {
-    background: rgba(255, 255, 255, 0.9);
-    color: #f57f17;
-    border-color: rgba(255, 255, 255, 0.8);
+.btn-secondary:hover {
+    background: linear-gradient(135deg, #5a6268 0%, #495057 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(108, 117, 125, 0.4);
 }
 
-.alert-warning .unlock-action .btn:hover {
+/* Ajustes para los estilos de success-overlay reutilizados */
+.success-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(10px);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.5s ease-out;
+}
+
+.success-container {
     background: white;
-    color: #ef6c00;
+    border-radius: 20px;
+    padding: 50px 40px;
+    text-align: center;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+    max-width: 550px;
+    width: 90%;
+    animation: slideInScale 0.6s ease-out;
+}
+
+.success-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+
+.success-icon {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #00b894 0%, #00a085 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+    animation: bounceIn 0.8s ease-out 0.3s both;
+}
+
+.success-icon i {
+    font-size: 2.5rem;
+    color: white;
+}
+
+.success-title {
+    color: #2c3e50;
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0;
+    animation: slideInUp 0.8s ease-out 0.5s both;
+}
+
+.success-message {
+    color: #7f8c8d;
+    font-size: 1.1rem;
+    margin: 0;
+    line-height: 1.6;
+    animation: slideInUp 0.8s ease-out 0.7s both;
+}
+
+.success-actions {
+    display: flex;
+    flex-direction: row;
+    gap: 15px;
+    align-items: center;
+    width: 100%;
+    justify-content: center;
+    animation: slideInUp 0.8s ease-out 0.9s both;
+    flex-wrap: wrap;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #ff4757 0%, #ff3742 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 16px 32px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #ff3742 0%, #ff2b37 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(255, 71, 87, 0.4);
+}
+
+/* Animaciones */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideInScale {
+    from {
+        opacity: 0;
+        transform: translateY(50px) scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes bounceIn {
+    0% {
+        opacity: 0;
+        transform: scale(0.3);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1.05);
+    }
+    70% {
+        transform: scale(0.9);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Responsive para dispositivos móviles */
+@media (max-width: 768px) {
+    .success-container {
+        padding: 40px 30px;
+        margin: 20px;
+        max-width: 95%;
+    }
+
+    .success-title {
+        font-size: 1.6rem;
+    }
+
+    .success-actions {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .btn-primary,
+    .btn-secondary {
+        width: 100%;
+        padding: 14px 24px;
+        font-size: 1rem;
+    }
+
+    .unlock-instructions {
+        text-align: left;
+        margin: 15px 0;
+    }
+}
+
+@media (max-width: 480px) {
+    .success-container {
+        padding: 30px 20px;
+        margin: 10px;
+    }
+
+    .success-title {
+        font-size: 1.4rem;
+    }
+
+    .success-icon {
+        width: 70px;
+        height: 70px;
+    }
+
+    .success-icon i {
+        font-size: 2rem;
+    }
 }

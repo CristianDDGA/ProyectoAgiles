@@ -8,11 +8,55 @@
 <PageTitle>Iniciar Sesión - UTA</PageTitle>
 
 <div class="auth-page">
+    <!-- Fondo decorativo -->
+    <div class="auth-background">
+        <div class="bg-shape shape-1"></div>
+        <div class="bg-shape shape-2"></div>
+        <div class="bg-shape shape-3"></div>
+        <div class="bg-shape shape-4"></div>
+    </div>
+
     <!-- Botón de volver al inicio -->
     <a href="/" class="back-to-home-btn">
         <i class="fas fa-arrow-left"></i>
         Volver al inicio
     </a>
+
+    <!-- Mensaje de cuenta bloqueada -->
+    @if (isAccountLocked)
+    {
+        <div class="success-overlay">
+            <div class="success-container">
+                <div class="success-content">
+                    <div class="success-icon locked-icon">
+                        <i class="fas fa-lock"></i>
+                    </div>
+                    <h2 class="success-title">Cuenta Temporalmente Bloqueada</h2>
+                    <p class="success-message">
+                        Tu cuenta está temporalmente bloqueada por múltiples intentos fallidos de inicio de sesión.
+                    </p>
+                    <div class="unlock-instructions">
+                        <p><strong>Para desbloquear tu cuenta:</strong></p>
+                        <ul>
+                            <li>Utiliza la opción "¿Olvidaste tu contraseña?" para restablecer tu contraseña</li>
+                            <li>O contacta al administrador del sistema</li>
+                        </ul>
+                        <p class="unlock-note">Tu cuenta se desbloqueará automáticamente después del restablecimiento de contraseña.</p>
+                    </div>
+                    <div class="success-actions">
+                        <a href="/forgot-password" class="btn btn-primary btn-lg">
+                            <i class="fas fa-key"></i>
+                            Restablecer mi Contraseña
+                        </a>
+                        <button type="button" class="btn btn-secondary btn-lg" @onclick="ClearAccountLockedMessage">
+                            <i class="fas fa-arrow-left"></i>
+                            Intentar de Nuevo
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
     
     <div class="auth-container">
         <div class="auth-card">
@@ -21,30 +65,13 @@
                 <img src="images/uta-logo.png" alt="Universidad Técnica de Ambato" class="logo-uta">
                 <h2 class="auth-title">Iniciar Sesión</h2>
                 <p class="auth-subtitle">Universidad Técnica de Ambato</p>
-            </div>            @if (!string.IsNullOrEmpty(errorMessage))
+            </div>
+
+            @if (!string.IsNullOrEmpty(errorMessage) && !isAccountLocked)
             {
-                <div class="@GetAlertClass()">
-                    <i class="@GetAlertIcon()"></i>
-                    
-                    @if (isAccountLocked)
-                    {
-                        <div class="account-locked-message">
-                            @foreach (var line in errorMessage.Split('\n', StringSplitOptions.RemoveEmptyEntries))
-                            {
-                                <div class="message-line">@line</div>
-                            }
-                            <div class="unlock-action mt-3">
-                                <a href="/forgot-password" class="btn btn-outline-primary btn-sm">
-                                    <i class="fas fa-key"></i>
-                                    Restablecer mi Contraseña
-                                </a>
-                            </div>
-                        </div>
-                    }
-                    else
-                    {
-                        @errorMessage
-                    }
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-circle"></i>
+                    @errorMessage
                 </div>
             }
 
@@ -87,19 +114,11 @@
                     }
                 </button>
             </EditForm>
-            
-            <!-- Enlaces adicionales -->
+              <!-- Enlaces adicionales -->
             <div class="auth-links">
                 <p>¿No tienes una cuenta? <a href="/register" class="register-link">Regístrate aquí</a></p>
             </div>
         </div>
-    </div>
-    
-    <!-- Background decorativo -->
-    <div class="auth-background">
-        <div class="bg-shape shape-1"></div>
-        <div class="bg-shape shape-2"></div>
-        <div class="bg-shape shape-3"></div>
     </div>
 </div>
 
@@ -143,28 +162,10 @@
         }
     }
 
-    private bool IsAccountLockedMessage(string message)
+    private void ClearAccountLockedMessage()
     {
-        if (string.IsNullOrEmpty(message)) return false;
-        
-        return message.Contains("cuenta está bloqueada", StringComparison.OrdinalIgnoreCase) ||
-               message.Contains("account is locked", StringComparison.OrdinalIgnoreCase) ||
-               message.Contains("bloqueada por intentos", StringComparison.OrdinalIgnoreCase);
-    }
-
-    private string GetAlertClass()
-    {
-        if (isAccountLocked)
-            return "alert alert-warning";
-        
-        return "alert alert-danger";
-    }
-
-    private string GetAlertIcon()
-    {
-        if (isAccountLocked)
-            return "fas fa-lock";
-        
-        return "fas fa-exclamation-circle";
+        isAccountLocked = false;
+        errorMessage = string.Empty;
+        StateHasChanged();
     }
 }
