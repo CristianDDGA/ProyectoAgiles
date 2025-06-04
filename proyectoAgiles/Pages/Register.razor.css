@@ -347,7 +347,7 @@ select.form-control option {
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(45deg, transparent 49%, rgba(255, 71, 87, 0.03) 50%, transparent 51%);
+    background: linear-gradient(45deg, transparent 49%, rgba(114, 47, 55, 0.03) 50%, transparent 51%);
     opacity: 0;
     transition: opacity 0.3s ease;
 }
@@ -1559,7 +1559,7 @@ input[type="file"] {
 .touch-active {
     background: linear-gradient(135deg, #fff5f5 0%, #ffe8e8 100%) !important;
     transform: scale(0.98) !important;
-    box-shadow: 0 8px 25px rgba(255, 71, 87, 0.2) !important;
+    box-shadow: 0 8px 25px rgba(114, 47, 55, 0.2) !important;
 }
 
 /* Mejoras para el feedback visual */
