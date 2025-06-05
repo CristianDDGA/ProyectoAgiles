@@ -65,34 +65,41 @@
                     </label>
                     <InputText id="name" @bind-Value="registerRequest.Name" class="form-control" placeholder="Ingresa tu nombre completo" />
                     <ValidationMessage For="@(() => registerRequest.Name)" class="text-danger" />
-                </div>
-
-                <div class="form-group">
+                </div>                <div class="form-group">
                     <label for="email" class="form-label">
                         <i class="fas fa-envelope"></i>
                         Correo Electrónico
                     </label>
-                    <InputText id="email" @bind-Value="registerRequest.Email" class="form-control" placeholder="Ingresa tu correo electrónico" />
-                    <ValidationMessage For="@(() => registerRequest.Email)" class="text-danger" />
-                </div>
-
-                <div class="form-row">
+                    <InputText id="email" @bind-Value="registerRequest.Email" @oninput="HandleEmailInput" class="form-control" placeholder="Ingresa tu correo electrónico" />
+                    <ValidationMessage For="@(() => registerRequest.Email)" class="text-danger" />                    @if (!string.IsNullOrEmpty(emailValidationMessage))
+                    {
+                        <div class="validation-message text-danger">
+                            <i class="fas @(emailExists ? "fa-exclamation-triangle" : "fa-check-circle")"></i>
+                            @emailValidationMessage
+                        </div>
+                    }
+                </div>                <div class="form-row">
                     <div class="form-group">
                         <label for="password" class="form-label">
                             <i class="fas fa-lock"></i>
                             Contraseña
                         </label>
-                        <InputText id="password" @bind-Value="registerRequest.Password" type="password" class="form-control" placeholder="Crea una contraseña segura" />
+                        <InputText id="password" @bind-Value="registerRequest.Password" @oninput="HandlePasswordInput" type="password" class="form-control" placeholder="Crea una contraseña segura" />
                         <ValidationMessage For="@(() => registerRequest.Password)" class="text-danger" />
-                    </div>
-
-                    <div class="form-group">
+                    </div>                    <div class="form-group">
                         <label for="confirmPassword" class="form-label">
                             <i class="fas fa-lock"></i>
                             Confirmar Contraseña
                         </label>
-                        <InputText id="confirmPassword" @bind-Value="registerRequest.ConfirmPassword" type="password" class="form-control" placeholder="Confirma tu contraseña" />
-                        <ValidationMessage For="@(() => registerRequest.ConfirmPassword)" class="text-danger" />                    </div>
+                        <InputText id="confirmPassword" @bind-Value="registerRequest.ConfirmPassword" @oninput="HandleConfirmPasswordInput" type="password" class="form-control" placeholder="Confirma tu contraseña" />
+                        @if (!string.IsNullOrEmpty(passwordValidationMessage))
+                        {
+                            <div class="validation-message text-danger">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                @passwordValidationMessage
+                            </div>
+                        }
+                    </div>
                 </div>
 
                 <div class="form-group">
@@ -101,10 +108,9 @@
                         Cédula
                     </label>
                     <InputText id="cedula" @bind-Value="registerRequest.Cedula" @oninput="HandleCedulaInput" class="form-control" placeholder="Ingresa tu número de cédula" />
-                    <ValidationMessage For="@(() => registerRequest.Cedula)" class="text-danger" />
-                    @if (!string.IsNullOrEmpty(cedulaValidationMessage))
+                    <ValidationMessage For="@(() => registerRequest.Cedula)" class="text-danger" />                    @if (!string.IsNullOrEmpty(cedulaValidationMessage))
                     {
-                        <div class="validation-message @(cedulaExists ? "text-danger" : "text-success")">
+                        <div class="validation-message text-danger">
                             <i class="fas @(cedulaExists ? "fa-exclamation-triangle" : "fa-check-circle")"></i>
                             @cedulaValidationMessage
                         </div>                    }
@@ -259,15 +265,16 @@
     private int dragCounter = 0;
     private bool isImageFile = false;
     private bool isPdfFile = false;
-    private string imagePreview = string.Empty;
-    private string errorMessage = string.Empty;
+    private string imagePreview = string.Empty;    private string errorMessage = string.Empty;
     private string fileErrorMessage = string.Empty;
     private string successMessage = string.Empty;
     private string cedulaValidationMessage = string.Empty;
-    private bool cedulaExists = false;
+    private bool cedulaExists = false;    private string emailValidationMessage = string.Empty;
+    private bool emailExists = false;
+    private string passwordValidationMessage = string.Empty;
+    private bool passwordsMatch = false;
     private System.Threading.Timer? cedulaValidationTimer;
-
-    private void HandleCedulaInput(ChangeEventArgs e)
+    private System.Threading.Timer? emailValidationTimer;private void HandleCedulaInput(ChangeEventArgs e)
     {
         var cedula = e.Value?.ToString() ?? string.Empty;
         
@@ -297,7 +304,91 @@
         registerRequest.Cedula = cedula;
     }
 
-    private async Task ValidateCedula(string cedula)
+    private void HandleEmailInput(ChangeEventArgs e)
+    {
+        var email = e.Value?.ToString() ?? string.Empty;
+        
+        // Cancelar timer anterior si existe
+        emailValidationTimer?.Dispose();
+        
+        // Solo validar si el email tiene un formato básico válido
+        if (IsValidEmailFormat(email))
+        {
+            // Crear un timer para validar después de 500ms sin cambios
+            emailValidationTimer = new System.Threading.Timer(async _ =>
+            {
+                await InvokeAsync(async () =>
+                {
+                    await ValidateEmail(email);
+                    StateHasChanged();
+                });
+            }, null, 500, System.Threading.Timeout.Infinite);
+        }
+        else if (!string.IsNullOrEmpty(email))
+        {
+            emailValidationMessage = "Formato de email inválido";
+            emailExists = false;
+        }
+        else
+        {
+            emailValidationMessage = string.Empty;
+            emailExists = false;
+        }
+        
+        // Actualizar el valor del modelo
+        registerRequest.Email = email;
+    }    private bool IsValidEmailFormat(string email)
+    {
+        if (string.IsNullOrEmpty(email)) return false;
+        
+        try
+        {
+            var emailAttribute = new System.ComponentModel.DataAnnotations.EmailAddressAttribute();
+            return emailAttribute.IsValid(email);
+        }
+        catch
+        {
+            return false;
+        }
+    }    private void HandlePasswordInput(ChangeEventArgs e)
+    {
+        var password = e.Value?.ToString() ?? string.Empty;
+        registerRequest.Password = password;
+        ValidatePasswords();
+    }
+
+    private void HandleConfirmPasswordInput(ChangeEventArgs e)
+    {
+        var confirmPassword = e.Value?.ToString() ?? string.Empty;
+        registerRequest.ConfirmPassword = confirmPassword;
+        ValidatePasswords();
+    }
+
+    private void ValidatePasswords()
+    {
+        var password = registerRequest.Password ?? string.Empty;
+        var confirmPassword = registerRequest.ConfirmPassword ?? string.Empty;
+
+        // Solo mostrar mensaje de validación si ambos campos tienen contenido
+        if (!string.IsNullOrEmpty(password) && !string.IsNullOrEmpty(confirmPassword))
+        {
+            if (password == confirmPassword)
+            {
+                passwordValidationMessage = string.Empty; // Ocultar mensaje cuando coinciden
+                passwordsMatch = true;
+            }
+            else
+            {
+                passwordValidationMessage = "Las contraseñas no coinciden";
+                passwordsMatch = false;
+            }
+        }
+        else
+        {
+            passwordValidationMessage = string.Empty;
+            passwordsMatch = false;
+        }
+    }private async Task ValidateCedula(string cedula)
     {
         if (string.IsNullOrEmpty(cedula) || cedula.Length != 10)
         {
@@ -325,7 +416,34 @@
         }
     }
 
-    private async Task HandleRegistration()
+    private async Task ValidateEmail(string email)
+    {
+        if (string.IsNullOrEmpty(email))
+        {
+            emailValidationMessage = string.Empty;
+            return;
+        }
+        
+        try
+        {
+            var exists = await AuthService.CheckEmailExists(email);
+            emailExists = exists;
+            
+            if (exists)
+            {
+                emailValidationMessage = "Este email ya está registrado";
+            }
+            else
+            {
+                emailValidationMessage = "Email disponible";
+            }
+        }
+        catch (Exception)
+        {
+            emailValidationMessage = "Error al validar el email";
+            emailExists = false;
+        }
+    }    private async Task HandleRegistration()
     {        try
         {
             isLoading = true;
@@ -336,6 +454,13 @@
             if (cedulaExists)
             {
                 errorMessage = "No se puede registrar con una cédula que ya está en uso";
+                return;
+            }
+
+            // Verificar si el email existe antes de proceder
+            if (emailExists)
+            {
+                errorMessage = "No se puede registrar con un email que ya está en uso";
                 return;
             }
 
@@ -353,6 +478,17 @@
                 if (cedulaAlreadyExists)
                 {
                     errorMessage = "La cédula ya está registrada en el sistema";
+                    return;
+                }
+            }
+
+            // Verificar el email una vez más antes del registro
+            if (!string.IsNullOrEmpty(registerRequest.Email))
+            {
+                var emailAlreadyExists = await AuthService.CheckEmailExists(registerRequest.Email);
+                if (emailAlreadyExists)
+                {
+                    errorMessage = "El email ya está registrado en el sistema";
                     return;
                 }
             }
@@ -757,10 +893,9 @@
                 }
             ");
         }
-    }
-
-    public void Dispose()
+    }    public void Dispose()
     {
         cedulaValidationTimer?.Dispose();
+        emailValidationTimer?.Dispose();
     }
 }
