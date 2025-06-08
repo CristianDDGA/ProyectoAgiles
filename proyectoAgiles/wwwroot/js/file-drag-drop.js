@@ -27,11 +27,9 @@ window.validateDroppedFile = function(file) {
 // Función para mostrar feedback visual
 window.showFileDropFeedback = function(type, message) {
     const dropZone = document.getElementById('dropZone');
-    if (!dropZone) return;
-
-    if (type === 'success') {
-        dropZone.style.borderColor = '#28a745';
-        dropZone.style.background = 'rgba(40, 167, 69, 0.1)';
+    if (!dropZone) return;    if (type === 'success') {
+        dropZone.style.borderColor = '#722f37';
+        dropZone.style.background = 'rgba(114, 47, 55, 0.1)';
         
         setTimeout(() => {
             dropZone.style.borderColor = '';

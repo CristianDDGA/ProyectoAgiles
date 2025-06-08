@@ -75,18 +75,21 @@
                 </div>
             }
 
-            <!-- Formulario de Login -->
-            <EditForm Model="loginRequest" OnValidSubmit="HandleLogin" class="auth-form">
-                <DataAnnotationsValidator />
-                
-                <div class="form-group">
+            <!-- Formulario de Login -->            <EditForm Model="loginRequest" OnValidSubmit="HandleLogin" class="auth-form">
+                  <div class="form-group">
                     <label for="email" class="form-label">
                         <i class="fas fa-envelope"></i>
                         Correo Electrónico
                     </label>
                     <InputText id="email" class="form-control" placeholder="Ingresa tu correo electrónico" 
-                               @bind-Value="loginRequest.Email" />
-                    <ValidationMessage For="@(() => loginRequest.Email)" class="text-danger" />
+                               @bind-Value="loginRequest.Email" @oninput="HandleEmailInput" />
+                    @if (!string.IsNullOrEmpty(emailValidationMessage))
+                    {
+                        <div class="validation-message text-danger">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            @emailValidationMessage
+                        </div>
+                    }
                 </div>
 
                 <div class="form-group">
@@ -95,8 +98,15 @@
                         Contraseña
                     </label>
                     <InputText type="password" id="password" class="form-control" placeholder="Ingresa tu contraseña" 
-                               @bind-Value="loginRequest.Password" />
-                    <ValidationMessage For="@(() => loginRequest.Password)" class="text-danger" />                </div>
+                               @bind-Value="loginRequest.Password" @oninput="HandlePasswordInput" />
+                    @if (!string.IsNullOrEmpty(passwordValidationMessage))
+                    {
+                        <div class="validation-message text-danger">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            @passwordValidationMessage
+                        </div>
+                    }
+                </div>
                 <div class="form-options">
                     <a href="/forgot-password" class="forgot-password">¿Olvidaste tu contraseña?</a>
                 </div>
@@ -127,11 +137,78 @@
     private bool isLoading = false;
     private string errorMessage = string.Empty;
     private bool isAccountLocked = false;
+    private string emailValidationMessage = string.Empty;
+    private string passwordValidationMessage = string.Empty;
 
-    private async Task HandleLogin()
+    private void HandleEmailInput(ChangeEventArgs e)
+    {
+        var email = e.Value?.ToString() ?? string.Empty;
+        loginRequest.Email = email;
+        ValidateEmail(email);
+    }
+
+    private void HandlePasswordInput(ChangeEventArgs e)
+    {
+        var password = e.Value?.ToString() ?? string.Empty;
+        loginRequest.Password = password;
+        ValidatePassword(password);
+    }
+
+    private void ValidateEmail(string email)
+    {
+        if (string.IsNullOrEmpty(email))
+        {
+            emailValidationMessage = "El email es requerido";
+        }
+        else if (!IsValidEmailFormat(email))
+        {
+            emailValidationMessage = "El formato del email no es válido";
+        }
+        else
+        {
+            emailValidationMessage = string.Empty;
+        }
+    }
+
+    private void ValidatePassword(string password)
+    {
+        if (string.IsNullOrEmpty(password))
+        {
+            passwordValidationMessage = "La contraseña es requerida";
+        }
+        else
+        {
+            passwordValidationMessage = string.Empty;
+        }
+    }
+
+    private bool IsValidEmailFormat(string email)
+    {
+        if (string.IsNullOrEmpty(email)) return false;
+        
+        try
+        {
+            var emailAttribute = new System.ComponentModel.DataAnnotations.EmailAddressAttribute();
+            return emailAttribute.IsValid(email);
+        }
+        catch
+        {
+            return false;
+        }
+    }    private async Task HandleLogin()
     {
         try
         {
+            // Validar campos antes de enviar
+            ValidateEmail(loginRequest.Email);
+            ValidatePassword(loginRequest.Password);
+            
+            // No proceder si hay errores de validación
+            if (!string.IsNullOrEmpty(emailValidationMessage) || !string.IsNullOrEmpty(passwordValidationMessage))
+            {
+                return;
+            }
+
             isLoading = true;
             errorMessage = string.Empty;
             isAccountLocked = false;

@@ -256,27 +256,12 @@ namespace proyectoAgiles.Services
                 return new ResetPasswordResponse { Success = false, Message = ex.Message };
             }
         }
-    }public class RegisterRequest
+    }    public class RegisterRequest
     {
-        [Required(ErrorMessage = "El nombre es requerido")]
-        [MaxLength(100, ErrorMessage = "El nombre no puede exceder 100 caracteres")]
         public string Name { get; set; } = string.Empty;
-
-        [Required(ErrorMessage = "El email es requerido")]
-        [EmailAddress(ErrorMessage = "El formato del email no es válido")]
-        [MaxLength(255, ErrorMessage = "El email no puede exceder 255 caracteres")]
         public string Email { get; set; } = string.Empty;
-
-        [Required(ErrorMessage = "La contraseña es requerida")]
-        [MinLength(6, ErrorMessage = "La contraseña debe tener al menos 6 caracteres")]
-        [MaxLength(100, ErrorMessage = "La contraseña no puede exceder 100 caracteres")]
-        public string Password { get; set; } = string.Empty;        [Required(ErrorMessage = "Confirma tu contraseña")]
-        [Compare("Password", ErrorMessage = "Las contraseñas no coinciden")]
+        public string Password { get; set; } = string.Empty;
         public string ConfirmPassword { get; set; } = string.Empty;
-
-        [Required(ErrorMessage = "La cédula es requerida")]
-        [RegularExpression(@"^\d{10}$", ErrorMessage = "La cédula debe tener exactamente 10 dígitos")]
-        [MaxLength(10, ErrorMessage = "La cédula debe tener 10 dígitos")]
         public string Cedula { get; set; } = string.Empty;
 
         // Propiedades para el archivo de documento
@@ -301,15 +286,11 @@ namespace proyectoAgiles.Services
             var parts = Name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
             return parts.Length > 1 ? string.Join(" ", parts.Skip(1)) : string.Empty;
         }
-    }public class LoginRequest
+    }    public class LoginRequest
     {
-        [Required(ErrorMessage = "El email es requerido")]
-        [EmailAddress(ErrorMessage = "El formato del email no es válido")]
         public string Email { get; set; } = string.Empty;
-
-        [Required(ErrorMessage = "La contraseña es requerida")]
         public string Password { get; set; } = string.Empty;
-    }    public class LoginResponse
+    }public class LoginResponse
     {
         public bool Success { get; set; }
         public string Message { get; set; } = string.Empty;

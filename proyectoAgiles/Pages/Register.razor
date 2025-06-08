@@ -1,17 +1,16 @@
-
 @page "/register"
 @using Microsoft.AspNetCore.Components.Forms
 @using Microsoft.AspNetCore.Components.Web
 @using Microsoft.JSInterop
 @using System.ComponentModel.DataAnnotations
+@using System.Linq
 @using static proyectoAgiles.Services.AuthService
 @implements IDisposable
 @inject proyectoAgiles.Services.AuthService AuthService
 @inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime
 
-<div class="auth-page">
-    <!-- Fondo decorativo -->
+<div class="auth-page">    <!-- Fondo decorativo -->
     <div class="auth-background">
         <div class="bg-shape shape-1"></div>
         <div class="bg-shape shape-2"></div>
@@ -52,41 +51,48 @@
                 <img src="images/uta-logo.png" alt="Universidad Técnica de Ambato" class="logo-uta">
                 <h1 class="auth-title">Crear Cuenta</h1>
                 <p class="auth-subtitle">Universidad Técnica de Ambato</p>
-            </div>
-
-            <!-- Formulario de Registro -->
+            </div>            <!-- Formulario de Registro -->
             <EditForm Model="@registerRequest" OnValidSubmit="@HandleRegistration" class="auth-form">
-                <DataAnnotationsValidator />
-
                 <div class="form-group">
                     <label for="name" class="form-label">
                         <i class="fas fa-user"></i>
                         Nombre Completo
                     </label>
-                    <InputText id="name" @bind-Value="registerRequest.Name" class="form-control" placeholder="Ingresa tu nombre completo" />
-                    <ValidationMessage For="@(() => registerRequest.Name)" class="text-danger" />
-                </div>                <div class="form-group">
+                    <InputText id="name" @bind-Value="registerRequest.Name" @oninput="HandleNameInput" class="form-control" placeholder="Ingresa tu nombre completo" />
+                    @if (!string.IsNullOrEmpty(nameValidationMessage))
+                    {
+                        <div class="validation-message text-danger">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            @nameValidationMessage
+                        </div>
+                    }
+                </div>
+
+                <div class="form-group">
                     <label for="email" class="form-label">
                         <i class="fas fa-envelope"></i>
                         Correo Electrónico
-                    </label>
-                    <InputText id="email" @bind-Value="registerRequest.Email" @oninput="HandleEmailInput" class="form-control" placeholder="Ingresa tu correo electrónico" />
-                    <ValidationMessage For="@(() => registerRequest.Email)" class="text-danger" />                    @if (!string.IsNullOrEmpty(emailValidationMessage))
+                    </label>                    <InputText id="email" @bind-Value="registerRequest.Email" @oninput="HandleEmailInput" class="form-control" placeholder="Ingresa tu correo electrónico" />                    
+                    @if (!string.IsNullOrEmpty(emailValidationMessage))
                     {
-                        <div class="validation-message text-danger">
-                            <i class="fas @(emailExists ? "fa-exclamation-triangle" : "fa-check-circle")"></i>
+                        <div class="validation-message @(emailExists || emailHasFormatError ? "text-danger" : "text-success")">
+                            <i class="fas @(emailExists || emailHasFormatError ? "fa-exclamation-triangle" : "fa-check-circle")"></i>
                             @emailValidationMessage
                         </div>
                     }
-                </div>                <div class="form-row">
-                    <div class="form-group">
-                        <label for="password" class="form-label">
+                </div><div class="form-row">                    <div class="form-group">                        <label for="password" class="form-label">
                             <i class="fas fa-lock"></i>
                             Contraseña
                         </label>
                         <InputText id="password" @bind-Value="registerRequest.Password" @oninput="HandlePasswordInput" type="password" class="form-control" placeholder="Crea una contraseña segura" />
-                        <ValidationMessage For="@(() => registerRequest.Password)" class="text-danger" />
-                    </div>                    <div class="form-group">
+                        @if (!string.IsNullOrEmpty(passwordStrengthMessage))
+                        {
+                            <div class="validation-message text-danger">
+                                <i class="fas @(isPasswordWeak ? "fa-exclamation-triangle" : "fa-info-circle")"></i>
+                                @passwordStrengthMessage
+                            </div>
+                        }
+                    </div><div class="form-group">
                         <label for="confirmPassword" class="form-label">
                             <i class="fas fa-lock"></i>
                             Confirmar Contraseña
@@ -106,14 +112,13 @@
                     <label for="cedula" class="form-label">
                         <i class="fas fa-id-card"></i>
                         Cédula
-                    </label>
-                    <InputText id="cedula" @bind-Value="registerRequest.Cedula" @oninput="HandleCedulaInput" class="form-control" placeholder="Ingresa tu número de cédula" />
-                    <ValidationMessage For="@(() => registerRequest.Cedula)" class="text-danger" />                    @if (!string.IsNullOrEmpty(cedulaValidationMessage))
+                    </label>                    <InputText id="cedula" @bind-Value="registerRequest.Cedula" @oninput="HandleCedulaInput" class="form-control" placeholder="Ingresa tu número de cédula" />                    @if (!string.IsNullOrEmpty(cedulaValidationMessage))
                     {
-                        <div class="validation-message text-danger">
-                            <i class="fas @(cedulaExists ? "fa-exclamation-triangle" : "fa-check-circle")"></i>
+                        <div class="validation-message @((cedulaExists || cedulaHasFormatError) ? "text-danger" : "text-success")">
+                            <i class="fas @((cedulaExists || cedulaHasFormatError) ? "fa-exclamation-triangle" : "fa-check-circle")"></i>
                             @cedulaValidationMessage
-                        </div>                    }
+                        </div>
+                    }
                 </div>                <!-- Zona de selección de archivos mejorada -->
                 <div class="form-group">
                     <label class="form-label">
@@ -267,41 +272,80 @@
     private bool isPdfFile = false;
     private string imagePreview = string.Empty;    private string errorMessage = string.Empty;
     private string fileErrorMessage = string.Empty;
-    private string successMessage = string.Empty;
-    private string cedulaValidationMessage = string.Empty;
-    private bool cedulaExists = false;    private string emailValidationMessage = string.Empty;
+    private string successMessage = string.Empty;    private string cedulaValidationMessage = string.Empty;
+    private bool cedulaExists = false;
+    private bool cedulaHasFormatError = false;
+    private string emailValidationMessage = string.Empty;    
     private bool emailExists = false;
+    private bool emailHasFormatError = false;
+    private string nameValidationMessage = string.Empty;
     private string passwordValidationMessage = string.Empty;
+    private string passwordStrengthMessage = string.Empty;
+    private bool isPasswordWeak = false;
     private bool passwordsMatch = false;
     private System.Threading.Timer? cedulaValidationTimer;
-    private System.Threading.Timer? emailValidationTimer;private void HandleCedulaInput(ChangeEventArgs e)
+    private System.Threading.Timer? emailValidationTimer;    private void HandleCedulaInput(ChangeEventArgs e)
     {
         var cedula = e.Value?.ToString() ?? string.Empty;
+        
+        // Actualizar el valor del modelo
+        registerRequest.Cedula = cedula;
+        
+        // Validación inmediata de formato
+        ValidateCedulaFormat(cedula);
         
         // Cancelar timer anterior si existe
         cedulaValidationTimer?.Dispose();
         
-        // Solo validar si la cédula tiene al menos 10 dígitos
-        if (cedula.Length >= 10)
+        // Solo validar existencia si la cédula tiene formato válido (10 dígitos)
+        if (cedula.Length == 10 && cedula.All(char.IsDigit))
         {
-            // Crear un timer para validar después de 500ms sin cambios
+            // Crear un timer para validar existencia después de 500ms sin cambios
             cedulaValidationTimer = new System.Threading.Timer(async _ =>
             {
                 await InvokeAsync(async () =>
                 {
-                    await ValidateCedula(cedula);
+                    await ValidateCedulaExistence(cedula);
                     StateHasChanged();
                 });
             }, null, 500, System.Threading.Timeout.Infinite);
         }
         else
         {
-            cedulaValidationMessage = string.Empty;
             cedulaExists = false;
         }
-        
-        // Actualizar el valor del modelo
-        registerRequest.Cedula = cedula;
+    }    private void ValidateCedulaFormat(string cedula)
+    {
+        if (string.IsNullOrEmpty(cedula))
+        {
+            cedulaValidationMessage = string.Empty;
+            cedulaExists = false;
+            cedulaHasFormatError = false;
+        }
+        else if (!cedula.All(char.IsDigit))
+        {
+            cedulaValidationMessage = "La cédula debe contener solo números";
+            cedulaExists = false;
+            cedulaHasFormatError = true;
+        }
+        else if (cedula.Length < 10)
+        {
+            cedulaValidationMessage = $"La cédula debe tener 10 dígitos (faltan {10 - cedula.Length})";
+            cedulaExists = false;
+            cedulaHasFormatError = true;
+        }
+        else if (cedula.Length > 10)
+        {
+            cedulaValidationMessage = $"La cédula debe tener 10 dígitos (sobran {cedula.Length - 10})";
+            cedulaExists = false;
+            cedulaHasFormatError = true;
+        }
+        else
+        {
+            // Formato correcto, el mensaje se actualizará con la validación de existencia
+            cedulaValidationMessage = string.Empty;
+            cedulaHasFormatError = false;
+        }
     }
 
     private void HandleEmailInput(ChangeEventArgs e)
@@ -323,16 +367,17 @@
                     StateHasChanged();
                 });
             }, null, 500, System.Threading.Timeout.Infinite);
-        }
-        else if (!string.IsNullOrEmpty(email))
+        }        else if (!string.IsNullOrEmpty(email))
         {
             emailValidationMessage = "Formato de email inválido";
             emailExists = false;
+            emailHasFormatError = true;
         }
         else
         {
             emailValidationMessage = string.Empty;
             emailExists = false;
+            emailHasFormatError = false;
         }
         
         // Actualizar el valor del modelo
@@ -354,6 +399,7 @@
     {
         var password = e.Value?.ToString() ?? string.Empty;
         registerRequest.Password = password;
+        ValidatePasswordStrength(password);
         ValidatePasswords();
     }
 
@@ -362,6 +408,30 @@
         var confirmPassword = e.Value?.ToString() ?? string.Empty;
         registerRequest.ConfirmPassword = confirmPassword;
         ValidatePasswords();
+    }    private void ValidatePasswordStrength(string password)
+    {
+        if (string.IsNullOrEmpty(password))
+        {
+            passwordStrengthMessage = string.Empty;
+            isPasswordWeak = false;
+            return;
+        }
+
+        if (password.Length < 6)
+        {
+            passwordStrengthMessage = "La contraseña debe tener al menos 6 caracteres";
+            isPasswordWeak = true;
+        }
+        else if (password.Length >= 6 && password.Length < 8)
+        {
+            passwordStrengthMessage = "Contraseña aceptable (recomendado: 8+ caracteres)";
+            isPasswordWeak = false;
+        }
+        else
+        {
+            passwordStrengthMessage = string.Empty;
+            isPasswordWeak = false;
+        }
     }
 
     private void ValidatePasswords()
@@ -388,11 +458,10 @@
             passwordValidationMessage = string.Empty;
             passwordsMatch = false;
         }
-    }private async Task ValidateCedula(string cedula)
+    }    private async Task ValidateCedulaExistence(string cedula)
     {
-        if (string.IsNullOrEmpty(cedula) || cedula.Length != 10)
+        if (string.IsNullOrEmpty(cedula) || cedula.Length != 10 || !cedula.All(char.IsDigit))
         {
-            cedulaValidationMessage = string.Empty;
             return;
         }
         
@@ -411,16 +480,16 @@
             }
         }
         catch (Exception)
-        {            cedulaValidationMessage = "Error al validar la cédula";
+        {
+            cedulaValidationMessage = "Error al validar la cédula";
             cedulaExists = false;
         }
-    }
-
-    private async Task ValidateEmail(string email)
+    }    private async Task ValidateEmail(string email)
     {
         if (string.IsNullOrEmpty(email))
         {
             emailValidationMessage = string.Empty;
+            emailHasFormatError = false;
             return;
         }
         
@@ -428,6 +497,7 @@
         {
             var exists = await AuthService.CheckEmailExists(email);
             emailExists = exists;
+            emailHasFormatError = false;
             
             if (exists)
             {
@@ -444,11 +514,28 @@
             emailExists = false;
         }
     }    private async Task HandleRegistration()
-    {        try
+    {
+        try
         {
             isLoading = true;
             errorMessage = string.Empty;
-            successMessage = string.Empty;
+            successMessage = string.Empty;            // Validar todos los campos antes de proceder
+            ValidateName(registerRequest.Name);
+            await ValidateEmail(registerRequest.Email);
+            await ValidateCedulaExistence(registerRequest.Cedula);
+            ValidatePasswords();
+            ValidatePasswordStrength(registerRequest.Password);
+
+            // Verificar si hay errores de validación
+            if (!string.IsNullOrEmpty(nameValidationMessage) || 
+                !string.IsNullOrEmpty(emailValidationMessage) || 
+                !string.IsNullOrEmpty(cedulaValidationMessage) || 
+                !string.IsNullOrEmpty(passwordValidationMessage) || 
+                !string.IsNullOrEmpty(passwordStrengthMessage))
+            {
+                errorMessage = "Por favor corrige los errores de validación antes de continuar";
+                return;
+            }
 
             // Verificar si la cédula existe antes de proceder
             if (cedulaExists)
@@ -897,5 +984,32 @@
     {
         cedulaValidationTimer?.Dispose();
         emailValidationTimer?.Dispose();
+    }
+
+    private void HandleNameInput(ChangeEventArgs e)
+    {
+        var name = e.Value?.ToString() ?? string.Empty;
+        registerRequest.Name = name;
+        ValidateName(name);
+    }
+
+    private void ValidateName(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            nameValidationMessage = "El nombre es requerido";
+        }
+        else if (name.Length < 2)
+        {
+            nameValidationMessage = "El nombre debe tener al menos 2 caracteres";
+        }
+        else if (name.Length > 100)
+        {
+            nameValidationMessage = "El nombre no puede tener más de 100 caracteres";
+        }
+        else
+        {
+            nameValidationMessage = string.Empty;
+        }
     }
 }
