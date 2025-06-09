@@ -296,8 +296,7 @@ namespace proyectoAgiles.Services
         public string Message { get; set; } = string.Empty;
         public UserDto? User { get; set; }
         public string Token { get; set; } = string.Empty;
-        public bool IsAccountLocked { get; set; } = false;
-    }public class UserDto
+        public bool IsAccountLocked { get; set; } = false;    }public class UserDto
     {
         public int Id { get; set; }
         public string FirstName { get; set; } = string.Empty;
@@ -306,7 +305,8 @@ namespace proyectoAgiles.Services
         public int UserType { get; set; }
         public string Cedula { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; }
-    }    public class CheckEmailResponse
+        public string FullName => $"{FirstName} {LastName}";
+    }public class CheckEmailResponse
     {
         public bool exists { get; set; }
     }

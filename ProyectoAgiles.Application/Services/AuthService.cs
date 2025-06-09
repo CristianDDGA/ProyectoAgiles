@@ -69,11 +69,11 @@ public class AuthService : IAuthService
             Cedula = registerDto.Cedula.Trim(),
             IdentityDocumentPath = documentPath,
             IsActive = true
-        };
-
-        var createdUser = await _userRepository.AddAsync(user);
+        };        var createdUser = await _userRepository.AddAsync(user);
         return MapToDto(createdUser);
-    }public async Task<UserDto?> LoginAsync(LoginDto loginDto)
+    }
+
+    public async Task<UserDto?> LoginAsync(LoginDto loginDto)
     {
         var user = await _userRepository.GetByEmailAsync(loginDto.Email);
         

@@ -38,29 +38,27 @@ public class AuthController : ControllerBase
         {
             return StatusCode(500, new { message = "Error interno del servidor", details = ex.Message });
         }
-    }
-
-    [HttpPost("login")]
-    public async Task<ActionResult<UserDto>> Login([FromBody] LoginDto loginDto)
+    }    [HttpPost("login")]
+    public async Task<ActionResult> Login([FromBody] LoginDto loginDto)
     {
         try
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(ModelState);
+                return BadRequest(new { Success = false, Message = "Datos de entrada inválidos" });
             }
 
             var user = await _authService.LoginAsync(loginDto);
             if (user == null)
             {
-                return Unauthorized(new { message = "Email o contraseña incorrectos" });
+                return Ok(new { Success = false, Message = "Email o contraseña incorrectos" });
             }
 
-            return Ok(user);
+            return Ok(new { Success = true, Message = "Inicio de sesión exitoso", User = user, Token = "" });
         }
         catch (Exception ex)
         {
-            return StatusCode(500, new { message = "Error interno del servidor", details = ex.Message });
+            return Ok(new { Success = false, Message = "Error interno del servidor", Details = ex.Message });
         }
     }
 

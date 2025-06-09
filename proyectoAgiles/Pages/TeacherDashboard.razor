@@ -1,0 +1,280 @@
+@page "/docente"
+@using Microsoft.AspNetCore.Components.Web
+@layout proyectoAgiles.Layout.MainLayout
+@inject NavigationManager Navigation
+@inject proyectoAgiles.Services.AuthService AuthService
+@inject UserSessionService UserSession
+
+<PageTitle>Panel de Docente - UTA</PageTitle>
+
+<div class="teacher-dashboard">
+    <!-- Header del Dashboard -->
+    <div class="dashboard-header">
+        <div class="header-content">            <div class="welcome-section">
+                <h1 class="dashboard-title">Panel de Docente</h1>
+                <p class="dashboard-subtitle">Universidad Técnica de Ambato</p>
+                <p class="welcome-text">Bienvenido, @UserSession.CurrentUser?.FullName</p>
+            </div>            <div class="header-actions">
+                <button class="btn btn-outline-light" @onclick='() => Navigation.NavigateTo("/docente/profile")'>
+                    <i class="fas fa-user"></i>
+                    Mi Perfil
+                </button>
+                <button class="btn btn-outline-danger" @onclick="Logout">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Cerrar Sesión
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tarjetas de Resumen -->
+    <div class="stats-section">
+        <div class="row">
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="stat-card">
+                    <div class="stat-icon courses">
+                        <i class="fas fa-book"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 class="stat-number">@totalCourses</h3>
+                        <p class="stat-label">Mis Cursos</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="stat-card">
+                    <div class="stat-icon students">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 class="stat-number">@totalStudents</h3>
+                        <p class="stat-label">Estudiantes</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="stat-card">
+                    <div class="stat-icon pending">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 class="stat-number">@pendingTasks</h3>
+                        <p class="stat-label">Tareas Pendientes</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="stat-card">
+                    <div class="stat-icon schedule">
+                        <i class="fas fa-calendar-alt"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 class="stat-number">@weeklyHours</h3>
+                        <p class="stat-label">Horas Semanales</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sección de Acciones Rápidas -->
+    <div class="quick-actions">
+        <h2 class="section-title">Acciones Rápidas</h2>
+        <div class="row">
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="action-card" @onclick="() => NavigateToCourses()">
+                    <div class="action-icon">
+                        <i class="fas fa-chalkboard-teacher"></i>
+                    </div>
+                    <h3>Mis Cursos</h3>
+                    <p>Gestionar contenido y actividades de tus cursos asignados</p>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="action-card" @onclick="() => NavigateToGrades()">
+                    <div class="action-icon">
+                        <i class="fas fa-clipboard-list"></i>
+                    </div>
+                    <h3>Calificaciones</h3>
+                    <p>Registrar y consultar calificaciones de estudiantes</p>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="action-card" @onclick="() => NavigateToSchedule()">
+                    <div class="action-icon">
+                        <i class="fas fa-calendar-week"></i>
+                    </div>
+                    <h3>Horarios</h3>
+                    <p>Ver y gestionar tu horario de clases semanal</p>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="action-card" @onclick="() => NavigateToMaterials()">
+                    <div class="action-icon">
+                        <i class="fas fa-file-alt"></i>
+                    </div>
+                    <h3>Material Didáctico</h3>
+                    <p>Subir y organizar material de apoyo para tus clases</p>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="action-card" @onclick="() => NavigateToAttendance()">
+                    <div class="action-icon">
+                        <i class="fas fa-user-check"></i>
+                    </div>
+                    <h3>Asistencia</h3>
+                    <p>Registrar y consultar asistencia de estudiantes</p>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="action-card" @onclick="() => NavigateToReports()">
+                    <div class="action-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h3>Reportes</h3>
+                    <p>Generar reportes académicos y de desempeño</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sección de Próximas Clases -->
+    <div class="upcoming-classes">
+        <h2 class="section-title">Próximas Clases</h2>
+        <div class="classes-list">
+            @if (upcomingClasses.Any())
+            {
+                @foreach (var classItem in upcomingClasses)
+                {
+                    <div class="class-item">
+                        <div class="class-time">
+                            <span class="time">@classItem.Time</span>
+                            <span class="date">@classItem.Date.ToString("dd/MM")</span>
+                        </div>
+                        <div class="class-content">
+                            <h4 class="class-name">@classItem.CourseName</h4>
+                            <p class="class-details">@classItem.Topic</p>
+                            <span class="class-location">
+                                <i class="fas fa-map-marker-alt"></i>
+                                @classItem.Location
+                            </span>
+                        </div>
+                        <div class="class-actions">
+                            <button class="btn btn-sm btn-outline-primary">Ver Detalles</button>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="no-classes">
+                    <i class="fas fa-calendar-times"></i>
+                    <p>No tienes clases programadas próximamente</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private int totalCourses = 0;
+    private int totalStudents = 0;
+    private int pendingTasks = 0;
+    private int weeklyHours = 0;
+    private List<ClassItem> upcomingClasses = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Verificar que el usuario esté autenticado y sea docente
+        if (UserSession.CurrentUser == null || UserSession.CurrentUser.UserType != 2)
+        {
+            Navigation.NavigateTo("/login");
+            return;
+        }
+
+        await LoadDashboardData();
+    }    private Task LoadDashboardData()
+    {
+        // Simular carga de datos - aquí conectarías con tu API
+        totalCourses = 4;
+        totalStudents = 120;
+        pendingTasks = 8;
+        weeklyHours = 16;
+
+        // Simular clases próximas
+        upcomingClasses = new List<ClassItem>
+        {
+            new ClassItem 
+            { 
+                CourseName = "Programación Web",
+                Topic = "Frameworks Frontend",
+                Time = "08:00 - 10:00",
+                Date = DateTime.Today.AddDays(1),
+                Location = "Aula 301"
+            },
+            new ClassItem 
+            { 
+                CourseName = "Base de Datos",
+                Topic = "Normalización",
+                Time = "10:00 - 12:00",
+                Date = DateTime.Today.AddDays(1),
+                Location = "Lab. Sistemas"
+            },
+            new ClassItem 
+            { 
+                CourseName = "Metodologías Ágiles",
+                Topic = "Scrum Framework",
+                Time = "14:00 - 16:00",
+                Date = DateTime.Today.AddDays(2),
+                Location = "Aula 205"
+            }
+        };
+        
+        return Task.CompletedTask;
+    }
+
+    private void NavigateToCourses()
+    {
+        Navigation.NavigateTo("/docente/courses");
+    }
+
+    private void NavigateToGrades()
+    {
+        Navigation.NavigateTo("/docente/grades");
+    }
+
+    private void NavigateToSchedule()
+    {
+        Navigation.NavigateTo("/docente/schedule");
+    }
+
+    private void NavigateToMaterials()
+    {
+        Navigation.NavigateTo("/docente/materials");
+    }
+
+    private void NavigateToAttendance()
+    {
+        Navigation.NavigateTo("/docente/attendance");
+    }
+
+    private void NavigateToReports()
+    {
+        Navigation.NavigateTo("/docente/reports");
+    }
+
+    private async Task Logout()
+    {
+        UserSession.ClearSession();
+        Navigation.NavigateTo("/login");
+    }
+
+    public class ClassItem
+    {
+        public string CourseName { get; set; } = string.Empty;
+        public string Topic { get; set; } = string.Empty;
+        public string Time { get; set; } = string.Empty;
+        public DateTime Date { get; set; }
+        public string Location { get; set; } = string.Empty;
+    }
+}

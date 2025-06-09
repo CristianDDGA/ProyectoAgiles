@@ -28,6 +28,10 @@ build_property.EnableCodeStyleSeverity =
 build_metadata.AdditionalFiles.TargetPath = QXBwLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
+[C:/Users/nixon/OneDrive/Escritorio/proyectoAgiles/proyectoAgiles/Pages/Login_backup.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcTG9naW5fYmFja3VwLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
 [C:/Users/nixon/OneDrive/Escritorio/proyectoAgiles/proyectoAgiles/_Imports.razor]
 build_metadata.AdditionalFiles.TargetPath = X0ltcG9ydHMucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
@@ -43,6 +47,10 @@ build_metadata.AdditionalFiles.CssScope = b-np7fwh6rym
 [C:/Users/nixon/OneDrive/Escritorio/proyectoAgiles/proyectoAgiles/Layout/NavMenu.razor]
 build_metadata.AdditionalFiles.TargetPath = TGF5b3V0XE5hdk1lbnUucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = b-kfu1zhtaup
+
+[C:/Users/nixon/OneDrive/Escritorio/proyectoAgiles/proyectoAgiles/Pages/AdminDashboard.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQWRtaW5EYXNoYm9hcmQucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = b-uzb8jgdep7
 
 [C:/Users/nixon/OneDrive/Escritorio/proyectoAgiles/proyectoAgiles/Pages/ForgotPassword.razor]
 build_metadata.AdditionalFiles.TargetPath = UGFnZXNcRm9yZ290UGFzc3dvcmQucmF6b3I=
@@ -63,6 +71,10 @@ build_metadata.AdditionalFiles.CssScope = b-uwm6zmo0nc
 [C:/Users/nixon/OneDrive/Escritorio/proyectoAgiles/proyectoAgiles/Pages/ResetPassword.razor]
 build_metadata.AdditionalFiles.TargetPath = UGFnZXNcUmVzZXRQYXNzd29yZC5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = b-mhzm7phkz1
+
+[C:/Users/nixon/OneDrive/Escritorio/proyectoAgiles/proyectoAgiles/Pages/TeacherDashboard.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcVGVhY2hlckRhc2hib2FyZC5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = b-idaguiugyp
 
 [C:/Users/nixon/OneDrive/Escritorio/proyectoAgiles/proyectoAgiles/Shared/AuthLayout.razor]
 build_metadata.AdditionalFiles.TargetPath = U2hhcmVkXEF1dGhMYXlvdXQucmF6b3I=

@@ -9,8 +9,9 @@ builder.RootComponents.Add<HeadOutlet>("head::after");
 
 builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
 
-// Configuración de API
+// Configuración de API y servicios
 builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<UserSessionService>();
 
 // Leer la configuración del API desde appsettings.json
 builder.Configuration.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
