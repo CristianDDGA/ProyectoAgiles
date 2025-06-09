@@ -162,10 +162,11 @@
     private int totalStudents = 0;
     private int pendingTasks = 0;
     private int weeklyHours = 0;
-    private List<ClassItem> upcomingClasses = new();
-
-    protected override async Task OnInitializedAsync()
+    private List<ClassItem> upcomingClasses = new();    protected override async Task OnInitializedAsync()
     {
+        // Asegurar que la sesión esté inicializada
+        await UserSession.InitializeAsync();
+        
         // Verificar que el usuario esté autenticado y sea docente
         if (UserSession.CurrentUser == null || UserSession.CurrentUser.UserType != 2)
         {
@@ -174,7 +175,7 @@
         }
 
         await LoadDashboardData();
-    }    private Task LoadDashboardData()
+    }private Task LoadDashboardData()
     {
         // Simular carga de datos - aquí conectarías con tu API
         totalCourses = 4;
@@ -242,12 +243,10 @@
     private void NavigateToReports()
     {
         Navigation.NavigateTo("/docente/reports");
-    }
-
-    private async Task Logout()
+    }    private async Task Logout()
     {
-        UserSession.ClearSession();
-        Navigation.NavigateTo("/login");
+        await UserSession.ClearSessionAsync();
+        Navigation.NavigateTo("/");
     }
 
     public class ClassItem

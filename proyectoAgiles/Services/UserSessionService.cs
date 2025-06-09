@@ -3,11 +3,11 @@ using System.Text.Json;
 using static proyectoAgiles.Services.AuthService;
 
 namespace proyectoAgiles.Services
-{
-    public class UserSessionService
+{    public class UserSessionService
     {
         private readonly IJSRuntime _jsRuntime;
         private UserDto? _currentUser;
+        private bool _isInitialized = false;
 
         public UserSessionService(IJSRuntime jsRuntime)
         {
@@ -18,6 +18,8 @@ namespace proyectoAgiles.Services
 
         public async Task InitializeAsync()
         {
+            if (_isInitialized) return;
+
             try
             {
                 var userData = await _jsRuntime.InvokeAsync<string>("localStorage.getItem", "currentUser");
@@ -25,11 +27,13 @@ namespace proyectoAgiles.Services
                 {
                     _currentUser = JsonSerializer.Deserialize<UserDto>(userData);
                 }
+                _isInitialized = true;
             }
             catch (Exception)
             {
                 // Si hay error al leer del localStorage, limpiar la sesión
                 await ClearSessionAsync();
+                _isInitialized = true;
             }
         }
 
@@ -38,18 +42,16 @@ namespace proyectoAgiles.Services
             _currentUser = user;
             var userData = JsonSerializer.Serialize(user);
             await _jsRuntime.InvokeVoidAsync("localStorage.setItem", "currentUser", userData);
-        }
-
-        public async Task ClearSessionAsync()
+        }        public async Task ClearSessionAsync()
         {
             _currentUser = null;
+            _isInitialized = false;
             await _jsRuntime.InvokeVoidAsync("localStorage.removeItem", "currentUser");
-        }
-
-        // Método sincrónico para usar en componentes
+        }        // Método sincrónico para usar en componentes
         public void ClearSession()
         {
             _currentUser = null;
+            _isInitialized = false;
             // Note: Para operaciones síncronas, usaremos InvokeVoidAsync con el método async
             _ = Task.Run(async () => await _jsRuntime.InvokeVoidAsync("localStorage.removeItem", "currentUser"));
         }

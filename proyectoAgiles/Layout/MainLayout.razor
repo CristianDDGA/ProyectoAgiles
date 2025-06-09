@@ -40,11 +40,9 @@
     protected override async Task OnInitializedAsync()
     {
         await UserSession.InitializeAsync();
-    }
-
-    private async Task Logout()
+    }    private async Task Logout()
     {
         await UserSession.ClearSessionAsync();
-        Navigation.NavigateTo("/login");
+        Navigation.NavigateTo("/");
     }
 }

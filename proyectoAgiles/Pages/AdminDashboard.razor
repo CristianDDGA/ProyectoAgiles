@@ -127,10 +127,11 @@
     private int totalTeachers = 0;
     private int activeUsers = 0;
     private int todayRegistrations = 0;
-    private List<ActivityItem> recentActivities = new();
-
-    protected override async Task OnInitializedAsync()
+    private List<ActivityItem> recentActivities = new();    protected override async Task OnInitializedAsync()
     {
+        // Asegurar que la sesión esté inicializada
+        await UserSession.InitializeAsync();
+        
         // Verificar que el usuario esté autenticado y sea admin
         if (UserSession.CurrentUser == null || UserSession.CurrentUser.UserType != 1)
         {
@@ -182,12 +183,10 @@
             "system" => "fa-cog",
             _ => "fa-info-circle"
         };
-    }
-
-    private async Task Logout()
+    }    private async Task Logout()
     {
-        UserSession.ClearSession();
-        Navigation.NavigateTo("/login");
+        await UserSession.ClearSessionAsync();
+        Navigation.NavigateTo("/");
     }
 
     public class ActivityItem
