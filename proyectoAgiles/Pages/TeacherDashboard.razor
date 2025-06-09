@@ -8,25 +8,6 @@
 <PageTitle>Panel de Docente - UTA</PageTitle>
 
 <div class="teacher-dashboard">
-    <!-- Header del Dashboard -->
-    <div class="dashboard-header">
-        <div class="header-content">            <div class="welcome-section">
-                <h1 class="dashboard-title">Panel de Docente</h1>
-                <p class="dashboard-subtitle">Universidad Técnica de Ambato</p>
-                <p class="welcome-text">Bienvenido, @UserSession.CurrentUser?.FullName</p>
-            </div>            <div class="header-actions">
-                <button class="btn btn-outline-light" @onclick='() => Navigation.NavigateTo("/docente/profile")'>
-                    <i class="fas fa-user"></i>
-                    Mi Perfil
-                </button>
-                <button class="btn btn-outline-danger" @onclick="Logout">
-                    <i class="fas fa-sign-out-alt"></i>
-                    Cerrar Sesión
-                </button>
-            </div>
-        </div>
-    </div>
-
     <!-- Tarjetas de Resumen -->
     <div class="stats-section">
         <div class="row">
