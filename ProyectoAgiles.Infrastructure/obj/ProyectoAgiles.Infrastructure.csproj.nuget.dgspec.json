@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "c:\\Users\\nixon\\OneDrive\\Escritorio\\proyectoAgiles\\ProyectoAgiles.Infrastructure\\ProyectoAgiles.Infrastructure.csproj": {}
+    "C:\\Users\\nixon\\OneDrive\\Escritorio\\proyectoAgiles\\ProyectoAgiles.Infrastructure\\ProyectoAgiles.Infrastructure.csproj": {}
   },
   "projects": {
-    "c:\\Users\\nixon\\OneDrive\\Escritorio\\proyectoAgiles\\ProyectoAgiles.Application\\ProyectoAgiles.Application.csproj": {
+    "C:\\Users\\nixon\\OneDrive\\Escritorio\\proyectoAgiles\\ProyectoAgiles.Application\\ProyectoAgiles.Application.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "c:\\Users\\nixon\\OneDrive\\Escritorio\\proyectoAgiles\\ProyectoAgiles.Application\\ProyectoAgiles.Application.csproj",
+        "projectUniqueName": "C:\\Users\\nixon\\OneDrive\\Escritorio\\proyectoAgiles\\ProyectoAgiles.Application\\ProyectoAgiles.Application.csproj",
         "projectName": "ProyectoAgiles.Application",
-        "projectPath": "c:\\Users\\nixon\\OneDrive\\Escritorio\\proyectoAgiles\\ProyectoAgiles.Application\\ProyectoAgiles.Application.csproj",
+        "projectPath": "C:\\Users\\nixon\\OneDrive\\Escritorio\\proyectoAgiles\\ProyectoAgiles.Application\\ProyectoAgiles.Application.csproj",
         "packagesPath": "C:\\Users\\nixon\\.nuget\\packages\\",
-        "outputPath": "c:\\Users\\nixon\\OneDrive\\Escritorio\\proyectoAgiles\\ProyectoAgiles.Application\\obj\\",
+        "outputPath": "C:\\Users\\nixon\\OneDrive\\Escritorio\\proyectoAgiles\\ProyectoAgiles.Application\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\nixon\\AppData\\Roaming\\NuGet\\NuGet.Config"
@@ -26,8 +26,8 @@
           "net9.0": {
             "targetAlias": "net9.0",
             "projectReferences": {
-              "c:\\Users\\nixon\\OneDrive\\Escritorio\\proyectoAgiles\\ProyectoAgiles.Domain\\ProyectoAgiles.Domain.csproj": {
-                "projectPath": "c:\\Users\\nixon\\OneDrive\\Escritorio\\proyectoAgiles\\ProyectoAgiles.Domain\\ProyectoAgiles.Domain.csproj"
+              "C:\\Users\\nixon\\OneDrive\\Escritorio\\proyectoAgiles\\ProyectoAgiles.Domain\\ProyectoAgiles.Domain.csproj": {
+                "projectPath": "C:\\Users\\nixon\\OneDrive\\Escritorio\\proyectoAgiles\\ProyectoAgiles.Domain\\ProyectoAgiles.Domain.csproj"
               }
             }
           }
@@ -81,14 +81,14 @@
         }
       }
     },
-    "c:\\Users\\nixon\\OneDrive\\Escritorio\\proyectoAgiles\\ProyectoAgiles.Domain\\ProyectoAgiles.Domain.csproj": {
+    "C:\\Users\\nixon\\OneDrive\\Escritorio\\proyectoAgiles\\ProyectoAgiles.Domain\\ProyectoAgiles.Domain.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "c:\\Users\\nixon\\OneDrive\\Escritorio\\proyectoAgiles\\ProyectoAgiles.Domain\\ProyectoAgiles.Domain.csproj",
+        "projectUniqueName": "C:\\Users\\nixon\\OneDrive\\Escritorio\\proyectoAgiles\\ProyectoAgiles.Domain\\ProyectoAgiles.Domain.csproj",
         "projectName": "ProyectoAgiles.Domain",
-        "projectPath": "c:\\Users\\nixon\\OneDrive\\Escritorio\\proyectoAgiles\\ProyectoAgiles.Domain\\ProyectoAgiles.Domain.csproj",
+        "projectPath": "C:\\Users\\nixon\\OneDrive\\Escritorio\\proyectoAgiles\\ProyectoAgiles.Domain\\ProyectoAgiles.Domain.csproj",
         "packagesPath": "C:\\Users\\nixon\\.nuget\\packages\\",
-        "outputPath": "c:\\Users\\nixon\\OneDrive\\Escritorio\\proyectoAgiles\\ProyectoAgiles.Domain\\obj\\",
+        "outputPath": "C:\\Users\\nixon\\OneDrive\\Escritorio\\proyectoAgiles\\ProyectoAgiles.Domain\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\nixon\\AppData\\Roaming\\NuGet\\NuGet.Config"
@@ -140,14 +140,14 @@
         }
       }
     },
-    "c:\\Users\\nixon\\OneDrive\\Escritorio\\proyectoAgiles\\ProyectoAgiles.Infrastructure\\ProyectoAgiles.Infrastructure.csproj": {
+    "C:\\Users\\nixon\\OneDrive\\Escritorio\\proyectoAgiles\\ProyectoAgiles.Infrastructure\\ProyectoAgiles.Infrastructure.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "c:\\Users\\nixon\\OneDrive\\Escritorio\\proyectoAgiles\\ProyectoAgiles.Infrastructure\\ProyectoAgiles.Infrastructure.csproj",
+        "projectUniqueName": "C:\\Users\\nixon\\OneDrive\\Escritorio\\proyectoAgiles\\ProyectoAgiles.Infrastructure\\ProyectoAgiles.Infrastructure.csproj",
         "projectName": "ProyectoAgiles.Infrastructure",
-        "projectPath": "c:\\Users\\nixon\\OneDrive\\Escritorio\\proyectoAgiles\\ProyectoAgiles.Infrastructure\\ProyectoAgiles.Infrastructure.csproj",
+        "projectPath": "C:\\Users\\nixon\\OneDrive\\Escritorio\\proyectoAgiles\\ProyectoAgiles.Infrastructure\\ProyectoAgiles.Infrastructure.csproj",
         "packagesPath": "C:\\Users\\nixon\\.nuget\\packages\\",
-        "outputPath": "c:\\Users\\nixon\\OneDrive\\Escritorio\\proyectoAgiles\\ProyectoAgiles.Infrastructure\\obj\\",
+        "outputPath": "C:\\Users\\nixon\\OneDrive\\Escritorio\\proyectoAgiles\\ProyectoAgiles.Infrastructure\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\nixon\\AppData\\Roaming\\NuGet\\NuGet.Config"
@@ -162,11 +162,11 @@
           "net9.0": {
             "targetAlias": "net9.0",
             "projectReferences": {
-              "c:\\Users\\nixon\\OneDrive\\Escritorio\\proyectoAgiles\\ProyectoAgiles.Application\\ProyectoAgiles.Application.csproj": {
-                "projectPath": "c:\\Users\\nixon\\OneDrive\\Escritorio\\proyectoAgiles\\ProyectoAgiles.Application\\ProyectoAgiles.Application.csproj"
+              "C:\\Users\\nixon\\OneDrive\\Escritorio\\proyectoAgiles\\ProyectoAgiles.Application\\ProyectoAgiles.Application.csproj": {
+                "projectPath": "C:\\Users\\nixon\\OneDrive\\Escritorio\\proyectoAgiles\\ProyectoAgiles.Application\\ProyectoAgiles.Application.csproj"
               },
-              "c:\\Users\\nixon\\OneDrive\\Escritorio\\proyectoAgiles\\ProyectoAgiles.Domain\\ProyectoAgiles.Domain.csproj": {
-                "projectPath": "c:\\Users\\nixon\\OneDrive\\Escritorio\\proyectoAgiles\\ProyectoAgiles.Domain\\ProyectoAgiles.Domain.csproj"
+              "C:\\Users\\nixon\\OneDrive\\Escritorio\\proyectoAgiles\\ProyectoAgiles.Domain\\ProyectoAgiles.Domain.csproj": {
+                "projectPath": "C:\\Users\\nixon\\OneDrive\\Escritorio\\proyectoAgiles\\ProyectoAgiles.Domain\\ProyectoAgiles.Domain.csproj"
               }
             }
           }

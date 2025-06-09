@@ -1,10 +1,10 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
-
-  <PropertyGroup>
+<Project Sdk="Microsoft.NET.Sdk.Web">  <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <GenerateStaticWebAssetsManifest>false</GenerateStaticWebAssetsManifest>
+    <GenerateCompressionManifest>false</GenerateCompressionManifest>
+    <EnableDefaultStaticWebAssets>false</EnableDefaultStaticWebAssets>
   </PropertyGroup>
 
   <ItemGroup>
@@ -14,8 +14,8 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.5" />
-  </ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.5" />  </ItemGroup>
+  
   <ItemGroup>
     <ProjectReference Include="..\ProyectoAgiles.Application\ProyectoAgiles.Application.csproj" />
     <ProjectReference Include="..\ProyectoAgiles.Domain\ProyectoAgiles.Domain.csproj" />
