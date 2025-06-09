@@ -1,5 +1,7 @@
 ﻿@using Microsoft.AspNetCore.Components.Routing
+@using proyectoAgiles.Services
 @inject NavigationManager Navigation
+@inject UserSessionService UserSession
 
 <div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid d-flex justify-content-between align-items-center">
@@ -7,13 +9,25 @@
             <span class="brand-text">UTA</span>
             <span class="brand-subtitle">Proyecto Ágiles</span>
         </a>
-        
-        @if (!IsOnAuthPage())
+          @if (!IsOnAuthPage())
         {
-            <div class="auth-buttons d-none d-md-flex">
-                <a href="/login" class="btn btn-outline-light btn-sm me-2">Iniciar Sesión</a>
-                <a href="/register" class="btn btn-primary btn-sm">Registrarse</a>
-            </div>
+            @if (UserSession.IsAuthenticated)
+            {
+                <div class="auth-user-info d-none d-md-flex align-items-center">
+                    <span class="user-greeting me-3">Hola, @UserSession.CurrentUser!.FirstName</span>
+                    <button @onclick="Logout" class="btn btn-outline-light btn-sm">
+                        <i class="fas fa-sign-out-alt me-1"></i>
+                        Cerrar Sesión
+                    </button>
+                </div>
+            }
+            else
+            {
+                <div class="auth-buttons d-none d-md-flex">
+                    <a href="/login" class="btn btn-outline-light btn-sm me-2">Iniciar Sesión</a>
+                    <a href="/register" class="btn btn-primary btn-sm">Registrarse</a>
+                </div>
+            }
         }
         
         <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
@@ -29,15 +43,29 @@
                 <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
             </NavLink>
         </div>
-        
-        @if (!IsOnAuthPage())
+          @if (!IsOnAuthPage())
         {
-            <div class="nav-item px-3 d-md-none">
-                <div class="mobile-auth-buttons">
-                    <a href="/login" class="btn btn-outline-primary btn-sm w-100 mb-2">Iniciar Sesión</a>
-                    <a href="/register" class="btn btn-primary btn-sm w-100">Registrarse</a>
+            @if (UserSession.IsAuthenticated)
+            {
+                <div class="nav-item px-3 d-md-none">
+                    <div class="mobile-user-info">
+                        <div class="user-greeting mb-2">Hola, @UserSession.CurrentUser!.FirstName</div>
+                        <button @onclick="Logout" class="btn btn-outline-primary btn-sm w-100">
+                            <i class="fas fa-sign-out-alt me-1"></i>
+                            Cerrar Sesión
+                        </button>
+                    </div>
                 </div>
-            </div>
+            }
+            else
+            {
+                <div class="nav-item px-3 d-md-none">
+                    <div class="mobile-auth-buttons">
+                        <a href="/login" class="btn btn-outline-primary btn-sm w-100 mb-2">Iniciar Sesión</a>
+                        <a href="/register" class="btn btn-primary btn-sm w-100">Registrarse</a>
+                    </div>
+                </div>
+            }
         }
     </nav>
 </div>
@@ -46,6 +74,11 @@
     private bool collapseNavMenu = true;
 
     private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await UserSession.InitializeAsync();
+    }
 
     private void ToggleNavMenu()
     {
@@ -56,5 +89,11 @@
     {
         var currentPath = Navigation.ToBaseRelativePath(Navigation.Uri).ToLower();
         return currentPath == "login" || currentPath == "register";
+    }
+
+    private async Task Logout()
+    {
+        await UserSession.ClearSessionAsync();
+        Navigation.NavigateTo("/login");
     }
 }
