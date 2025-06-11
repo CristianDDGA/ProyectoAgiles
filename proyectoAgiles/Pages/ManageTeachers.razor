@@ -95,9 +95,7 @@
                         }
                     </div>
                 </div>
-            </div>
-
-            <!-- Formulario de registro -->
+            </div>            <!-- Formulario de registro -->
             <div class="col-lg-6">
                 <div class="card registration-card">
                     <div class="card-header">
@@ -113,7 +111,27 @@
                             </div>                        }
                         else
                         {
-                            <EditForm Model="registrationRequest" OnValidSubmit="RegisterTeacher">
+                            <EditForm Model="registrationRequest" OnValidSubmit="RegisterTeacher">                                <!-- Nombre Completo (pre-llenado desde validación pero editable) -->
+                                <div class="form-group">
+                                    <label for="teacherName" class="form-label">
+                                        <i class="fas fa-user"></i>
+                                        Nombre Completo
+                                    </label>
+                                    <InputText id="teacherName" 
+                                              class="form-control" 
+                                              @bind-Value="registrationRequest.Name" 
+                                              @oninput="HandleNameInput"
+                                              placeholder="Nombre completo del docente" />
+                                    <small class="form-text text-muted">Este nombre se obtuvo de la validación de cédula, pero puedes editarlo</small>
+                                    @if (!string.IsNullOrEmpty(nameValidationMessage))
+                                    {
+                                        <div class="validation-message text-danger">
+                                            <i class="fas fa-exclamation-triangle"></i>
+                                            @nameValidationMessage
+                                        </div>
+                                    }
+                                </div>
+
                                 <div class="form-group">
                                     <label for="teacherEmail" class="form-label">
                                         <i class="fas fa-envelope"></i>
@@ -133,25 +151,60 @@
                                     }
                                 </div>
 
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="teacherPassword" class="form-label">
+                                            <i class="fas fa-lock"></i>
+                                            Contraseña
+                                        </label>
+                                        <InputText type="password" 
+                                                  id="teacherPassword" 
+                                                  class="form-control" 
+                                                  placeholder="Contraseña segura" 
+                                                  @bind-Value="registrationRequest.Password" 
+                                                  @oninput="HandlePasswordInput" />
+                                        @if (!string.IsNullOrEmpty(passwordStrengthMessage))
+                                        {
+                                            <div class="validation-message text-info">
+                                                <i class="fas @(isPasswordWeak ? "fa-exclamation-triangle" : "fa-info-circle")"></i>
+                                                @passwordStrengthMessage
+                                            </div>
+                                        }
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="confirmPassword" class="form-label">
+                                            <i class="fas fa-lock"></i>
+                                            Confirmar Contraseña
+                                        </label>
+                                        <InputText type="password" 
+                                                  id="confirmPassword" 
+                                                  class="form-control" 
+                                                  placeholder="Confirma la contraseña" 
+                                                  @bind-Value="registrationRequest.ConfirmPassword" 
+                                                  @oninput="HandleConfirmPasswordInput" />
+                                        @if (!string.IsNullOrEmpty(passwordValidationMessage))
+                                        {
+                                            <div class="validation-message text-danger">
+                                                <i class="fas fa-exclamation-triangle"></i>
+                                                @passwordValidationMessage
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+
+                                <!-- Cédula (pre-llenada desde validación) -->
                                 <div class="form-group">
-                                    <label for="teacherPassword" class="form-label">
-                                        <i class="fas fa-lock"></i>
-                                        Contraseña
+                                    <label for="teacherCedula" class="form-label">
+                                        <i class="fas fa-id-card"></i>
+                                        Cédula
                                     </label>
-                                    <InputText type="password" 
-                                              id="teacherPassword" 
+                                    <InputText id="teacherCedula" 
                                               class="form-control" 
-                                              placeholder="Contraseña segura" 
-                                              @bind-Value="registrationRequest.Password" 
-                                              @oninput="HandlePasswordInput" />
-                                    @if (!string.IsNullOrEmpty(passwordStrengthMessage))
-                                    {
-                                        <div class="validation-message text-info">
-                                            <i class="fas @(isPasswordWeak ? "fa-exclamation-triangle" : "fa-info-circle")"></i>
-                                            @passwordStrengthMessage
-                                        </div>
-                                    }
-                                </div>                                <!-- Zona de selección de archivos mejorada -->
+                                              @bind-Value="registrationRequest.Cedula" 
+                                              readonly="true" />
+                                    <small class="form-text text-muted">Esta cédula fue validada exitosamente</small>
+                                </div><!-- Zona de selección de archivos mejorada -->
                                 <div class="form-group">
                                     <label class="form-label">
                                         <i class="fas fa-file-upload"></i>
@@ -330,15 +383,15 @@
     private bool isPdfFile = false;
     private bool isDocFile = false;
     private string imagePreview = string.Empty;
-    private string fileErrorMessage = string.Empty;
-
-    // Validaciones de email y contraseña
+    private string fileErrorMessage = string.Empty;    // Validaciones de email y contraseña
     private string emailValidationMessage = string.Empty;
     private bool emailExists = false;
     private bool emailHasFormatError = false;
     private string passwordStrengthMessage = string.Empty;
+    private string passwordValidationMessage = string.Empty;
+    private string nameValidationMessage = string.Empty;
     private bool isPasswordWeak = false;
-    private System.Threading.Timer? emailValidationTimer;    protected override async Task OnInitializedAsync()
+    private System.Threading.Timer? emailValidationTimer;protected override async Task OnInitializedAsync()
     {
         // Verificar que el usuario esté autenticado y sea administrador
         await UserSession.InitializeAsync();
@@ -485,6 +538,25 @@
                 validatedTeacher = await response.Content.ReadFromJsonAsync<ExternalTeacherDto>();
                 validationMessage = "✅ Docente encontrado en la base de datos externa";
                 validationSuccess = true;
+                  // Llenar automáticamente los campos del formulario de registro
+                registrationRequest.Name = validatedTeacher.NombresCompletos;
+                registrationRequest.Cedula = validatedTeacher.Cedula;
+                // Limpiar otros campos para que el usuario los complete
+                registrationRequest.Email = string.Empty;
+                registrationRequest.Password = string.Empty;
+                registrationRequest.ConfirmPassword = string.Empty;
+                registrationRequest.Document = null;
+                
+                // Validar el nombre pre-llenado
+                ValidateName(registrationRequest.Name);
+                
+                // Limpiar mensajes de validación
+                emailValidationMessage = string.Empty;
+                passwordStrengthMessage = string.Empty;
+                passwordValidationMessage = string.Empty;
+                fileErrorMessage = string.Empty;
+                selectedFile = null;
+                imagePreview = string.Empty;
             }
             else
             {
@@ -789,17 +861,14 @@
             emailExists = false;
             emailHasFormatError = false;
         }
-    }
-
-    private void HandlePasswordInput(ChangeEventArgs e)
+    }    private void HandlePasswordInput(ChangeEventArgs e)
     {
         var password = e.Value?.ToString() ?? string.Empty;
         registrationRequest.Password = password;
         
         ValidatePasswordStrength(password);
-    }
-
-    private void ValidatePasswordStrength(string password)
+        ValidatePasswordMatch();
+    }private void ValidatePasswordStrength(string password)
     {
         if (string.IsNullOrEmpty(password))
         {
@@ -808,51 +877,101 @@
             return;
         }
 
-        var hasNumber = password.Any(char.IsDigit);
-        var hasUpper = password.Any(char.IsUpper);
-        var hasLower = password.Any(char.IsLower);
-        var hasMinLength = password.Length >= 8;
-
-        var strengthScore = 0;
-        var issues = new List<string>();
-
-        if (hasMinLength) strengthScore++; else issues.Add("mínimo 8 caracteres");
-        if (hasNumber) strengthScore++; else issues.Add("un número");
-        if (hasUpper) strengthScore++; else issues.Add("una mayúscula");
-        if (hasLower) strengthScore++; else issues.Add("una minúscula");
-
-        if (strengthScore == 4)
+        if (password.Length < 6)
         {
-            passwordStrengthMessage = "Contraseña segura";
+            passwordStrengthMessage = "La contraseña debe tener al menos 6 caracteres";
+            isPasswordWeak = true;
+        }
+        else if (password.Length >= 6 && password.Length < 8)
+        {
+            passwordStrengthMessage = "Contraseña aceptable (recomendado: 8+ caracteres)";
             isPasswordWeak = false;
         }
         else
         {
-            passwordStrengthMessage = $"Falta: {string.Join(", ", issues)}";
-            isPasswordWeak = true;
+            passwordStrengthMessage = string.Empty;
+            isPasswordWeak = false;
         }
+    }    private void HandleConfirmPasswordInput(ChangeEventArgs e)
+    {
+        var confirmPassword = e.Value?.ToString() ?? string.Empty;
+        registrationRequest.ConfirmPassword = confirmPassword;
+        
+        ValidatePasswordMatch();
     }
 
-    private bool IsFormValid()
+    private void HandleNameInput(ChangeEventArgs e)
+    {
+        var name = e.Value?.ToString() ?? string.Empty;
+        registrationRequest.Name = name;
+        ValidateName(name);
+    }
+
+    private void ValidateName(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            nameValidationMessage = "El nombre es requerido";
+        }
+        else if (name.Length < 2)
+        {
+            nameValidationMessage = "El nombre debe tener al menos 2 caracteres";
+        }
+        else if (name.Length > 100)
+        {
+            nameValidationMessage = "El nombre no puede tener más de 100 caracteres";
+        }
+        else
+        {
+            nameValidationMessage = string.Empty;
+        }
+    }private void ValidatePasswordMatch()
+    {
+        var password = registrationRequest.Password ?? string.Empty;
+        var confirmPassword = registrationRequest.ConfirmPassword ?? string.Empty;
+
+        // Solo mostrar mensaje de validación si ambos campos tienen contenido
+        if (!string.IsNullOrEmpty(password) && !string.IsNullOrEmpty(confirmPassword))
+        {
+            if (password == confirmPassword)
+            {
+                passwordValidationMessage = string.Empty; // Ocultar mensaje cuando coinciden
+            }
+            else
+            {
+                passwordValidationMessage = "Las contraseñas no coinciden";
+            }
+        }
+        else
+        {
+            passwordValidationMessage = string.Empty;
+        }
+    }    private bool IsFormValid()
     {
         return validatedTeacher != null &&
+               !string.IsNullOrWhiteSpace(registrationRequest.Name) &&
+               string.IsNullOrEmpty(nameValidationMessage) &&
                !string.IsNullOrWhiteSpace(registrationRequest.Email) &&
-               !string.IsNullOrWhiteSpace(registrationRequest.Password) &&
                !emailExists &&
                !emailHasFormatError &&
-               !isPasswordWeak;
+               string.IsNullOrEmpty(emailValidationMessage) &&
+               !string.IsNullOrWhiteSpace(registrationRequest.Password) &&
+               !isPasswordWeak &&
+               !string.IsNullOrWhiteSpace(registrationRequest.ConfirmPassword) &&
+               registrationRequest.Password == registrationRequest.ConfirmPassword &&
+               string.IsNullOrEmpty(passwordValidationMessage);
     }
 
     public class TeacherValidationRequest
     {
         public string Cedula { get; set; } = string.Empty;
-    }
-
-    public class TeacherRegistrationRequest
+    }    public class TeacherRegistrationRequest
     {
+        public string Name { get; set; } = string.Empty;
         public string Cedula { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
         public string Password { get; set; } = string.Empty;
+        public string ConfirmPassword { get; set; } = string.Empty;
         public IBrowserFile? Document { get; set; }
     }
 

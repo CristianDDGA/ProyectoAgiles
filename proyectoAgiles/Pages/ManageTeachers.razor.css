@@ -108,6 +108,59 @@
     box-shadow: 0 0 0 0.2rem rgba(114, 47, 55, 0.25);
 }
 
+/* Estilos para formulario de registro de docentes */
+.form-row {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.form-row .form-group {
+    flex: 1;
+    margin-bottom: 0;
+}
+
+.validation-message {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+    padding: 0.375rem 0.75rem;
+    border-radius: 0.375rem;
+    background-color: rgba(255, 255, 255, 0.8);
+}
+
+.validation-message.text-success {
+    color: #28a745;
+    background-color: rgba(40, 167, 69, 0.1);
+    border: 1px solid rgba(40, 167, 69, 0.2);
+}
+
+.validation-message.text-danger {
+    color: #dc3545;
+    background-color: rgba(220, 53, 69, 0.1);
+    border: 1px solid rgba(220, 53, 69, 0.2);
+}
+
+.validation-message.text-info {
+    color: #17a2b8;
+    background-color: rgba(23, 162, 184, 0.1);
+    border: 1px solid rgba(23, 162, 184, 0.2);
+}
+
+/* Campos de solo lectura */
+.form-control[readonly] {
+    background-color: #f8f9fa;
+    border-color: #dee2e6;
+    color: #6c757d;
+}
+
+.form-text {
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
 /* Botones */
 .btn {
     border-radius: 10px;
@@ -262,6 +315,15 @@
         flex-direction: column;
         align-items: flex-start;
         gap: 0.25rem;
+    }
+    
+    .form-row {
+        flex-direction: column;
+        gap: 0;
+    }
+    
+    .form-row .form-group {
+        margin-bottom: 1rem;
     }
 }
 
@@ -736,6 +798,55 @@
     border-left: 3px solid #17a2b8;
 }
 
+/* Estilos para form-row (campos en línea) */
+.form-row {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.form-row .form-group {
+    flex: 1;
+    margin-bottom: 0;
+}
+
+/* Validaciones en tiempo real */
+.validation-message {
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.validation-message i {
+    font-size: 0.8rem;
+}
+
+.text-success {
+    color: #28a745 !important;
+}
+
+.text-danger {
+    color: #dc3545 !important;
+}
+
+.text-info {
+    color: #17a2b8 !important;
+}
+
+/* Mejoras para campos de formulario */
+.form-control:focus {
+    border-color: #722f37;
+    box-shadow: 0 0 0 0.2rem rgba(114, 47, 55, 0.25);
+}
+
+.form-text {
+    font-size: 0.825rem;
+    color: #6c757d;
+    margin-top: 0.25rem;
+}
+
 /* Responsive para componentes de archivo */
 @media (max-width: 768px) {
     .file-drop-zone {
@@ -767,5 +878,15 @@
     
     .preview-image {
         max-height: 150px;
+    }
+    
+    /* Form row responsive */
+    .form-row {
+        flex-direction: column;
+        gap: 0;
+    }
+    
+    .form-row .form-group {
+        margin-bottom: 1rem;
     }
 }
