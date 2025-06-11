@@ -112,3 +112,65 @@ code {
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
     text-align: start;
 }
+
+/* Estilos específicos para el botón Cerrar Sesión - Sobrescribir Bootstrap */
+.top-row .container-fluid .auth-user-info button.btn.btn-outline-light,
+.top-row .container-fluid .auth-user-info .btn.btn-outline-light,
+button.btn.btn-outline-light[onclick*="Logout"],
+.auth-user-info button[onclick*="Logout"] {
+    border: 1px solid #722f37 !important;
+    color: white !important;
+    background: linear-gradient(135deg, rgba(114, 47, 55, 0.3) 0%, rgba(90, 37, 43, 0.3) 100%) !important;
+    backdrop-filter: blur(10px) !important;
+    transition: all 0.3s ease !important;
+}
+
+.top-row .container-fluid .auth-user-info button.btn.btn-outline-light:hover,
+.top-row .container-fluid .auth-user-info .btn.btn-outline-light:hover,
+button.btn.btn-outline-light[onclick*="Logout"]:hover,
+.auth-user-info button[onclick*="Logout"]:hover {
+    background: linear-gradient(135deg, #722f37 0%, #5a252b 100%) !important;
+    border-color: #722f37 !important;
+    color: white !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 12px rgba(114, 47, 55, 0.4) !important;
+}
+
+.top-row .container-fluid .auth-user-info button.btn.btn-outline-light:focus,
+.top-row .container-fluid .auth-user-info button.btn.btn-outline-light:focus-visible,
+button.btn.btn-outline-light[onclick*="Logout"]:focus,
+.auth-user-info button[onclick*="Logout"]:focus {
+    background: linear-gradient(135deg, #722f37 0%, #5a252b 100%) !important;
+    border-color: #722f37 !important;
+    color: white !important;
+    box-shadow: 0 0 0 0.2rem rgba(114, 47, 55, 0.25) !important;
+}
+
+.top-row .container-fluid .auth-user-info button.btn.btn-outline-light:active,
+button.btn.btn-outline-light[onclick*="Logout"]:active,
+.auth-user-info button[onclick*="Logout"]:active {
+    background: linear-gradient(135deg, #5a252b 0%, #722f37 100%) !important;
+    border-color: #5a252b !important;
+    color: white !important;
+    box-shadow: 0 2px 8px rgba(114, 47, 55, 0.3) !important;
+}
+
+/* Para versión móvil */
+.mobile-user-info button.btn.btn-outline-primary,
+.mobile-user-info .btn.btn-outline-primary {
+    border: 1px solid #722f37 !important;
+    color: #722f37 !important;
+    background: transparent !important;
+}
+
+.mobile-user-info button.btn.btn-outline-primary:hover,
+.mobile-user-info .btn.btn-outline-primary:hover {
+    background: linear-gradient(135deg, #722f37 0%, #5a252b 100%) !important;
+    color: white !important;
+    box-shadow: 0 4px 12px rgba(114, 47, 55, 0.4) !important;
+}
+
+/* Texto del saludo también en burgundy */
+.mobile-user-info .user-greeting {
+    color: #722f37 !important;
+}

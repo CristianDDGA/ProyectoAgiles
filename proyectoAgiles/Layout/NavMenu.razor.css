@@ -183,17 +183,65 @@
     font-weight: 500;
 }
 
+/* Estilos específicos para el botón Cerrar Sesión - Desktop */
 .auth-user-info .btn-outline-light {
-    border: 1px solid rgba(255, 255, 255, 0.6);
-    color: rgba(255, 255, 255, 0.9);
-    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(114, 47, 55, 0.8) !important;
+    color: rgba(255, 255, 255, 0.9) !important;
+    background: linear-gradient(135deg, rgba(114, 47, 55, 0.2) 0%, rgba(90, 37, 43, 0.2) 100%) !important;
     backdrop-filter: blur(10px);
 }
 
 .auth-user-info .btn-outline-light:hover {
-    background: rgba(255, 255, 255, 0.2);
-    color: white;
+    background: linear-gradient(135deg, #722f37 0%, #5a252b 100%) !important;
+    border-color: #722f37 !important;
+    color: white !important;
     transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(114, 47, 55, 0.4) !important;
+}
+
+.auth-user-info .btn-outline-light:focus {
+    background: linear-gradient(135deg, #722f37 0%, #5a252b 100%) !important;
+    border-color: #722f37 !important;
+    color: white !important;
+    box-shadow: 0 0 0 0.2rem rgba(114, 47, 55, 0.25) !important;
+}
+
+.auth-user-info .btn-outline-light:active {
+    background: linear-gradient(135deg, #5a252b 0%, #722f37 100%) !important;
+    border-color: #5a252b !important;
+    color: white !important;
+}
+
+/* Estilos con máxima especificidad para el botón Cerrar Sesión */
+.top-row .auth-user-info button.btn.btn-outline-light {
+    border: 1px solid rgba(114, 47, 55, 0.8) !important;
+    color: rgba(255, 255, 255, 0.9) !important;
+    background: linear-gradient(135deg, rgba(114, 47, 55, 0.2) 0%, rgba(90, 37, 43, 0.2) 100%) !important;
+    backdrop-filter: blur(10px) !important;
+    box-shadow: none !important;
+}
+
+.top-row .auth-user-info button.btn.btn-outline-light:hover {
+    background: linear-gradient(135deg, #722f37 0%, #5a252b 100%) !important;
+    border-color: #722f37 !important;
+    color: white !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 12px rgba(114, 47, 55, 0.4) !important;
+}
+
+.top-row .auth-user-info button.btn.btn-outline-light:focus,
+.top-row .auth-user-info button.btn.btn-outline-light:focus-visible {
+    background: linear-gradient(135deg, #722f37 0%, #5a252b 100%) !important;
+    border-color: #722f37 !important;
+    color: white !important;
+    box-shadow: 0 0 0 0.2rem rgba(114, 47, 55, 0.25) !important;
+}
+
+.top-row .auth-user-info button.btn.btn-outline-light:active {
+    background: linear-gradient(135deg, #5a252b 0%, #722f37 100%) !important;
+    border-color: #5a252b !important;
+    color: white !important;
+    box-shadow: 0 2px 8px rgba(114, 47, 55, 0.3) !important;
 }
 
 /* Estilos para información del usuario en móvil */
@@ -205,7 +253,7 @@
 }
 
 .mobile-user-info .user-greeting {
-    color: #667eea;
+    color: #722f37 !important;
     font-size: 0.95rem;
     font-weight: 600;
     margin-bottom: 0.5rem;
@@ -221,15 +269,28 @@
     font-weight: 500;
 }
 
+/* Estilos específicos para el botón Cerrar Sesión - Móvil */
 .mobile-user-info .btn-outline-primary {
-    border: 1px solid #dc3545;
-    color: #dc3545;
-    background: transparent;
+    border: 1px solid #722f37 !important;
+    color: #722f37 !important;
+    background: transparent !important;
 }
 
 .mobile-user-info .btn-outline-primary:hover {
-    background: #dc3545;
-    color: white;
+    background: linear-gradient(135deg, #722f37 0%, #5a252b 100%) !important;
+    color: white !important;
+    box-shadow: 0 4px 12px rgba(114, 47, 55, 0.4) !important;
+}
+
+.mobile-user-info .btn-outline-primary:focus {
+    background: linear-gradient(135deg, #722f37 0%, #5a252b 100%) !important;
+    color: white !important;
+    box-shadow: 0 0 0 0.2rem rgba(114, 47, 55, 0.25) !important;
+}
+
+.mobile-user-info .btn-outline-primary:active {
+    background: linear-gradient(135deg, #5a252b 0%, #722f37 100%) !important;
+    color: white !important;
 }
 
 @media (max-width: 767px) {
