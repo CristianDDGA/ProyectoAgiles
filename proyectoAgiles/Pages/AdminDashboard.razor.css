@@ -2,7 +2,7 @@
 .admin-dashboard {
     padding: 20px;
     margin: 0;
-    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
     min-height: 100vh;
     width: 100%;
     overflow-x: hidden;
@@ -20,7 +20,7 @@
     font-weight: 800;
     color: #2d3748;
     margin: 0;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #722f37 0%, #5a252b 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -79,35 +79,15 @@
 }
 
 .stat-icon.teachers {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #722f37 0%, #5a252b 100%);
 }
 
 .stat-icon.active {
-    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    background: linear-gradient(135deg, #8b3a42 0%, #722f37 100%);
 }
 
 .stat-icon.registrations {
-    background: linear-gradient(135deg, #ff7b7b 0%, #ff416c 100%);
-}
-
-.stat-icon.users {
-    background: linear-gradient(135deg, #ffa726 0%, #fb8c00 100%);
-}
-
-.stat-icon.users {
-    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
-}
-
-.stat-icon.teachers {
-    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-}
-
-.stat-icon.active {
-    background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
-}
-
-.stat-icon.registrations {
-    background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+    background: linear-gradient(135deg, #9d4c56 0%, #8b3a42 100%);
 }
 
 .stat-content .stat-number {
@@ -141,7 +121,7 @@
     transform: translateY(-50%);
     width: 4px;
     height: 30px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #722f37 0%, #5a252b 100%);
     border-radius: 2px;
 }
 
@@ -168,13 +148,13 @@
 .action-card:hover {
     transform: translateY(-10px) scale(1.02);
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
-    border-color: rgba(102, 126, 234, 0.3);
+    border-color: rgba(114, 47, 55, 0.3);
 }
 
 .action-icon {
     width: 90px;
     height: 90px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #722f37 0%, #5a252b 100%);
     border-radius: 22px;
     display: flex;
     align-items: center;
@@ -182,7 +162,7 @@
     margin: 0 auto 25px;
     font-size: 2.2rem;
     color: white;
-    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+    box-shadow: 0 8px 25px rgba(114, 47, 55, 0.3);
 }
 
 .action-card h3 {
@@ -224,7 +204,7 @@
 }
 
 .activity-list::-webkit-scrollbar-thumb {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #722f37 0%, #5a252b 100%);
     border-radius: 3px;
 }
 
@@ -252,7 +232,7 @@
 .activity-item .activity-icon {
     width: 50px;
     height: 50px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #722f37 0%, #5a252b 100%);
     border-radius: 12px;
     display: flex;
     align-items: center;
@@ -260,7 +240,7 @@
     margin-right: 18px;
     color: white;
     font-size: 1.1rem;
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.25);
+    box-shadow: 0 4px 12px rgba(114, 47, 55, 0.25);
 }
 
 .activity-content .activity-description {
