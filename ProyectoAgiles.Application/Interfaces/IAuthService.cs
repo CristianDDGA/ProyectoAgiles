@@ -12,15 +12,5 @@ public interface IAuthService
     Task<bool> CedulaExistsAsync(string cedula);
     
     // Nuevos métodos para recuperación de contraseña
-    Task<ForgotPasswordResponse> ForgotPasswordAsync(string email);
-    Task<ResetPasswordResponse> ResetPasswordAsync(ResetPasswordDto resetPasswordDto);
-}
-
-public interface IUserService
-{
-    Task<IEnumerable<UserDto>> GetAllUsersAsync();
-    Task<UserDto?> GetUserByIdAsync(int id);
-    Task<UserDto?> UpdateUserAsync(int id, RegisterDto updateDto);
-    Task<bool> DeleteUserAsync(int id);
-    Task<bool> ToggleUserStatusAsync(int id);
+    Task<ForgotPasswordResponse> ForgotPasswordAsync(string email);    Task<ResetPasswordResponse> ResetPasswordAsync(ResetPasswordDto resetPasswordDto);
 }
