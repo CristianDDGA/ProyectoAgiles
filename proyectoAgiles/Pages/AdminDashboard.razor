@@ -10,28 +10,15 @@
 <PageTitle>Panel de Administración - UTA</PageTitle>
 
 <div class="admin-dashboard">
-    <!-- Header del Dashboard -->
-    <div class="dashboard-header">
-        <div class="header-content">
-            <div class="welcome-section">
-                <h1 class="dashboard-title">Panel de Administración</h1>
-                <p class="dashboard-subtitle">Universidad Técnica de Ambato</p>
-                <p class="welcome-text">Bienvenido de vuelta, @(UserSession.CurrentUser?.FirstName ?? "Administrador")</p>
-            </div>
-            <div class="header-actions">
-                <button class="btn btn-outline-light" @onclick="NavigateToSettings">
-                    <i class="fas fa-cog me-2"></i>Configuración
-                </button>
-                <button class="btn btn-outline-light ms-2" @onclick="Logout">
-                    <i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión
-                </button>
-            </div>
-        </div>
-    </div>    <!-- Tarjetas de Estadísticas -->
+    <!-- Título del Panel -->
+    <div class="dashboard-title-section">
+        <h1 class="dashboard-main-title">Panel de Administración</h1>
+    </div>
+    
+    <!-- Tarjetas de Estadísticas -->
     <div class="stats-section">
         <h2 class="section-title">Resumen General</h2>
-        <div class="row">
-            <div class="col-lg-3 col-md-6 mb-4">
+        <div class="row">            <div class="col-lg-4 col-md-6 mb-4">
                 <div class="stat-card">
                     <div class="stat-icon teachers">
                         <i class="fas fa-chalkboard-teacher"></i>
@@ -42,7 +29,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-lg-3 col-md-6 mb-4">
+            <div class="col-lg-4 col-md-6 mb-4">
                 <div class="stat-card">
                     <div class="stat-icon active">
                         <i class="fas fa-user-check"></i>
@@ -52,8 +39,7 @@
                         <p class="stat-label">Usuarios Activos</p>
                     </div>
                 </div>
-            </div>
-            <div class="col-lg-3 col-md-6 mb-4">
+            </div>            <div class="col-lg-4 col-md-6 mb-4">
                 <div class="stat-card">
                     <div class="stat-icon registrations">
                         <i class="fas fa-calendar-day"></i>
@@ -64,23 +50,11 @@
                     </div>
                 </div>
             </div>
-            <div class="col-lg-3 col-md-6 mb-4">
-                <div class="stat-card">
-                    <div class="stat-icon users">
-                        <i class="fas fa-users"></i>
-                    </div>
-                    <div class="stat-content">
-                        <h3 class="stat-number">@(totalTeachers + activeUsers)</h3>
-                        <p class="stat-label">Total Usuarios</p>
-                    </div>
-                </div>
-            </div>
         </div>
-    </div>    <!-- Sección de Acciones Rápidas -->
+    </div><!-- Sección de Acciones Rápidas -->
     <div class="quick-actions">
-        <h2 class="section-title">Acciones Rápidas</h2>
-        <div class="row">
-            <div class="col-lg-4 col-md-6 mb-4">
+        <h2 class="section-title">Acciones Rápidas</h2>        <div class="row">
+            <div class="col-lg-6 col-md-6 mb-4">
                 <div class="action-card" @onclick="NavigateToTeachers">
                     <div class="action-icon">
                         <i class="fas fa-user-tie"></i>
@@ -89,16 +63,7 @@
                     <p>Registrar nuevos docentes y validar su información externa</p>
                 </div>
             </div>
-            <div class="col-lg-4 col-md-6 mb-4">
-                <div class="action-card" @onclick="NavigateToUsers">
-                    <div class="action-icon">
-                        <i class="fas fa-users-cog"></i>
-                    </div>
-                    <h3>Administrar Usuarios</h3>
-                    <p>Gestionar cuentas de usuario y permisos del sistema</p>
-                </div>
-            </div>
-            <div class="col-lg-4 col-md-6 mb-4">
+            <div class="col-lg-6 col-md-6 mb-4">
                 <div class="action-card" @onclick="NavigateToReports">
                     <div class="action-icon">
                         <i class="fas fa-chart-bar"></i>
