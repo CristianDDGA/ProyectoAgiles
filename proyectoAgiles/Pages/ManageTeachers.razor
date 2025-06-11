@@ -11,31 +11,76 @@
 
 <PageTitle>Gestionar Docentes - UTA</PageTitle>
 
-<div class="manage-teachers-page">
-    <!-- Header de la página -->
+<div class="manage-teachers-page">    <!-- Header de la página mejorado -->
     <div class="page-header">
         <div class="header-content">
             <div class="header-text">
                 <h1 class="page-title">
-                    <i class="fas fa-user-tie"></i>
+                    <div class="title-icon-wrapper">
+                        <i class="fas fa-user-tie"></i>
+                        <div class="icon-decoration"></div>
+                    </div>
                     Gestionar Docentes
                 </h1>
-                <p class="page-subtitle">Registra nuevos docentes utilizando la validación de cédula externa</p>
-            </div>            <button @onclick="GoBackToDashboard" class="btn btn-secondary">
-                <i class="fas fa-arrow-left"></i>
-                Volver al Dashboard
-            </button>
+                <p class="page-subtitle">Valida y registra nuevos docentes con verificación externa de identidad</p>
+                <div class="header-stats">
+                    <div class="stat-item">
+                        <i class="fas fa-shield-check"></i>
+                        <span>Validación Externa</span>
+                    </div>
+                    <div class="stat-item">
+                        <i class="fas fa-user-check"></i>
+                        <span>Registro Seguro</span>
+                    </div>
+                    <div class="stat-item">
+                        <i class="fas fa-file-upload"></i>
+                        <span>Documentos Opcionales</span>
+                    </div>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button @onclick="GoBackToDashboard" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i>
+                    Volver al Dashboard
+                </button>
+            </div>
         </div>
     </div>
 
     <div class="container-fluid">
-        <div class="row">
-            <!-- Formulario de validación de cédula -->
+        <div class="row">            <!-- Formulario de validación de cédula mejorado -->
             <div class="col-lg-6">
                 <div class="card validation-card">
                     <div class="card-header">
-                        <h3><i class="fas fa-search"></i> Validar Cédula</h3>
-                        <p>Ingresa la cédula del docente para verificar su existencia en la base de datos externa</p>
+                        <div class="card-header-content">
+                            <div class="card-title-section">
+                                <h3><i class="fas fa-search"></i> Validar Cédula</h3>
+                                <p>Ingresa la cédula del docente para verificar su existencia en la base de datos externa</p>
+                            </div>
+                            <div class="card-status">
+                                @if (validationSuccess && validatedTeacher != null)
+                                {
+                                    <div class="status-badge success">
+                                        <i class="fas fa-check-circle"></i>
+                                        Validado
+                                    </div>
+                                }
+                                else if (!string.IsNullOrEmpty(validationMessage) && !validationSuccess)
+                                {
+                                    <div class="status-badge error">
+                                        <i class="fas fa-times-circle"></i>
+                                        Error
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="status-badge pending">
+                                        <i class="fas fa-clock"></i>
+                                        Pendiente
+                                    </div>
+                                }
+                            </div>
+                        </div>
                     </div>
                     <div class="card-body">
                         <EditForm Model="validationRequest" OnValidSubmit="ValidateCedula">
@@ -44,172 +89,395 @@
                                     <i class="fas fa-id-card"></i>
                                     Número de Cédula
                                 </label>
-                                <InputText id="cedula" 
-                                          class="form-control" 
-                                          placeholder="Ej: 1750000001" 
-                                          @bind-Value="validationRequest.Cedula" 
-                                          maxlength="10" />
+                                <div class="input-group">                                    <InputText id="cedula" 
+                                              class="@($"form-control {(validationSuccess ? "is-valid" : (!string.IsNullOrEmpty(validationMessage) && !validationSuccess ? "is-invalid" : ""))}")" 
+                                              placeholder="Ej: 1750000001" 
+                                              @bind-Value="validationRequest.Cedula" 
+                                              maxlength="10" />
+                                    <div class="input-group-append">
+                                        <div class="input-icon">
+                                            @if (isValidating)
+                                            {
+                                                <div class="spinner-border spinner-border-sm"></div>
+                                            }
+                                            else if (validationSuccess)
+                                            {
+                                                <i class="fas fa-check text-success"></i>
+                                            }
+                                            else if (!string.IsNullOrEmpty(validationMessage) && !validationSuccess)
+                                            {
+                                                <i class="fas fa-times text-danger"></i>
+                                            }
+                                            else
+                                            {
+                                                <i class="fas fa-search text-muted"></i>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                                <small class="form-text text-muted">
+                                    <i class="fas fa-info-circle"></i>
+                                    La cédula debe tener exactamente 10 dígitos
+                                </small>
                             </div>
                             
-                            <button type="submit" class="btn btn-primary" disabled="@isValidating">
-                                @if (isValidating)
+                            <div class="validation-buttons">
+                                <button type="submit" class="btn btn-primary btn-validation" disabled="@isValidating">
+                                    @if (isValidating)
+                                    {
+                                        <div class="loading-content">
+                                            <span class="spinner-border spinner-border-sm mr-2"></span>
+                                            <span>Validando...</span>
+                                            <div class="loading-dots">
+                                                <span></span>
+                                                <span></span>
+                                                <span></span>
+                                            </div>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <i class="fas fa-search"></i>
+                                        <span>Validar Cédula</span>
+                                    }
+                                </button>
+                                @if (validatedTeacher != null)
                                 {
-                                    <span class="spinner-border spinner-border-sm mr-2"></span>
-                                    <span>Validando...</span>
+                                    <button type="button" class="btn btn-outline-secondary" @onclick="ClearValidation">
+                                        <i class="fas fa-redo"></i>
+                                        Nueva Validación
+                                    </button>
                                 }
-                                else
-                                {
-                                    <i class="fas fa-search"></i>
-                                    <span>Validar Cédula</span>
-                                }
-                            </button>
-                        </EditForm>
-
-                        @if (!string.IsNullOrEmpty(validationMessage))
+                            </div>
+                        </EditForm>                        @if (!string.IsNullOrEmpty(validationMessage))
                         {
-                            <div class="alert @(validationSuccess ? "alert-success" : "alert-danger") mt-3">
-                                <i class="fas @(validationSuccess ? "fa-check-circle" : "fa-exclamation-triangle")"></i>
-                                @validationMessage
+                            <div class="validation-result @(validationSuccess ? "success" : "error")">
+                                <div class="result-icon">
+                                    <i class="fas @(validationSuccess ? "fa-check-circle" : "fa-exclamation-triangle")"></i>
+                                </div>
+                                <div class="result-content">
+                                    <div class="result-title">
+                                        @(validationSuccess ? "Validación Exitosa" : "Error en Validación")
+                                    </div>
+                                    <div class="result-message">
+                                        @validationMessage
+                                    </div>
+                                </div>
                             </div>
                         }
 
                         @if (validatedTeacher != null)
                         {
-                            <div class="teacher-info mt-4">
-                                <h4><i class="fas fa-user-check"></i> Información del Docente</h4>
-                                <div class="info-card">
-                                    <div class="info-item">
-                                        <span class="label">Nombre Completo:</span>
-                                        <span class="value">@validatedTeacher.NombresCompletos</span>
+                            <div class="teacher-info-enhanced">
+                                <div class="info-header">
+                                    <h4><i class="fas fa-user-check"></i> Información del Docente</h4>
+                                    <div class="verification-badge">
+                                        <i class="fas fa-certificate"></i>
+                                        Verificado Externamente
                                     </div>
-                                    <div class="info-item">
-                                        <span class="label">Cédula:</span>
-                                        <span class="value">@validatedTeacher.Cedula</span>
+                                </div>
+                                <div class="info-card-enhanced">
+                                    <div class="info-grid">
+                                        <div class="info-item-enhanced">
+                                            <div class="info-icon">
+                                                <i class="fas fa-user"></i>
+                                            </div>
+                                            <div class="info-details">
+                                                <span class="info-label">Nombre Completo</span>
+                                                <span class="info-value">@validatedTeacher.NombresCompletos</span>
+                                            </div>
+                                        </div>
+                                        <div class="info-item-enhanced">
+                                            <div class="info-icon">
+                                                <i class="fas fa-id-card"></i>
+                                            </div>
+                                            <div class="info-details">
+                                                <span class="info-label">Cédula</span>
+                                                <span class="info-value">@validatedTeacher.Cedula</span>
+                                            </div>
+                                        </div>
+                                        <div class="info-item-enhanced">
+                                            <div class="info-icon">
+                                                <i class="fas fa-university"></i>
+                                            </div>
+                                            <div class="info-details">
+                                                <span class="info-label">Universidad</span>
+                                                <span class="info-value">@validatedTeacher.Universidad</span>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div class="info-item">
-                                        <span class="label">Universidad:</span>
-                                        <span class="value">@validatedTeacher.Universidad</span>
+                                    <div class="verification-footer">
+                                        <div class="verification-info">
+                                            <i class="fas fa-shield-check"></i>
+                                            <span>Datos verificados desde base externa</span>
+                                        </div>                                        <div class="verification-time">
+                                            <i class="fas fa-clock"></i>
+                                            <span>@DateTime.Now.ToString("HH:mm:ss")</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         }
                     </div>
                 </div>
-            </div>            <!-- Formulario de registro -->
+            </div>            <!-- Formulario de registro mejorado -->
             <div class="col-lg-6">
                 <div class="card registration-card">
                     <div class="card-header">
-                        <h3><i class="fas fa-user-plus"></i> Registrar Docente</h3>
-                        <p>Completa la información requerida para registrar al docente</p>
+                        <div class="card-header-content">
+                            <div class="card-title-section">
+                                <h3><i class="fas fa-user-plus"></i> Registrar Docente</h3>
+                                <p>Completa la información requerida para registrar al docente</p>
+                            </div>
+                            <div class="progress-indicator">
+                                <div class="progress-step @(validatedTeacher != null ? "completed" : "")">
+                                    <i class="fas fa-search"></i>
+                                    <span>Validar</span>
+                                </div>
+                                <div class="progress-connector @(validatedTeacher != null ? "active" : "")"></div>
+                                <div class="progress-step @(IsFormValid() ? "completed" : (validatedTeacher != null ? "active" : ""))">
+                                    <i class="fas fa-user-plus"></i>
+                                    <span>Registrar</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <div class="card-body">
                         @if (validatedTeacher == null)
                         {
-                            <div class="empty-state">
-                                <i class="fas fa-arrow-left text-muted"></i>
-                                <p class="text-muted">Primero valida una cédula para habilitar el registro</p>
-                            </div>                        }
+                            <div class="empty-state-enhanced">
+                                <div class="empty-icon-container">
+                                    <i class="fas fa-arrow-left"></i>
+                                    <div class="pulse-animation"></div>
+                                </div>
+                                <div class="empty-content">
+                                    <h5>Validación Requerida</h5>
+                                    <p>Primero valida una cédula para habilitar el formulario de registro</p>
+                                    <div class="empty-steps">
+                                        <div class="step-item">
+                                            <i class="fas fa-1"></i>
+                                            <span>Ingresa la cédula</span>
+                                        </div>
+                                        <div class="step-item">
+                                            <i class="fas fa-2"></i>
+                                            <span>Verifica los datos</span>
+                                        </div>
+                                        <div class="step-item">
+                                            <i class="fas fa-3"></i>
+                                            <span>Completa el registro</span>
+                                        </div>
+                                    </div>
+                                </div>                            </div>
+                        }
                         else
                         {
-                            <EditForm Model="registrationRequest" OnValidSubmit="RegisterTeacher">                                <!-- Nombre Completo (pre-llenado desde validación pero editable) -->
-                                <div class="form-group">
-                                    <label for="teacherName" class="form-label">
-                                        <i class="fas fa-user"></i>
-                                        Nombre Completo
-                                    </label>
-                                    <InputText id="teacherName" 
-                                              class="form-control" 
-                                              @bind-Value="registrationRequest.Name" 
-                                              @oninput="HandleNameInput"
-                                              placeholder="Nombre completo del docente" />
-                                    <small class="form-text text-muted">Este nombre se obtuvo de la validación de cédula, pero puedes editarlo</small>
-                                    @if (!string.IsNullOrEmpty(nameValidationMessage))
-                                    {
-                                        <div class="validation-message text-danger">
-                                            <i class="fas fa-exclamation-triangle"></i>
-                                            @nameValidationMessage
+                            <EditForm Model="registrationRequest" OnValidSubmit="RegisterTeacher">
+                                <div class="registration-form-container">
+                                    <!-- Sección de información personal -->
+                                    <div class="form-section">
+                                        <div class="section-header">
+                                            <h5><i class="fas fa-user"></i> Información Personal</h5>
+                                            <p>Datos básicos del docente</p>
                                         </div>
-                                    }
-                                </div>
-
-                                <div class="form-group">
-                                    <label for="teacherEmail" class="form-label">
-                                        <i class="fas fa-envelope"></i>
-                                        Correo Electrónico
-                                    </label>
-                                    <InputText id="teacherEmail" 
-                                              class="form-control" 
-                                              placeholder="correo@uta.edu.ec" 
-                                              @bind-Value="registrationRequest.Email" 
-                                              @oninput="HandleEmailInput" />
-                                    @if (!string.IsNullOrEmpty(emailValidationMessage))
-                                    {
-                                        <div class="validation-message @(emailExists || emailHasFormatError ? "text-danger" : "text-success")">
-                                            <i class="fas @(emailExists || emailHasFormatError ? "fa-exclamation-triangle" : "fa-check-circle")"></i>
-                                            @emailValidationMessage
-                                        </div>
-                                    }
-                                </div>
-
-                                <div class="form-row">
-                                    <div class="form-group">
-                                        <label for="teacherPassword" class="form-label">
-                                            <i class="fas fa-lock"></i>
-                                            Contraseña
-                                        </label>
-                                        <InputText type="password" 
-                                                  id="teacherPassword" 
-                                                  class="form-control" 
-                                                  placeholder="Contraseña segura" 
-                                                  @bind-Value="registrationRequest.Password" 
-                                                  @oninput="HandlePasswordInput" />
-                                        @if (!string.IsNullOrEmpty(passwordStrengthMessage))
-                                        {
-                                            <div class="validation-message text-info">
-                                                <i class="fas @(isPasswordWeak ? "fa-exclamation-triangle" : "fa-info-circle")"></i>
-                                                @passwordStrengthMessage
+                                        
+                                        <!-- Nombre Completo (pre-llenado desde validación pero editable) -->
+                                        <div class="form-group">
+                                            <label for="teacherName" class="form-label">
+                                                <i class="fas fa-user"></i>
+                                                Nombre Completo
+                                            </label>
+                                            <div class="input-group">                                                <InputText id="teacherName" 
+                                                          class="@($"form-control {(string.IsNullOrEmpty(nameValidationMessage) && !string.IsNullOrWhiteSpace(registrationRequest.Name) ? "is-valid" : (!string.IsNullOrEmpty(nameValidationMessage) ? "is-invalid" : ""))}")" 
+                                                          @bind-Value="registrationRequest.Name" 
+                                                          @oninput="HandleNameInput"
+                                                          placeholder="Nombre completo del docente" />
+                                                <div class="input-group-append">
+                                                    <div class="input-icon">
+                                                        @if (string.IsNullOrEmpty(nameValidationMessage) && !string.IsNullOrWhiteSpace(registrationRequest.Name))
+                                                        {
+                                                            <i class="fas fa-check text-success"></i>
+                                                        }
+                                                        else if (!string.IsNullOrEmpty(nameValidationMessage))
+                                                        {
+                                                            <i class="fas fa-times text-danger"></i>
+                                                        }
+                                                        else
+                                                        {
+                                                            <i class="fas fa-user text-muted"></i>
+                                                        }
+                                                    </div>
+                                                </div>
                                             </div>
-                                        }
+                                            <small class="form-text text-muted">
+                                                <i class="fas fa-info-circle"></i>
+                                                Este nombre se obtuvo de la validación de cédula, pero puedes editarlo
+                                            </small>
+                                            @if (!string.IsNullOrEmpty(nameValidationMessage))
+                                            {
+                                                <div class="validation-message text-danger">
+                                                    <i class="fas fa-exclamation-triangle"></i>
+                                                    @nameValidationMessage
+                                                </div>
+                                            }
+                                        </div>
+
+                                        <!-- Cédula (pre-llenada desde validación) -->
+                                        <div class="form-group">
+                                            <label for="teacherCedula" class="form-label">
+                                                <i class="fas fa-id-card"></i>
+                                                Cédula
+                                            </label>
+                                            <div class="input-group">
+                                                <InputText id="teacherCedula" 
+                                                          class="form-control is-valid" 
+                                                          @bind-Value="registrationRequest.Cedula" 
+                                                          readonly="true" />
+                                                <div class="input-group-append">
+                                                    <div class="input-icon">
+                                                        <i class="fas fa-lock text-success"></i>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <small class="form-text text-success">
+                                                <i class="fas fa-shield-check"></i>
+                                                Esta cédula fue validada exitosamente
+                                            </small>
+                                        </div>
                                     </div>
 
-                                    <div class="form-group">
-                                        <label for="confirmPassword" class="form-label">
-                                            <i class="fas fa-lock"></i>
-                                            Confirmar Contraseña
-                                        </label>
-                                        <InputText type="password" 
-                                                  id="confirmPassword" 
-                                                  class="form-control" 
-                                                  placeholder="Confirma la contraseña" 
-                                                  @bind-Value="registrationRequest.ConfirmPassword" 
-                                                  @oninput="HandleConfirmPasswordInput" />
-                                        @if (!string.IsNullOrEmpty(passwordValidationMessage))
-                                        {
-                                            <div class="validation-message text-danger">
-                                                <i class="fas fa-exclamation-triangle"></i>
-                                                @passwordValidationMessage
-                                            </div>
-                                        }
-                                    </div>
-                                </div>
+                                    <!-- Sección de credenciales -->
+                                    <div class="form-section">
+                                        <div class="section-header">
+                                            <h5><i class="fas fa-key"></i> Credenciales de Acceso</h5>
+                                            <p>Información para el acceso al sistema</p>
+                                        </div>
 
-                                <!-- Cédula (pre-llenada desde validación) -->
-                                <div class="form-group">
-                                    <label for="teacherCedula" class="form-label">
-                                        <i class="fas fa-id-card"></i>
-                                        Cédula
-                                    </label>
-                                    <InputText id="teacherCedula" 
-                                              class="form-control" 
-                                              @bind-Value="registrationRequest.Cedula" 
-                                              readonly="true" />
-                                    <small class="form-text text-muted">Esta cédula fue validada exitosamente</small>
-                                </div><!-- Zona de selección de archivos mejorada -->
-                                <div class="form-group">
-                                    <label class="form-label">
-                                        <i class="fas fa-file-upload"></i>
-                                        Documento (Opcional)
-                                    </label>
+                                        <div class="form-group">
+                                            <label for="teacherEmail" class="form-label">
+                                                <i class="fas fa-envelope"></i>
+                                                Correo Electrónico
+                                            </label>
+                                            <div class="input-group">                                                <InputText id="teacherEmail" 
+                                                          class="@($"form-control {(string.IsNullOrEmpty(emailValidationMessage) && !string.IsNullOrWhiteSpace(registrationRequest.Email) && !emailExists && !emailHasFormatError ? "is-valid" : (emailExists || emailHasFormatError || (!string.IsNullOrEmpty(emailValidationMessage) && emailValidationMessage != "Correo disponible") ? "is-invalid" : ""))}")" 
+                                                          placeholder="correo@uta.edu.ec" 
+                                                          @bind-Value="registrationRequest.Email" 
+                                                          @oninput="HandleEmailInput" />
+                                                <div class="input-group-append">
+                                                    <div class="input-icon">
+                                                        @if (string.IsNullOrEmpty(emailValidationMessage) && !string.IsNullOrWhiteSpace(registrationRequest.Email) && !emailExists && !emailHasFormatError)
+                                                        {
+                                                            <i class="fas fa-check text-success"></i>
+                                                        }
+                                                        else if (emailExists || emailHasFormatError)
+                                                        {
+                                                            <i class="fas fa-times text-danger"></i>
+                                                        }
+                                                        else if (emailValidationMessage == "Correo disponible")
+                                                        {
+                                                            <i class="fas fa-check text-success"></i>
+                                                        }
+                                                        else
+                                                        {
+                                                            <i class="fas fa-envelope text-muted"></i>
+                                                        }
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            @if (!string.IsNullOrEmpty(emailValidationMessage))
+                                            {
+                                                <div class="validation-message @(emailExists || emailHasFormatError ? "text-danger" : "text-success")">
+                                                    <i class="fas @(emailExists || emailHasFormatError ? "fa-exclamation-triangle" : "fa-check-circle")"></i>
+                                                    @emailValidationMessage
+                                                </div>
+                                            }
+                                        </div>                                        <div class="form-row">
+                                            <div class="form-group">
+                                                <label for="teacherPassword" class="form-label">
+                                                    <i class="fas fa-lock"></i>
+                                                    Contraseña
+                                                </label>
+                                                <div class="input-group">                                                    <InputText type="password" 
+                                                              id="teacherPassword" 
+                                                              class="@($"form-control {(!isPasswordWeak && !string.IsNullOrWhiteSpace(registrationRequest.Password) ? "is-valid" : (isPasswordWeak ? "is-invalid" : ""))}")" 
+                                                              placeholder="Contraseña segura" 
+                                                              @bind-Value="registrationRequest.Password" 
+                                                              @oninput="HandlePasswordInput" />
+                                                    <div class="input-group-append">
+                                                        <div class="input-icon">
+                                                            @if (!isPasswordWeak && !string.IsNullOrWhiteSpace(registrationRequest.Password))
+                                                            {
+                                                                <i class="fas fa-check text-success"></i>
+                                                            }
+                                                            else if (isPasswordWeak)
+                                                            {
+                                                                <i class="fas fa-times text-danger"></i>
+                                                            }
+                                                            else
+                                                            {
+                                                                <i class="fas fa-lock text-muted"></i>
+                                                            }
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                @if (!string.IsNullOrEmpty(passwordStrengthMessage))
+                                                {
+                                                    <div class="validation-message @(isPasswordWeak ? "text-danger" : "text-info")">
+                                                        <i class="fas @(isPasswordWeak ? "fa-exclamation-triangle" : "fa-info-circle")"></i>
+                                                        @passwordStrengthMessage
+                                                    </div>
+                                                }
+                                            </div>
+
+                                            <div class="form-group">
+                                                <label for="confirmPassword" class="form-label">
+                                                    <i class="fas fa-lock"></i>
+                                                    Confirmar Contraseña
+                                                </label>
+                                                <div class="input-group">                                                    <InputText type="password" 
+                                                              id="confirmPassword" 
+                                                              class="@($"form-control {(string.IsNullOrEmpty(passwordValidationMessage) && !string.IsNullOrWhiteSpace(registrationRequest.ConfirmPassword) && registrationRequest.Password == registrationRequest.ConfirmPassword ? "is-valid" : (!string.IsNullOrEmpty(passwordValidationMessage) ? "is-invalid" : ""))}")" 
+                                                              placeholder="Confirma la contraseña" 
+                                                              @bind-Value="registrationRequest.ConfirmPassword" 
+                                                              @oninput="HandleConfirmPasswordInput" />
+                                                    <div class="input-group-append">
+                                                        <div class="input-icon">
+                                                            @if (string.IsNullOrEmpty(passwordValidationMessage) && !string.IsNullOrWhiteSpace(registrationRequest.ConfirmPassword) && registrationRequest.Password == registrationRequest.ConfirmPassword)
+                                                            {
+                                                                <i class="fas fa-check text-success"></i>
+                                                            }
+                                                            else if (!string.IsNullOrEmpty(passwordValidationMessage))
+                                                            {
+                                                                <i class="fas fa-times text-danger"></i>
+                                                            }
+                                                            else
+                                                            {
+                                                                <i class="fas fa-lock text-muted"></i>
+                                                            }
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                @if (!string.IsNullOrEmpty(passwordValidationMessage))
+                                                {
+                                                    <div class="validation-message text-danger">
+                                                        <i class="fas fa-exclamation-triangle"></i>
+                                                        @passwordValidationMessage
+                                                    </div>
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>                                    <!-- Sección de documentos -->
+                                    <div class="form-section">
+                                        <div class="section-header">
+                                            <h5><i class="fas fa-file-upload"></i> Documentos Adicionales</h5>
+                                            <p>Opcionalmente puedes adjuntar documentos de respaldo</p>
+                                        </div>
+
+                                        <!-- Zona de selección de archivos mejorada -->
+                                        <div class="form-group">
+                                            <label class="form-label">
+                                                <i class="fas fa-file-upload"></i>
+                                                Documento (Opcional)
+                                            </label>
                                     <div class="file-drop-zone @(isDragOver ? "drag-over" : "") @(dragCounter > 0 ? "dragging" : "")" 
                                          id="dropZone"
                                          @onclick="TriggerFileSelect"
@@ -326,29 +594,77 @@
                                             <i class="fas fa-exclamation-triangle"></i>
                                             @fileErrorMessage
                                         </div>
+                                    }                                        </div>
+                                    </div>
+
+                                    <!-- Botón de registro mejorado -->
+                                    <div class="form-actions">
+                                        <div class="action-buttons">
+                                            <button type="submit" class="btn btn-success btn-register" disabled="@(isRegistering || !IsFormValid())">
+                                                @if (isRegistering)
+                                                {
+                                                    <div class="loading-content">
+                                                        <span class="spinner-border spinner-border-sm mr-2"></span>
+                                                        <span>Registrando...</span>
+                                                        <div class="loading-dots">
+                                                            <span></span>
+                                                            <span></span>
+                                                            <span></span>
+                                                        </div>
+                                                    </div>
+                                                }
+                                                else
+                                                {
+                                                    <i class="fas fa-user-plus"></i>
+                                                    <span>Registrar Docente</span>
+                                                }
+                                            </button>
+                                            <button type="button" class="btn btn-outline-secondary" @onclick="ClearRegistrationForm" disabled="@isRegistering">
+                                                <i class="fas fa-eraser"></i>
+                                                Limpiar Formulario
+                                            </button>
+                                        </div>
+                                        
+                                        @if (IsFormValid())
+                                        {
+                                            <div class="form-validation-summary success">
+                                                <i class="fas fa-check-circle"></i>
+                                                <span>Formulario completo y válido</span>
+                                            </div>
+                                        }
+                                        else if (validatedTeacher != null)
+                                        {
+                                            <div class="form-validation-summary warning">
+                                                <i class="fas fa-exclamation-circle"></i>
+                                                <span>Completa todos los campos requeridos</span>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            </EditForm>
+                        }                        @if (!string.IsNullOrEmpty(registrationMessage))
+                        {
+                            <div class="registration-result @(registrationSuccess ? "success" : "error")">
+                                <div class="result-icon">
+                                    <i class="fas @(registrationSuccess ? "fa-check-circle" : "fa-exclamation-triangle")"></i>
+                                </div>
+                                <div class="result-content">
+                                    <div class="result-title">
+                                        @(registrationSuccess ? "Registro Exitoso" : "Error en Registro")
+                                    </div>
+                                    <div class="result-message">
+                                        @registrationMessage
+                                    </div>
+                                    @if (registrationSuccess)
+                                    {
+                                        <div class="success-actions">
+                                            <button type="button" class="btn btn-outline-primary btn-sm" @onclick="ClearValidation">
+                                                <i class="fas fa-plus"></i>
+                                                Registrar Otro Docente
+                                            </button>
+                                        </div>
                                     }
                                 </div>
-
-                                <button type="submit" class="btn btn-success" disabled="@(isRegistering || !IsFormValid())">
-                                    @if (isRegistering)
-                                    {
-                                        <span class="spinner-border spinner-border-sm mr-2"></span>
-                                        <span>Registrando...</span>
-                                    }
-                                    else
-                                    {
-                                        <i class="fas fa-user-plus"></i>
-                                        <span>Registrar Docente</span>
-                                    }
-                                </button>
-                            </EditForm>
-                        }
-
-                        @if (!string.IsNullOrEmpty(registrationMessage))
-                        {
-                            <div class="alert @(registrationSuccess ? "alert-success" : "alert-danger") mt-3">
-                                <i class="fas @(registrationSuccess ? "fa-check-circle" : "fa-exclamation-triangle")"></i>
-                                @registrationMessage
                             </div>
                         }
                     </div>
@@ -507,11 +823,71 @@
                 window.initializeManageTeachersFileDrop();
             ");
         }
-    }
-
-    private void GoBackToDashboard()
+    }    private void GoBackToDashboard()
     {
         Navigation.NavigateTo("/admin");
+    }    private void ClearValidation()
+    {
+        validationRequest = new();
+        validatedTeacher = null;
+        validationMessage = string.Empty;
+        validationSuccess = false;
+        registrationRequest = new();
+        registrationMessage = string.Empty;
+        registrationSuccess = false;
+        
+        // Limpiar validaciones
+        emailValidationMessage = string.Empty;
+        passwordStrengthMessage = string.Empty;
+        passwordValidationMessage = string.Empty;
+        nameValidationMessage = string.Empty;
+        fileErrorMessage = string.Empty;
+        
+        // Limpiar archivo
+        selectedFile = null;
+        imagePreview = string.Empty;
+        isImageFile = false;
+        isPdfFile = false;
+        isDocFile = false;
+        
+        // Limpiar estados
+        emailExists = false;
+        emailHasFormatError = false;
+        isPasswordWeak = false;
+    }
+
+    private void ClearRegistrationForm()
+    {
+        if (validatedTeacher != null)
+        {
+            // Solo limpiar los campos editables, mantener los datos de validación
+            registrationRequest.Email = string.Empty;
+            registrationRequest.Password = string.Empty;
+            registrationRequest.ConfirmPassword = string.Empty;
+            registrationRequest.Document = null;
+            
+            // Limpiar validaciones
+            emailValidationMessage = string.Empty;
+            passwordStrengthMessage = string.Empty;
+            passwordValidationMessage = string.Empty;
+            fileErrorMessage = string.Empty;
+            
+            // Limpiar archivo
+            selectedFile = null;
+            imagePreview = string.Empty;
+            isImageFile = false;
+            isPdfFile = false;
+            isDocFile = false;
+            
+            // Limpiar estados
+            emailExists = false;
+            emailHasFormatError = false;
+            isPasswordWeak = false;
+            
+            // Mantener el nombre validado
+            registrationRequest.Name = validatedTeacher.NombresCompletos;
+            registrationRequest.Cedula = validatedTeacher.Cedula;
+        }
     }
 
     private async Task ValidateCedula()
@@ -954,7 +1330,7 @@
                !string.IsNullOrWhiteSpace(registrationRequest.Email) &&
                !emailExists &&
                !emailHasFormatError &&
-               string.IsNullOrEmpty(emailValidationMessage) &&
+               (string.IsNullOrEmpty(emailValidationMessage) || emailValidationMessage == "Correo disponible") &&
                !string.IsNullOrWhiteSpace(registrationRequest.Password) &&
                !isPasswordWeak &&
                !string.IsNullOrWhiteSpace(registrationRequest.ConfirmPassword) &&
