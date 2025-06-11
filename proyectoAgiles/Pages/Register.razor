@@ -9,6 +9,7 @@
 @inject proyectoAgiles.Services.AuthService AuthService
 @inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime
+@inject proyectoAgiles.Services.UserSessionService UserSession
 
 <div class="auth-page">    <!-- Fondo decorativo -->
     <div class="auth-background">
@@ -270,21 +271,34 @@
     private int dragCounter = 0;
     private bool isImageFile = false;
     private bool isPdfFile = false;
-    private string imagePreview = string.Empty;    private string errorMessage = string.Empty;
+    private string imagePreview = string.Empty;
+    private string errorMessage = string.Empty;
     private string fileErrorMessage = string.Empty;
-    private string successMessage = string.Empty;    private string cedulaValidationMessage = string.Empty;
+    private string successMessage = string.Empty;
+    private string cedulaValidationMessage = string.Empty;
     private bool cedulaExists = false;
     private bool cedulaHasFormatError = false;
-    private string emailValidationMessage = string.Empty;    
-    private bool emailExists = false;
+    private string emailValidationMessage = string.Empty;      private bool emailExists = false;
     private bool emailHasFormatError = false;
     private string nameValidationMessage = string.Empty;
     private string passwordValidationMessage = string.Empty;
     private string passwordStrengthMessage = string.Empty;
     private bool isPasswordWeak = false;
-    private bool passwordsMatch = false;
+    private bool passwordsMatch = false; // Mantener para evitar errores
     private System.Threading.Timer? cedulaValidationTimer;
-    private System.Threading.Timer? emailValidationTimer;    private void HandleCedulaInput(ChangeEventArgs e)
+    private System.Threading.Timer? emailValidationTimer;    protected override async Task OnInitializedAsync()
+    {
+        // Solo permitir acceso a administradores autenticados
+        await UserSession.InitializeAsync();
+        
+        if (!UserSession.IsAuthenticated || UserSession.CurrentUser?.UserType != 1) // 1 = Admin
+        {
+            Navigation.NavigateTo("/");
+            return;
+        }
+    }
+
+    private void HandleCedulaInput(ChangeEventArgs e)
     {
         var cedula = e.Value?.ToString() ?? string.Empty;
         

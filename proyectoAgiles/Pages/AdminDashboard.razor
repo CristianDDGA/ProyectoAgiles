@@ -148,9 +148,7 @@
         }
 
         await LoadDashboardData();
-    }
-
-    private async Task LoadDashboardData()
+    }    private Task LoadDashboardData()
     {
         // Simular carga de datos - aquí conectarías con tu API
         totalUsers = 25;
@@ -165,7 +163,9 @@
             new ActivityItem { Type = "user_login", Description = "María García inició sesión", Timestamp = DateTime.Now.AddHours(-2) },
             new ActivityItem { Type = "system", Description = "Backup automático completado", Timestamp = DateTime.Now.AddHours(-4) }
         };
-    }    private void NavigateToUsers()
+        
+        return Task.CompletedTask;
+    }private void NavigateToUsers()
     {
         Navigation.NavigateTo("/admin/users");
     }

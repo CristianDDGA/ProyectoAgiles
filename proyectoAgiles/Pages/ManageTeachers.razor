@@ -1,9 +1,13 @@
 @page "/admin/manage-teachers"
 @using Microsoft.AspNetCore.Components.Web
+@using Microsoft.AspNetCore.Components.Forms
+@using System.ComponentModel.DataAnnotations
+@using System.IO
 @layout proyectoAgiles.Layout.MainLayout
 @inject NavigationManager Navigation
 @inject proyectoAgiles.Services.UserSessionService UserSession
 @inject HttpClient HttpClient
+@inject IJSRuntime JSRuntime
 
 <PageTitle>Gestionar Docentes - UTA</PageTitle>
 
@@ -106,8 +110,7 @@
                             <div class="empty-state">
                                 <i class="fas fa-arrow-left text-muted"></i>
                                 <p class="text-muted">Primero valida una cédula para habilitar el registro</p>
-                            </div>
-                        }
+                            </div>                        }
                         else
                         {
                             <EditForm Model="registrationRequest" OnValidSubmit="RegisterTeacher">
@@ -119,7 +122,15 @@
                                     <InputText id="teacherEmail" 
                                               class="form-control" 
                                               placeholder="correo@uta.edu.ec" 
-                                              @bind-Value="registrationRequest.Email" />
+                                              @bind-Value="registrationRequest.Email" 
+                                              @oninput="HandleEmailInput" />
+                                    @if (!string.IsNullOrEmpty(emailValidationMessage))
+                                    {
+                                        <div class="validation-message @(emailExists || emailHasFormatError ? "text-danger" : "text-success")">
+                                            <i class="fas @(emailExists || emailHasFormatError ? "fa-exclamation-triangle" : "fa-check-circle")"></i>
+                                            @emailValidationMessage
+                                        </div>
+                                    }
                                 </div>
 
                                 <div class="form-group">
@@ -131,24 +142,141 @@
                                               id="teacherPassword" 
                                               class="form-control" 
                                               placeholder="Contraseña segura" 
-                                              @bind-Value="registrationRequest.Password" />
-                                </div>
-
+                                              @bind-Value="registrationRequest.Password" 
+                                              @oninput="HandlePasswordInput" />
+                                    @if (!string.IsNullOrEmpty(passwordStrengthMessage))
+                                    {
+                                        <div class="validation-message text-info">
+                                            <i class="fas @(isPasswordWeak ? "fa-exclamation-triangle" : "fa-info-circle")"></i>
+                                            @passwordStrengthMessage
+                                        </div>
+                                    }
+                                </div>                                <!-- Zona de selección de archivos mejorada -->
                                 <div class="form-group">
-                                    <label for="teacherDocument" class="form-label">
+                                    <label class="form-label">
                                         <i class="fas fa-file-upload"></i>
                                         Documento (Opcional)
                                     </label>
-                                    <InputFile id="teacherDocument" 
-                                              class="form-control" 
-                                              OnChange="HandleFileSelected" 
-                                              accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
-                                    <small class="form-text text-muted">
-                                        Formatos aceptados: PDF, DOC, DOCX, JPG, PNG (Max: 5MB)
-                                    </small>
+                                    <div class="file-drop-zone @(isDragOver ? "drag-over" : "") @(dragCounter > 0 ? "dragging" : "")" 
+                                         id="dropZone"
+                                         @onclick="TriggerFileSelect"
+                                         @ondrop="HandleFileDrop" 
+                                         @ondragover="HandleDragOver" 
+                                         @ondragenter="HandleDragEnter" 
+                                         @ondragleave="HandleDragLeave"
+                                         @ondragover:preventDefault="true" 
+                                         @ondrop:preventDefault="true">
+                                        
+                                        @if (selectedFile is null)
+                                        {
+                                            <div class="drop-zone-content">
+                                                <div class="upload-icon-container">
+                                                    <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                                                    <div class="upload-animation-circle"></div>
+                                                </div>
+                                                <div class="drop-zone-text">
+                                                    <p class="main-text">Arrastra y suelta tu documento aquí</p>
+                                                    <p class="or-text">o</p>
+                                                    <button type="button" class="btn-select-file" @onclick="TriggerFileSelect" @onclick:stopPropagation="true">
+                                                        <i class="fas fa-file-search"></i>
+                                                        Seleccionar archivo
+                                                    </button>
+                                                    <small class="formats-text">Formatos: PDF, DOC, DOCX, JPG, PNG (Máx. 5MB)</small>
+                                                </div>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div class="file-preview-container">
+                                                <div class="file-preview-header">
+                                                    <div class="file-info-preview">
+                                                        <div class="file-icon-container">
+                                                            @if (isImageFile)
+                                                            {
+                                                                <i class="fas fa-image file-icon image-icon"></i>
+                                                            }
+                                                            else if (isPdfFile)
+                                                            {
+                                                                <i class="fas fa-file-pdf file-icon pdf-icon"></i>
+                                                            }
+                                                            else if (isDocFile)
+                                                            {
+                                                                <i class="fas fa-file-word file-icon doc-icon"></i>
+                                                            }
+                                                            else
+                                                            {
+                                                                <i class="fas fa-file file-icon default-icon"></i>
+                                                            }
+                                                        </div>
+                                                        <div class="file-details">
+                                                            <span class="file-name" title="@selectedFile?.Name">@selectedFile?.Name</span>
+                                                            <span class="file-size">@FormatFileSize(selectedFile?.Size ?? 0)</span>
+                                                            <div class="file-progress">
+                                                                <div class="progress-bar"></div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <button type="button" class="btn-remove-file" @onclick="ClearFile" @onclick:stopPropagation="true" title="Eliminar archivo">
+                                                        <i class="fas fa-times"></i>
+                                                    </button>
+                                                </div>
+                                                
+                                                @if (isImageFile && !string.IsNullOrEmpty(imagePreview))
+                                                {
+                                                    <div class="image-preview">
+                                                        <img src="@imagePreview" alt="Vista previa" class="preview-image" />
+                                                    </div>
+                                                }
+                                                else if (isPdfFile)
+                                                {
+                                                    <div class="pdf-preview">
+                                                        <div class="pdf-preview-info">
+                                                            <i class="fas fa-file-pdf"></i>
+                                                            <span>Documento PDF cargado correctamente</span>
+                                                        </div>
+                                                    </div>
+                                                }
+                                                else if (isDocFile)
+                                                {
+                                                    <div class="doc-preview">
+                                                        <div class="doc-preview-info">
+                                                            <i class="fas fa-file-word"></i>
+                                                            <span>Documento Word cargado correctamente</span>
+                                                        </div>
+                                                    </div>
+                                                }
+
+                                                <div class="file-actions">
+                                                    <button type="button" class="btn-change-file" @onclick="TriggerFileSelect" @onclick:stopPropagation="true">
+                                                        <i class="fas fa-exchange-alt"></i>
+                                                        Cambiar archivo
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        }
+
+                                        <!-- Overlay para drag over -->
+                                        <div class="drag-overlay @(isDragOver ? "visible" : "")">
+                                            <div class="drag-overlay-content">
+                                                <i class="fas fa-download"></i>
+                                                <p>Suelta el archivo aquí</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Input file oculto necesario para el botón seleccionar -->
+                                    <InputFile @ref="fileInput" OnChange="HandleFileSelected" class="file-input-hidden" style="display: none;" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" multiple="false" />
+                                    
+                                    @if (!string.IsNullOrEmpty(fileErrorMessage))
+                                    {
+                                        <div class="file-error-message">
+                                            <i class="fas fa-exclamation-triangle"></i>
+                                            @fileErrorMessage
+                                        </div>
+                                    }
                                 </div>
 
-                                <button type="submit" class="btn btn-success" disabled="@isRegistering">
+                                <button type="submit" class="btn btn-success" disabled="@(isRegistering || !IsFormValid())">
                                     @if (isRegistering)
                                     {
                                         <span class="spinner-border spinner-border-sm mr-2"></span>
@@ -182,14 +310,35 @@
     private TeacherRegistrationRequest registrationRequest = new();
     private ExternalTeacherDto? validatedTeacher;
     
+    // Estados de carga
     private bool isValidating = false;
     private bool isRegistering = false;
     
+    // Mensajes de validación y estado
     private string validationMessage = string.Empty;
     private bool validationSuccess = false;
     
     private string registrationMessage = string.Empty;
-    private bool registrationSuccess = false;    protected override async Task OnInitializedAsync()
+    private bool registrationSuccess = false;
+
+    // Manejo de archivos
+    private InputFile? fileInput;
+    private IBrowserFile? selectedFile;
+    private bool isDragOver = false;
+    private int dragCounter = 0;
+    private bool isImageFile = false;
+    private bool isPdfFile = false;
+    private bool isDocFile = false;
+    private string imagePreview = string.Empty;
+    private string fileErrorMessage = string.Empty;
+
+    // Validaciones de email y contraseña
+    private string emailValidationMessage = string.Empty;
+    private bool emailExists = false;
+    private bool emailHasFormatError = false;
+    private string passwordStrengthMessage = string.Empty;
+    private bool isPasswordWeak = false;
+    private System.Threading.Timer? emailValidationTimer;    protected override async Task OnInitializedAsync()
     {
         // Verificar que el usuario esté autenticado y sea administrador
         await UserSession.InitializeAsync();
@@ -198,6 +347,112 @@
         {
             Navigation.NavigateTo("/login");
             return;
+        }
+    }    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JSRuntime.InvokeVoidAsync("eval", @"
+                // Función para hacer click en el input file
+                window.triggerFileInput = (element) => {
+                    if (element) {
+                        element.click();
+                    }
+                };
+
+                window.initializeManageTeachersFileDrop = () => {
+                    const dropZone = document.getElementById('dropZone');
+                    if (!dropZone) return;
+
+                    let dragCounter = 0;
+
+                    // Prevenir comportamiento por defecto del navegador
+                    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                        dropZone.addEventListener(eventName, preventDefaults, false);
+                        document.body.addEventListener(eventName, preventDefaults, false);
+                    });
+
+                    function preventDefaults(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    }
+
+                    // Manejar eventos de drag
+                    dropZone.addEventListener('dragenter', (e) => {
+                        e.preventDefault();
+                        dragCounter++;
+                        dropZone.classList.add('drag-over');
+                        dropZone.classList.add('dragging');
+                    }, false);
+
+                    dropZone.addEventListener('dragleave', (e) => {
+                        e.preventDefault();
+                        dragCounter--;
+                        if (dragCounter <= 0) {
+                            dragCounter = 0;
+                            dropZone.classList.remove('drag-over');
+                            dropZone.classList.remove('dragging');
+                        }
+                    }, false);
+
+                    dropZone.addEventListener('dragover', (e) => {
+                        e.preventDefault();
+                        dropZone.classList.add('drag-over');
+                    }, false);
+
+                    // Manejar el drop de archivos
+                    dropZone.addEventListener('drop', handleDrop, false);
+
+                    function handleDrop(e) {
+                        e.preventDefault();
+                        dragCounter = 0;
+                        dropZone.classList.remove('drag-over');
+                        dropZone.classList.remove('dragging');
+
+                        const dt = e.dataTransfer;
+                        const files = dt.files;
+                        
+                        if (files.length > 0) {
+                            const file = files[0];
+                            
+                            // Validar archivo
+                            const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+                            const allowedExtensions = ['.pdf', '.jpg', '.jpeg', '.png', '.doc', '.docx'];
+                            
+                            const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
+                            const isValidType = allowedTypes.includes(file.type.toLowerCase()) || allowedExtensions.includes(fileExtension);
+                            
+                            if (!isValidType) {
+                                alert('Tipo de archivo no válido. Solo se permiten: PDF, DOC, DOCX, JPG, PNG');
+                                return;
+                            }
+                            
+                            if (file.size > 5 * 1024 * 1024) {
+                                alert('El archivo es demasiado grande. Tamaño máximo: 5MB');
+                                return;
+                            }
+
+                            // Transferir archivo al input file
+                            const fileInput = document.querySelector('.file-input-hidden');
+                            if (fileInput) {
+                                try {
+                                    const dataTransfer = new DataTransfer();
+                                    dataTransfer.items.add(file);
+                                    fileInput.files = dataTransfer.files;
+                                    
+                                    const event = new Event('change', { bubbles: true });
+                                    fileInput.dispatchEvent(event);
+                                } catch (error) {
+                                    console.error('Error al procesar el archivo:', error);
+                                }
+                            }
+                        }
+                    }
+                };
+
+                // Inicializar el drag and drop
+                window.initializeManageTeachersFileDrop();
+            ");
         }
     }
 
@@ -311,24 +566,281 @@
         {
             isRegistering = false;
         }
+    }    private async Task HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        if (e.File != null)
+        {
+            await ProcessSelectedFile(e.File);
+        }
     }
 
-    private void HandleFileSelected(InputFileChangeEventArgs e)
+    private async Task ProcessSelectedFile(IBrowserFile file)
     {
-        var file = e.File;
-        if (file != null)
+        try
         {
-            // Validar tamaño (5MB máximo)
+            fileErrorMessage = string.Empty;
+            
+            // Validar tamaño del archivo (5MB máximo para teacher management)
             if (file.Size > 5 * 1024 * 1024)
             {
-                registrationMessage = "El archivo no puede superar los 5MB";
-                registrationSuccess = false;
+                fileErrorMessage = "El archivo es demasiado grande. Tamaño máximo: 5MB";
+                StateHasChanged();
                 return;
             }
 
+            // Validar que el archivo no esté vacío
+            if (file.Size == 0)
+            {
+                fileErrorMessage = "El archivo está vacío. Por favor selecciona un archivo válido.";
+                StateHasChanged();
+                return;
+            }
+
+            // Validar tipo de archivo
+            var allowedTypes = new[] { "application/pdf", "image/jpeg", "image/jpg", "image/png", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document" };
+            var allowedExtensions = new[] { ".pdf", ".jpg", ".jpeg", ".png", ".doc", ".docx" };
+            
+            var fileExtension = Path.GetExtension(file.Name).ToLower();
+            var isValidType = allowedTypes.Contains(file.ContentType.ToLower()) || allowedExtensions.Contains(fileExtension);
+            
+            if (!isValidType)
+            {
+                fileErrorMessage = "Tipo de archivo no válido. Solo se permiten: PDF, DOC, DOCX, JPG, PNG";
+                StateHasChanged();
+                return;
+            }
+
+            selectedFile = file;
             registrationRequest.Document = file;
-            registrationMessage = string.Empty;
+            
+            // Determinar tipo de archivo
+            isImageFile = file.ContentType.StartsWith("image/") || new[] { ".jpg", ".jpeg", ".png" }.Contains(fileExtension);
+            isPdfFile = file.ContentType == "application/pdf" || fileExtension == ".pdf";
+            isDocFile = new[] { ".doc", ".docx" }.Contains(fileExtension) || file.ContentType.Contains("word");
+
+            // Generar vista previa para imágenes
+            if (isImageFile)
+            {
+                await GenerateImagePreview(file);
+            }
+
+            // Limpiar errores previos
+            fileErrorMessage = string.Empty;
+            StateHasChanged();
         }
+        catch (Exception ex)
+        {
+            fileErrorMessage = $"Error al procesar el archivo: {ex.Message}";
+            StateHasChanged();
+        }
+    }
+
+    private async Task GenerateImagePreview(IBrowserFile file)
+    {
+        try
+        {
+            var buffer = new byte[file.Size];
+            await file.OpenReadStream().ReadAsync(buffer);
+            var base64String = Convert.ToBase64String(buffer);
+            var mimeType = file.ContentType;
+            imagePreview = $"data:{mimeType};base64,{base64String}";
+        }
+        catch
+        {
+            imagePreview = string.Empty;
+        }
+    }
+
+    private void ClearFile()
+    {
+        selectedFile = null;
+        registrationRequest.Document = null;
+        fileErrorMessage = string.Empty;
+        isImageFile = false;
+        isPdfFile = false;
+        isDocFile = false;
+        imagePreview = string.Empty;
+        StateHasChanged();
+    }    private async Task TriggerFileSelect()
+    {
+        if (fileInput?.Element != null)
+        {
+            await JSRuntime.InvokeVoidAsync("triggerFileInput", fileInput.Element);
+        }
+    }
+
+    private void HandleDragEnter(DragEventArgs e)
+    {
+        dragCounter++;
+        isDragOver = true;
+    }
+
+    private void HandleDragLeave(DragEventArgs e)
+    {
+        dragCounter--;
+        if (dragCounter <= 0)
+        {
+            dragCounter = 0;
+            isDragOver = false;
+        }
+    }
+
+    private void HandleDragOver(DragEventArgs e)
+    {
+        // Necesario para permitir el drop
+    }    private async Task HandleFileDrop(DragEventArgs e)
+    {
+        dragCounter = 0;
+        isDragOver = false;
+
+        // El drag and drop se maneja principalmente por JavaScript
+        // Este método solo actualiza el estado visual de Blazor
+        await Task.CompletedTask;
+    }
+
+    private string FormatFileSize(long bytes)
+    {
+        string[] sizes = { "B", "KB", "MB", "GB" };
+        double len = bytes;
+        int order = 0;
+        while (len >= 1024 && order < sizes.Length - 1)
+        {
+            order++;
+            len = len / 1024;
+        }
+        return $"{len:0.##} {sizes[order]}";
+    }
+
+    private void HandleEmailInput(ChangeEventArgs e)
+    {
+        var email = e.Value?.ToString() ?? string.Empty;
+        registrationRequest.Email = email;
+        
+        // Cancelar timer anterior si existe
+        emailValidationTimer?.Dispose();
+        
+        // Solo validar si el email tiene un formato básico válido
+        if (IsValidEmailFormat(email))
+        {
+            // Crear un timer para validar después de 500ms sin cambios
+            emailValidationTimer = new System.Threading.Timer(async _ =>
+            {
+                await InvokeAsync(async () =>
+                {
+                    await ValidateEmail(email);
+                    StateHasChanged();
+                });
+            }, null, 500, System.Threading.Timeout.Infinite);
+        }
+        else if (!string.IsNullOrEmpty(email))
+        {
+            emailValidationMessage = "Formato de email inválido";
+            emailExists = false;
+            emailHasFormatError = true;
+        }
+        else
+        {
+            emailValidationMessage = string.Empty;
+            emailExists = false;
+            emailHasFormatError = false;
+        }
+    }
+
+    private bool IsValidEmailFormat(string email)
+    {
+        if (string.IsNullOrEmpty(email)) return false;
+        
+        try
+        {
+            var emailAttribute = new System.ComponentModel.DataAnnotations.EmailAddressAttribute();
+            return emailAttribute.IsValid(email);
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private async Task ValidateEmail(string email)
+    {
+        try
+        {
+            var response = await HttpClient.GetAsync($"https://localhost:7200/api/auth/check-email/{email}");
+            
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                var emailCheckResponse = System.Text.Json.JsonSerializer.Deserialize<dynamic>(content);
+                
+                emailExists = true;
+                emailValidationMessage = "Este correo ya está registrado";
+                emailHasFormatError = false;
+            }
+            else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                emailExists = false;
+                emailValidationMessage = "Correo disponible";
+                emailHasFormatError = false;
+            }
+        }
+        catch
+        {
+            emailValidationMessage = string.Empty;
+            emailExists = false;
+            emailHasFormatError = false;
+        }
+    }
+
+    private void HandlePasswordInput(ChangeEventArgs e)
+    {
+        var password = e.Value?.ToString() ?? string.Empty;
+        registrationRequest.Password = password;
+        
+        ValidatePasswordStrength(password);
+    }
+
+    private void ValidatePasswordStrength(string password)
+    {
+        if (string.IsNullOrEmpty(password))
+        {
+            passwordStrengthMessage = string.Empty;
+            isPasswordWeak = false;
+            return;
+        }
+
+        var hasNumber = password.Any(char.IsDigit);
+        var hasUpper = password.Any(char.IsUpper);
+        var hasLower = password.Any(char.IsLower);
+        var hasMinLength = password.Length >= 8;
+
+        var strengthScore = 0;
+        var issues = new List<string>();
+
+        if (hasMinLength) strengthScore++; else issues.Add("mínimo 8 caracteres");
+        if (hasNumber) strengthScore++; else issues.Add("un número");
+        if (hasUpper) strengthScore++; else issues.Add("una mayúscula");
+        if (hasLower) strengthScore++; else issues.Add("una minúscula");
+
+        if (strengthScore == 4)
+        {
+            passwordStrengthMessage = "Contraseña segura";
+            isPasswordWeak = false;
+        }
+        else
+        {
+            passwordStrengthMessage = $"Falta: {string.Join(", ", issues)}";
+            isPasswordWeak = true;
+        }
+    }
+
+    private bool IsFormValid()
+    {
+        return validatedTeacher != null &&
+               !string.IsNullOrWhiteSpace(registrationRequest.Email) &&
+               !string.IsNullOrWhiteSpace(registrationRequest.Password) &&
+               !emailExists &&
+               !emailHasFormatError &&
+               !isPasswordWeak;
     }
 
     public class TeacherValidationRequest

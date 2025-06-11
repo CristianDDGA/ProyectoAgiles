@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "0W5/SFJAdDo=",
+  "dgSpecHash": "Mfhg4X8Xj/0=",
   "success": true,
-  "projectFilePath": "C:\\Users\\nixon\\OneDrive\\Escritorio\\proyectoAgiles\\ProyectoAgiles.Api\\ProyectoAgiles.Api.csproj",
+  "projectFilePath": "C:\\Users\\nixon\\OneDrive\\Escritorio\\proyectoAgiles\\proyectoAgiles.Api\\ProyectoAgiles.Api.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\nixon\\.nuget\\packages\\azure.core\\1.38.0\\azure.core.1.38.0.nupkg.sha512",
     "C:\\Users\\nixon\\.nuget\\packages\\azure.identity\\1.11.4\\azure.identity.1.11.4.nupkg.sha512",

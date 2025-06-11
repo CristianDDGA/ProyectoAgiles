@@ -20,12 +20,10 @@
                         Cerrar Sesión
                     </button>
                 </div>
-            }
-            else
+            }            else
             {
                 <div class="auth-buttons d-none d-md-flex">
-                    <a href="/login" class="btn btn-outline-light btn-sm me-2">Iniciar Sesión</a>
-                    <a href="/register" class="btn btn-primary btn-sm">Registrarse</a>
+                    <a href="/login" class="btn btn-outline-light btn-sm">Iniciar Sesión</a>
                 </div>
             }
         }
@@ -56,13 +54,11 @@
                         </button>
                     </div>
                 </div>
-            }
-            else
+            }            else
             {
                 <div class="nav-item px-3 d-md-none">
                     <div class="mobile-auth-buttons">
-                        <a href="/login" class="btn btn-outline-primary btn-sm w-100 mb-2">Iniciar Sesión</a>
-                        <a href="/register" class="btn btn-primary btn-sm w-100">Registrarse</a>
+                        <a href="/login" class="btn btn-outline-primary btn-sm w-100">Iniciar Sesión</a>
                     </div>
                 </div>
             }
@@ -83,13 +79,11 @@
     private void ToggleNavMenu()
     {
         collapseNavMenu = !collapseNavMenu;
-    }
-
-    private bool IsOnAuthPage()
+    }    private bool IsOnAuthPage()
     {
         var currentPath = Navigation.ToBaseRelativePath(Navigation.Uri).ToLower();
-        return currentPath == "login" || currentPath == "register";
-    }    private async Task Logout()
+        return currentPath == "login";
+    }private async Task Logout()
     {
         await UserSession.ClearSessionAsync();
         Navigation.NavigateTo("/");
