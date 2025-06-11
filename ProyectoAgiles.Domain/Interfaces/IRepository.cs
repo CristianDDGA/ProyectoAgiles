@@ -20,6 +20,7 @@ public interface IRepository<T> where T : BaseEntity
 public interface IUserRepository : IRepository<User>
 {
     Task<User?> GetByEmailAsync(string email);
+    Task<User?> GetByCedulaAsync(string cedula);
     Task<bool> EmailExistsAsync(string email);
     Task<User?> ValidateUserAsync(string email, string password);
     Task<bool> CedulaExistsAsync(string cedula);

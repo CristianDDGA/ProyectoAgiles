@@ -1,0 +1,356 @@
+@page "/admin/manage-teachers"
+@using Microsoft.AspNetCore.Components.Web
+@layout proyectoAgiles.Layout.MainLayout
+@inject NavigationManager Navigation
+@inject proyectoAgiles.Services.UserSessionService UserSession
+@inject HttpClient HttpClient
+
+<PageTitle>Gestionar Docentes - UTA</PageTitle>
+
+<div class="manage-teachers-page">
+    <!-- Header de la página -->
+    <div class="page-header">
+        <div class="header-content">
+            <div class="header-text">
+                <h1 class="page-title">
+                    <i class="fas fa-user-tie"></i>
+                    Gestionar Docentes
+                </h1>
+                <p class="page-subtitle">Registra nuevos docentes utilizando la validación de cédula externa</p>
+            </div>            <button @onclick="GoBackToDashboard" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i>
+                Volver al Dashboard
+            </button>
+        </div>
+    </div>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Formulario de validación de cédula -->
+            <div class="col-lg-6">
+                <div class="card validation-card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-search"></i> Validar Cédula</h3>
+                        <p>Ingresa la cédula del docente para verificar su existencia en la base de datos externa</p>
+                    </div>
+                    <div class="card-body">
+                        <EditForm Model="validationRequest" OnValidSubmit="ValidateCedula">
+                            <div class="form-group">
+                                <label for="cedula" class="form-label">
+                                    <i class="fas fa-id-card"></i>
+                                    Número de Cédula
+                                </label>
+                                <InputText id="cedula" 
+                                          class="form-control" 
+                                          placeholder="Ej: 1750000001" 
+                                          @bind-Value="validationRequest.Cedula" 
+                                          maxlength="10" />
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary" disabled="@isValidating">
+                                @if (isValidating)
+                                {
+                                    <span class="spinner-border spinner-border-sm mr-2"></span>
+                                    <span>Validando...</span>
+                                }
+                                else
+                                {
+                                    <i class="fas fa-search"></i>
+                                    <span>Validar Cédula</span>
+                                }
+                            </button>
+                        </EditForm>
+
+                        @if (!string.IsNullOrEmpty(validationMessage))
+                        {
+                            <div class="alert @(validationSuccess ? "alert-success" : "alert-danger") mt-3">
+                                <i class="fas @(validationSuccess ? "fa-check-circle" : "fa-exclamation-triangle")"></i>
+                                @validationMessage
+                            </div>
+                        }
+
+                        @if (validatedTeacher != null)
+                        {
+                            <div class="teacher-info mt-4">
+                                <h4><i class="fas fa-user-check"></i> Información del Docente</h4>
+                                <div class="info-card">
+                                    <div class="info-item">
+                                        <span class="label">Nombre Completo:</span>
+                                        <span class="value">@validatedTeacher.NombresCompletos</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="label">Cédula:</span>
+                                        <span class="value">@validatedTeacher.Cedula</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="label">Universidad:</span>
+                                        <span class="value">@validatedTeacher.Universidad</span>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Formulario de registro -->
+            <div class="col-lg-6">
+                <div class="card registration-card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-user-plus"></i> Registrar Docente</h3>
+                        <p>Completa la información requerida para registrar al docente</p>
+                    </div>
+                    <div class="card-body">
+                        @if (validatedTeacher == null)
+                        {
+                            <div class="empty-state">
+                                <i class="fas fa-arrow-left text-muted"></i>
+                                <p class="text-muted">Primero valida una cédula para habilitar el registro</p>
+                            </div>
+                        }
+                        else
+                        {
+                            <EditForm Model="registrationRequest" OnValidSubmit="RegisterTeacher">
+                                <div class="form-group">
+                                    <label for="teacherEmail" class="form-label">
+                                        <i class="fas fa-envelope"></i>
+                                        Correo Electrónico
+                                    </label>
+                                    <InputText id="teacherEmail" 
+                                              class="form-control" 
+                                              placeholder="correo@uta.edu.ec" 
+                                              @bind-Value="registrationRequest.Email" />
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="teacherPassword" class="form-label">
+                                        <i class="fas fa-lock"></i>
+                                        Contraseña
+                                    </label>
+                                    <InputText type="password" 
+                                              id="teacherPassword" 
+                                              class="form-control" 
+                                              placeholder="Contraseña segura" 
+                                              @bind-Value="registrationRequest.Password" />
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="teacherDocument" class="form-label">
+                                        <i class="fas fa-file-upload"></i>
+                                        Documento (Opcional)
+                                    </label>
+                                    <InputFile id="teacherDocument" 
+                                              class="form-control" 
+                                              OnChange="HandleFileSelected" 
+                                              accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                                    <small class="form-text text-muted">
+                                        Formatos aceptados: PDF, DOC, DOCX, JPG, PNG (Max: 5MB)
+                                    </small>
+                                </div>
+
+                                <button type="submit" class="btn btn-success" disabled="@isRegistering">
+                                    @if (isRegistering)
+                                    {
+                                        <span class="spinner-border spinner-border-sm mr-2"></span>
+                                        <span>Registrando...</span>
+                                    }
+                                    else
+                                    {
+                                        <i class="fas fa-user-plus"></i>
+                                        <span>Registrar Docente</span>
+                                    }
+                                </button>
+                            </EditForm>
+                        }
+
+                        @if (!string.IsNullOrEmpty(registrationMessage))
+                        {
+                            <div class="alert @(registrationSuccess ? "alert-success" : "alert-danger") mt-3">
+                                <i class="fas @(registrationSuccess ? "fa-check-circle" : "fa-exclamation-triangle")"></i>
+                                @registrationMessage
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private TeacherValidationRequest validationRequest = new();
+    private TeacherRegistrationRequest registrationRequest = new();
+    private ExternalTeacherDto? validatedTeacher;
+    
+    private bool isValidating = false;
+    private bool isRegistering = false;
+    
+    private string validationMessage = string.Empty;
+    private bool validationSuccess = false;
+    
+    private string registrationMessage = string.Empty;
+    private bool registrationSuccess = false;    protected override async Task OnInitializedAsync()
+    {
+        // Verificar que el usuario esté autenticado y sea administrador
+        await UserSession.InitializeAsync();
+        
+        if (UserSession.CurrentUser == null || UserSession.CurrentUser.UserType != 1)
+        {
+            Navigation.NavigateTo("/login");
+            return;
+        }
+    }
+
+    private void GoBackToDashboard()
+    {
+        Navigation.NavigateTo("/admin");
+    }
+
+    private async Task ValidateCedula()
+    {
+        if (string.IsNullOrWhiteSpace(validationRequest.Cedula) || validationRequest.Cedula.Length != 10)
+        {
+            validationMessage = "La cédula debe tener exactamente 10 dígitos";
+            validationSuccess = false;
+            return;
+        }
+
+        isValidating = true;
+        validationMessage = string.Empty;
+        validatedTeacher = null;
+        
+        // Limpiar formulario de registro
+        registrationRequest = new() { Cedula = validationRequest.Cedula };
+        registrationMessage = string.Empty;
+
+        try
+        {
+            var response = await HttpClient.PostAsJsonAsync("api/teachermanagement/validate-cedula", validationRequest);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                validatedTeacher = await response.Content.ReadFromJsonAsync<ExternalTeacherDto>();
+                validationMessage = "✅ Docente encontrado en la base de datos externa";
+                validationSuccess = true;
+            }
+            else
+            {
+                validationMessage = "❌ No se encontró un docente con esta cédula en la base de datos externa";
+                validationSuccess = false;
+            }
+        }
+        catch (Exception ex)
+        {
+            validationMessage = $"Error al validar la cédula: {ex.Message}";
+            validationSuccess = false;
+        }
+        finally
+        {
+            isValidating = false;
+        }
+    }
+
+    private async Task RegisterTeacher()
+    {
+        if (validatedTeacher == null)
+        {
+            registrationMessage = "Primero debe validar una cédula";
+            registrationSuccess = false;
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(registrationRequest.Email) || 
+            string.IsNullOrWhiteSpace(registrationRequest.Password))
+        {
+            registrationMessage = "El correo electrónico y la contraseña son requeridos";
+            registrationSuccess = false;
+            return;
+        }
+
+        isRegistering = true;
+        registrationMessage = string.Empty;
+
+        try
+        {
+            // Preparar datos para envío
+            using var content = new MultipartFormDataContent();
+            content.Add(new StringContent(registrationRequest.Cedula), "Cedula");
+            content.Add(new StringContent(registrationRequest.Email), "Email");
+            content.Add(new StringContent(registrationRequest.Password), "Password");
+            
+            if (registrationRequest.Document != null)
+            {
+                var fileContent = new StreamContent(registrationRequest.Document.OpenReadStream());
+                content.Add(fileContent, "Document", registrationRequest.Document.Name);
+            }
+
+            var response = await HttpClient.PostAsync("api/teachermanagement/register", content);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                registrationMessage = "✅ Docente registrado exitosamente";
+                registrationSuccess = true;
+                
+                // Limpiar formularios
+                validationRequest = new();
+                registrationRequest = new();
+                validatedTeacher = null;
+                validationMessage = string.Empty;
+            }
+            else
+            {
+                var errorResponse = await response.Content.ReadAsStringAsync();
+                registrationMessage = $"❌ Error al registrar el docente: {errorResponse}";
+                registrationSuccess = false;
+            }
+        }
+        catch (Exception ex)
+        {
+            registrationMessage = $"Error al registrar el docente: {ex.Message}";
+            registrationSuccess = false;
+        }
+        finally
+        {
+            isRegistering = false;
+        }
+    }
+
+    private void HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        if (file != null)
+        {
+            // Validar tamaño (5MB máximo)
+            if (file.Size > 5 * 1024 * 1024)
+            {
+                registrationMessage = "El archivo no puede superar los 5MB";
+                registrationSuccess = false;
+                return;
+            }
+
+            registrationRequest.Document = file;
+            registrationMessage = string.Empty;
+        }
+    }
+
+    public class TeacherValidationRequest
+    {
+        public string Cedula { get; set; } = string.Empty;
+    }
+
+    public class TeacherRegistrationRequest
+    {
+        public string Cedula { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+        public IBrowserFile? Document { get; set; }
+    }
+
+    public class ExternalTeacherDto
+    {
+        public int Id { get; set; }
+        public string Cedula { get; set; } = string.Empty;
+        public string Universidad { get; set; } = string.Empty;
+        public string NombresCompletos { get; set; } = string.Empty;
+    }
+}

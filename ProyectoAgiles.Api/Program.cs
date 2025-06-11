@@ -19,6 +19,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IPasswordResetTokenRepository, PasswordResetTokenRepository>();
+builder.Services.AddScoped<IExternalTeacherRepository, ExternalTeacherRepository>();
 
 // Servicio para manejo de archivos
 builder.Services.AddScoped<IFileService, FileService>();
@@ -28,6 +29,7 @@ builder.Services.AddScoped<IEmailService, EmailService>();
 
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<ITeacherManagementService, TeacherManagementService>();
 
 // Configuración de CORS
 builder.Services.AddCors(options =>

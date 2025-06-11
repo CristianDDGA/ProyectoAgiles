@@ -7,10 +7,9 @@ public class ApplicationDbContext : DbContext
 {
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
     {
-    }
-
-    public DbSet<User> Users { get; set; }
+    }    public DbSet<User> Users { get; set; }
     public DbSet<PasswordResetToken> PasswordResetTokens { get; set; }
+    public DbSet<ExternalTeacher> ExternalTeachers { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -82,7 +81,33 @@ public class ApplicationDbContext : DbContext
             entity.HasOne(e => e.User)
                 .WithMany()
                 .HasForeignKey(e => e.UserId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.Cascade);        });
+
+        // Configuración de la entidad ExternalTeacher
+        modelBuilder.Entity<ExternalTeacher>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            
+            entity.Property(e => e.Cedula)
+                .IsRequired()
+                .HasMaxLength(10);
+            
+            entity.HasIndex(e => e.Cedula)
+                .IsUnique();
+            
+            entity.Property(e => e.Universidad)
+                .IsRequired()
+                .HasMaxLength(200);
+            
+            entity.Property(e => e.NombresCompletos)
+                .IsRequired()
+                .HasMaxLength(200);
+            
+            entity.Property(e => e.CreatedAt)
+                .IsRequired();
+            
+            entity.Property(e => e.UpdatedAt)
+                .IsRequired();
         });
 
         // Datos semilla para el administrador por defecto
@@ -101,6 +126,35 @@ public class ApplicationDbContext : DbContext
                 Cedula = "0000000000", // Cédula por defecto para admin
                 IsActive = true,
                 CreatedAt = new DateTime(2025, 6, 3, 0, 0, 0, DateTimeKind.Utc)
+            }
+        );        // Datos de ejemplo para docentes externos
+        modelBuilder.Entity<ExternalTeacher>().HasData(
+            new ExternalTeacher
+            {
+                Id = 1,
+                Cedula = "1750000001",
+                Universidad = "Universidad Técnica de Ambato",
+                NombresCompletos = "María Elena García Pérez",
+                CreatedAt = new DateTime(2025, 6, 11, 0, 0, 0, DateTimeKind.Utc),
+                UpdatedAt = new DateTime(2025, 6, 11, 0, 0, 0, DateTimeKind.Utc)
+            },
+            new ExternalTeacher
+            {
+                Id = 2,
+                Cedula = "1750000002",
+                Universidad = "Universidad Técnica de Ambato",
+                NombresCompletos = "Carlos Alberto Mendoza Silva",
+                CreatedAt = new DateTime(2025, 6, 11, 0, 0, 0, DateTimeKind.Utc),
+                UpdatedAt = new DateTime(2025, 6, 11, 0, 0, 0, DateTimeKind.Utc)
+            },
+            new ExternalTeacher
+            {
+                Id = 3,
+                Cedula = "1750000003",
+                Universidad = "Universidad Técnica de Ambato",
+                NombresCompletos = "Ana Cristina López Vargas",
+                CreatedAt = new DateTime(2025, 6, 11, 0, 0, 0, DateTimeKind.Utc),
+                UpdatedAt = new DateTime(2025, 6, 11, 0, 0, 0, DateTimeKind.Utc)
             }
         );
     }

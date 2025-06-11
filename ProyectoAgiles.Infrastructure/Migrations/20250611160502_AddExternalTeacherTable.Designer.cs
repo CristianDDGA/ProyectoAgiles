@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ProyectoAgiles.Infrastructure.Data;
 
@@ -11,9 +12,11 @@ using ProyectoAgiles.Infrastructure.Data;
 namespace ProyectoAgiles.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250611160502_AddExternalTeacherTable")]
+    partial class AddExternalTeacherTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -63,28 +66,28 @@ namespace ProyectoAgiles.Infrastructure.Migrations
                         {
                             Id = 1,
                             Cedula = "1750000001",
-                            CreatedAt = new DateTime(2025, 6, 11, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2025, 6, 11, 16, 5, 1, 997, DateTimeKind.Utc).AddTicks(6911),
                             NombresCompletos = "María Elena García Pérez",
                             Universidad = "Universidad Técnica de Ambato",
-                            UpdatedAt = new DateTime(2025, 6, 11, 0, 0, 0, 0, DateTimeKind.Utc)
+                            UpdatedAt = new DateTime(2025, 6, 11, 16, 5, 1, 997, DateTimeKind.Utc).AddTicks(7077)
                         },
                         new
                         {
                             Id = 2,
                             Cedula = "1750000002",
-                            CreatedAt = new DateTime(2025, 6, 11, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2025, 6, 11, 16, 5, 1, 997, DateTimeKind.Utc).AddTicks(7214),
                             NombresCompletos = "Carlos Alberto Mendoza Silva",
                             Universidad = "Universidad Técnica de Ambato",
-                            UpdatedAt = new DateTime(2025, 6, 11, 0, 0, 0, 0, DateTimeKind.Utc)
+                            UpdatedAt = new DateTime(2025, 6, 11, 16, 5, 1, 997, DateTimeKind.Utc).AddTicks(7214)
                         },
                         new
                         {
                             Id = 3,
                             Cedula = "1750000003",
-                            CreatedAt = new DateTime(2025, 6, 11, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2025, 6, 11, 16, 5, 1, 997, DateTimeKind.Utc).AddTicks(7215),
                             NombresCompletos = "Ana Cristina López Vargas",
                             Universidad = "Universidad Técnica de Ambato",
-                            UpdatedAt = new DateTime(2025, 6, 11, 0, 0, 0, 0, DateTimeKind.Utc)
+                            UpdatedAt = new DateTime(2025, 6, 11, 16, 5, 1, 997, DateTimeKind.Utc).AddTicks(7216)
                         });
                 });
 
