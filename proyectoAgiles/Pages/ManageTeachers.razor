@@ -221,11 +221,9 @@
         
         // Limpiar formulario de registro
         registrationRequest = new() { Cedula = validationRequest.Cedula };
-        registrationMessage = string.Empty;
-
-        try
+        registrationMessage = string.Empty;        try
         {
-            var response = await HttpClient.PostAsJsonAsync("api/teachermanagement/validate-cedula", validationRequest);
+            var response = await HttpClient.PostAsJsonAsync("http://localhost:5200/api/teachermanagement/validate-cedula", validationRequest);
             
             if (response.IsSuccessStatusCode)
             {
@@ -284,7 +282,7 @@
                 content.Add(fileContent, "Document", registrationRequest.Document.Name);
             }
 
-            var response = await HttpClient.PostAsync("api/teachermanagement/register", content);
+            var response = await HttpClient.PostAsync("http://localhost:5200/api/teachermanagement/register", content);
             
             if (response.IsSuccessStatusCode)
             {

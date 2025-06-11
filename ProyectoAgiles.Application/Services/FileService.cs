@@ -59,28 +59,26 @@ public class FileService : IFileService
         {
             throw new InvalidOperationException($"Error al guardar archivo: {ex.Message}", ex);
         }
-    }
-
-    public async Task<bool> DeleteFileAsync(string filePath)
+    }    public Task<bool> DeleteFileAsync(string filePath)
     {
         try
         {
             if (string.IsNullOrEmpty(filePath))
-                return false;
+                return Task.FromResult(false);
 
             var fullPath = Path.Combine(_webRootPath, filePath);
             
             if (File.Exists(fullPath))
             {
                 File.Delete(fullPath);
-                return true;
+                return Task.FromResult(true);
             }
 
-            return false;
+            return Task.FromResult(false);
         }
         catch
         {
-            return false;
+            return Task.FromResult(false);
         }
     }
 

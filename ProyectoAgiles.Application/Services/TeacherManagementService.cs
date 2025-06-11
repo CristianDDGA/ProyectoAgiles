@@ -77,16 +77,14 @@ public class TeacherManagementService : ITeacherManagementService
             // Extraer nombres del docente externo
             var nombresParts = externalTeacher.NombresCompletos.Split(' ', StringSplitOptions.RemoveEmptyEntries);
             var firstName = nombresParts.Length > 0 ? nombresParts[0] : "";
-            var lastName = nombresParts.Length > 1 ? string.Join(" ", nombresParts.Skip(1)) : "";
-
-            // Crear el nuevo usuario
+            var lastName = nombresParts.Length > 1 ? string.Join(" ", nombresParts.Skip(1)) : "";            // Crear el nuevo usuario
             var newUser = new User
             {
                 FirstName = firstName,
                 LastName = lastName,
                 Email = request.Email,
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
-                UserType = UserType.Teacher,
+                UserType = UserType.Docente,
                 Cedula = request.Cedula,
                 IsActive = true,
                 CreatedAt = DateTime.UtcNow
