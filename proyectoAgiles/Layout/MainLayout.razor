@@ -7,10 +7,28 @@
         <div class="container-fluid">
             <div class="navbar-brand">
                 <img src="images/uta-logo.png" alt="Universidad Técnica de Ambato" class="logo-uta">
-            </div>            <div class="ms-auto">
+            </div>            <div class="ms-auto d-flex align-items-center">
                 @if (UserSession.IsAuthenticated)
-                {
-                    <span class="navbar-text me-3">Hola, @UserSession.CurrentUser!.FirstName</span>
+                {                    <div class="user-info-section d-flex align-items-center me-3">
+                        <div class="user-avatar">
+                            @if (UserSession.IsAdmin)
+                            {
+                                <i class="fas fa-shield-alt text-primary"></i>
+                            }
+                            else if (UserSession.IsTeacher)
+                            {
+                                <i class="fas fa-chalkboard-teacher text-info"></i>
+                            }
+                            else
+                            {
+                                <i class="fas fa-user text-secondary"></i>
+                            }
+                        </div>
+                        <div class="user-details">
+                            <span class="navbar-text">Hola, @UserSession.CurrentUser!.FirstName</span>
+                            <small class="user-role text-muted d-block">@UserSession.GetUserRole()</small>
+                        </div>
+                    </div>
                     <button @onclick="Logout" class="btn btn-outline-danger">
                         <i class="fas fa-sign-out-alt me-1"></i>
                         Cerrar Sesión

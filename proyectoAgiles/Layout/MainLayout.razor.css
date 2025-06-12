@@ -125,6 +125,55 @@
     padding: 0;
 }
 
+/* Estilos para la información del usuario */
+.user-info-section {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 12px;
+    padding: 0.5rem 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.user-avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: rgba(114, 47, 55, 0.1);
+    border-radius: 50%;
+    border: 2px solid rgba(114, 47, 55, 0.2);
+    margin-right: 12px !important;
+}
+
+.user-avatar i {
+    font-size: 1.2rem;
+}
+
+.user-details {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+}
+
+.navbar-text {
+    color: #2c3e50 !important;
+    font-weight: 600;
+    font-size: 0.95rem;
+    margin: 0;
+}
+
+.user-role {
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #7f8c8d !important;
+    margin: 0;
+    line-height: 1;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .main-content {
@@ -149,5 +198,44 @@
     .navbar {
         min-height: 70px;
         padding: 0.3rem 0.8rem;
+    }
+      .user-info-section {
+        padding: 0.3rem 0.7rem;
+        background: rgba(255, 255, 255, 0.95);
+    }
+      .user-avatar {
+        width: 35px;
+        height: 35px;
+        background: rgba(114, 47, 55, 0.1);
+        margin-right: 10px !important;
+    }
+    
+    .user-avatar i {
+        font-size: 1rem;
+    }
+    
+    .navbar-text {
+        font-size: 0.85rem;
+        color: #2c3e50 !important;
+    }
+    
+    .user-role {
+        font-size: 0.7rem;
+        color: #7f8c8d !important;
+    }
+}
+
+@media (max-width: 576px) {
+    .user-details {
+        display: none;
+    }
+      .user-info-section {
+        padding: 0.4rem;
+        background: rgba(255, 255, 255, 0.95);
+    }
+      .user-avatar {
+        width: 32px;
+        height: 32px;
+        margin-right: 8px !important;
     }
 }
