@@ -122,8 +122,7 @@ public class AuthService : IAuthService
                 Message = "Inicio de sesión exitoso",
                 User = MapToDto(validatedUser)
             };
-        }
-        else
+        }        else
         {
             // Login fallido - incrementar contador
             await IncrementFailedLoginAttemptsAsync(user);
@@ -141,10 +140,15 @@ public class AuthService : IAuthService
                 };
             }
             
+            // Calcular intentos restantes (3 intentos máximos)
+            int remainingAttempts = 3 - (user.FailedLoginAttempts + 1);
+            
             return new LoginResponse
             {
                 Success = false,
-                Message = $"Email o contraseña incorrectos. Intentos restantes: {3 - user.FailedLoginAttempts - 1}",
+                Message = remainingAttempts > 0 
+                    ? $"Email o contraseña incorrectos. Intentos restantes: {remainingAttempts}" 
+                    : "Email o contraseña incorrectos",
                 FailedAttempts = user.FailedLoginAttempts + 1
             };
         }
@@ -313,14 +317,12 @@ public class AuthService : IAuthService
             FullName = user.FullName,
             IdentityDocumentPath = user.IdentityDocumentPath
         };
-    }
-
-    private async Task IncrementFailedLoginAttemptsAsync(User user)
+    }    private async Task IncrementFailedLoginAttemptsAsync(User user)
     {
         user.FailedLoginAttempts++;
         user.LastFailedLogin = DateTime.UtcNow;
         
-        // Si alcanza 3 intentos fallidos, bloquear la cuenta
+        // Si alcanza 3 intentos fallidos, bloquear la cuenta al cuarto intento
         if (user.FailedLoginAttempts >= 3)
         {
             user.IsLocked = true;
