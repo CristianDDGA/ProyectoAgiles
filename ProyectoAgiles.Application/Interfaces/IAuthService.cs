@@ -5,7 +5,7 @@ namespace ProyectoAgiles.Application.Interfaces;
 public interface IAuthService
 {
     Task<UserDto?> RegisterAsync(RegisterDto registerDto);
-    Task<UserDto?> LoginAsync(LoginDto loginDto);
+    Task<LoginResponse> LoginAsync(LoginDto loginDto);
     Task<UserDto?> GetUserByIdAsync(int userId);
     Task<UserDto?> GetUserByEmailAsync(string email);
     Task<bool> EmailExistsAsync(string email);

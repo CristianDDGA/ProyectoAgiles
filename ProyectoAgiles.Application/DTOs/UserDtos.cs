@@ -65,3 +65,13 @@ public class ResetPasswordResponse
     public bool Success { get; set; }
     public string Message { get; set; } = string.Empty;
 }
+
+public class LoginResponse
+{
+    public bool Success { get; set; }
+    public string Message { get; set; } = string.Empty;
+    public UserDto? User { get; set; }
+    public string Token { get; set; } = string.Empty;
+    public bool IsAccountLocked { get; set; } = false;
+    public int FailedAttempts { get; set; } = 0;
+}

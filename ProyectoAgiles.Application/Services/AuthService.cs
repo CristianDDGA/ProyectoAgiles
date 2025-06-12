@@ -71,15 +71,17 @@ public class AuthService : IAuthService
             IsActive = true
         };        var createdUser = await _userRepository.AddAsync(user);
         return MapToDto(createdUser);
-    }
-
-    public async Task<UserDto?> LoginAsync(LoginDto loginDto)
+    }    public async Task<LoginResponse> LoginAsync(LoginDto loginDto)
     {
         var user = await _userRepository.GetByEmailAsync(loginDto.Email);
         
         if (user == null)
         {
-            return null; // Usuario no encontrado
+            return new LoginResponse
+            {
+                Success = false,
+                Message = "Email o contraseña incorrectos"
+            };
         }
         
         // Verificar si la cuenta está bloqueada
@@ -94,7 +96,13 @@ public class AuthService : IAuthService
             else
             {
                 // La cuenta sigue bloqueada
-                throw new InvalidOperationException("Tu cuenta está bloqueada por múltiples intentos fallidos. Para desbloquearla, utiliza la opción 'Olvidé mi contraseña' o contacta al administrador.");
+                return new LoginResponse
+                {
+                    Success = false,
+                    Message = "Tu cuenta está bloqueada por múltiples intentos fallidos. Para desbloquearla, utiliza la opción 'Olvidé mi contraseña' o contacta al administrador.",
+                    IsAccountLocked = true,
+                    FailedAttempts = user.FailedLoginAttempts
+                };
             }
         }
         
@@ -108,13 +116,37 @@ public class AuthService : IAuthService
             {
                 await ResetFailedLoginAttemptsAsync(user);
             }
-            return MapToDto(validatedUser);
+            return new LoginResponse
+            {
+                Success = true,
+                Message = "Inicio de sesión exitoso",
+                User = MapToDto(validatedUser)
+            };
         }
         else
         {
             // Login fallido - incrementar contador
             await IncrementFailedLoginAttemptsAsync(user);
-            return null;
+            
+            // Verificar si ahora está bloqueada después del incremento
+            var updatedUser = await _userRepository.GetByIdAsync(user.Id);
+            if (updatedUser?.IsLocked == true)
+            {
+                return new LoginResponse
+                {
+                    Success = false,
+                    Message = "Tu cuenta ha sido bloqueada por múltiples intentos fallidos. Para desbloquearla, utiliza la opción 'Olvidé mi contraseña' o contacta al administrador.",
+                    IsAccountLocked = true,
+                    FailedAttempts = updatedUser.FailedLoginAttempts
+                };
+            }
+            
+            return new LoginResponse
+            {
+                Success = false,
+                Message = $"Email o contraseña incorrectos. Intentos restantes: {3 - user.FailedLoginAttempts - 1}",
+                FailedAttempts = user.FailedLoginAttempts + 1
+            };
         }
     }
 
