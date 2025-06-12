@@ -3,6 +3,7 @@
 @using Microsoft.AspNetCore.Components.Forms
 @using System.ComponentModel.DataAnnotations
 @using System.IO
+@using System.Text.Json
 @layout proyectoAgiles.Layout.MainLayout
 @inject NavigationManager Navigation
 @inject proyectoAgiles.Services.UserSessionService UserSession
@@ -877,9 +878,7 @@
             registrationRequest.Name = validatedTeacher.NombresCompletos;
             registrationRequest.Cedula = validatedTeacher.Cedula;
         }
-    }
-
-    private async Task ValidateCedula()
+    }    private async Task ValidateCedula()
     {
         if (string.IsNullOrWhiteSpace(validationRequest.Cedula) || validationRequest.Cedula.Length != 10)
         {
@@ -898,30 +897,55 @@
 
         try
         {
-            var response = await HttpClient.PostAsJsonAsync("http://localhost:5200/api/teachermanagement/validate-cedula", validationRequest);
+            // Primero verificar si la cédula ya está registrada como usuario en el sistema
+            var userExistsResponse = await HttpClient.GetAsync($"http://localhost:5200/api/auth/check-cedula/{validationRequest.Cedula}");
             
-            if (response.IsSuccessStatusCode)
+            if (userExistsResponse.IsSuccessStatusCode)
+            {
+                var userCheckContent = await userExistsResponse.Content.ReadAsStringAsync();
+                var userCheckResult = System.Text.Json.JsonSerializer.Deserialize<JsonElement>(userCheckContent);
+                
+                if (userCheckResult.TryGetProperty("exists", out var existsProperty) && existsProperty.GetBoolean())
+                {
+                    validationMessage = "❌ Esta cédula ya está registrada en el sistema";
+                    validationSuccess = false;
+                    return;
+                }
+            }
+
+            // Si la cédula no está registrada como usuario, proceder con la validación externa
+            var response = await HttpClient.PostAsJsonAsync("http://localhost:5200/api/teachermanagement/validate-cedula", validationRequest);
+              if (response.IsSuccessStatusCode)
             {
                 validatedTeacher = await response.Content.ReadFromJsonAsync<ExternalTeacherDto>();
-                validationMessage = "✅ Docente encontrado en la base de datos externa";
-                validationSuccess = true;
-
-                // Llenar automáticamente los campos del formulario de registro
-                registrationRequest.Name = validatedTeacher.NombresCompletos;
-                registrationRequest.Cedula = validatedTeacher.Cedula;
-                // Limpiar otros campos para que el usuario los complete
-                registrationRequest.Email = string.Empty;
-                registrationRequest.Password = string.Empty;
-                registrationRequest.ConfirmPassword = string.Empty;
-                registrationRequest.Document = null;
                 
-                // Limpiar mensajes de validación
-                emailValidationMessage = string.Empty;
-                passwordStrengthMessage = string.Empty;
-                passwordValidationMessage = string.Empty;
-                fileErrorMessage = string.Empty;
-                selectedFile = null;
-                imagePreview = string.Empty;
+                if (validatedTeacher != null)
+                {
+                    validationMessage = "✅ Docente encontrado en la base de datos externa";
+                    validationSuccess = true;
+
+                    // Llenar automáticamente los campos del formulario de registro
+                    registrationRequest.Name = validatedTeacher.NombresCompletos;
+                    registrationRequest.Cedula = validatedTeacher.Cedula;
+                    // Limpiar otros campos para que el usuario los complete
+                    registrationRequest.Email = string.Empty;
+                    registrationRequest.Password = string.Empty;
+                    registrationRequest.ConfirmPassword = string.Empty;
+                    registrationRequest.Document = null;
+                    
+                    // Limpiar mensajes de validación
+                    emailValidationMessage = string.Empty;
+                    passwordStrengthMessage = string.Empty;
+                    passwordValidationMessage = string.Empty;
+                    fileErrorMessage = string.Empty;
+                    selectedFile = null;
+                    imagePreview = string.Empty;
+                }
+                else
+                {
+                    validationMessage = "❌ Error al procesar la respuesta del servidor";
+                    validationSuccess = false;
+                }
             }
             else
             {
