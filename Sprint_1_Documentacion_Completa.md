@@ -873,7 +873,120 @@
     └── Services/UserService.cs (100 líneas)
 ```
 
-### 🛠️ Anexo C: Comandos de Desarrollo
+### 📋 Anexo C: Explicación Detallada de Carpetas y Archivos
+
+#### 🔧 Archivos de Configuración Principal
+
+- **`proyectoAgiles.slnx`**: Archivo de solución de Visual Studio que define los 5 proyectos de la arquitectura limpia (Frontend, API, Application, Domain, Infrastructure).
+
+- **Documentación**:
+  - `COMANDOS_BASE_DATOS.md`: Scripts SQL para crear tablas, índices y configuración inicial de base de datos
+  - `DATABASE_SETUP.md`: Guía paso a paso para configurar SQL Server y Entity Framework
+  - `Sprint_1_Documentacion_Completa.md`: Documentación completa del sprint actual con historias de usuario y criterios de aceptación
+  - `Sprint_Backlog_*.md`: Desglose específico de cada historia de usuario del sprint
+  - `test-register.json`: Datos de prueba en formato JSON para testing del sistema de registro
+
+#### 🎨 Frontend - Proyecto `proyectoAgiles/` (Blazor WebAssembly)
+
+**Archivos Principales:**
+- **`Program.cs`**: Punto de entrada de la aplicación Blazor. Configura la inyección de dependencias, servicios HTTP para comunicación con la API, y servicios personalizados como `AuthService` y `UserSessionService`.
+
+- **`App.razor`**: Componente raíz que maneja el sistema de enrutamiento. Define qué hacer cuando se encuentra una ruta válida, cuando no se encuentra, y inicializa la sesión del usuario.
+
+- **`_Imports.razor`**: Archivo de importaciones globales que incluye todos los namespaces necesarios (System.Net.Http, Microsoft.AspNetCore.Components, etc.) para que estén disponibles en todos los componentes sin necesidad de declararlos individualmente.
+
+- **`proyectoAgiles.csproj`**: Archivo de proyecto que define las dependencias de NuGet específicas para Blazor WebAssembly, incluyendo las librerías de Microsoft para componentes web.
+
+**Carpetas Funcionales:**
+
+**📄 `Pages/`** - Componentes de páginas principales:
+- `Login.razor`: Página de autenticación con formulario de email/cédula y contraseña, validaciones en tiempo real y manejo de errores
+- `Register.razor`: Formulario de registro completo con validación de datos, carga de documentos y verificación de cédula
+- `ForgotPassword.razor`: Página para solicitar recuperación de contraseña por email o cédula
+- `ResetPassword.razor`: Página para establecer nueva contraseña usando token de validación
+- `Home.razor`: Página de bienvenida con información general del sistema
+- `AdminDashboard.razor`: Dashboard con estadísticas, gráficos y herramientas de gestión para administradores
+- `TeacherDashboard.razor`: Dashboard personalizado para docentes con acceso a sus recursos y herramientas
+- `ManageTeachers.razor`: Interfaz CRUD completa para gestión de docentes (crear, leer, actualizar, eliminar)
+
+**🎨 `Layout/`** - Plantillas de diseño:
+- `MainLayout.razor`: Layout principal con header, sidebar, navegación y footer para usuarios autenticados
+- `AuthLayout.razor`: Layout específico para páginas de autenticación (login, registro) con diseño centrado y minimalista
+- `NavMenu.razor`: Componente de navegación con menús dinámicos según el rol del usuario
+- Archivos `.css`: Estilos específicos para cada layout con diseño responsive
+
+**⚙️ `Services/`** - Servicios del frontend:
+- `AuthService.cs`: Servicio para todas las operaciones de autenticación (login, registro, verificación de tokens, logout)
+- `UserSessionService.cs`: Servicio para mantener el estado de la sesión del usuario, roles y permisos durante la navegación
+
+**🔄 `Shared/`** - Componentes reutilizables:
+- `AuthLayout.razor`: Componente de layout compartido para todas las páginas de autenticación
+
+**🌐 `wwwroot/`** - Recursos estáticos web:
+- `index.html`: Archivo HTML base que carga la aplicación Blazor WebAssembly
+- `appsettings.json`: Configuración del cliente (URLs de API, timeouts, configuraciones de UI)
+- `favicon.png`, `icon-192.png`: Iconos de la aplicación para browser y PWA
+- `css/`: Hojas de estilo CSS globales y frameworks (Bootstrap, CSS personalizado)
+- `js/`: Scripts JavaScript para interacciones específicas y librerías externas
+- `images/`: Recursos gráficos (logos, iconos, ilustraciones)
+- `lib/`: Librerías de terceros (jQuery, Bootstrap JS, etc.)
+
+**📊 `Properties/`**:
+- `launchSettings.json`: Configuración de perfiles de desarrollo (URLs, variables de entorno, configuraciones de HTTPS)
+
+#### 🔌 Backend API - Proyecto `ProyectoAgiles.Api/`
+
+**Archivos Principales:**
+- **`Program.cs`**: Configuración completa del servidor API incluyendo Entity Framework, inyección de dependencias, CORS, autenticación, y configuración de servicios
+- **`ProyectoAgiles.Api.csproj`**: Dependencias específicas del API (Entity Framework, JWT, Swagger)
+
+**Archivos de Configuración:**
+- `appsettings.json`: Configuración de producción (cadenas de conexión, configuraciones de email, JWT settings)
+- `appsettings.Development.json`: Configuración específica para desarrollo
+- `ProyectoAgiles.Api.http`: Archivo de pruebas HTTP para testing manual de endpoints
+- `test-api.http`: Tests adicionales para validar funcionalidad de la API
+
+**📡 `Controllers/`** - Controladores REST:
+- `AuthController.cs`: Endpoints para autenticación, registro, recuperación de contraseña y validación de tokens
+- `DashboardController.cs`: Endpoints para obtener estadísticas y datos de dashboards
+- Otros controladores para diferentes módulos del sistema
+
+#### 📚 Capa de Aplicación - `ProyectoAgiles.Application/`
+
+Esta capa implementa los casos de uso del sistema:
+- **`DTOs/`**: Data Transfer Objects para transferir datos entre las capas sin exponer entidades de dominio
+- **`Services/`**: Servicios de aplicación que coordinan las operaciones de negocio y orquestan llamadas a repositorios
+- **`Interfaces/`**: Contratos que definen las operaciones disponibles en la capa de aplicación
+- **`ProyectoAgiles.Application.csproj`**: Dependencias mínimas para la lógica de aplicación
+
+#### 🏗️ Capa de Dominio - `ProyectoAgiles.Domain/`
+
+El núcleo del sistema con la lógica de negocio pura:
+- **`Entities/`**: Entidades de dominio (User, Teacher, Course, etc.) con sus propiedades y comportamientos
+- **`Enums/`**: Enumeraciones del dominio (UserRole, CourseStatus, etc.)
+- **`Interfaces/`**: Contratos de repositorios y servicios de dominio
+- **`ProyectoAgiles.Domain.csproj`**: Sin dependencias externas, solo .NET Core
+
+#### 🔗 Capa de Infraestructura - `ProyectoAgiles.Infrastructure/`
+
+Implementación de acceso a datos y servicios externos:
+- **`Data/`**: `ApplicationDbContext` y configuraciones de Entity Framework
+- **`Repositories/`**: Implementaciones concretas de repositorios para cada entidad
+- **`Migrations/`**: Migraciones de Entity Framework para evolución del esquema de base de datos
+- **`ProyectoAgiles.Infrastructure.csproj`**: Dependencias de acceso a datos (Entity Framework, SQL Server, etc.)
+
+#### 🔨 Carpetas de Compilación
+
+**`bin/`** y **`obj/`** (en cada proyecto):
+- `bin/`: Archivos compilados, DLLs y ejecutables listos para despliegue
+- `obj/`: Archivos temporales de compilación, cache de NuGet y metadatos del proyecto
+
+#### 📁 Estructura de Archivos de Soporte
+
+- **`obj/`** (raíz): Archivos de compilación y configuración global de la solución
+- **Cache de NuGet**: Archivos como `project.assets.json`, `*.nuget.cache` que almacenan información de dependencias
+
+### 🛠️ Anexo D: Comandos de Desarrollo
 
 ```powershell
 # Ejecutar el proyecto Blazor
@@ -895,11 +1008,10 @@ dotnet test
 dotnet build proyectoAgiles.slnx
 ```
 
-### 📊 Anexo D: URLs y Endpoints
+### 📊 Anexo E: URLs y Endpoints
 
 #### URLs del Frontend (Blazor)
 - Login: `http://localhost:5043/login`
-- Registro: `http://localhost:5043/register`
 - Recuperar contraseña: `http://localhost:5043/forgot-password`
 - Dashboard Admin: `http://localhost:5043/admin`
 - Dashboard Docente: `http://localhost:5043/docente`
