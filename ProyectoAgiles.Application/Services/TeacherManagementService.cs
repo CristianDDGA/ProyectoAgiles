@@ -4,7 +4,6 @@ using ProyectoAgiles.Application.Interfaces;
 using ProyectoAgiles.Domain.Entities;
 using ProyectoAgiles.Domain.Enums;
 using ProyectoAgiles.Domain.Interfaces;
-using BCrypt.Net;
 
 namespace ProyectoAgiles.Application.Services;
 
@@ -83,7 +82,7 @@ public class TeacherManagementService : ITeacherManagementService
                 FirstName = firstName,
                 LastName = lastName,
                 Email = request.Email,
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
+                PasswordHash = request.Password, // No hashear aquí, el repositorio se encarga
                 UserType = UserType.Docente,
                 Cedula = request.Cedula,
                 IsActive = true,
