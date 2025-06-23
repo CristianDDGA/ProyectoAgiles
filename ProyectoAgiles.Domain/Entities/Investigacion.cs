@@ -28,4 +28,7 @@ public class Investigacion : BaseEntity
 
     [Required]
     public string Observacion { get; set; } = string.Empty;
+
+    // Nuevo campo para almacenar el PDF
+    public byte[]? ArchivoPdf { get; set; }
 }
