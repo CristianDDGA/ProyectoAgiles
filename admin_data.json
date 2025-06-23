@@ -1,0 +1,9 @@
+{
+  "firstName": "Admin",
+  "lastName": "Sistema",
+  "email": "admin@sistema.com",
+  "password": "Admin123!",
+  "confirmPassword": "Admin123!",
+  "userType": 1,
+  "cedula": "0000000000"
+}

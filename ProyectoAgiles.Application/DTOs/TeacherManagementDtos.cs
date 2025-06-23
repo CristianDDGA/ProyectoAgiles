@@ -8,6 +8,7 @@ public class ExternalTeacherDto
     public string Cedula { get; set; } = string.Empty;
     public string Universidad { get; set; } = string.Empty;
     public string NombresCompletos { get; set; } = string.Empty;
+    public string Nivel { get; set; } = string.Empty; // Nuevo campo para el nivel/rango
 }
 
 public class TeacherValidationRequest

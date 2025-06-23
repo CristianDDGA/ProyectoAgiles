@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ProyectoAgiles.Infrastructure.Data;
 
@@ -11,9 +12,11 @@ using ProyectoAgiles.Infrastructure.Data;
 namespace ProyectoAgiles.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250623031238_AddNivelToExternalTeacher")]
+    partial class AddNivelToExternalTeacher
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -37,6 +40,10 @@ namespace ProyectoAgiles.Infrastructure.Migrations
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
+
+                    b.Property<string>("Nivel")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("NombresCompletos")
                         .IsRequired()
@@ -64,6 +71,7 @@ namespace ProyectoAgiles.Infrastructure.Migrations
                             Id = 1,
                             Cedula = "1750000001",
                             CreatedAt = new DateTime(2025, 6, 11, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Nivel = "",
                             NombresCompletos = "María Elena García Pérez",
                             Universidad = "Universidad Técnica de Ambato",
                             UpdatedAt = new DateTime(2025, 6, 11, 0, 0, 0, 0, DateTimeKind.Utc)
@@ -73,6 +81,7 @@ namespace ProyectoAgiles.Infrastructure.Migrations
                             Id = 2,
                             Cedula = "1750000002",
                             CreatedAt = new DateTime(2025, 6, 11, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Nivel = "",
                             NombresCompletos = "Carlos Alberto Mendoza Silva",
                             Universidad = "Universidad Técnica de Ambato",
                             UpdatedAt = new DateTime(2025, 6, 11, 0, 0, 0, 0, DateTimeKind.Utc)
@@ -82,6 +91,7 @@ namespace ProyectoAgiles.Infrastructure.Migrations
                             Id = 3,
                             Cedula = "1750000003",
                             CreatedAt = new DateTime(2025, 6, 11, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Nivel = "",
                             NombresCompletos = "Ana Cristina López Vargas",
                             Universidad = "Universidad Técnica de Ambato",
                             UpdatedAt = new DateTime(2025, 6, 11, 0, 0, 0, 0, DateTimeKind.Utc)
@@ -184,9 +194,6 @@ namespace ProyectoAgiles.Infrastructure.Migrations
 
                     b.Property<DateTime?>("LockoutEnd")
                         .HasColumnType("datetime2");
-
-                    b.Property<string>("Nivel")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("PasswordHash")
                         .IsRequired()

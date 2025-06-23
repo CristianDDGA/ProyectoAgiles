@@ -33,6 +33,7 @@ public class TeacherManagementService : ITeacherManagementService
             Cedula = externalTeacher.Cedula,
             Universidad = externalTeacher.Universidad,
             NombresCompletos = externalTeacher.NombresCompletos
+            // Nivel eliminado, ya no se mapea
         };
     }
 
@@ -86,7 +87,8 @@ public class TeacherManagementService : ITeacherManagementService
                 UserType = UserType.Docente,
                 Cedula = request.Cedula,
                 IsActive = true,
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                Nivel = "titular auxiliar 1" // Nivel por defecto al registrar un docente
             };
 
             await _userRepository.AddAsync(newUser);
@@ -124,6 +126,7 @@ public class TeacherManagementService : ITeacherManagementService
             Cedula = et.Cedula,
             Universidad = et.Universidad,
             NombresCompletos = et.NombresCompletos
+            // Nivel eliminado, ya no se mapea
         });
     }
 }

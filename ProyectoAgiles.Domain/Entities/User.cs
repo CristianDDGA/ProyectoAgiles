@@ -38,4 +38,5 @@ public class User : BaseEntity
     public DateTime? LastFailedLogin { get; set; }
 
     public string FullName => $"{FirstName} {LastName}";
+    public string? Nivel { get; set; } // Nivel del docente: titular auxiliar 1, titular auxiliar 2, etc.
 }
