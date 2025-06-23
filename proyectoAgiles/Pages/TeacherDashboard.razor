@@ -32,10 +32,157 @@
                             <li>Haber obtenido como mínimo el setenta y cinco por ciento (75 %) del puntaje de la evaluación integral en los últimos cuatro periodos académicos de evaluación de desempeño en los que ejerció la docencia.</li>
                             <li>Haber realizado y aprobado noventa y seis horas de capacitación y actualización profesional y científica en los últimos tres (3) años en una Universidad o Escuela Politécnica acreditada. Al menos 24 Horas (25%) de estas deberán ser de actualización pedagógica. El cumplimiento de este literal se exceptúa si se ha desempeñado como autoridad en una Universidad o Escuela Politécnica por más de dos (2) años.</li>
                         </ol>
-                    </div>
-                    <div class="modal-footer">
+                    </div>                    <div class="modal-footer">
                         <button class="btn btn-outline-primary" @onclick="VerificarRequisitos">Verificar requisitos</button>
                         <button class="btn btn-secondary" @onclick="CloseRequisitosModal">Cerrar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (showInvestigacionesModal)
+    {
+        <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,0.3);">
+            <div class="modal-dialog modal-xl">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Gestión de Investigaciones</h5>
+                        <button type="button" class="btn-close" @onclick="CloseInvestigacionesModal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="d-flex justify-content-between mb-3">
+                            <h6>Mis Investigaciones</h6>
+                            <div>
+                                <button class="btn btn-success me-2" @onclick="ShowAgregarInvestigacion">
+                                    <i class="fas fa-plus"></i> Agregar
+                                </button>
+                                <button class="btn btn-primary" @onclick="ImportarInvestigaciones">
+                                    <i class="fas fa-download"></i> Importar
+                                </button>
+                            </div>
+                        </div>
+                        
+                        @if (isLoadingInvestigaciones)
+                        {
+                            <div class="text-center">
+                                <div class="spinner-border" role="status">
+                                    <span class="visually-hidden">Cargando...</span>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Título</th>
+                                            <th>Área</th>
+                                            <th>Estado</th>
+                                            <th>Fecha Inicio</th>
+                                            <th>Fecha Fin</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @if (investigaciones.Any())
+                                        {
+                                            @foreach (var investigacion in investigaciones)
+                                            {
+                                                <tr>
+                                                    <td>@investigacion.Titulo</td>
+                                                    <td>@investigacion.Area</td>
+                                                    <td>
+                                                        <span class="badge @GetEstadoBadgeClass(investigacion.Estado)">
+                                                            @investigacion.Estado
+                                                        </span>
+                                                    </td>
+                                                    <td>@investigacion.FechaInicio.ToString("dd/MM/yyyy")</td>
+                                                    <td>@(investigacion.FechaFin?.ToString("dd/MM/yyyy") ?? "En progreso")</td>
+                                                    <td>
+                                                        <button class="btn btn-sm btn-outline-primary me-1" @onclick="() => EditarInvestigacion(investigacion)">
+                                                            <i class="fas fa-edit"></i>
+                                                        </button>
+                                                        <button class="btn btn-sm btn-outline-danger" @onclick="() => EliminarInvestigacion(investigacion.Id)">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <tr>
+                                                <td colspan="6" class="text-center text-muted">No hay investigaciones registradas</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" @onclick="CloseInvestigacionesModal">Cerrar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (showAgregarModal)
+    {
+        <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,0.3);">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">@(editingInvestigacion != null ? "Editar" : "Agregar") Investigación</h5>
+                        <button type="button" class="btn-close" @onclick="CloseAgregarModal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form>
+                            <div class="row">
+                                <div class="col-md-12 mb-3">
+                                    <label class="form-label">Título *</label>
+                                    <input type="text" class="form-control" @bind="nuevaInvestigacion.Titulo" required />
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Área *</label>
+                                    <input type="text" class="form-control" @bind="nuevaInvestigacion.Area" required />
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Estado *</label>
+                                    <select class="form-select" @bind="nuevaInvestigacion.Estado">
+                                        <option value="En progreso">En progreso</option>
+                                        <option value="Completado">Completado</option>
+                                        <option value="Pausado">Pausado</option>
+                                        <option value="Cancelado">Cancelado</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Fecha Inicio *</label>
+                                    <input type="date" class="form-control" @bind="nuevaInvestigacion.FechaInicio" required />
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Fecha Fin</label>
+                                    <input type="date" class="form-control" @bind="nuevaInvestigacion.FechaFin" />
+                                </div>
+                                <div class="col-md-12 mb-3">
+                                    <label class="form-label">Descripción</label>
+                                    <textarea class="form-control" rows="3" @bind="nuevaInvestigacion.Descripcion"></textarea>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-success" @onclick="GuardarInvestigacion" disabled="@isSaving">
+                            @if (isSaving)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                            }
+                            @(editingInvestigacion != null ? "Actualizar" : "Guardar")
+                        </button>
+                        <button class="btn btn-secondary" @onclick="CloseAgregarModal">Cancelar</button>
                     </div>
                 </div>
             </div>
@@ -95,14 +242,13 @@
     <!-- Sección de Acciones Rápidas -->
     <div class="quick-actions">
         <h2 class="section-title">Acciones Rápidas</h2>
-        <div class="row">
-            <div class="col-lg-4 col-md-6 mb-4">
-                <div class="action-card" @onclick="() => NavigateToCourses()">
+        <div class="row">            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="action-card" @onclick="() => NavigateToInvestigaciones()">
                     <div class="action-icon">
-                        <i class="fas fa-chalkboard-teacher"></i>
+                        <i class="fas fa-microscope"></i>
                     </div>
-                    <h3>Mis Cursos</h3>
-                    <p>Gestionar contenido y actividades de tus cursos asignados</p>
+                    <h3>Investigaciones</h3>
+                    <p>Gestionar y consultar tus proyectos de investigación</p>
                 </div>
             </div>
             <div class="col-lg-4 col-md-6 mb-4">
@@ -191,13 +337,20 @@
     </div>
 </div>
 
-@code {
-    private int totalCourses = 0;
+@code {    private int totalCourses = 0;
     private int totalStudents = 0;
     private int pendingTasks = 0;
     private int weeklyHours = 0;
     private List<ClassItem> upcomingClasses = new();
     private bool showRequisitosModal = false;
+    private bool showInvestigacionesModal = false;
+    private bool showAgregarModal = false;
+    private bool isLoadingInvestigaciones = false;
+    private bool isSaving = false;
+    
+    private List<Investigacion> investigaciones = new();
+    private Investigacion nuevaInvestigacion = new();
+    private Investigacion? editingInvestigacion = null;
 
     protected override async Task OnInitializedAsync()
     {
@@ -248,15 +401,13 @@
                 Time = "14:00 - 16:00",
                 Date = DateTime.Today.AddDays(2),
                 Location = "Aula 205"
-            }
-        };
+            }        };
         
         return Task.CompletedTask;
-    }
-
-    private void NavigateToCourses()
+    }    private async Task NavigateToInvestigaciones()
     {
-        Navigation.NavigateTo("/docente/courses");
+        showInvestigacionesModal = true;
+        await LoadInvestigaciones();
     }
 
     private void NavigateToGrades()
@@ -272,9 +423,7 @@
     private void NavigateToMaterials()
     {
         Navigation.NavigateTo("/docente/materials");
-    }
-
-    private void NavigateToAttendance()
+    }    private void NavigateToAttendance()
     {
         Navigation.NavigateTo("/docente/attendance");
     }
@@ -282,7 +431,225 @@
     private void NavigateToReports()
     {
         Navigation.NavigateTo("/docente/reports");
-    }    private async Task Logout()
+    }
+
+    private async Task LoadInvestigaciones()
+    {
+        isLoadingInvestigaciones = true;
+        StateHasChanged();
+        
+        try
+        {
+            // Simular carga de datos - aquí conectarías con tu API/Base de datos
+            await Task.Delay(500); // Simular tiempo de carga
+            
+            // Datos de ejemplo - estos deberían venir de la base de datos
+            investigaciones = new List<Investigacion>
+            {
+                new Investigacion 
+                { 
+                    Id = 1,
+                    Titulo = "Análisis de Algoritmos de Machine Learning",
+                    Area = "Inteligencia Artificial",
+                    Estado = "En progreso",
+                    FechaInicio = DateTime.Now.AddMonths(-6),
+                    Descripcion = "Investigación sobre optimización de algoritmos ML"
+                },
+                new Investigacion 
+                { 
+                    Id = 2,
+                    Titulo = "Metodologías Ágiles en Educación Superior",
+                    Area = "Educación",
+                    Estado = "Completado",
+                    FechaInicio = DateTime.Now.AddYears(-1),
+                    FechaFin = DateTime.Now.AddMonths(-2),
+                    Descripcion = "Estudio sobre implementación de Scrum en aulas universitarias"
+                }
+            };
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error al cargar investigaciones: {ex.Message}");
+        }
+        finally
+        {
+            isLoadingInvestigaciones = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task ImportarInvestigaciones()
+    {
+        isLoadingInvestigaciones = true;
+        StateHasChanged();
+        
+        try
+        {
+            var cedula = UserSession.CurrentUser?.Cedula ?? string.Empty;
+            if (string.IsNullOrEmpty(cedula))
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "No se pudo obtener la cédula del usuario.");
+                return;
+            }
+
+            // Aquí harías la llamada a tu API para importar investigaciones por cédula
+            // var investigacionesImportadas = await AuthService.ImportarInvestigacionesPorCedula(cedula);
+            
+            // Simular importación de investigaciones
+            await Task.Delay(1000);
+            
+            var investigacionesImportadas = new List<Investigacion>
+            {
+                new Investigacion 
+                { 
+                    Id = 3,
+                    Titulo = "Desarrollo de Software Sustentable",
+                    Area = "Ingeniería de Software",
+                    Estado = "En progreso",
+                    FechaInicio = DateTime.Now.AddMonths(-3),
+                    Descripcion = "Investigación importada sobre prácticas sustentables en desarrollo"
+                }
+            };
+
+            // Agregar las investigaciones importadas que no estén ya en la lista
+            foreach (var importada in investigacionesImportadas)
+            {
+                if (!investigaciones.Any(i => i.Titulo == importada.Titulo))
+                {
+                    investigaciones.Add(importada);
+                }
+            }
+
+            await JSRuntime.InvokeVoidAsync("alert", $"Se importaron {investigacionesImportadas.Count} investigaciones.");
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error al importar investigaciones: {ex.Message}");
+        }
+        finally
+        {
+            isLoadingInvestigaciones = false;
+            StateHasChanged();
+        }
+    }
+
+    private void ShowAgregarInvestigacion()
+    {
+        editingInvestigacion = null;
+        nuevaInvestigacion = new Investigacion();
+        showAgregarModal = true;
+    }
+
+    private void EditarInvestigacion(Investigacion investigacion)
+    {
+        editingInvestigacion = investigacion;
+        nuevaInvestigacion = new Investigacion
+        {
+            Id = investigacion.Id,
+            Titulo = investigacion.Titulo,
+            Area = investigacion.Area,
+            Estado = investigacion.Estado,
+            FechaInicio = investigacion.FechaInicio,
+            FechaFin = investigacion.FechaFin,
+            Descripcion = investigacion.Descripcion
+        };
+        showAgregarModal = true;
+    }
+
+    private async Task GuardarInvestigacion()
+    {
+        if (string.IsNullOrWhiteSpace(nuevaInvestigacion.Titulo) || 
+            string.IsNullOrWhiteSpace(nuevaInvestigacion.Area))
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "Por favor complete los campos obligatorios.");
+            return;
+        }
+
+        isSaving = true;
+        StateHasChanged();
+
+        try
+        {
+            // Simular guardado - aquí conectarías con tu API
+            await Task.Delay(500);
+
+            if (editingInvestigacion != null)
+            {
+                // Actualizar investigación existente
+                var index = investigaciones.FindIndex(i => i.Id == editingInvestigacion.Id);
+                if (index >= 0)
+                {
+                    investigaciones[index] = nuevaInvestigacion;
+                }
+            }
+            else
+            {
+                // Agregar nueva investigación
+                nuevaInvestigacion.Id = investigaciones.Any() ? investigaciones.Max(i => i.Id) + 1 : 1;
+                investigaciones.Add(nuevaInvestigacion);
+            }
+
+            CloseAgregarModal();
+            await JSRuntime.InvokeVoidAsync("alert", 
+                editingInvestigacion != null ? "Investigación actualizada exitosamente." : "Investigación agregada exitosamente.");
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error al guardar: {ex.Message}");
+        }
+        finally
+        {
+            isSaving = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task EliminarInvestigacion(int id)
+    {
+        var confirmDelete = await JSRuntime.InvokeAsync<bool>("confirm", 
+            "¿Está seguro de que desea eliminar esta investigación?");
+        
+        if (confirmDelete)
+        {
+            try
+            {
+                // Simular eliminación - aquí conectarías con tu API
+                await Task.Delay(300);
+                
+                investigaciones.RemoveAll(i => i.Id == id);
+                await JSRuntime.InvokeVoidAsync("alert", "Investigación eliminada exitosamente.");
+                StateHasChanged();
+            }
+            catch (Exception ex)
+            {
+                await JSRuntime.InvokeVoidAsync("alert", $"Error al eliminar: {ex.Message}");
+            }
+        }
+    }
+
+    private void CloseInvestigacionesModal()
+    {
+        showInvestigacionesModal = false;
+    }
+
+    private void CloseAgregarModal()
+    {
+        showAgregarModal = false;
+        nuevaInvestigacion = new Investigacion();
+        editingInvestigacion = null;
+    }
+
+    private string GetEstadoBadgeClass(string estado)
+    {
+        return estado switch
+        {
+            "Completado" => "bg-success",
+            "En progreso" => "bg-primary",
+            "Pausado" => "bg-warning text-dark",
+            "Cancelado" => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }private async Task Logout()
     {
         await UserSession.ClearSessionAsync();
         Navigation.NavigateTo("/");
@@ -332,8 +699,7 @@
             // Actualizar la sesión del usuario
             await UserSession.InitializeAsync();
             // Mostrar mensaje de éxito
-            await JSRuntime.InvokeVoidAsync("alert", "¡Felicidades! Has subido de nivel.");
-        }
+            await JSRuntime.InvokeVoidAsync("alert", "¡Felicidades! Has subido de nivel.");        }
         else
         {
             // Mostrar mensaje de error
@@ -348,5 +714,16 @@
         public string Time { get; set; } = string.Empty;
         public DateTime Date { get; set; }
         public string Location { get; set; } = string.Empty;
+    }
+
+    public class Investigacion
+    {
+        public int Id { get; set; }
+        public string Titulo { get; set; } = string.Empty;
+        public string Area { get; set; } = string.Empty;
+        public string Estado { get; set; } = "En progreso";
+        public DateTime FechaInicio { get; set; } = DateTime.Today;
+        public DateTime? FechaFin { get; set; }
+        public string Descripcion { get; set; } = string.Empty;
     }
 }
