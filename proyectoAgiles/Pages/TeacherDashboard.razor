@@ -197,6 +197,147 @@
                         <button class="btn btn-secondary" @onclick="CloseAgregarModal">Cancelar</button>
                     </div>
                 </div>
+            </div>        </div>
+    }
+
+    @* Modal para Evaluaciones de Desempeño *@
+    @if (showEvaluacionesModal)
+    {
+        <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,0.3);">
+            <div class="modal-dialog modal-xl">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Gestión de Evaluaciones de Desempeño DAC</h5>
+                        <button type="button" class="btn-close" @onclick="CloseEvaluacionesModal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="d-flex justify-content-between mb-3">
+                            <h6>Mis Evaluaciones DAC</h6>
+                            <div>
+                                <button class="btn btn-success me-2" @onclick="ShowAgregarEvaluacion">
+                                    <i class="fas fa-plus"></i> Agregar
+                                </button>
+                                <button class="btn btn-primary" @onclick="ImportarEvaluaciones">
+                                    <i class="fas fa-download"></i> Importar
+                                </button>
+                            </div>
+                        </div>
+                          @if (isLoadingEvaluaciones)
+                        {
+                            <div class="text-center">
+                                <div class="spinner-border" role="status">
+                                    <span class="visually-hidden">Cargando...</span>
+                                </div>
+                                <p class="mt-2">Cargando evaluaciones...</p>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Período</th>
+                                            <th>Año</th>
+                                            <th>Semestre</th>
+                                            <th>Puntaje</th>
+                                            <th>Porcentaje</th>
+                                            <th>Estado</th>
+                                            <th>Fecha Evaluación</th>
+                                            <th>Evaluador</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @if (evaluaciones.Any())
+                                        {
+                                            @foreach (var evaluacion in evaluaciones)
+                                            {
+                                                <tr>
+                                                    <td>@evaluacion.PeriodoAcademico</td>
+                                                    <td>@evaluacion.Anio</td>
+                                                    <td>@evaluacion.Semestre</td>
+                                                    <td>@evaluacion.PuntajeObtenido/@evaluacion.PuntajeMaximo</td>
+                                                    <td>
+                                                        <span class="badge @GetPorcentajeBadgeClass(evaluacion.PorcentajeObtenido)">
+                                                            @evaluacion.PorcentajeObtenido.ToString("F1")%
+                                                        </span>
+                                                    </td>
+                                                    <td>@evaluacion.Estado</td>
+                                                    <td>@evaluacion.FechaEvaluacion.ToString("dd/MM/yyyy")</td>
+                                                    <td>@evaluacion.Evaluador</td>
+                                                    <td>
+                                                        <button class="btn btn-sm btn-outline-primary me-1" @onclick="() => EditarEvaluacion(evaluacion)">
+                                                            <i class="fas fa-edit"></i>
+                                                        </button>
+                                                        <button class="btn btn-sm btn-outline-danger" @onclick="() => EliminarEvaluacion(evaluacion.Id)">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                        @if (!string.IsNullOrEmpty(evaluacion.NombreArchivoRespaldo))
+                                                        {
+                                                            <button class="btn btn-outline-primary btn-sm" @onclick="() => VerPdfEvaluacion(evaluacion.Id)">
+                                                                <i class="fas fa-file-pdf"></i> Ver PDF
+                                                            </button>
+                                                        }
+                                                    </td>
+                                                </tr>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <tr>
+                                                <td colspan="9" class="text-center text-muted py-4">
+                                                    <i class="fas fa-star fa-2x mb-2"></i>
+                                                    <p class="mb-1">No hay evaluaciones de desempeño cargadas</p>
+                                                    <small>Haz clic en "Importar" para cargar tus evaluaciones desde la base de datos DAC</small>
+                                                    <br><small class="text-info">Cédula actual: @(UserSession.CurrentUser?.Cedula ?? "No disponible")</small>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            @* Mostrar resumen de cumplimiento del 75% *@
+                            @if (evaluaciones.Any())
+                            {
+                                <div class="mt-4">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h6 class="card-title mb-0">
+                                                <i class="fas fa-chart-line"></i> Verificación Requisito 75%
+                                            </h6>
+                                        </div>
+                                        <div class="card-body">
+                                            @if (verificacionRequisito != null)
+                                            {
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <div class="d-flex align-items-center">
+                                                            <span class="badge @(verificacionRequisito.CumpleRequisito ? "bg-success" : "bg-danger") me-2">
+                                                                <i class="fas @(verificacionRequisito.CumpleRequisito ? "fa-check" : "fa-times")"></i>
+                                                            </span>
+                                                            <strong>@(verificacionRequisito.CumpleRequisito ? "CUMPLE" : "NO CUMPLE")</strong>
+                                                        </div>
+                                                        <p class="mb-1 mt-2">@verificacionRequisito.Mensaje</p>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <p class="mb-1"><strong>Evaluaciones analizadas:</strong> @verificacionRequisito.EvaluacionesAnalizadas</p>
+                                                        <p class="mb-1"><strong>Que alcanzan 75%:</strong> @verificacionRequisito.EvaluacionesQueAlcanzan75</p>
+                                                        <p class="mb-0"><strong>Promedio últimas 4:</strong> @verificacionRequisito.PorcentajePromedioUltimasCuatro%</p>
+                                                    </div>
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        }
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" @onclick="CloseEvaluacionesModal">Cerrar</button>
+                    </div>
+                </div>
             </div>
         </div>
     }
@@ -298,14 +439,22 @@
                     <h3>Asistencia</h3>
                     <p>Registrar y consultar asistencia de estudiantes</p>
                 </div>
-            </div>
-            <div class="col-lg-4 col-md-6 mb-4">
+            </div>            <div class="col-lg-4 col-md-6 mb-4">
                 <div class="action-card" @onclick="() => NavigateToReports()">
                     <div class="action-icon">
                         <i class="fas fa-chart-line"></i>
                     </div>
                     <h3>Reportes</h3>
                     <p>Generar reportes académicos y de desempeño</p>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="action-card" @onclick="() => NavigateToEvaluaciones()">
+                    <div class="action-icon">
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <h3>Evaluaciones de Desempeño</h3>
+                    <p>Consultar y gestionar evaluaciones DAC</p>
                 </div>
             </div>
         </div>
@@ -353,14 +502,19 @@
     private int totalStudents = 0;
     private int pendingTasks = 0;
     private int weeklyHours = 0;
-    private List<ClassItem> upcomingClasses = new();
-    private bool showRequisitosModal = false;
+    private List<ClassItem> upcomingClasses = new();    private bool showRequisitosModal = false;
     private bool showInvestigacionesModal = false;
+    private bool showEvaluacionesModal = false;
     private bool showAgregarModal = false;
     private bool isLoadingInvestigaciones = false;
+    private bool isLoadingEvaluaciones = false;
     private bool isSaving = false;
     
     private List<Investigacion> investigaciones = new();
+    private List<EvaluacionDesempenoDto> evaluaciones = new();
+    private EvaluacionDesempenoDto nuevaEvaluacion = new();
+    private EvaluacionDesempenoDto? editingEvaluacion = null;
+    private VerificacionRequisito75Dto? verificacionRequisito = null;
     private Investigacion nuevaInvestigacion = new();
     private Investigacion? editingInvestigacion = null;
     private IBrowserFile? selectedPdf;
@@ -459,9 +613,15 @@
             }        };
         
         return Task.CompletedTask;
-    }    private async Task NavigateToInvestigaciones()
+    }    private void NavigateToInvestigaciones()
     {
         showInvestigacionesModal = true;
+        // No cargar automáticamente - solo mostrar tabla vacía
+    }
+
+    private void NavigateToEvaluaciones()
+    {
+        showEvaluacionesModal = true;
         // No cargar automáticamente - solo mostrar tabla vacía
     }
 
@@ -707,11 +867,118 @@
                 await JSRuntime.InvokeVoidAsync("alert", $"Error al eliminar: {ex.Message}");
             }
         }
-    }
-
-    private void CloseInvestigacionesModal()
+    }    private void CloseInvestigacionesModal()
     {
         showInvestigacionesModal = false;
+    }
+
+    // Métodos para Evaluaciones de Desempeño
+    private void CloseEvaluacionesModal()
+    {
+        showEvaluacionesModal = false;
+    }
+
+    private async Task ImportarEvaluaciones()
+    {
+        try
+        {
+            if (UserSession.CurrentUser?.Cedula == null)
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "No se pudo obtener la cédula del usuario");
+                return;
+            }
+
+            isLoadingEvaluaciones = true;
+            StateHasChanged();
+
+            var apiBaseUrl = "http://localhost:5200"; // Deberías obtener esto de configuración
+            var cedula = UserSession.CurrentUser.Cedula;
+
+            // Importar evaluaciones desde la API
+            var response = await new HttpClient().GetAsync($"{apiBaseUrl}/api/evaluacionesdesempeno/by-cedula/{cedula}");
+            
+            if (response.IsSuccessStatusCode)
+            {
+                var jsonContent = await response.Content.ReadAsStringAsync();
+                var apiEvaluaciones = System.Text.Json.JsonSerializer.Deserialize<EvaluacionDesempenoDto[]>(jsonContent, 
+                    new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+                if (apiEvaluaciones != null)
+                {
+                    evaluaciones = apiEvaluaciones.ToList();
+
+                    // Obtener verificación del requisito 75%
+                    var verificacionResponse = await new HttpClient().GetAsync($"{apiBaseUrl}/api/evaluacionesdesempeno/verificar-requisito-75/{cedula}");
+                    if (verificacionResponse.IsSuccessStatusCode)
+                    {
+                        var verificacionJson = await verificacionResponse.Content.ReadAsStringAsync();
+                        verificacionRequisito = System.Text.Json.JsonSerializer.Deserialize<VerificacionRequisito75Dto>(verificacionJson, 
+                            new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    }
+
+                    await JSRuntime.InvokeVoidAsync("alert", $"Se importaron {evaluaciones.Count} evaluaciones correctamente");
+                }
+                else
+                {
+                    await JSRuntime.InvokeVoidAsync("alert", "No se encontraron evaluaciones para esta cédula");
+                }
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Error al cargar evaluaciones desde la API");
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error: {ex.Message}");
+        }
+        finally
+        {
+            isLoadingEvaluaciones = false;
+            StateHasChanged();
+        }
+    }    private async Task ShowAgregarEvaluacion()
+    {
+        // Por ahora solo mostrar mensaje
+        await JSRuntime.InvokeVoidAsync("alert", "Funcionalidad de agregar evaluación en desarrollo");
+    }
+
+    private async Task EditarEvaluacion(EvaluacionDesempenoDto evaluacion)
+    {
+        // Por ahora solo mostrar mensaje
+        await JSRuntime.InvokeVoidAsync("alert", $"Editar evaluación del período {evaluacion.PeriodoAcademico}");
+    }
+
+    private async Task EliminarEvaluacion(int id)
+    {
+        var confirmacion = await JSRuntime.InvokeAsync<bool>("confirm", "¿Estás seguro de que quieres eliminar esta evaluación?");        if (confirmacion)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "Funcionalidad de eliminar evaluación en desarrollo");
+        }
+    }
+
+    private async Task VerPdfEvaluacion(int id)
+    {
+        try
+        {
+            var apiBaseUrl = "http://localhost:5200";
+            var url = $"{apiBaseUrl}/api/evaluacionesdesempeno/{id}/pdf";
+            await JSRuntime.InvokeVoidAsync("open", url, "_blank");
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error al abrir PDF: {ex.Message}");
+        }
+    }
+
+    private string GetPorcentajeBadgeClass(decimal porcentaje)
+    {
+        return porcentaje switch
+        {
+            >= 90 => "bg-success",
+            >= 75 => "bg-warning text-dark",
+            _ => "bg-danger"
+        };
     }
 
     private void CloseAgregarModal()
@@ -900,5 +1167,37 @@
         public string Descripcion { get; set; } = string.Empty; // Mapeado desde Observacion
         public string Filiacion { get; set; } = string.Empty;
         public bool TienePdf { get; set; } // Agregar propiedad para saber si tiene PDF
+    }
+
+    public class EvaluacionDesempenoDto
+    {
+        public int Id { get; set; }
+        public string Cedula { get; set; } = string.Empty;
+        public string PeriodoAcademico { get; set; } = string.Empty;
+        public int Anio { get; set; }
+        public int Semestre { get; set; }
+        public decimal PuntajeObtenido { get; set; }
+        public decimal PuntajeMaximo { get; set; }
+        public decimal PorcentajeObtenido { get; set; }
+        public bool CumpleMinimo { get; set; }
+        public DateTime FechaEvaluacion { get; set; }
+        public string TipoEvaluacion { get; set; } = string.Empty;
+        public string? Observaciones { get; set; }
+        public string Estado { get; set; } = string.Empty;
+        public string? Evaluador { get; set; }
+        public string? NombreArchivoRespaldo { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public DateTime? UpdatedAt { get; set; }
+    }
+
+    public class VerificacionRequisito75Dto
+    {
+        public string Cedula { get; set; } = string.Empty;
+        public bool CumpleRequisito { get; set; }
+        public int EvaluacionesAnalizadas { get; set; }
+        public int EvaluacionesQueAlcanzan75 { get; set; }
+        public decimal PorcentajePromedioUltimasCuatro { get; set; }
+        public string Mensaje { get; set; } = string.Empty;
+        public List<EvaluacionDesempenoDto> EvaluacionesConsideradas { get; set; } = new();
     }
 }
