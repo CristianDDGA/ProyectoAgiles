@@ -113,4 +113,23 @@ public class UsersController : ControllerBase
             return StatusCode(500, new { message = "Error interno del servidor", details = ex.Message });
         }
     }
+
+    [HttpPost("{id}/subir-nivel")]
+    public async Task<IActionResult> SubirNivel(int id)
+    {
+        var user = await _userService.GetUserByIdAsync(id);
+        if (user == null)
+            return NotFound();
+        if (user.UserType != ProyectoAgiles.Domain.Enums.UserType.Docente)
+            return BadRequest("Solo los docentes pueden subir de nivel.");
+
+        // Lógica simple: cambiar el nivel a un valor superior (ejemplo)
+        var niveles = new[] { "titular auxiliar 1", "titular auxiliar 2", "titular principal", "titular agregado" };
+        var actual = Array.IndexOf(niveles, user.Nivel);
+        if (actual < 0 || actual == niveles.Length - 1)
+            return BadRequest("Ya tienes el nivel más alto o nivel desconocido.");
+        user.Nivel = niveles[actual + 1];
+        await _userService.UpdateUserNivelAsync(id, user.Nivel);
+        return Ok();
+    }
 }

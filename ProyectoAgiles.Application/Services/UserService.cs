@@ -142,6 +142,15 @@ public class UserService : IUserService
         return activities.OrderByDescending(a => a.Timestamp).Take(10);
     }
 
+    public async Task<bool> UpdateUserNivelAsync(int id, string nuevoNivel)
+    {
+        var user = await _userRepository.GetByIdAsync(id);
+        if (user == null) return false;
+        user.Nivel = nuevoNivel;
+        await _userRepository.UpdateAsync(user);
+        return true;
+    }
+
     private static UserDto MapToDto(Domain.Entities.User user)
     {        return new UserDto
         {

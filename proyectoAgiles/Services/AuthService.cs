@@ -257,6 +257,12 @@ namespace proyectoAgiles.Services
                 return new ResetPasswordResponse { Success = false, Message = ex.Message };
             }
         }
+
+        public async Task<bool> SubirNivel(int userId)
+        {
+            var response = await _httpClient.PostAsync($"{_apiBaseUrl}/api/users/{userId}/subir-nivel", null);
+            return response.IsSuccessStatusCode;
+        }
     }    public class RegisterRequest
     {
         public string Name { get; set; } = string.Empty;

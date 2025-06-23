@@ -4,10 +4,18 @@
 @inject NavigationManager Navigation
 @inject proyectoAgiles.Services.AuthService AuthService
 @inject UserSessionService UserSession
+@inject IJSRuntime JSRuntime
 
 <PageTitle>Panel de Docente - UTA</PageTitle>
 
 <div class="teacher-dashboard">
+    <!-- Sección de Nivel -->
+    <div class="nivel-section d-flex align-items-center mb-4">
+        <span class="fw-bold me-3">Nivel actual:</span>
+        <span class="badge bg-info text-dark me-3" style="font-size:1.1em;">@UserSession.GetUserNivel()</span>
+        <button class="btn btn-sm btn-success" @onclick="OnSubirNivel">Subir de nivel</button>
+    </div>
+
     <!-- Tarjetas de Resumen -->
     <div class="stats-section">
         <div class="row">
@@ -247,6 +255,30 @@
     {
         await UserSession.ClearSessionAsync();
         Navigation.NavigateTo("/");
+    }
+
+    private async Task OnSubirNivel()
+    {
+        // Lógica para subir de nivel
+        var userId = UserSession.CurrentUser?.Id ?? 0;
+        if (userId == 0)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "No se pudo obtener el usuario actual.");
+            return;
+        }
+        var result = await AuthService.SubirNivel(userId);
+        if (result)
+        {
+            // Actualizar la sesión del usuario
+            await UserSession.InitializeAsync();
+            // Mostrar mensaje de éxito
+            await JSRuntime.InvokeVoidAsync("alert", "¡Felicidades! Has subido de nivel.");
+        }
+        else
+        {
+            // Mostrar mensaje de error
+            await JSRuntime.InvokeVoidAsync("alert", "Error al intentar subir de nivel. Inténtalo más tarde.");
+        }
     }
 
     public class ClassItem

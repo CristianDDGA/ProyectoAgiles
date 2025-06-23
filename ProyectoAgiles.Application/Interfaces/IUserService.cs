@@ -11,4 +11,5 @@ public interface IUserService
     Task<bool> ToggleUserStatusAsync(int id);
     Task<DashboardStatsDto> GetDashboardStatsAsync();
     Task<IEnumerable<ActivityItemDto>> GetRecentActivitiesAsync();
+    Task<bool> UpdateUserNivelAsync(int id, string nuevoNivel);
 }
