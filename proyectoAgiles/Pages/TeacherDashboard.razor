@@ -145,37 +145,27 @@
                         <h5 class="modal-title">@(editingInvestigacion != null ? "Editar" : "Agregar") Investigación</h5>
                         <button type="button" class="btn-close" @onclick="CloseAgregarModal"></button>
                     </div>
-                    <div class="modal-body">
-                        <form>
+                    <div class="modal-body">                        <form>
                             <div class="row">
                                 <div class="col-md-12 mb-3">
                                     <label class="form-label">Título *</label>
                                     <input type="text" class="form-control" @bind="nuevaInvestigacion.Titulo" required />
                                 </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Área *</label>
+                                <div class="col-md-12 mb-3">
+                                    <label class="form-label">Área de Conocimiento *</label>
                                     <input type="text" class="form-control" @bind="nuevaInvestigacion.Area" required />
                                 </div>
                                 <div class="col-md-6 mb-3">
-                                    <label class="form-label">Estado *</label>
-                                    <select class="form-select" @bind="nuevaInvestigacion.Estado">
-                                        <option value="En progreso">En progreso</option>
-                                        <option value="Completado">Completado</option>
-                                        <option value="Pausado">Pausado</option>
-                                        <option value="Cancelado">Cancelado</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Fecha Inicio *</label>
+                                    <label class="form-label">Fecha de Publicación *</label>
                                     <input type="date" class="form-control" @bind="nuevaInvestigacion.FechaInicio" required />
                                 </div>
                                 <div class="col-md-6 mb-3">
-                                    <label class="form-label">Fecha Fin</label>
-                                    <input type="date" class="form-control" @bind="nuevaInvestigacion.FechaFin" />
+                                    <label class="form-label">Revista/Editorial</label>
+                                    <input type="text" class="form-control" @bind="nuevaInvestigacion.RevistaOEditorial" placeholder="Nombre de la revista o editorial" />
                                 </div>
                                 <div class="col-md-12 mb-3">
-                                    <label class="form-label">Descripción</label>
-                                    <textarea class="form-control" rows="3" @bind="nuevaInvestigacion.Descripcion"></textarea>
+                                    <label class="form-label">Observaciones</label>
+                                    <textarea class="form-control" rows="3" @bind="nuevaInvestigacion.Descripcion" placeholder="Descripción o comentarios adicionales sobre la investigación"></textarea>
                                 </div>
                             </div>
                         </form>
@@ -514,16 +504,19 @@
             
             if (investigaciones.Any())
             {
-                await JSRuntime.InvokeVoidAsync("alert", $"Se importaron {investigaciones.Count} investigaciones de la base de datos.");
+                await MostrarNotificacionExito($"✅ Importación exitosa", 
+                    $"Se han cargado {investigaciones.Count} investigación{(investigaciones.Count > 1 ? "es" : "")} desde la base de datos.");
             }
             else
             {
-                await JSRuntime.InvokeVoidAsync("alert", "No se encontraron investigaciones para tu cédula en la base de datos.");
+                await MostrarNotificacionInfo("ℹ️ Sin resultados", 
+                    "No se encontraron investigaciones asociadas a tu cédula en la base de datos.");
             }
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("alert", $"Error al importar investigaciones: {ex.Message}");
+            await MostrarNotificacionError("❌ Error de importación", 
+                $"No se pudieron cargar las investigaciones: {ex.Message}");
         }
         finally
         {
@@ -537,9 +530,7 @@
         editingInvestigacion = null;
         nuevaInvestigacion = new Investigacion();
         showAgregarModal = true;
-    }
-
-    private void EditarInvestigacion(Investigacion investigacion)
+    }    private void EditarInvestigacion(Investigacion investigacion)
     {
         editingInvestigacion = investigacion;
         nuevaInvestigacion = new Investigacion
@@ -547,13 +538,12 @@
             Id = investigacion.Id,
             Titulo = investigacion.Titulo,
             Area = investigacion.Area,
-            Estado = investigacion.Estado,
             FechaInicio = investigacion.FechaInicio,
-            FechaFin = investigacion.FechaFin,
+            RevistaOEditorial = investigacion.RevistaOEditorial,
             Descripcion = investigacion.Descripcion
         };
         showAgregarModal = true;
-    }    private async Task GuardarInvestigacion()
+    }private async Task GuardarInvestigacion()
     {
         if (string.IsNullOrWhiteSpace(nuevaInvestigacion.Titulo) || 
             string.IsNullOrWhiteSpace(nuevaInvestigacion.Area))
@@ -572,9 +562,7 @@
             {
                 await JSRuntime.InvokeVoidAsync("alert", "No se pudo obtener la cédula del usuario.");
                 return;
-            }
-
-            if (editingInvestigacion != null)
+            }            if (editingInvestigacion != null)
             {
                 // Actualizar investigación existente
                 var updateDto = new proyectoAgiles.Services.UpdateInvestigacionDto
@@ -583,7 +571,7 @@
                     Cedula = cedula,
                     Titulo = nuevaInvestigacion.Titulo,
                     Tipo = "Artículo", // Valor por defecto
-                    RevistaOEditorial = "N/A", // Valor por defecto
+                    RevistaOEditorial = !string.IsNullOrWhiteSpace(nuevaInvestigacion.RevistaOEditorial) ? nuevaInvestigacion.RevistaOEditorial : "N/A",
                     FechaPublicacion = nuevaInvestigacion.FechaInicio,
                     CampoConocimiento = nuevaInvestigacion.Area,
                     Filiacion = "Universidad Técnica de Ambato",
@@ -607,7 +595,7 @@
                     Cedula = cedula,
                     Titulo = nuevaInvestigacion.Titulo,
                     Tipo = "Artículo", // Valor por defecto
-                    RevistaOEditorial = "N/A", // Valor por defecto
+                    RevistaOEditorial = !string.IsNullOrWhiteSpace(nuevaInvestigacion.RevistaOEditorial) ? nuevaInvestigacion.RevistaOEditorial : "N/A",
                     FechaPublicacion = nuevaInvestigacion.FechaInicio,
                     CampoConocimiento = nuevaInvestigacion.Area,
                     Filiacion = "Universidad Técnica de Ambato",
@@ -619,10 +607,9 @@
                 // Agregar a la lista local
                 investigaciones.Add(MapearDesdeDto(created));
             }
-
-            CloseAgregarModal();
-            await JSRuntime.InvokeVoidAsync("alert", 
-                editingInvestigacion != null ? "Investigación actualizada exitosamente." : "Investigación agregada exitosamente.");
+              CloseAgregarModal();
+            await MostrarNotificacionExito("✅ Guardado exitoso", 
+                editingInvestigacion != null ? "La investigación ha sido actualizada correctamente." : "La nueva investigación ha sido agregada exitosamente.");
         }
         catch (Exception ex)
         {
@@ -644,17 +631,16 @@
             {
                 // Eliminar de la base de datos
                 var success = await AuthService.EliminarInvestigacion(id);
-                
-                if (success)
+                  if (success)
                 {
                     // Eliminar de la lista local
                     investigaciones.RemoveAll(i => i.Id == id);
-                    await JSRuntime.InvokeVoidAsync("alert", "Investigación eliminada exitosamente.");
+                    await MostrarNotificacionExito("🗑️ Eliminado", "La investigación ha sido eliminada correctamente.");
                     StateHasChanged();
                 }
                 else
                 {
-                    await JSRuntime.InvokeVoidAsync("alert", "Error al eliminar la investigación.");
+                    await MostrarNotificacionError("❌ Error", "No se pudo eliminar la investigación.");
                 }
             }
             catch (Exception ex)
@@ -679,35 +665,33 @@
         return estado switch
         {
             "Completado" => "bg-success",
-            "En progreso" => "bg-primary",
-            "Pausado" => "bg-warning text-dark",
-            "Cancelado" => "bg-danger",
+            "En revisión" => "bg-warning text-dark",
             _ => "bg-secondary"
         };
-    }
-
-    private string DeterminarEstado(DateTime fechaPublicacion)
+    }private string DeterminarEstado(DateTime fechaPublicacion)
     {
-        // Si la fecha de publicación es futura, está en progreso
+        // Si la fecha de publicación es futura, está en revisión
         if (fechaPublicacion > DateTime.Now)
         {
-            return "En progreso";
+            return "En revisión";
         }
         // Si la fecha es pasada, está completado
         return "Completado";
-    }
-
-    private Investigacion MapearDesdeDto(proyectoAgiles.Services.InvestigacionDto dto)
+    }    private Investigacion MapearDesdeDto(proyectoAgiles.Services.InvestigacionDto dto)
     {
         return new Investigacion
         {
             Id = dto.Id,
+            Cedula = dto.Cedula,
             Titulo = dto.Titulo,
+            Tipo = dto.Tipo,
+            RevistaOEditorial = dto.RevistaOEditorial,
             Area = dto.CampoConocimiento,
             Estado = DeterminarEstado(dto.FechaPublicacion),
             FechaInicio = dto.FechaPublicacion,
             FechaFin = null,
-            Descripcion = dto.Observacion
+            Descripcion = dto.Observacion,
+            Filiacion = dto.Filiacion
         };
     }private async Task Logout()
     {
@@ -765,6 +749,74 @@
             // Mostrar mensaje de error
             await JSRuntime.InvokeVoidAsync("alert", "Error al intentar subir de nivel. Inténtalo más tarde.");
         }
+    }    // Métodos para notificaciones mejoradas
+    private async Task MostrarNotificacionExito(string titulo, string mensaje)
+    {
+        await JSRuntime.InvokeVoidAsync("eval", $@"
+            // Crear y mostrar toast de Bootstrap
+            const toastHtml = `
+                <div class='toast align-items-center text-white bg-success border-0' role='alert' aria-live='assertive' aria-atomic='true' style='position: fixed; top: 20px; right: 20px; z-index: 9999;'>
+                    <div class='d-flex'>
+                        <div class='toast-body'>
+                            <strong>{titulo}</strong><br>{mensaje}
+                        </div>
+                        <button type='button' class='btn-close btn-close-white me-2 m-auto' data-bs-dismiss='toast'></button>
+                    </div>
+                </div>`;
+            
+            document.body.insertAdjacentHTML('beforeend', toastHtml);
+            const toastElement = document.body.lastElementChild;
+            const toast = new bootstrap.Toast(toastElement, {{ delay: 4000 }});
+            toast.show();
+            
+            toastElement.addEventListener('hidden.bs.toast', () => toastElement.remove());
+        ");
+    }
+
+    private async Task MostrarNotificacionInfo(string titulo, string mensaje)
+    {
+        await JSRuntime.InvokeVoidAsync("eval", $@"
+            // Crear y mostrar toast de Bootstrap
+            const toastHtml = `
+                <div class='toast align-items-center text-white bg-info border-0' role='alert' aria-live='assertive' aria-atomic='true' style='position: fixed; top: 20px; right: 20px; z-index: 9999;'>
+                    <div class='d-flex'>
+                        <div class='toast-body'>
+                            <strong>{titulo}</strong><br>{mensaje}
+                        </div>
+                        <button type='button' class='btn-close btn-close-white me-2 m-auto' data-bs-dismiss='toast'></button>
+                    </div>
+                </div>`;
+            
+            document.body.insertAdjacentHTML('beforeend', toastHtml);
+            const toastElement = document.body.lastElementChild;
+            const toast = new bootstrap.Toast(toastElement, {{ delay: 5000 }});
+            toast.show();
+            
+            toastElement.addEventListener('hidden.bs.toast', () => toastElement.remove());
+        ");
+    }
+
+    private async Task MostrarNotificacionError(string titulo, string mensaje)
+    {
+        await JSRuntime.InvokeVoidAsync("eval", $@"
+            // Crear y mostrar toast de Bootstrap
+            const toastHtml = `
+                <div class='toast align-items-center text-white bg-danger border-0' role='alert' aria-live='assertive' aria-atomic='true' style='position: fixed; top: 20px; right: 20px; z-index: 9999;'>
+                    <div class='d-flex'>
+                        <div class='toast-body'>
+                            <strong>{titulo}</strong><br>{mensaje}
+                        </div>
+                        <button type='button' class='btn-close btn-close-white me-2 m-auto' data-bs-dismiss='toast'></button>
+                    </div>
+                </div>`;
+            
+            document.body.insertAdjacentHTML('beforeend', toastHtml);
+            const toastElement = document.body.lastElementChild;
+            const toast = new bootstrap.Toast(toastElement, {{ delay: 6000 }});
+            toast.show();
+            
+            toastElement.addEventListener('hidden.bs.toast', () => toastElement.remove());
+        ");
     }
 
     public class ClassItem
@@ -782,7 +834,7 @@
         public string Tipo { get; set; } = string.Empty;
         public string RevistaOEditorial { get; set; } = string.Empty;
         public string Area { get; set; } = string.Empty; // Mapeado desde CampoConocimiento
-        public string Estado { get; set; } = "En progreso";
+        public string Estado { get; set; } = "En revisión";
         public DateTime FechaInicio { get; set; } = DateTime.Today; // Mapeado desde FechaPublicacion
         public DateTime? FechaFin { get; set; }
         public string Descripcion { get; set; } = string.Empty; // Mapeado desde Observacion
