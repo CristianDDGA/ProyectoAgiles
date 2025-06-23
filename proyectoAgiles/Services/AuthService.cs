@@ -263,6 +263,13 @@ namespace proyectoAgiles.Services
             var response = await _httpClient.PostAsync($"{_apiBaseUrl}/api/users/{userId}/subir-nivel", null);
             return response.IsSuccessStatusCode;
         }
+
+        public async Task<bool> VerificarRequisitosSubirNivel(int userId)
+        {
+            // Simulación: siempre retorna true (cumple requisitos)
+            await Task.Delay(500); // Simula espera de red
+            return true;
+        }
     }    public class RegisterRequest
     {
         public string Name { get; set; } = string.Empty;

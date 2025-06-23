@@ -13,8 +13,34 @@
     <div class="nivel-section d-flex align-items-center mb-4">
         <span class="fw-bold me-3">Nivel actual:</span>
         <span class="badge bg-info text-dark me-3" style="font-size:1.1em;">@UserSession.GetUserNivel()</span>
-        <button class="btn btn-sm btn-success" @onclick="OnSubirNivel">Subir de nivel</button>
+        <button class="btn btn-sm btn-success me-2" @onclick="ShowRequisitosModal">Subir de nivel</button>
     </div>
+
+    @if (showRequisitosModal)
+    {
+        <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,0.3);">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Requisitos para subir de nivel</h5>
+                        <button type="button" class="btn-close" @onclick="CloseRequisitosModal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <ol>
+                            <li>Experiencia mínima de 4 años como personal académico titular auxiliar 1 en la práctica docente en la Universidad Técnica de Ambato.</li>
+                            <li>Haber creado o publicado una obra de relevancia o un artículo indexado, con filiación UTA, en el campo amplio de conocimiento vinculado a sus actividades de docencia o investigación. La publicación deberá ser realizada durante el ejercicio de sus actividades en el grado que se encuentra. (Conforme lo establecido en el Reglamento para consideración de obras relevantes de la UTA)</li>
+                            <li>Haber obtenido como mínimo el setenta y cinco por ciento (75 %) del puntaje de la evaluación integral en los últimos cuatro periodos académicos de evaluación de desempeño en los que ejerció la docencia.</li>
+                            <li>Haber realizado y aprobado noventa y seis horas de capacitación y actualización profesional y científica en los últimos tres (3) años en una Universidad o Escuela Politécnica acreditada. Al menos 24 Horas (25%) de estas deberán ser de actualización pedagógica. El cumplimiento de este literal se exceptúa si se ha desempeñado como autoridad en una Universidad o Escuela Politécnica por más de dos (2) años.</li>
+                        </ol>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-outline-primary" @onclick="VerificarRequisitos">Verificar requisitos</button>
+                        <button class="btn btn-secondary" @onclick="CloseRequisitosModal">Cerrar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
 
     <!-- Tarjetas de Resumen -->
     <div class="stats-section">
@@ -170,7 +196,10 @@
     private int totalStudents = 0;
     private int pendingTasks = 0;
     private int weeklyHours = 0;
-    private List<ClassItem> upcomingClasses = new();    protected override async Task OnInitializedAsync()
+    private List<ClassItem> upcomingClasses = new();
+    private bool showRequisitosModal = false;
+
+    protected override async Task OnInitializedAsync()
     {
         // Asegurar que la sesión esté inicializada
         await UserSession.InitializeAsync();
@@ -183,7 +212,9 @@
         }
 
         await LoadDashboardData();
-    }private Task LoadDashboardData()
+    }
+
+    private Task LoadDashboardData()
     {
         // Simular carga de datos - aquí conectarías con tu API
         totalCourses = 4;
@@ -257,7 +288,36 @@
         Navigation.NavigateTo("/");
     }
 
-    private async Task OnSubirNivel()
+    private async Task VerificarRequisitos()
+    {
+        var userId = UserSession.CurrentUser?.Id ?? 0;
+        if (userId == 0)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "No se pudo obtener el usuario actual.");
+            return;
+        }
+        var requisitosCumplidos = await AuthService.VerificarRequisitosSubirNivel(userId);
+        if (requisitosCumplidos)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "¡Cumples con todos los requisitos para subir de nivel!");
+        }
+        else
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "No cumples con todos los requisitos para subir de nivel.");
+        }
+    }
+
+    private void ShowRequisitosModal()
+    {
+        showRequisitosModal = true;
+    }
+
+    private void CloseRequisitosModal()
+    {
+        showRequisitosModal = false;
+    }
+
+    private async Task SubirNivel()
     {
         // Lógica para subir de nivel
         var userId = UserSession.CurrentUser?.Id ?? 0;
