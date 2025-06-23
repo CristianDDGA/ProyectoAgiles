@@ -60,7 +60,7 @@ namespace ProyectoAgiles.Infrastructure.Migrations
                     b.HasIndex("Cedula")
                         .IsUnique();
 
-                    b.ToTable("ExternalTeachers");
+                    b.ToTable("ExternalTeachers", (string)null);
 
                     b.HasData(
                         new
@@ -132,7 +132,7 @@ namespace ProyectoAgiles.Infrastructure.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("PasswordResetTokens");
+                    b.ToTable("PasswordResetTokens", (string)null);
                 });
 
             modelBuilder.Entity("ProyectoAgiles.Domain.Entities.TTHH", b =>
@@ -165,7 +165,7 @@ namespace ProyectoAgiles.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("TTHH");
+                    b.ToTable("TTHH", (string)null);
                 });
 
             modelBuilder.Entity("ProyectoAgiles.Domain.Entities.User", b =>
@@ -244,7 +244,7 @@ namespace ProyectoAgiles.Infrastructure.Migrations
                     b.HasIndex("Email")
                         .IsUnique();
 
-                    b.ToTable("Users");
+                    b.ToTable("Users", (string)null);
 
                     b.HasData(
                         new

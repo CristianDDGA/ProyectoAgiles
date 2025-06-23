@@ -21,6 +21,7 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IPasswordResetTokenRepository, PasswordResetTokenRepository>();
 builder.Services.AddScoped<IExternalTeacherRepository, ExternalTeacherRepository>();
 builder.Services.AddScoped<ITTHHRepository, TTHHRepository>();
+builder.Services.AddScoped<IInvestigacionRepository, InvestigacionRepository>();
 
 // Servicio para manejo de archivos
 builder.Services.AddScoped<IFileService, FileService>();
@@ -31,6 +32,7 @@ builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ITeacherManagementService, TeacherManagementService>();
+builder.Services.AddScoped<IInvestigacionService, InvestigacionService>();
 
 // Configuración de CORS
 builder.Services.AddCors(options =>

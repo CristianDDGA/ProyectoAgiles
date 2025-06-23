@@ -11,6 +11,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<PasswordResetToken> PasswordResetTokens { get; set; }
     public DbSet<ExternalTeacher> ExternalTeachers { get; set; }
     public DbSet<TTHH> TTHH { get; set; }
+    public DbSet<Investigacion> Investigaciones { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -108,7 +109,42 @@ public class ApplicationDbContext : DbContext
                 .IsRequired();
             
             entity.Property(e => e.UpdatedAt)
+                .IsRequired();        });
+
+        // Configuración de la entidad Investigacion
+        modelBuilder.Entity<Investigacion>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            
+            entity.Property(e => e.Cedula)
                 .IsRequired();
+            
+            entity.Property(e => e.Titulo)
+                .IsRequired();
+            
+            entity.Property(e => e.Tipo)
+                .IsRequired();
+            
+            entity.Property(e => e.RevistaOEditorial)
+                .IsRequired();
+            
+            entity.Property(e => e.FechaPublicacion)
+                .IsRequired();
+            
+            entity.Property(e => e.CampoConocimiento)
+                .IsRequired();
+            
+            entity.Property(e => e.Filiacion)
+                .IsRequired();
+            
+            entity.Property(e => e.Observacion)
+                .IsRequired();
+            
+            entity.Property(e => e.CreatedAt)
+                .IsRequired();
+            
+            entity.Property(e => e.IsDeleted)
+                .HasDefaultValue(false);
         });
 
         // Datos semilla para el administrador por defecto
