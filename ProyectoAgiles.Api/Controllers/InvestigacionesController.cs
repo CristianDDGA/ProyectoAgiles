@@ -177,4 +177,68 @@ public class InvestigacionesController : ControllerBase
             return StatusCode(500, new { message = "Error interno del servidor", error = ex.Message });
         }
     }
+
+    /// <summary>
+    /// Inserta datos de prueba (solo en desarrollo)
+    /// </summary>
+    [HttpPost("seed-test-data")]
+    public async Task<ActionResult> SeedTestData()
+    {
+        try
+        {
+            var testData = new List<CreateInvestigacionDto>
+            {
+                new CreateInvestigacionDto
+                {
+                    Cedula = "1805123456",
+                    Titulo = "Análisis de algoritmos de machine learning en sistemas distribuidos",
+                    Tipo = "Artículo",
+                    RevistaOEditorial = "IEEE Transactions on Software Engineering",
+                    FechaPublicacion = new DateTime(2024, 1, 15),
+                    CampoConocimiento = "Ingeniería de Software",
+                    Filiacion = "Universidad Técnica de Ambato",
+                    Observacion = "Investigación sobre optimización de algoritmos ML distribuidos"
+                },
+                new CreateInvestigacionDto
+                {
+                    Cedula = "1805123456",
+                    Titulo = "Metodologías ágiles aplicadas en el desarrollo de software educativo",
+                    Tipo = "Libro",
+                    RevistaOEditorial = "Editorial Académica Española",
+                    FechaPublicacion = new DateTime(2023, 11, 20),
+                    CampoConocimiento = "Educación en Ingeniería",
+                    Filiacion = "Universidad Técnica de Ambato",
+                    Observacion = "Estudio sobre la implementación de Scrum en proyectos educativos"
+                },
+                new CreateInvestigacionDto
+                {
+                    Cedula = "1805123456",
+                    Titulo = "Desarrollo de aplicaciones web con tecnologías emergentes",
+                    Tipo = "Artículo",
+                    RevistaOEditorial = "Revista de Ingeniería de Software",
+                    FechaPublicacion = new DateTime(2024, 3, 10),
+                    CampoConocimiento = "Tecnologías Web",
+                    Filiacion = "Universidad Técnica de Ambato",
+                    Observacion = "Análisis comparativo de frameworks modernos"
+                }
+            };
+
+            var createdInvestigaciones = new List<InvestigacionDto>();
+            foreach (var data in testData)
+            {
+                var created = await _investigacionService.CreateAsync(data);
+                createdInvestigaciones.Add(created);
+            }
+
+            return Ok(new { 
+                message = "Datos de prueba insertados exitosamente", 
+                count = createdInvestigaciones.Count,
+                investigaciones = createdInvestigaciones 
+            });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "Error al insertar datos de prueba", error = ex.Message });
+        }
+    }
 }

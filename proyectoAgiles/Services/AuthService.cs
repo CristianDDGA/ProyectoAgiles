@@ -262,15 +262,120 @@ namespace proyectoAgiles.Services
         {
             var response = await _httpClient.PostAsync($"{_apiBaseUrl}/api/users/{userId}/subir-nivel", null);
             return response.IsSuccessStatusCode;
-        }
-
-        public async Task<bool> VerificarRequisitosSubirNivel(int userId)
+        }        public async Task<bool> VerificarRequisitosSubirNivel(int userId)
         {
             // Simulación: siempre retorna true (cumple requisitos)
             await Task.Delay(500); // Simula espera de red
-            return true;
+            return true;        }
+
+        // Métodos para trabajar con investigaciones
+        public async Task<List<InvestigacionDto>> GetInvestigacionesPorCedula(string cedula)
+        {
+            try
+            {
+                var response = await _httpClient.GetFromJsonAsync<List<InvestigacionDto>>($"{_apiBaseUrl}/api/investigaciones/by-cedula/{cedula}");
+                return response ?? new List<InvestigacionDto>();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error al obtener investigaciones: {ex.Message}");
+            }
         }
-    }    public class RegisterRequest
+
+        public async Task<InvestigacionDto> CrearInvestigacion(CreateInvestigacionDto createDto)
+        {
+            try
+            {
+                var response = await _httpClient.PostAsJsonAsync($"{_apiBaseUrl}/api/investigaciones", createDto);
+                if (response.IsSuccessStatusCode)
+                {
+                    var result = await response.Content.ReadFromJsonAsync<InvestigacionDto>();
+                    return result!;
+                }
+                
+                var errorContent = await response.Content.ReadAsStringAsync();
+                throw new Exception($"Error al crear investigación: {errorContent}");
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error al crear investigación: {ex.Message}");
+            }
+        }
+
+        public async Task<InvestigacionDto> ActualizarInvestigacion(UpdateInvestigacionDto updateDto)
+        {
+            try
+            {
+                var response = await _httpClient.PutAsJsonAsync($"{_apiBaseUrl}/api/investigaciones/{updateDto.Id}", updateDto);
+                if (response.IsSuccessStatusCode)
+                {
+                    var result = await response.Content.ReadFromJsonAsync<InvestigacionDto>();
+                    return result!;
+                }
+                
+                var errorContent = await response.Content.ReadAsStringAsync();
+                throw new Exception($"Error al actualizar investigación: {errorContent}");
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error al actualizar investigación: {ex.Message}");
+            }
+        }
+
+        public async Task<bool> EliminarInvestigacion(int id)
+        {
+            try
+            {
+                var response = await _httpClient.DeleteAsync($"{_apiBaseUrl}/api/investigaciones/{id}");
+                return response.IsSuccessStatusCode;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error al eliminar investigación: {ex.Message}");
+            }
+        }
+    }
+
+    // DTOs para investigaciones
+    public class InvestigacionDto
+    {
+        public int Id { get; set; }
+        public string Cedula { get; set; } = string.Empty;
+        public string Titulo { get; set; } = string.Empty;
+        public string Tipo { get; set; } = string.Empty;
+        public string RevistaOEditorial { get; set; } = string.Empty;
+        public DateTime FechaPublicacion { get; set; }
+        public string CampoConocimiento { get; set; } = string.Empty;
+        public string Filiacion { get; set; } = string.Empty;
+        public string Observacion { get; set; } = string.Empty;
+        public DateTime CreatedAt { get; set; }
+        public DateTime? UpdatedAt { get; set; }
+    }
+
+    public class CreateInvestigacionDto
+    {
+        public string Cedula { get; set; } = string.Empty;
+        public string Titulo { get; set; } = string.Empty;
+        public string Tipo { get; set; } = string.Empty;
+        public string RevistaOEditorial { get; set; } = string.Empty;
+        public DateTime FechaPublicacion { get; set; }
+        public string CampoConocimiento { get; set; } = string.Empty;
+        public string Filiacion { get; set; } = string.Empty;
+        public string Observacion { get; set; } = string.Empty;
+    }
+
+    public class UpdateInvestigacionDto
+    {
+        public int Id { get; set; }
+        public string Cedula { get; set; } = string.Empty;
+        public string Titulo { get; set; } = string.Empty;
+        public string Tipo { get; set; } = string.Empty;
+        public string RevistaOEditorial { get; set; } = string.Empty;
+        public DateTime FechaPublicacion { get; set; }
+        public string CampoConocimiento { get; set; } = string.Empty;
+        public string Filiacion { get; set; } = string.Empty;
+        public string Observacion { get; set; } = string.Empty;
+    }public class RegisterRequest
     {
         public string Name { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;

@@ -62,13 +62,13 @@
                                 </button>
                             </div>
                         </div>
-                        
-                        @if (isLoadingInvestigaciones)
+                          @if (isLoadingInvestigaciones)
                         {
                             <div class="text-center">
                                 <div class="spinner-border" role="status">
                                     <span class="visually-hidden">Cargando...</span>
                                 </div>
+                                <p class="mt-2">Cargando investigaciones...</p>
                             </div>
                         }
                         else
@@ -79,9 +79,10 @@
                                         <tr>
                                             <th>Título</th>
                                             <th>Área</th>
+                                            <th>Tipo</th>
                                             <th>Estado</th>
-                                            <th>Fecha Inicio</th>
-                                            <th>Fecha Fin</th>
+                                            <th>Fecha Publicación</th>
+                                            <th>Revista/Editorial</th>
                                             <th>Acciones</th>
                                         </tr>
                                     </thead>
@@ -93,13 +94,14 @@
                                                 <tr>
                                                     <td>@investigacion.Titulo</td>
                                                     <td>@investigacion.Area</td>
+                                                    <td>@investigacion.Tipo</td>
                                                     <td>
                                                         <span class="badge @GetEstadoBadgeClass(investigacion.Estado)">
                                                             @investigacion.Estado
                                                         </span>
                                                     </td>
                                                     <td>@investigacion.FechaInicio.ToString("dd/MM/yyyy")</td>
-                                                    <td>@(investigacion.FechaFin?.ToString("dd/MM/yyyy") ?? "En progreso")</td>
+                                                    <td>@investigacion.RevistaOEditorial</td>
                                                     <td>
                                                         <button class="btn btn-sm btn-outline-primary me-1" @onclick="() => EditarInvestigacion(investigacion)">
                                                             <i class="fas fa-edit"></i>
@@ -114,7 +116,10 @@
                                         else
                                         {
                                             <tr>
-                                                <td colspan="6" class="text-center text-muted">No hay investigaciones registradas</td>
+                                                <td colspan="7" class="text-center text-muted">
+                                                    No hay investigaciones registradas para tu cédula.
+                                                    <br><small>Cédula actual: @(UserSession.CurrentUser?.Cedula ?? "No disponible")</small>
+                                                </td>
                                             </tr>
                                         }
                                     </tbody>
@@ -431,54 +436,7 @@
     private void NavigateToReports()
     {
         Navigation.NavigateTo("/docente/reports");
-    }
-
-    private async Task LoadInvestigaciones()
-    {
-        isLoadingInvestigaciones = true;
-        StateHasChanged();
-        
-        try
-        {
-            // Simular carga de datos - aquí conectarías con tu API/Base de datos
-            await Task.Delay(500); // Simular tiempo de carga
-            
-            // Datos de ejemplo - estos deberían venir de la base de datos
-            investigaciones = new List<Investigacion>
-            {
-                new Investigacion 
-                { 
-                    Id = 1,
-                    Titulo = "Análisis de Algoritmos de Machine Learning",
-                    Area = "Inteligencia Artificial",
-                    Estado = "En progreso",
-                    FechaInicio = DateTime.Now.AddMonths(-6),
-                    Descripcion = "Investigación sobre optimización de algoritmos ML"
-                },
-                new Investigacion 
-                { 
-                    Id = 2,
-                    Titulo = "Metodologías Ágiles en Educación Superior",
-                    Area = "Educación",
-                    Estado = "Completado",
-                    FechaInicio = DateTime.Now.AddYears(-1),
-                    FechaFin = DateTime.Now.AddMonths(-2),
-                    Descripcion = "Estudio sobre implementación de Scrum en aulas universitarias"
-                }
-            };
-        }
-        catch (Exception ex)
-        {
-            await JSRuntime.InvokeVoidAsync("alert", $"Error al cargar investigaciones: {ex.Message}");
-        }
-        finally
-        {
-            isLoadingInvestigaciones = false;
-            StateHasChanged();
-        }
-    }
-
-    private async Task ImportarInvestigaciones()
+    }    private async Task LoadInvestigaciones()
     {
         isLoadingInvestigaciones = true;
         StateHasChanged();
@@ -492,35 +450,68 @@
                 return;
             }
 
-            // Aquí harías la llamada a tu API para importar investigaciones por cédula
-            // var investigacionesImportadas = await AuthService.ImportarInvestigacionesPorCedula(cedula);
-            
-            // Simular importación de investigaciones
-            await Task.Delay(1000);
-            
-            var investigacionesImportadas = new List<Investigacion>
-            {
-                new Investigacion 
-                { 
-                    Id = 3,
-                    Titulo = "Desarrollo de Software Sustentable",
-                    Area = "Ingeniería de Software",
-                    Estado = "En progreso",
-                    FechaInicio = DateTime.Now.AddMonths(-3),
-                    Descripcion = "Investigación importada sobre prácticas sustentables en desarrollo"
-                }
-            };
+            // Debug: Mostrar la cédula que se está usando
+            Console.WriteLine($"Cargando investigaciones para cédula: {cedula}");
 
-            // Agregar las investigaciones importadas que no estén ya en la lista
-            foreach (var importada in investigacionesImportadas)
+            // Obtener investigaciones de la base de datos por cédula
+            var investigacionesApi = await AuthService.GetInvestigacionesPorCedula(cedula);
+            
+            Console.WriteLine($"Investigaciones obtenidas de la API: {investigacionesApi?.Count ?? 0}");
+            
+            if (investigacionesApi == null || !investigacionesApi.Any())
             {
-                if (!investigaciones.Any(i => i.Titulo == importada.Titulo))
-                {
-                    investigaciones.Add(importada);
-                }
+                investigaciones = new List<Investigacion>();
+                await JSRuntime.InvokeVoidAsync("console.log", $"No se encontraron investigaciones para la cédula: {cedula}");
+                return;
+            }
+              // Mapear de InvestigacionDto a nuestro modelo local
+            investigaciones = investigacionesApi.Select(inv => new Investigacion
+            {
+                Id = inv.Id,
+                Cedula = inv.Cedula,
+                Titulo = inv.Titulo,
+                Tipo = inv.Tipo,
+                RevistaOEditorial = inv.RevistaOEditorial,
+                Area = inv.CampoConocimiento, // Mapear CampoConocimiento a Area
+                Estado = DeterminarEstado(inv.FechaPublicacion), // Determinar estado basado en fecha
+                FechaInicio = inv.FechaPublicacion, // Usar FechaPublicacion como FechaInicio
+                FechaFin = null, // No hay fecha fin en la base de datos
+                Descripcion = inv.Observacion, // Mapear Observacion a Descripcion
+                Filiacion = inv.Filiacion
+            }).ToList();
+
+            Console.WriteLine($"Investigaciones mapeadas: {investigaciones.Count}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al cargar investigaciones: {ex.Message}");
+            Console.WriteLine($"Stack trace: {ex.StackTrace}");
+            await JSRuntime.InvokeVoidAsync("alert", $"Error al cargar investigaciones: {ex.Message}");
+            investigaciones = new List<Investigacion>();
+        }
+        finally
+        {
+            isLoadingInvestigaciones = false;
+            StateHasChanged();
+        }
+    }private async Task ImportarInvestigaciones()
+    {
+        isLoadingInvestigaciones = true;
+        StateHasChanged();
+        
+        try
+        {
+            var cedula = UserSession.CurrentUser?.Cedula ?? string.Empty;
+            if (string.IsNullOrEmpty(cedula))
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "No se pudo obtener la cédula del usuario.");
+                return;
             }
 
-            await JSRuntime.InvokeVoidAsync("alert", $"Se importaron {investigacionesImportadas.Count} investigaciones.");
+            // Recargar las investigaciones desde la base de datos
+            await LoadInvestigaciones();
+            
+            await JSRuntime.InvokeVoidAsync("alert", $"Se cargaron {investigaciones.Count} investigaciones de la base de datos.");
         }
         catch (Exception ex)
         {
@@ -554,9 +545,7 @@
             Descripcion = investigacion.Descripcion
         };
         showAgregarModal = true;
-    }
-
-    private async Task GuardarInvestigacion()
+    }    private async Task GuardarInvestigacion()
     {
         if (string.IsNullOrWhiteSpace(nuevaInvestigacion.Titulo) || 
             string.IsNullOrWhiteSpace(nuevaInvestigacion.Area))
@@ -570,23 +559,57 @@
 
         try
         {
-            // Simular guardado - aquí conectarías con tu API
-            await Task.Delay(500);
+            var cedula = UserSession.CurrentUser?.Cedula ?? string.Empty;
+            if (string.IsNullOrEmpty(cedula))
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "No se pudo obtener la cédula del usuario.");
+                return;
+            }
 
             if (editingInvestigacion != null)
             {
                 // Actualizar investigación existente
+                var updateDto = new proyectoAgiles.Services.UpdateInvestigacionDto
+                {
+                    Id = editingInvestigacion.Id,
+                    Cedula = cedula,
+                    Titulo = nuevaInvestigacion.Titulo,
+                    Tipo = "Artículo", // Valor por defecto
+                    RevistaOEditorial = "N/A", // Valor por defecto
+                    FechaPublicacion = nuevaInvestigacion.FechaInicio,
+                    CampoConocimiento = nuevaInvestigacion.Area,
+                    Filiacion = "Universidad Técnica de Ambato",
+                    Observacion = nuevaInvestigacion.Descripcion ?? ""
+                };
+
+                var updated = await AuthService.ActualizarInvestigacion(updateDto);
+                
+                // Actualizar en la lista local
                 var index = investigaciones.FindIndex(i => i.Id == editingInvestigacion.Id);
                 if (index >= 0)
                 {
-                    investigaciones[index] = nuevaInvestigacion;
+                    investigaciones[index] = MapearDesdeDto(updated);
                 }
             }
             else
             {
-                // Agregar nueva investigación
-                nuevaInvestigacion.Id = investigaciones.Any() ? investigaciones.Max(i => i.Id) + 1 : 1;
-                investigaciones.Add(nuevaInvestigacion);
+                // Crear nueva investigación
+                var createDto = new proyectoAgiles.Services.CreateInvestigacionDto
+                {
+                    Cedula = cedula,
+                    Titulo = nuevaInvestigacion.Titulo,
+                    Tipo = "Artículo", // Valor por defecto
+                    RevistaOEditorial = "N/A", // Valor por defecto
+                    FechaPublicacion = nuevaInvestigacion.FechaInicio,
+                    CampoConocimiento = nuevaInvestigacion.Area,
+                    Filiacion = "Universidad Técnica de Ambato",
+                    Observacion = nuevaInvestigacion.Descripcion ?? ""
+                };
+
+                var created = await AuthService.CrearInvestigacion(createDto);
+                
+                // Agregar a la lista local
+                investigaciones.Add(MapearDesdeDto(created));
             }
 
             CloseAgregarModal();
@@ -602,9 +625,7 @@
             isSaving = false;
             StateHasChanged();
         }
-    }
-
-    private async Task EliminarInvestigacion(int id)
+    }    private async Task EliminarInvestigacion(int id)
     {
         var confirmDelete = await JSRuntime.InvokeAsync<bool>("confirm", 
             "¿Está seguro de que desea eliminar esta investigación?");
@@ -613,12 +634,20 @@
         {
             try
             {
-                // Simular eliminación - aquí conectarías con tu API
-                await Task.Delay(300);
+                // Eliminar de la base de datos
+                var success = await AuthService.EliminarInvestigacion(id);
                 
-                investigaciones.RemoveAll(i => i.Id == id);
-                await JSRuntime.InvokeVoidAsync("alert", "Investigación eliminada exitosamente.");
-                StateHasChanged();
+                if (success)
+                {
+                    // Eliminar de la lista local
+                    investigaciones.RemoveAll(i => i.Id == id);
+                    await JSRuntime.InvokeVoidAsync("alert", "Investigación eliminada exitosamente.");
+                    StateHasChanged();
+                }
+                else
+                {
+                    await JSRuntime.InvokeVoidAsync("alert", "Error al eliminar la investigación.");
+                }
             }
             catch (Exception ex)
             {
@@ -637,9 +666,7 @@
         showAgregarModal = false;
         nuevaInvestigacion = new Investigacion();
         editingInvestigacion = null;
-    }
-
-    private string GetEstadoBadgeClass(string estado)
+    }    private string GetEstadoBadgeClass(string estado)
     {
         return estado switch
         {
@@ -648,6 +675,31 @@
             "Pausado" => "bg-warning text-dark",
             "Cancelado" => "bg-danger",
             _ => "bg-secondary"
+        };
+    }
+
+    private string DeterminarEstado(DateTime fechaPublicacion)
+    {
+        // Si la fecha de publicación es futura, está en progreso
+        if (fechaPublicacion > DateTime.Now)
+        {
+            return "En progreso";
+        }
+        // Si la fecha es pasada, está completado
+        return "Completado";
+    }
+
+    private Investigacion MapearDesdeDto(proyectoAgiles.Services.InvestigacionDto dto)
+    {
+        return new Investigacion
+        {
+            Id = dto.Id,
+            Titulo = dto.Titulo,
+            Area = dto.CampoConocimiento,
+            Estado = DeterminarEstado(dto.FechaPublicacion),
+            FechaInicio = dto.FechaPublicacion,
+            FechaFin = null,
+            Descripcion = dto.Observacion
         };
     }private async Task Logout()
     {
@@ -714,16 +766,18 @@
         public string Time { get; set; } = string.Empty;
         public DateTime Date { get; set; }
         public string Location { get; set; } = string.Empty;
-    }
-
-    public class Investigacion
+    }    public class Investigacion
     {
         public int Id { get; set; }
+        public string Cedula { get; set; } = string.Empty;
         public string Titulo { get; set; } = string.Empty;
-        public string Area { get; set; } = string.Empty;
+        public string Tipo { get; set; } = string.Empty;
+        public string RevistaOEditorial { get; set; } = string.Empty;
+        public string Area { get; set; } = string.Empty; // Mapeado desde CampoConocimiento
         public string Estado { get; set; } = "En progreso";
-        public DateTime FechaInicio { get; set; } = DateTime.Today;
+        public DateTime FechaInicio { get; set; } = DateTime.Today; // Mapeado desde FechaPublicacion
         public DateTime? FechaFin { get; set; }
-        public string Descripcion { get; set; } = string.Empty;
+        public string Descripcion { get; set; } = string.Empty; // Mapeado desde Observacion
+        public string Filiacion { get; set; } = string.Empty;
     }
 }
