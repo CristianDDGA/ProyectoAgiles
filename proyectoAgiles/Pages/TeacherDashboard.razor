@@ -112,13 +112,14 @@
                                                     </td>
                                                 </tr>
                                             }
-                                        }
-                                        else
+                                        }                                        else
                                         {
                                             <tr>
-                                                <td colspan="7" class="text-center text-muted">
-                                                    No hay investigaciones registradas para tu cédula.
-                                                    <br><small>Cédula actual: @(UserSession.CurrentUser?.Cedula ?? "No disponible")</small>
+                                                <td colspan="7" class="text-center text-muted py-4">
+                                                    <i class="fas fa-search fa-2x mb-2"></i>
+                                                    <p class="mb-1">No hay investigaciones cargadas</p>
+                                                    <small>Haz clic en "Importar" para cargar tus investigaciones desde la base de datos</small>
+                                                    <br><small class="text-info">Cédula actual: @(UserSession.CurrentUser?.Cedula ?? "No disponible")</small>
                                                 </td>
                                             </tr>
                                         }
@@ -412,7 +413,7 @@
     }    private async Task NavigateToInvestigaciones()
     {
         showInvestigacionesModal = true;
-        await LoadInvestigaciones();
+        // No cargar automáticamente - solo mostrar tabla vacía
     }
 
     private void NavigateToGrades()
@@ -494,7 +495,7 @@
             isLoadingInvestigaciones = false;
             StateHasChanged();
         }
-    }private async Task ImportarInvestigaciones()
+    }    private async Task ImportarInvestigaciones()
     {
         isLoadingInvestigaciones = true;
         StateHasChanged();
@@ -508,10 +509,17 @@
                 return;
             }
 
-            // Recargar las investigaciones desde la base de datos
+            // Cargar las investigaciones desde la base de datos
             await LoadInvestigaciones();
             
-            await JSRuntime.InvokeVoidAsync("alert", $"Se cargaron {investigaciones.Count} investigaciones de la base de datos.");
+            if (investigaciones.Any())
+            {
+                await JSRuntime.InvokeVoidAsync("alert", $"Se importaron {investigaciones.Count} investigaciones de la base de datos.");
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "No se encontraron investigaciones para tu cédula en la base de datos.");
+            }
         }
         catch (Exception ex)
         {
