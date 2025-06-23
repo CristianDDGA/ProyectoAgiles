@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\nixon\\OneDrive\\Escritorio\\proyectoAgiles\\proyectoAgiles.Api\\ProyectoAgiles.Api.csproj": {}
+    "C:\\Users\\nixon\\OneDrive\\Escritorio\\proyectoAgiles\\ProyectoAgiles.Api\\ProyectoAgiles.Api.csproj": {}
   },
   "projects": {
-    "C:\\Users\\nixon\\OneDrive\\Escritorio\\proyectoAgiles\\proyectoAgiles.Api\\ProyectoAgiles.Api.csproj": {
+    "C:\\Users\\nixon\\OneDrive\\Escritorio\\proyectoAgiles\\ProyectoAgiles.Api\\ProyectoAgiles.Api.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\nixon\\OneDrive\\Escritorio\\proyectoAgiles\\proyectoAgiles.Api\\ProyectoAgiles.Api.csproj",
+        "projectUniqueName": "C:\\Users\\nixon\\OneDrive\\Escritorio\\proyectoAgiles\\ProyectoAgiles.Api\\ProyectoAgiles.Api.csproj",
         "projectName": "ProyectoAgiles.Api",
-        "projectPath": "C:\\Users\\nixon\\OneDrive\\Escritorio\\proyectoAgiles\\proyectoAgiles.Api\\ProyectoAgiles.Api.csproj",
+        "projectPath": "C:\\Users\\nixon\\OneDrive\\Escritorio\\proyectoAgiles\\ProyectoAgiles.Api\\ProyectoAgiles.Api.csproj",
         "packagesPath": "C:\\Users\\nixon\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\nixon\\OneDrive\\Escritorio\\proyectoAgiles\\proyectoAgiles.Api\\obj\\",
+        "outputPath": "C:\\Users\\nixon\\OneDrive\\Escritorio\\proyectoAgiles\\ProyectoAgiles.Api\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\nixon\\AppData\\Roaming\\NuGet\\NuGet.Config"
@@ -54,6 +54,10 @@
         "net9.0": {
           "targetAlias": "net9.0",
           "dependencies": {
+            "AutoMapper.Extensions.Microsoft.DependencyInjection": {
+              "target": "Package",
+              "version": "[12.0.1, )"
+            },
             "Microsoft.AspNetCore.OpenApi": {
               "target": "Package",
               "version": "[9.0.5, )"
@@ -140,6 +144,10 @@
         "net9.0": {
           "targetAlias": "net9.0",
           "dependencies": {
+            "AutoMapper": {
+              "target": "Package",
+              "version": "[12.0.1, )"
+            },
             "BCrypt.Net-Next": {
               "target": "Package",
               "version": "[4.0.3, )"

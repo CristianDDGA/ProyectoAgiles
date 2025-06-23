@@ -12,6 +12,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<ExternalTeacher> ExternalTeachers { get; set; }
     public DbSet<TTHH> TTHH { get; set; }
     public DbSet<Investigacion> Investigaciones { get; set; }
+    public DbSet<EvaluacionDesempeno> DAC { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -109,9 +110,7 @@ public class ApplicationDbContext : DbContext
                 .IsRequired();
             
             entity.Property(e => e.UpdatedAt)
-                .IsRequired();        });
-
-        // Configuración de la entidad Investigacion
+                .IsRequired();        });        // Configuración de la entidad Investigacion
         modelBuilder.Entity<Investigacion>(entity =>
         {
             entity.HasKey(e => e.Id);
@@ -145,6 +144,68 @@ public class ApplicationDbContext : DbContext
             
             entity.Property(e => e.IsDeleted)
                 .HasDefaultValue(false);
+        });        // Configuración de la entidad EvaluacionDesempeno
+        modelBuilder.Entity<EvaluacionDesempeno>(entity =>
+        {
+            entity.ToTable("DAC"); // Nombre específico de la tabla
+            
+            entity.HasKey(e => e.Id);
+            
+            entity.Property(e => e.Cedula)
+                .IsRequired()
+                .HasMaxLength(10);
+            
+            entity.Property(e => e.PeriodoAcademico)
+                .IsRequired()
+                .HasMaxLength(10);
+            
+            entity.Property(e => e.Anio)
+                .IsRequired();
+            
+            entity.Property(e => e.Semestre)
+                .IsRequired();
+            
+            entity.Property(e => e.PuntajeObtenido)
+                .IsRequired()
+                .HasColumnType("decimal(5,2)");
+            
+            entity.Property(e => e.PuntajeMaximo)
+                .IsRequired()
+                .HasColumnType("decimal(5,2)")
+                .HasDefaultValue(100);
+            
+            entity.Property(e => e.FechaEvaluacion)
+                .IsRequired();
+            
+            entity.Property(e => e.TipoEvaluacion)
+                .HasMaxLength(50)
+                .HasDefaultValue("Integral");
+            
+            entity.Property(e => e.Observaciones)
+                .HasMaxLength(500);
+            
+            entity.Property(e => e.Estado)
+                .HasMaxLength(20)
+                .HasDefaultValue("Completada");
+            
+            entity.Property(e => e.Evaluador)
+                .HasMaxLength(100);
+            
+            entity.Property(e => e.NombreArchivoRespaldo)
+                .HasMaxLength(255);
+            
+            entity.Property(e => e.CreatedAt)
+                .IsRequired();
+            
+            entity.Property(e => e.IsDeleted)
+                .HasDefaultValue(false);
+
+            // Índice único compuesto para evitar duplicados de evaluación por período
+            entity.HasIndex(e => new { e.Cedula, e.PeriodoAcademico })
+                .IsUnique();
+
+            // Filtro global para soft delete
+            entity.HasQueryFilter(e => !e.IsDeleted);
         });
 
         // Datos semilla para el administrador por defecto

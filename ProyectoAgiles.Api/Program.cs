@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using ProyectoAgiles.Application.Interfaces;
 using ProyectoAgiles.Application.Services;
+using ProyectoAgiles.Application.Mappings;
 using ProyectoAgiles.Domain.Interfaces;
 using ProyectoAgiles.Infrastructure.Data;
 using ProyectoAgiles.Infrastructure.Repositories;
@@ -15,6 +16,9 @@ builder.Services.AddOpenApi();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+// Configuración de AutoMapper
+builder.Services.AddAutoMapper(typeof(EvaluacionDesempenoMappingProfile));
+
 // Inyección de dependencias
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddScoped<IUserRepository, UserRepository>();
@@ -22,6 +26,7 @@ builder.Services.AddScoped<IPasswordResetTokenRepository, PasswordResetTokenRepo
 builder.Services.AddScoped<IExternalTeacherRepository, ExternalTeacherRepository>();
 builder.Services.AddScoped<ITTHHRepository, TTHHRepository>();
 builder.Services.AddScoped<IInvestigacionRepository, InvestigacionRepository>();
+builder.Services.AddScoped<IEvaluacionDesempenoRepository, EvaluacionDesempenoRepository>();
 
 // Servicio para manejo de archivos
 builder.Services.AddScoped<IFileService, FileService>();
@@ -33,6 +38,7 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ITeacherManagementService, TeacherManagementService>();
 builder.Services.AddScoped<IInvestigacionService, InvestigacionService>();
+builder.Services.AddScoped<IEvaluacionDesempenoService, EvaluacionDesempenoService>();
 
 // Configuración de CORS
 builder.Services.AddCors(options =>
