@@ -153,7 +153,8 @@ public class UserService : IUserService
             Cedula = user.Cedula,
             IsActive = user.IsActive,
             CreatedAt = user.CreatedAt,
-            FullName = user.FullName
+            FullName = user.FullName,
+            Nivel = user.Nivel // Mapeo de nivel
         };
     }
 }

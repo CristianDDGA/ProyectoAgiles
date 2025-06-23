@@ -26,7 +26,14 @@
                         </div>
                         <div class="user-details">
                             <span class="navbar-text">Hola, @UserSession.CurrentUser!.FirstName</span>
-                            <small class="user-role text-muted d-block">@UserSession.GetUserRole()</small>
+                            @if (UserSession.IsTeacher)
+                            {
+                                <small class="user-role text-muted d-block">@UserSession.GetUserNivel()</small>
+                            }
+                            else
+                            {
+                                <small class="user-role text-muted d-block">@UserSession.GetUserRole()</small>
+                            }
                         </div>
                     </div>
                     <button @onclick="Logout" class="btn btn-outline-danger">

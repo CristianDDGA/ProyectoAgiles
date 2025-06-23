@@ -39,6 +39,7 @@ public class UserDto
     
     // Ruta del documento de identidad almacenado
     public string? IdentityDocumentPath { get; set; }
+    public string? Nivel { get; set; } // Agregado para exponer el nivel
 }
 
 public class ForgotPasswordDto

@@ -315,7 +315,8 @@ public class AuthService : IAuthService
             IsActive = user.IsActive,
             CreatedAt = user.CreatedAt,
             FullName = user.FullName,
-            IdentityDocumentPath = user.IdentityDocumentPath
+            IdentityDocumentPath = user.IdentityDocumentPath,
+            Nivel = user.Nivel // Mapeo de nivel
         };
     }    private async Task IncrementFailedLoginAttemptsAsync(User user)
     {

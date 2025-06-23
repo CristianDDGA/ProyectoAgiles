@@ -6,6 +6,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 
@@ -296,7 +297,7 @@ namespace proyectoAgiles.Services
         public string Message { get; set; } = string.Empty;
         public UserDto? User { get; set; }
         public string Token { get; set; } = string.Empty;
-        public bool IsAccountLocked { get; set; } = false;    }public class UserDto
+        public bool IsAccountLocked { get; set; } = false;    }    public class UserDto
     {
         public int Id { get; set; }
         public string FirstName { get; set; } = string.Empty;
@@ -305,6 +306,9 @@ namespace proyectoAgiles.Services
         public int UserType { get; set; }
         public string Cedula { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; }
+        
+        [JsonPropertyName("nivel")]
+        public string? Nivel { get; set; } // Agregado para exponer el nivel
         public string FullName => $"{FirstName} {LastName}";
     }public class CheckEmailResponse
     {

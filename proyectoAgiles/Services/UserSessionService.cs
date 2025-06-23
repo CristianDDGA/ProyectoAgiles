@@ -14,9 +14,7 @@ namespace proyectoAgiles.Services
             _jsRuntime = jsRuntime;
         }
 
-        public UserDto? CurrentUser => _currentUser;
-
-        public async Task InitializeAsync()
+        public UserDto? CurrentUser => _currentUser;        public async Task InitializeAsync()
         {
             if (_isInitialized) return;
 
@@ -25,7 +23,12 @@ namespace proyectoAgiles.Services
                 var userData = await _jsRuntime.InvokeAsync<string>("localStorage.getItem", "currentUser");
                 if (!string.IsNullOrEmpty(userData))
                 {
-                    _currentUser = JsonSerializer.Deserialize<UserDto>(userData);
+                    var options = new JsonSerializerOptions
+                    {
+                        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                        PropertyNameCaseInsensitive = true
+                    };
+                    _currentUser = JsonSerializer.Deserialize<UserDto>(userData, options);
                 }
                 _isInitialized = true;
             }
@@ -35,14 +38,18 @@ namespace proyectoAgiles.Services
                 await ClearSessionAsync();
                 _isInitialized = true;
             }
-        }
-
-        public async Task SetUserAsync(UserDto user)
+        }        public async Task SetUserAsync(UserDto user)
         {
             _currentUser = user;
-            var userData = JsonSerializer.Serialize(user);
+            var options = new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                PropertyNameCaseInsensitive = true
+            };
+            var userData = JsonSerializer.Serialize(user, options);
+            Console.WriteLine($"Guardando usuario: {userData}"); // Debug temporal
             await _jsRuntime.InvokeVoidAsync("localStorage.setItem", "currentUser", userData);
-        }        public async Task ClearSessionAsync()
+        }public async Task ClearSessionAsync()
         {
             _currentUser = null;
             _isInitialized = false;
@@ -80,6 +87,11 @@ namespace proyectoAgiles.Services
                 2 => "/docente", 
                 _ => "/"
             };
+        }        public string GetUserNivel()
+        {
+            var nivel = _currentUser?.Nivel ?? string.Empty;
+            Console.WriteLine($"GetUserNivel devuelve: '{nivel}'"); // Debug temporal
+            return nivel;
         }
     }
 }
