@@ -368,9 +368,7 @@ public class EvaluacionesDesempenoController : ControllerBase
         {
             return StatusCode(500, new { message = "Error interno del servidor", error = ex.Message });
         }
-    }
-
-    /// <summary>
+    }    /// <summary>
     /// Inserta datos de prueba para evaluaciones (solo en desarrollo)
     /// </summary>
     [HttpPost("seed-test-data")]
@@ -382,7 +380,7 @@ public class EvaluacionesDesempenoController : ControllerBase
             {
                 new CreateEvaluacionDesempenoDto
                 {
-                    Cedula = "1805123456",
+                    Cedula = "1750000001",
                     PeriodoAcademico = "2024-1",
                     Anio = 2024,
                     Semestre = 1,
@@ -391,12 +389,12 @@ public class EvaluacionesDesempenoController : ControllerBase
                     FechaEvaluacion = new DateTime(2024, 6, 15),
                     TipoEvaluacion = "Integral",
                     Estado = "Completada",
-                    Evaluador = "Comisión Evaluadora",
-                    Observaciones = "Excelente desempeño en docencia e investigación"
+                    Evaluador = "Comisión Evaluadora UTA",
+                    Observaciones = "Excelente desempeño en docencia e investigación - María Elena García Pérez"
                 },
                 new CreateEvaluacionDesempenoDto
                 {
-                    Cedula = "1805123456",
+                    Cedula = "1750000001",
                     PeriodoAcademico = "2023-2",
                     Anio = 2023,
                     Semestre = 2,
@@ -405,12 +403,12 @@ public class EvaluacionesDesempenoController : ControllerBase
                     FechaEvaluacion = new DateTime(2024, 1, 20),
                     TipoEvaluacion = "Integral",
                     Estado = "Completada",
-                    Evaluador = "Comisión Evaluadora",
-                    Observaciones = "Buen desempeño, cumple con estándares requeridos"
+                    Evaluador = "Comisión Evaluadora UTA",
+                    Observaciones = "Buen desempeño, cumple con estándares requeridos - María Elena García Pérez"
                 },
                 new CreateEvaluacionDesempenoDto
                 {
-                    Cedula = "1805123456",
+                    Cedula = "1750000001",
                     PeriodoAcademico = "2023-1",
                     Anio = 2023,
                     Semestre = 1,
@@ -419,12 +417,12 @@ public class EvaluacionesDesempenoController : ControllerBase
                     FechaEvaluacion = new DateTime(2023, 6, 25),
                     TipoEvaluacion = "Integral",
                     Estado = "Completada",
-                    Evaluador = "Comisión Evaluadora",
-                    Observaciones = "Muy buen desempeño académico y en gestión"
+                    Evaluador = "Comisión Evaluadora UTA",
+                    Observaciones = "Muy buen desempeño académico y en gestión - María Elena García Pérez"
                 },
                 new CreateEvaluacionDesempenoDto
                 {
-                    Cedula = "1805123456",
+                    Cedula = "1750000001",
                     PeriodoAcademico = "2022-2",
                     Anio = 2022,
                     Semestre = 2,
@@ -433,8 +431,22 @@ public class EvaluacionesDesempenoController : ControllerBase
                     FechaEvaluacion = new DateTime(2023, 1, 15),
                     TipoEvaluacion = "Integral",
                     Estado = "Completada",
-                    Evaluador = "Comisión Evaluadora",
-                    Observaciones = "Cumple con los requisitos mínimos establecidos"
+                    Evaluador = "Comisión Evaluadora UTA",
+                    Observaciones = "Cumple con los requisitos mínimos establecidos - María Elena García Pérez"
+                },
+                new CreateEvaluacionDesempenoDto
+                {
+                    Cedula = "1750000001",
+                    PeriodoAcademico = "2022-1",
+                    Anio = 2022,
+                    Semestre = 1,
+                    PuntajeObtenido = 88.3m,
+                    PuntajeMaximo = 100,
+                    FechaEvaluacion = new DateTime(2022, 6, 10),
+                    TipoEvaluacion = "Integral",
+                    Estado = "Completada",
+                    Evaluador = "Comisión Evaluadora UTA",
+                    Observaciones = "Destacado desempeño en todas las áreas evaluadas - María Elena García Pérez"
                 }
             };
 
@@ -454,7 +466,7 @@ public class EvaluacionesDesempenoController : ControllerBase
             }
 
             return Ok(new { 
-                message = "Datos de prueba insertados exitosamente", 
+                message = "Datos de prueba insertados exitosamente para cédula 1750000001", 
                 count = createdEvaluaciones.Count,
                 evaluaciones = createdEvaluaciones 
             });
@@ -462,6 +474,117 @@ public class EvaluacionesDesempenoController : ControllerBase
         catch (Exception ex)
         {
             return StatusCode(500, new { message = "Error al insertar datos de prueba", error = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Inserta datos específicos para la cédula 1750000001 - María Elena García Pérez
+    /// </summary>
+    [HttpPost("seed-data-1750000001")]
+    public async Task<ActionResult> SeedDataForCedula1750000001()
+    {
+        try
+        {
+            var testData = new List<CreateEvaluacionDesempenoDto>
+            {
+                new CreateEvaluacionDesempenoDto
+                {
+                    Cedula = "1750000001",
+                    PeriodoAcademico = "2024-1",
+                    Anio = 2024,
+                    Semestre = 1,
+                    PuntajeObtenido = 85.5m,
+                    PuntajeMaximo = 100,
+                    FechaEvaluacion = new DateTime(2024, 6, 15),
+                    TipoEvaluacion = "Integral",
+                    Estado = "Completada",
+                    Evaluador = "Comisión Evaluadora UTA",
+                    Observaciones = "Excelente desempeño en docencia e investigación - María Elena García Pérez"
+                },
+                new CreateEvaluacionDesempenoDto
+                {
+                    Cedula = "1750000001",
+                    PeriodoAcademico = "2023-2",
+                    Anio = 2023,
+                    Semestre = 2,
+                    PuntajeObtenido = 78.2m,
+                    PuntajeMaximo = 100,
+                    FechaEvaluacion = new DateTime(2024, 1, 20),
+                    TipoEvaluacion = "Integral",
+                    Estado = "Completada",
+                    Evaluador = "Comisión Evaluadora UTA",
+                    Observaciones = "Buen desempeño, cumple con estándares requeridos - María Elena García Pérez"
+                },
+                new CreateEvaluacionDesempenoDto
+                {
+                    Cedula = "1750000001",
+                    PeriodoAcademico = "2023-1",
+                    Anio = 2023,
+                    Semestre = 1,
+                    PuntajeObtenido = 82.8m,
+                    PuntajeMaximo = 100,
+                    FechaEvaluacion = new DateTime(2023, 6, 25),
+                    TipoEvaluacion = "Integral",
+                    Estado = "Completada",
+                    Evaluador = "Comisión Evaluadora UTA",
+                    Observaciones = "Muy buen desempeño académico y en gestión - María Elena García Pérez"
+                },
+                new CreateEvaluacionDesempenoDto
+                {
+                    Cedula = "1750000001",
+                    PeriodoAcademico = "2022-2",
+                    Anio = 2022,
+                    Semestre = 2,
+                    PuntajeObtenido = 76.5m,
+                    PuntajeMaximo = 100,
+                    FechaEvaluacion = new DateTime(2023, 1, 15),
+                    TipoEvaluacion = "Integral",
+                    Estado = "Completada",
+                    Evaluador = "Comisión Evaluadora UTA",
+                    Observaciones = "Cumple con los requisitos mínimos establecidos - María Elena García Pérez"
+                },
+                new CreateEvaluacionDesempenoDto
+                {
+                    Cedula = "1750000001",
+                    PeriodoAcademico = "2022-1",
+                    Anio = 2022,
+                    Semestre = 1,
+                    PuntajeObtenido = 88.3m,
+                    PuntajeMaximo = 100,
+                    FechaEvaluacion = new DateTime(2022, 6, 10),
+                    TipoEvaluacion = "Integral",
+                    Estado = "Completada",
+                    Evaluador = "Comisión Evaluadora UTA",
+                    Observaciones = "Destacado desempeño en todas las áreas evaluadas - María Elena García Pérez"
+                }
+            };
+
+            var createdEvaluaciones = new List<EvaluacionDesempenoDto>();
+            foreach (var data in testData)
+            {
+                try
+                {
+                    var created = await _evaluacionService.CreateAsync(data);
+                    createdEvaluaciones.Add(created);
+                }
+                catch (InvalidOperationException ex)
+                {
+                    // Si ya existe, continúa con el siguiente
+                    Console.WriteLine($"Evaluación ya existe: {ex.Message}");
+                    continue;
+                }
+            }
+
+            return Ok(new { 
+                message = "Datos insertados exitosamente para María Elena García Pérez (1750000001)", 
+                count = createdEvaluaciones.Count,
+                evaluaciones = createdEvaluaciones,
+                verificacion = await _evaluacionService.VerificarRequisito75PorCientoAsync("1750000001")
+            });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "Error al insertar datos", error = ex.Message });
         }
     }
 }
