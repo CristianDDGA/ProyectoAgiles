@@ -11,13 +11,16 @@ public class TeacherManagementService : ITeacherManagementService
 {
     private readonly IExternalTeacherRepository _externalTeacherRepository;
     private readonly IUserRepository _userRepository;
+    private readonly ITTHHRepository _tthhRepository;
 
     public TeacherManagementService(
         IExternalTeacherRepository externalTeacherRepository,
-        IUserRepository userRepository)
+        IUserRepository userRepository,
+        ITTHHRepository tthhRepository)
     {
         _externalTeacherRepository = externalTeacherRepository;
         _userRepository = userRepository;
+        _tthhRepository = tthhRepository;
     }
 
     public async Task<ExternalTeacherDto?> ValidateTeacherByCedulaAsync(string cedula)
@@ -92,6 +95,17 @@ public class TeacherManagementService : ITeacherManagementService
             };
 
             await _userRepository.AddAsync(newUser);
+
+            // Registrar en TTHH
+            var tthh = new TTHH
+            {
+                Cedula = request.Cedula,
+                FechaInicio = DateTime.UtcNow,
+                Observacion = "Registro automático al crear docente",
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+            await _tthhRepository.AddAsync(tthh);
 
             // TODO: Manejar el documento subido si es necesario
             // if (request.Document != null)
