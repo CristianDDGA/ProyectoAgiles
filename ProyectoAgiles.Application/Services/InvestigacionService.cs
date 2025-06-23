@@ -60,9 +60,7 @@ public class InvestigacionService : IInvestigacionService
 
         var createdInvestigacion = await _investigacionRepository.CreateAsync(investigacion);
         return MapToDto(createdInvestigacion);
-    }
-
-    public async Task<InvestigacionDto> CreateWithPdfAsync(CreateInvestigacionWithPdfDto createDto)
+    }    public async Task<InvestigacionDto> CreateWithPdfAsync(CreateInvestigacionWithPdfDto createDto)
     {
         byte[]? archivoPdfBytes = null;
         if (createDto.ArchivoPdf != null)
@@ -70,7 +68,15 @@ public class InvestigacionService : IInvestigacionService
             using var ms = new MemoryStream();
             await createDto.ArchivoPdf.CopyToAsync(ms);
             archivoPdfBytes = ms.ToArray();
+            
+            // Log para depuración
+            Console.WriteLine($"CreateWithPdfAsync - PDF procesado: {archivoPdfBytes.Length} bytes");
         }
+        else
+        {
+            Console.WriteLine("CreateWithPdfAsync - No se recibió archivo PDF");
+        }
+        
         var investigacion = new Investigacion
         {
             Cedula = createDto.Cedula,
@@ -84,6 +90,10 @@ public class InvestigacionService : IInvestigacionService
             ArchivoPdf = archivoPdfBytes
         };
         var createdInvestigacion = await _investigacionRepository.CreateAsync(investigacion);
+        
+        // Log para verificar que se guardó
+        Console.WriteLine($"CreateWithPdfAsync - Investigación creada ID: {createdInvestigacion.Id}, PDF guardado: {createdInvestigacion.ArchivoPdf?.Length ?? 0} bytes");
+        
         return MapToDto(createdInvestigacion);
     }
 
@@ -114,12 +124,21 @@ public class InvestigacionService : IInvestigacionService
     public async Task<bool> ExistsAsync(int id)
     {
         return await _investigacionRepository.ExistsAsync(id);
-    }
-
-    public async Task<byte[]?> GetPdfByIdAsync(int id)
+    }    public async Task<byte[]?> GetPdfByIdAsync(int id)
     {
+        Console.WriteLine($"GetPdfByIdAsync - Buscando investigación con ID: {id}");
+        
         var investigacion = await _investigacionRepository.GetByIdAsync(id);
-        return investigacion?.ArchivoPdf;
+        
+        if (investigacion == null)
+        {
+            Console.WriteLine($"GetPdfByIdAsync - No se encontró investigación con ID: {id}");
+            return null;
+        }
+        
+        Console.WriteLine($"GetPdfByIdAsync - Investigación encontrada. PDF: {investigacion.ArchivoPdf?.Length ?? 0} bytes");
+        
+        return investigacion.ArchivoPdf;
     }
 
     private static InvestigacionDto MapToDto(Investigacion investigacion)

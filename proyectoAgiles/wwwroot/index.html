@@ -26,6 +26,48 @@
         <span class="dismiss">🗙</span>
     </div>    <script src="lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="js/file-drag-drop.js"></script>
+    <script>
+        // Función para mostrar PDF en nueva pestaña o descargar
+        window.showPdf = function(pdfDataUrl, fileName) {
+            try {
+                // Intento 1: Abrir en nueva pestaña
+                const newWindow = window.open();
+                if (newWindow) {
+                    newWindow.document.write(`
+                        <html>
+                            <head>
+                                <title>${fileName}</title>
+                                <style>
+                                    body { margin: 0; padding: 0; }
+                                    iframe { width: 100vw; height: 100vh; border: none; }
+                                </style>
+                            </head>
+                            <body>
+                                <iframe src="${pdfDataUrl}" type="application/pdf"></iframe>
+                            </body>
+                        </html>
+                    `);
+                    newWindow.document.close();
+                    return true;
+                } else {
+                    // Intento 2: Crear enlace de descarga
+                    const link = document.createElement('a');
+                    link.href = pdfDataUrl;
+                    link.download = fileName;
+                    link.style.display = 'none';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    return false;
+                }
+            } catch (error) {
+                console.error('Error al mostrar PDF:', error);
+                // Intento 3: Navegación directa
+                window.location.href = pdfDataUrl;
+                return false;
+            }
+        };
+    </script>
     <script src="_framework/blazor.webassembly.js"></script>
 </body>
 

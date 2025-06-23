@@ -121,19 +121,31 @@ public class InvestigacionesController : ControllerBase
         {
             return StatusCode(500, new { message = "Error interno del servidor", error = ex.Message });
         }
-    }
-
-    /// <summary>
+    }    /// <summary>
     /// Crea una nueva investigación con PDF
     /// </summary>
     [HttpPost("con-pdf")]
     public async Task<IActionResult> CreateWithPdf([FromForm] CreateInvestigacionWithPdfDto dto)
     {
-        if (!ModelState.IsValid)
-            return BadRequest(ModelState);
+        try
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
 
-        var investigacion = await _investigacionService.CreateWithPdfAsync(dto);
-        return CreatedAtAction(nameof(GetById), new { id = investigacion.Id }, investigacion);
+            // Log para depuración
+            Console.WriteLine($"CreateWithPdf - Archivo recibido: {dto.ArchivoPdf?.FileName ?? "null"}, Tamaño: {dto.ArchivoPdf?.Length ?? 0}");
+
+            var investigacion = await _investigacionService.CreateWithPdfAsync(dto);
+            
+            Console.WriteLine($"CreateWithPdf - Investigación creada exitosamente con ID: {investigacion.Id}");
+            
+            return CreatedAtAction(nameof(GetById), new { id = investigacion.Id }, investigacion);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"CreateWithPdf - Error: {ex.Message}");
+            return StatusCode(500, new { message = "Error interno del servidor", error = ex.Message });
+        }
     }
 
     /// <summary>
@@ -262,6 +274,10 @@ public class InvestigacionesController : ControllerBase
         try
         {
             var pdfBytes = await _investigacionService.GetPdfByIdAsync(id);
+            
+            // Log para depuración
+            Console.WriteLine($"GetPdf - ID: {id}, PDF bytes: {pdfBytes?.Length ?? 0}");
+            
             if (pdfBytes == null || pdfBytes.Length == 0)
                 return NotFound(new { message = "PDF no encontrado para esta investigación" });
 
@@ -269,6 +285,7 @@ public class InvestigacionesController : ControllerBase
         }
         catch (Exception ex)
         {
+            Console.WriteLine($"Error en GetPdf - ID: {id}, Error: {ex.Message}");
             return StatusCode(500, new { message = "Error interno del servidor", error = ex.Message });
         }
     }

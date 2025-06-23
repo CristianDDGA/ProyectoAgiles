@@ -301,27 +301,43 @@ namespace proyectoAgiles.Services
             {
                 throw new Exception($"Error al crear investigación: {ex.Message}");
             }
-        }
-
-        public async Task<InvestigacionDto> CrearInvestigacionConPdf(CreateInvestigacionWithPdfDto createDto)
+        }        public async Task<InvestigacionDto> CrearInvestigacionConPdf(CreateInvestigacionWithPdfDto createDto)
         {
-            using var form = new MultipartFormDataContent();
-            form.Add(new StringContent(createDto.Cedula), "Cedula");
-            form.Add(new StringContent(createDto.Titulo), "Titulo");
-            form.Add(new StringContent(createDto.Tipo), "Tipo");
-            form.Add(new StringContent(createDto.RevistaOEditorial), "RevistaOEditorial");
-            form.Add(new StringContent(createDto.FechaPublicacion.ToString("o")), "FechaPublicacion");
-            form.Add(new StringContent(createDto.CampoConocimiento), "CampoConocimiento");
-            form.Add(new StringContent(createDto.Filiacion), "Filiacion");
-            form.Add(new StringContent(createDto.Observacion), "Observacion");
-            if (createDto.ArchivoPdf != null)
+            try
             {
-                var stream = createDto.ArchivoPdf.OpenReadStream(10 * 1024 * 1024); // 10MB máx
-                form.Add(new StreamContent(stream), "ArchivoPdf", createDto.ArchivoPdf.Name);
+                Console.WriteLine($"CrearInvestigacionConPdf - PDF: {createDto.ArchivoPdf?.Name}, Size: {createDto.ArchivoPdf?.Size ?? 0}");
+                
+                using var form = new MultipartFormDataContent();
+                form.Add(new StringContent(createDto.Cedula), "Cedula");
+                form.Add(new StringContent(createDto.Titulo), "Titulo");
+                form.Add(new StringContent(createDto.Tipo), "Tipo");
+                form.Add(new StringContent(createDto.RevistaOEditorial), "RevistaOEditorial");
+                form.Add(new StringContent(createDto.FechaPublicacion.ToString("o")), "FechaPublicacion");
+                form.Add(new StringContent(createDto.CampoConocimiento), "CampoConocimiento");
+                form.Add(new StringContent(createDto.Filiacion), "Filiacion");
+                form.Add(new StringContent(createDto.Observacion), "Observacion");
+                
+                if (createDto.ArchivoPdf != null)
+                {
+                    var stream = createDto.ArchivoPdf.OpenReadStream(10 * 1024 * 1024); // 10MB máx
+                    form.Add(new StreamContent(stream), "ArchivoPdf", createDto.ArchivoPdf.Name);
+                    Console.WriteLine($"CrearInvestigacionConPdf - PDF agregado al form: {createDto.ArchivoPdf.Name}");
+                }
+                else
+                {
+                    Console.WriteLine("CrearInvestigacionConPdf - No hay PDF para enviar");
+                }
+                
+                var response = await _httpClient.PostAsync($"{_apiBaseUrl}/api/investigaciones/con-pdf", form);
+                Console.WriteLine($"CrearInvestigacionConPdf - Response: {response.StatusCode}");
+                response.EnsureSuccessStatusCode();
+                return await response.Content.ReadFromJsonAsync<InvestigacionDto>() ?? new InvestigacionDto();
             }
-            var response = await _httpClient.PostAsync($"{_apiBaseUrl}/api/investigaciones/con-pdf", form);
-            response.EnsureSuccessStatusCode();
-            return await response.Content.ReadFromJsonAsync<InvestigacionDto>() ?? new InvestigacionDto();
+            catch (Exception ex)
+            {
+                Console.WriteLine($"CrearInvestigacionConPdf - Error: {ex.Message}");
+                throw;
+            }
         }
 
         public async Task<InvestigacionDto> ActualizarInvestigacion(UpdateInvestigacionDto updateDto)
@@ -355,16 +371,28 @@ namespace proyectoAgiles.Services
             {
                 throw new Exception($"Error al eliminar investigación: {ex.Message}");
             }
-        }
-
-        public async Task<byte[]?> ObtenerPdfInvestigacion(int investigacionId)
+        }        public async Task<byte[]?> ObtenerPdfInvestigacion(int investigacionId)
         {
-            var response = await _httpClient.GetAsync($"{_apiBaseUrl}/api/investigaciones/{investigacionId}/pdf");
-            if (response.IsSuccessStatusCode)
+            try
             {
-                return await response.Content.ReadAsByteArrayAsync();
+                Console.WriteLine($"ObtenerPdfInvestigacion - Solicitando PDF ID: {investigacionId}");
+                var response = await _httpClient.GetAsync($"{_apiBaseUrl}/api/investigaciones/{investigacionId}/pdf");
+                Console.WriteLine($"ObtenerPdfInvestigacion - Response Status: {response.StatusCode}");
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    var bytes = await response.Content.ReadAsByteArrayAsync();
+                    Console.WriteLine($"ObtenerPdfInvestigacion - Bytes recibidos: {bytes.Length}");
+                    return bytes;
+                }
+                Console.WriteLine($"ObtenerPdfInvestigacion - Error: {response.StatusCode}");
+                return null;
             }
-            return null;
+            catch (Exception ex)
+            {
+                Console.WriteLine($"ObtenerPdfInvestigacion - Exception: {ex.Message}");
+                throw;
+            }
         }
     }
 
