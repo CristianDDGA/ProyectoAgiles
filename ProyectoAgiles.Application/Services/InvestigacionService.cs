@@ -62,6 +62,31 @@ public class InvestigacionService : IInvestigacionService
         return MapToDto(createdInvestigacion);
     }
 
+    public async Task<InvestigacionDto> CreateWithPdfAsync(CreateInvestigacionWithPdfDto createDto)
+    {
+        byte[]? archivoPdfBytes = null;
+        if (createDto.ArchivoPdf != null)
+        {
+            using var ms = new MemoryStream();
+            await createDto.ArchivoPdf.CopyToAsync(ms);
+            archivoPdfBytes = ms.ToArray();
+        }
+        var investigacion = new Investigacion
+        {
+            Cedula = createDto.Cedula,
+            Titulo = createDto.Titulo,
+            Tipo = createDto.Tipo,
+            RevistaOEditorial = createDto.RevistaOEditorial,
+            FechaPublicacion = createDto.FechaPublicacion,
+            CampoConocimiento = createDto.CampoConocimiento,
+            Filiacion = createDto.Filiacion,
+            Observacion = createDto.Observacion,
+            ArchivoPdf = archivoPdfBytes
+        };
+        var createdInvestigacion = await _investigacionRepository.CreateAsync(investigacion);
+        return MapToDto(createdInvestigacion);
+    }
+
     public async Task<InvestigacionDto> UpdateAsync(UpdateInvestigacionDto updateDto)
     {
         var existingInvestigacion = await _investigacionRepository.GetByIdAsync(updateDto.Id);
@@ -91,6 +116,12 @@ public class InvestigacionService : IInvestigacionService
         return await _investigacionRepository.ExistsAsync(id);
     }
 
+    public async Task<byte[]?> GetPdfByIdAsync(int id)
+    {
+        var investigacion = await _investigacionRepository.GetByIdAsync(id);
+        return investigacion?.ArchivoPdf;
+    }
+
     private static InvestigacionDto MapToDto(Investigacion investigacion)
     {
         return new InvestigacionDto
@@ -105,7 +136,8 @@ public class InvestigacionService : IInvestigacionService
             Filiacion = investigacion.Filiacion,
             Observacion = investigacion.Observacion,
             CreatedAt = investigacion.CreatedAt,
-            UpdatedAt = investigacion.UpdatedAt
+            UpdatedAt = investigacion.UpdatedAt,
+            TienePdf = investigacion.ArchivoPdf != null && investigacion.ArchivoPdf.Length > 0
         };
     }
 }

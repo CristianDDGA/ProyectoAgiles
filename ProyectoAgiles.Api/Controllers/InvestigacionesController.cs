@@ -124,6 +124,19 @@ public class InvestigacionesController : ControllerBase
     }
 
     /// <summary>
+    /// Crea una nueva investigación con PDF
+    /// </summary>
+    [HttpPost("con-pdf")]
+    public async Task<IActionResult> CreateWithPdf([FromForm] CreateInvestigacionWithPdfDto dto)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        var investigacion = await _investigacionService.CreateWithPdfAsync(dto);
+        return CreatedAtAction(nameof(GetById), new { id = investigacion.Id }, investigacion);
+    }
+
+    /// <summary>
     /// Actualiza una investigación existente
     /// </summary>
     [HttpPut("{id}")]
@@ -239,6 +252,24 @@ public class InvestigacionesController : ControllerBase
         catch (Exception ex)
         {
             return StatusCode(500, new { message = "Error al insertar datos de prueba", error = ex.Message });
+        }
+    }    /// <summary>
+    /// Obtiene el PDF de una investigación
+    /// </summary>
+    [HttpGet("{id}/pdf")]
+    public async Task<IActionResult> GetPdf(int id)
+    {
+        try
+        {
+            var pdfBytes = await _investigacionService.GetPdfByIdAsync(id);
+            if (pdfBytes == null || pdfBytes.Length == 0)
+                return NotFound(new { message = "PDF no encontrado para esta investigación" });
+
+            return File(pdfBytes, "application/pdf", $"investigacion_{id}.pdf");
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "Error interno del servidor", error = ex.Message });
         }
     }
 }

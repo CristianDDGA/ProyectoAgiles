@@ -8,6 +8,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.Extensions.Configuration;
 
 namespace proyectoAgiles.Services
@@ -302,6 +303,27 @@ namespace proyectoAgiles.Services
             }
         }
 
+        public async Task<InvestigacionDto> CrearInvestigacionConPdf(CreateInvestigacionWithPdfDto createDto)
+        {
+            using var form = new MultipartFormDataContent();
+            form.Add(new StringContent(createDto.Cedula), "Cedula");
+            form.Add(new StringContent(createDto.Titulo), "Titulo");
+            form.Add(new StringContent(createDto.Tipo), "Tipo");
+            form.Add(new StringContent(createDto.RevistaOEditorial), "RevistaOEditorial");
+            form.Add(new StringContent(createDto.FechaPublicacion.ToString("o")), "FechaPublicacion");
+            form.Add(new StringContent(createDto.CampoConocimiento), "CampoConocimiento");
+            form.Add(new StringContent(createDto.Filiacion), "Filiacion");
+            form.Add(new StringContent(createDto.Observacion), "Observacion");
+            if (createDto.ArchivoPdf != null)
+            {
+                var stream = createDto.ArchivoPdf.OpenReadStream(10 * 1024 * 1024); // 10MB máx
+                form.Add(new StreamContent(stream), "ArchivoPdf", createDto.ArchivoPdf.Name);
+            }
+            var response = await _httpClient.PostAsync($"{_apiBaseUrl}/api/investigaciones/con-pdf", form);
+            response.EnsureSuccessStatusCode();
+            return await response.Content.ReadFromJsonAsync<InvestigacionDto>() ?? new InvestigacionDto();
+        }
+
         public async Task<InvestigacionDto> ActualizarInvestigacion(UpdateInvestigacionDto updateDto)
         {
             try
@@ -334,6 +356,16 @@ namespace proyectoAgiles.Services
                 throw new Exception($"Error al eliminar investigación: {ex.Message}");
             }
         }
+
+        public async Task<byte[]?> ObtenerPdfInvestigacion(int investigacionId)
+        {
+            var response = await _httpClient.GetAsync($"{_apiBaseUrl}/api/investigaciones/{investigacionId}/pdf");
+            if (response.IsSuccessStatusCode)
+            {
+                return await response.Content.ReadAsByteArrayAsync();
+            }
+            return null;
+        }
     }
 
     // DTOs para investigaciones
@@ -350,6 +382,7 @@ namespace proyectoAgiles.Services
         public string Observacion { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
+        public bool TienePdf { get; set; }
     }
 
     public class CreateInvestigacionDto
@@ -463,5 +496,16 @@ namespace proyectoAgiles.Services
     {
         public bool Success { get; set; }
         public string Message { get; set; } = string.Empty;
+    }public class CreateInvestigacionWithPdfDto
+    {
+        public string Cedula { get; set; } = string.Empty;
+        public string Titulo { get; set; } = string.Empty;
+        public string Tipo { get; set; } = string.Empty;
+        public string RevistaOEditorial { get; set; } = string.Empty;
+        public DateTime FechaPublicacion { get; set; }
+        public string CampoConocimiento { get; set; } = string.Empty;
+        public string Filiacion { get; set; } = string.Empty;
+        public string Observacion { get; set; } = string.Empty;
+        public IBrowserFile? ArchivoPdf { get; set; }
     }
 }

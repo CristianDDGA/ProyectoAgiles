@@ -109,6 +109,12 @@
                                                         <button class="btn btn-sm btn-outline-danger" @onclick="() => EliminarInvestigacion(investigacion.Id)">
                                                             <i class="fas fa-trash"></i>
                                                         </button>
+                                                        @if (investigacion.TienePdf)
+                                                        {
+                                                            <button class="btn btn-outline-primary btn-sm" @onclick="() => VerPdf(investigacion.Id)">
+                                                                <i class="fas fa-file-pdf"></i> Ver PDF
+                                                            </button>
+                                                        }
                                                     </td>
                                                 </tr>
                                             }
@@ -166,6 +172,16 @@
                                 <div class="col-md-12 mb-3">
                                     <label class="form-label">Observaciones</label>
                                     <textarea class="form-control" rows="3" @bind="nuevaInvestigacion.Descripcion" placeholder="Descripción o comentarios adicionales sobre la investigación"></textarea>
+                                </div>
+                                <div class="col-md-12 mb-3">
+                                    <label class="form-label">Archivo PDF</label>
+                                    <InputFile OnChange="HandlePdfSelected" accept=".pdf" />
+                                    @if (!string.IsNullOrEmpty(pdfFileName))
+                                    {
+                                        <div class="mt-2 text-success">
+                                            <i class="fas fa-file-pdf"></i> @pdfFileName
+                                        </div>
+                                    }
                                 </div>
                             </div>
                         </form>
@@ -347,6 +363,36 @@
     private List<Investigacion> investigaciones = new();
     private Investigacion nuevaInvestigacion = new();
     private Investigacion? editingInvestigacion = null;
+    private IBrowserFile? selectedPdf;
+    private string? pdfFileName;
+
+    private void HandlePdfSelected(InputFileChangeEventArgs e)
+    {
+        selectedPdf = e.File;
+        pdfFileName = selectedPdf?.Name;
+    }
+
+    private async Task VerPdf(int investigacionId)
+    {
+        try
+        {
+            var pdfBytes = await AuthService.ObtenerPdfInvestigacion(investigacionId);
+            if (pdfBytes != null && pdfBytes.Length > 0)
+            {
+                var base64 = Convert.ToBase64String(pdfBytes);
+                var pdfDataUrl = $"data:application/pdf;base64,{base64}";
+                await JSRuntime.InvokeVoidAsync("open", pdfDataUrl, "_blank");
+            }
+            else
+            {
+                await MostrarNotificacionError("PDF no disponible", "No se encontró el archivo PDF para esta investigación.");
+            }
+        }
+        catch (Exception ex)
+        {
+            await MostrarNotificacionError("Error", $"Error al obtener el PDF: {ex.Message}");
+        }
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -468,7 +514,8 @@
                 FechaInicio = inv.FechaPublicacion, // Usar FechaPublicacion como FechaInicio
                 FechaFin = null, // No hay fecha fin en la base de datos
                 Descripcion = inv.Observacion, // Mapear Observacion a Descripcion
-                Filiacion = inv.Filiacion
+                Filiacion = inv.Filiacion,
+                TienePdf = inv.TienePdf // Verificar si tiene PDF
             }).ToList();
 
             Console.WriteLine($"Investigaciones mapeadas: {investigaciones.Count}");
@@ -590,21 +637,20 @@
             else
             {
                 // Crear nueva investigación
-                var createDto = new proyectoAgiles.Services.CreateInvestigacionDto
+                var createDto = new proyectoAgiles.Services.CreateInvestigacionWithPdfDto
                 {
                     Cedula = cedula,
                     Titulo = nuevaInvestigacion.Titulo,
-                    Tipo = "Artículo", // Valor por defecto
+                    Tipo = "Artículo",
                     RevistaOEditorial = !string.IsNullOrWhiteSpace(nuevaInvestigacion.RevistaOEditorial) ? nuevaInvestigacion.RevistaOEditorial : "N/A",
                     FechaPublicacion = nuevaInvestigacion.FechaInicio,
                     CampoConocimiento = nuevaInvestigacion.Area,
                     Filiacion = "Universidad Técnica de Ambato",
-                    Observacion = nuevaInvestigacion.Descripcion ?? ""
+                    Observacion = nuevaInvestigacion.Descripcion ?? "",
+                    ArchivoPdf = selectedPdf
                 };
 
-                var created = await AuthService.CrearInvestigacion(createDto);
-                
-                // Agregar a la lista local
+                var created = await AuthService.CrearInvestigacionConPdf(createDto);
                 investigaciones.Add(MapearDesdeDto(created));
             }
               CloseAgregarModal();
@@ -691,7 +737,8 @@
             FechaInicio = dto.FechaPublicacion,
             FechaFin = null,
             Descripcion = dto.Observacion,
-            Filiacion = dto.Filiacion
+            Filiacion = dto.Filiacion,
+            TienePdf = dto.TienePdf // Agregar mapeo de TienePdf
         };
     }private async Task Logout()
     {
@@ -839,5 +886,6 @@
         public DateTime? FechaFin { get; set; }
         public string Descripcion { get; set; } = string.Empty; // Mapeado desde Observacion
         public string Filiacion { get; set; } = string.Empty;
+        public bool TienePdf { get; set; } // Agregar propiedad para saber si tiene PDF
     }
 }

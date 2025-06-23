@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Http;
 
 namespace ProyectoAgiles.Application.DTOs;
 
@@ -15,6 +16,7 @@ public class InvestigacionDto
     public string Observacion { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
+    public bool TienePdf { get; set; } // Asegura que esté presente y pública
 }
 
 public class CreateInvestigacionDto
@@ -73,4 +75,17 @@ public class UpdateInvestigacionDto
 
     [Required(ErrorMessage = "La observación es requerida")]
     public string Observacion { get; set; } = string.Empty;
+}
+
+public class CreateInvestigacionWithPdfDto
+{
+    public string Cedula { get; set; } = string.Empty;
+    public string Titulo { get; set; } = string.Empty;
+    public string Tipo { get; set; } = string.Empty;
+    public string RevistaOEditorial { get; set; } = string.Empty;
+    public DateTime FechaPublicacion { get; set; }
+    public string CampoConocimiento { get; set; } = string.Empty;
+    public string Filiacion { get; set; } = string.Empty;
+    public string Observacion { get; set; } = string.Empty;
+    public IFormFile? ArchivoPdf { get; set; }
 }
