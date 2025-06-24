@@ -12,11 +12,31 @@
 <PageTitle>Panel de Docente - UTA</PageTitle>
 
 <div class="teacher-dashboard">    <!-- Sección de Nivel -->
-    <div class="nivel-section d-flex align-items-center mb-4">
-        <span class="fw-bold me-3">Nivel actual:</span>
-        <span class="badge bg-info text-dark me-3" style="font-size:1.1em;">@UserSession.GetUserNivel()</span>
-        <button class="btn btn-sm btn-success me-2" @onclick="ShowRequisitosModal">Subir de nivel</button>
-    </div>@if (showRequisitosModal)
+    <div class="nivel-section-container mb-4">
+        <div class="nivel-card">
+            <div class="nivel-header">
+                <h5 class="nivel-title">
+                    <i class="fas fa-graduation-cap me-2"></i>
+                    Nivel Académico Actual
+                </h5>
+            </div>
+            <div class="nivel-content">
+                <div class="nivel-info">
+                    <div class="nivel-label">Nivel actual:</div>
+                    <div class="nivel-badge-container">
+                        <span class="badge bg-info text-dark nivel-badge">@UserSession.GetUserNivel()</span>
+                    </div>
+                </div>
+                <div class="nivel-actions">
+                    <button class="btn btn-success nivel-btn" @onclick="ShowRequisitosModal">
+                        <i class="fas fa-arrow-up me-2"></i>
+                        Subir de Nivel
+                    </button>
+                </div>
+            </div>        </div>
+    </div>
+
+    @if (showRequisitosModal)
     {
         <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,0.3);">
             <div class="modal-dialog modal-xl">
