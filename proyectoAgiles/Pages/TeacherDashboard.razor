@@ -322,15 +322,14 @@
                         else
                         {
                             <div class="table-responsive">
-                                <table class="table table-striped">
-                                    <thead>
+                                <table class="table table-striped">                                    <thead>
                                         <tr>
                                             <th>Título</th>
                                             <th>Área</th>
                                             <th>Tipo</th>
                                             <th>Estado</th>
                                             <th>Fecha Publicación</th>
-                                            <th>Revista/Editorial</th>
+                                            <th>Filiación</th>
                                             <th>Acciones</th>
                                         </tr>
                                     </thead>
@@ -347,9 +346,19 @@
                                                         <span class="badge @GetEstadoBadgeClass(investigacion.Estado)">
                                                             @investigacion.Estado
                                                         </span>
+                                                    </td>                                                    <td>@investigacion.FechaInicio.ToString("dd/MM/yyyy")</td>
+                                                    <td>
+                                                        @if (!string.IsNullOrEmpty(investigacion.Filiacion))
+                                                        {
+                                                            <span class="badge @(investigacion.Filiacion.Contains("UTA", StringComparison.OrdinalIgnoreCase) || investigacion.Filiacion.Contains("Universidad Técnica de Ambato", StringComparison.OrdinalIgnoreCase) ? "bg-success" : "bg-secondary")">
+                                                                @investigacion.Filiacion
+                                                            </span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span class="text-muted">Sin filiación</span>
+                                                        }
                                                     </td>
-                                                    <td>@investigacion.FechaInicio.ToString("dd/MM/yyyy")</td>
-                                                    <td>@investigacion.RevistaOEditorial</td>
                                                     <td>
                                                         <button class="btn btn-sm btn-outline-primary me-1" @onclick="() => EditarInvestigacion(investigacion)">
                                                             <i class="fas fa-edit"></i>
