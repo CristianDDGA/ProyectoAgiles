@@ -1305,23 +1305,24 @@
                         var verificacionJson = await verificacionResponse.Content.ReadAsStringAsync();
                         verificacionRequisito = System.Text.Json.JsonSerializer.Deserialize<VerificacionRequisito75Dto>(verificacionJson, 
                             new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-                    }
-
-                    await JSRuntime.InvokeVoidAsync("alert", $"Se importaron {evaluaciones.Count} evaluaciones correctamente");
+                    }                    await MostrarNotificacionExito($"✅ Importación exitosa", 
+                        $"Se han cargado {evaluaciones.Count} evaluación{(evaluaciones.Count != 1 ? "es" : "")} desde la base de datos DAC.");
                 }
                 else
                 {
-                    await JSRuntime.InvokeVoidAsync("alert", "No se encontraron evaluaciones para esta cédula");
+                    await MostrarNotificacionInfo("ℹ️ Sin resultados", 
+                        "No se encontraron evaluaciones asociadas a tu cédula en la base de datos DAC.");
                 }
             }
             else
             {
-                await JSRuntime.InvokeVoidAsync("alert", "Error al cargar evaluaciones desde la API");
-            }
+                await MostrarNotificacionError("❌ Error de importación", 
+                    "Error al cargar evaluaciones desde la API DAC.");            }
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("alert", $"Error: {ex.Message}");
+            await MostrarNotificacionError("❌ Error de importación", 
+                $"No se pudieron cargar las evaluaciones: {ex.Message}");
         }
         finally
         {
@@ -1650,19 +1651,18 @@
     {
         showCapacitacionesModal = false;
         StateHasChanged();
-    }
-
-    private async Task ImportarCapacitaciones()
+    }    private async Task ImportarCapacitaciones()
     {
+        isLoadingCapacitaciones = true;
+        StateHasChanged();
+        
         try
         {
-            isLoadingCapacitaciones = true;
-            StateHasChanged();
-
             var cedula = UserSession.CurrentUser?.Cedula;
             if (string.IsNullOrEmpty(cedula))
             {
-                await JSRuntime.InvokeVoidAsync("alert", "No se pudo obtener la cédula del usuario");
+                await MostrarNotificacionError("❌ Error de importación", 
+                    "No se pudo obtener la cédula del usuario.");
                 return;
             }
 
@@ -1677,22 +1677,39 @@
                 var content = await response.Content.ReadAsStringAsync();
                 var result = System.Text.Json.JsonSerializer.Deserialize<ImportResult>(content);
 
+                // Recargar capacitaciones después de la importación
                 await CargarCapacitaciones();
                 
-                var mensaje = result?.imported > 0 ? 
-                    $"Se importaron {result.imported} capacitaciones correctamente" :
-                    "No se encontraron nuevas capacitaciones para importar";
-                    
-                await JSRuntime.InvokeVoidAsync("alert", mensaje);
+                // Verificar si hay capacitaciones disponibles después de la importación
+                if (capacitaciones.Any())
+                {
+                    if (result?.imported > 0)
+                    {
+                        await MostrarNotificacionExito($"✅ Importación exitosa", 
+                            $"Se han importado {result.imported} nueva{(result.imported > 1 ? "s" : "")} capacitación{(result.imported > 1 ? "es" : "")}. Total disponible: {capacitaciones.Count}.");
+                    }
+                    else
+                    {
+                        await MostrarNotificacionExito($"✅ Capacitaciones cargadas", 
+                            $"Se han cargado {capacitaciones.Count} capacitación{(capacitaciones.Count > 1 ? "es" : "")} desde la base de datos.");
+                    }
+                }
+                else
+                {
+                    await MostrarNotificacionInfo("ℹ️ Sin resultados", 
+                        "No se encontraron capacitaciones asociadas a tu cédula en la base de datos.");
+                }
             }
             else
             {
-                await JSRuntime.InvokeVoidAsync("alert", "Error al importar capacitaciones desde el sistema externo");
+                await MostrarNotificacionError("❌ Error de importación", 
+                    "No se pudieron cargar las capacitaciones desde el sistema externo.");
             }
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("alert", $"Error al importar capacitaciones: {ex.Message}");
+            await MostrarNotificacionError("❌ Error de importación", 
+                $"No se pudieron cargar las capacitaciones: {ex.Message}");
         }
         finally
         {
