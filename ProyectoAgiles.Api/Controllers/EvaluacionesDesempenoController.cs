@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using ProyectoAgiles.Application.DTOs;
 using ProyectoAgiles.Application.Interfaces;
+using ProyectoAgiles.Domain.Interfaces;
+using System.Linq;
 
 namespace ProyectoAgiles.Api.Controllers;
 
@@ -9,10 +11,20 @@ namespace ProyectoAgiles.Api.Controllers;
 public class EvaluacionesDesempenoController : ControllerBase
 {
     private readonly IEvaluacionDesempenoService _evaluacionService;
+    private readonly ITTHHRepository _tthhRepository;
+    private readonly IInvestigacionService _investigacionService;
+    private readonly IDiticService _diticService;
 
-    public EvaluacionesDesempenoController(IEvaluacionDesempenoService evaluacionService)
+    public EvaluacionesDesempenoController(
+        IEvaluacionDesempenoService evaluacionService,
+        ITTHHRepository tthhRepository,
+        IInvestigacionService investigacionService,
+        IDiticService diticService)
     {
         _evaluacionService = evaluacionService;
+        _tthhRepository = tthhRepository;
+        _investigacionService = investigacionService;
+        _diticService = diticService;
     }
 
     /// <summary>
@@ -675,7 +687,260 @@ public class EvaluacionesDesempenoController : ControllerBase
                 error = ex.Message,
                 stackTrace = ex.StackTrace,
                 innerException = ex.InnerException?.Message
-            });
+            });        }
+    }
+
+    /// <summary>
+    /// Obtiene estadísticas completas de un docente para los requisitos de promoción
+    /// </summary>
+    [HttpGet("estadisticas-docente/{cedula}")]
+    public async Task<ActionResult> GetEstadisticasDocente(string cedula)
+    {
+        try
+        {
+            // 1. Experiencia (años de servicio desde TTHH)
+            var experienciaStats = new
+            {
+                titulo = "Experiencia Académica",
+                icono = "fas fa-clock",
+                color = "primary",
+                datos = new
+                {
+                    añosRequeridos = 4,
+                    añosObtenidos = 0.0,
+                    cumple = false,
+                    detalles = "Años como titular auxiliar 1"
+                }
+            };
+
+            try
+            {
+                var tthhData = await _tthhRepository.GetByCedulaAsync(cedula);
+                if (tthhData != null)
+                {
+                    var fechaIngreso = tthhData.FechaInicio;
+                    var añosExperiencia = Math.Round((DateTime.Now - fechaIngreso).TotalDays / 365.25, 1);
+                    
+                    experienciaStats = new
+                    {
+                        titulo = "Experiencia Académica",
+                        icono = "fas fa-clock",
+                        color = "primary",
+                        datos = new
+                        {
+                            añosRequeridos = 4,
+                            añosObtenidos = añosExperiencia,
+                            cumple = añosExperiencia >= 4,
+                            detalles = $"Años de servicio desde {fechaIngreso:yyyy-MM-dd}"
+                        }
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                experienciaStats = new
+                {
+                    titulo = "Experiencia Académica",
+                    icono = "fas fa-clock",
+                    color = "primary",
+                    datos = new
+                    {
+                        añosRequeridos = 4,
+                        añosObtenidos = 0.0,
+                        cumple = false,
+                        detalles = $"Error al obtener datos: {ex.Message}"
+                    }
+                };
+            }            // 2. Obras/Investigaciones
+            var obrasStats = new
+            {
+                titulo = "Obras e Investigaciones",
+                icono = "fas fa-book",
+                color = "success",
+                datos = new
+                {
+                    totalObras = 0,
+                    obrasConUTA = 0,
+                    cumple = false,
+                    detalles = "Obras relevantes con filiación UTA"
+                }
+            };
+
+            try
+            {
+                var investigaciones = await _investigacionService.GetByCedulaAsync(cedula);
+                var obrasConUTA = investigaciones.Count(i => i.Filiacion?.Contains("UTA") == true);
+                
+                obrasStats = new
+                {
+                    titulo = "Obras e Investigaciones",
+                    icono = "fas fa-book",
+                    color = "success",
+                    datos = new
+                    {
+                        totalObras = investigaciones.Count(),
+                        obrasConUTA = obrasConUTA,
+                        cumple = obrasConUTA > 0,
+                        detalles = $"Obras con filiación UTA: {obrasConUTA} de {investigaciones.Count()}"
+                    }
+                };
+            }
+            catch (Exception ex)
+            {
+                obrasStats = new
+                {
+                    titulo = "Obras e Investigaciones",
+                    icono = "fas fa-book",
+                    color = "success",
+                    datos = new
+                    {
+                        totalObras = 0,
+                        obrasConUTA = 0,
+                        cumple = false,
+                        detalles = $"Error al obtener datos: {ex.Message}"
+                    }
+                };
+            }
+
+            // 3. Evaluaciones DAC
+            var evaluacionesStats = new
+            {
+                titulo = "Evaluaciones de Desempeño",
+                icono = "fas fa-star",
+                color = "warning",
+                datos = new
+                {
+                    evaluacionesAnalizadas = 0,
+                    promedioObtenido = 0.0m,
+                    requiere75 = 75.0m,
+                    cumple = false,
+                    detalles = "Promedio últimas 4 evaluaciones"
+                }
+            };
+
+            try
+            {
+                var verificacionEvaluaciones = await _evaluacionService.VerificarRequisito75PorCientoAsync(cedula);
+                evaluacionesStats = new
+                {
+                    titulo = "Evaluaciones de Desempeño",
+                    icono = "fas fa-star",
+                    color = "warning",
+                    datos = new
+                    {
+                        evaluacionesAnalizadas = verificacionEvaluaciones.EvaluacionesAnalizadas,
+                        promedioObtenido = verificacionEvaluaciones.PorcentajePromedioUltimasCuatro,
+                        requiere75 = 75.0m,
+                        cumple = verificacionEvaluaciones.CumpleRequisito,
+                        detalles = verificacionEvaluaciones.Mensaje
+                    }
+                };
+            }
+            catch (Exception ex)
+            {
+                evaluacionesStats = new
+                {
+                    titulo = "Evaluaciones de Desempeño",
+                    icono = "fas fa-star",
+                    color = "warning",
+                    datos = new
+                    {
+                        evaluacionesAnalizadas = 0,
+                        promedioObtenido = 0.0m,
+                        requiere75 = 75.0m,
+                        cumple = false,
+                        detalles = $"Error al obtener datos: {ex.Message}"
+                    }
+                };
+            }            // 4. Capacitaciones DITIC
+            var capacitacionStats = new
+            {
+                titulo = "Capacitaciones Profesionales",
+                icono = "fas fa-graduation-cap",
+                color = "info",
+                datos = new
+                {
+                    horasRequeridas = 96,
+                    horasObtenidas = 0,
+                    horasPedagogicasRequeridas = 24,
+                    horasPedagogicasObtenidas = 0,
+                    cumple = false,
+                    detalles = "Capacitaciones últimos 3 años"
+                }
+            };
+
+            try
+            {
+                var verificacionCapacitacion = await _diticService.VerifyRequirementAsync(cedula);
+                capacitacionStats = new
+                {
+                    titulo = "Capacitaciones Profesionales",
+                    icono = "fas fa-graduation-cap",
+                    color = "info",
+                    datos = new
+                    {
+                        horasRequeridas = 96,
+                        horasObtenidas = verificacionCapacitacion.HorasObtenidas,
+                        horasPedagogicasRequeridas = 24,
+                        horasPedagogicasObtenidas = verificacionCapacitacion.HorasPedagogicasObtenidas,
+                        cumple = verificacionCapacitacion.CumpleRequisito,
+                        detalles = verificacionCapacitacion.MensajeDetallado
+                    }
+                };
+            }
+            catch (Exception ex)
+            {
+                capacitacionStats = new
+                {
+                    titulo = "Capacitaciones Profesionales",
+                    icono = "fas fa-graduation-cap",
+                    color = "info",
+                    datos = new
+                    {
+                        horasRequeridas = 96,
+                        horasObtenidas = 0,
+                        horasPedagogicasRequeridas = 24,
+                        horasPedagogicasObtenidas = 0,
+                        cumple = false,
+                        detalles = $"Error al obtener datos: {ex.Message}"
+                    }
+                };
+            }
+
+            // Calcular requisitos cumplidos
+            var requisitosCumplidos = 0;
+            if (experienciaStats.datos.cumple) requisitosCumplidos++;
+            if (obrasStats.datos.cumple) requisitosCumplidos++;
+            if (evaluacionesStats.datos.cumple) requisitosCumplidos++;
+            if (capacitacionStats.datos.cumple) requisitosCumplidos++;
+
+            var porcentajeCompletitud = Math.Round((double)requisitosCumplidos / 4 * 100, 1);
+
+            var resultado = new
+            {
+                cedula = cedula,
+                fechaConsulta = DateTime.Now,
+                resumen = new
+                {
+                    totalRequisitos = 4,
+                    requisitosCumplidos = requisitosCumplidos,
+                    porcentajeCompletitud = porcentajeCompletitud,
+                    puedeSubirNivel = requisitosCumplidos == 4
+                },
+                secciones = new
+                {
+                    experiencia = experienciaStats,
+                    obras = obrasStats,
+                    evaluaciones = evaluacionesStats,
+                    capacitaciones = capacitacionStats
+                }
+            };
+
+            return Ok(resultado);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "Error al obtener estadísticas del docente", error = ex.Message });
         }
     }
 }

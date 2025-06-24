@@ -11,13 +11,13 @@
 
 <PageTitle>Panel de Docente - UTA</PageTitle>
 
-<div class="teacher-dashboard">
-    <!-- Sección de Nivel -->
+<div class="teacher-dashboard">    <!-- Sección de Nivel -->
     <div class="nivel-section d-flex align-items-center mb-4">
         <span class="fw-bold me-3">Nivel actual:</span>
         <span class="badge bg-info text-dark me-3" style="font-size:1.1em;">@UserSession.GetUserNivel()</span>
         <button class="btn btn-sm btn-success me-2" @onclick="ShowRequisitosModal">Subir de nivel</button>
-    </div>    @if (showRequisitosModal)
+        <button class="btn btn-sm btn-primary me-2" @onclick="ShowEstadisticasModal">Ver estadísticas</button>
+    </div>@if (showRequisitosModal)
     {
         <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,0.3);">
             <div class="modal-dialog modal-xl">
@@ -263,8 +263,220 @@
                                 <i class="fas fa-refresh me-1"></i>
                                 Verificar nuevamente
                             </button>
+                        }                        <button class="btn btn-secondary" @onclick="CloseRequisitosModal">Cerrar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (showEstadisticasModal)
+    {
+        <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,0.3);">
+            <div class="modal-dialog modal-xl">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="fas fa-chart-bar me-2"></i>
+                            Estadísticas de Requisitos para Promoción
+                        </h5>
+                        <button type="button" class="btn-close" @onclick="CloseEstadisticasModal"></button>
+                    </div>
+                    <div class="modal-body">
+                        @if (isLoadingEstadisticas)
+                        {
+                            <div class="text-center py-4">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Cargando estadísticas...</span>
+                                </div>
+                                <p class="mt-3">Cargando estadísticas...</p>
+                            </div>
                         }
-                        <button class="btn btn-secondary" @onclick="CloseRequisitosModal">Cerrar</button>
+                        else if (estadisticasDocente != null)
+                        {
+                            <!-- Resumen general -->
+                            <div class="alert @(estadisticasDocente.Resumen.PuedeSubirNivel ? "alert-success" : "alert-info") mb-4">
+                                <h6 class="alert-heading mb-2">
+                                    <i class="fas fa-chart-pie me-2"></i>
+                                    Resumen General
+                                </h6>
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <strong>Requisitos cumplidos:</strong>
+                                        <div class="h4">@estadisticasDocente.Resumen.RequisitosCumplidos / @estadisticasDocente.Resumen.TotalRequisitos</div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <strong>Porcentaje:</strong>
+                                        <div class="h4">@estadisticasDocente.Resumen.PorcentajeCompletitud%</div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <strong>Estado:</strong>
+                                        <div class="h5">
+                                            @if (estadisticasDocente.Resumen.PuedeSubirNivel)
+                                            {
+                                                <span class="badge bg-success">✅ Listo para ascender</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-warning text-dark">⏳ En progreso</span>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Estadísticas por sección -->
+                            <div class="row">
+                                <!-- Experiencia -->
+                                <div class="col-md-6 mb-3">
+                                    <div class="card">
+                                        <div class="card-header d-flex align-items-center">
+                                            <i class="@estadisticasDocente.Secciones.Experiencia.Icono text-@estadisticasDocente.Secciones.Experiencia.Color me-2"></i>
+                                            <strong>@estadisticasDocente.Secciones.Experiencia.Titulo</strong>
+                                            @if (estadisticasDocente.Secciones.Experiencia.Datos.Cumple)
+                                            {
+                                                <i class="fas fa-check-circle text-success ms-auto"></i>
+                                            }
+                                            else
+                                            {
+                                                <i class="fas fa-times-circle text-danger ms-auto"></i>
+                                            }
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="row">
+                                                <div class="col-6">
+                                                    <small class="text-muted">Años obtenidos:</small>
+                                                    <div class="h5">@estadisticasDocente.Secciones.Experiencia.Datos.AñosObtenidos</div>
+                                                </div>
+                                                <div class="col-6">
+                                                    <small class="text-muted">Años requeridos:</small>
+                                                    <div class="h5">@estadisticasDocente.Secciones.Experiencia.Datos.AñosRequeridos</div>
+                                                </div>
+                                            </div>
+                                            <p class="mt-2 mb-0">@estadisticasDocente.Secciones.Experiencia.Datos.Detalles</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Obras -->
+                                <div class="col-md-6 mb-3">
+                                    <div class="card">
+                                        <div class="card-header d-flex align-items-center">
+                                            <i class="@estadisticasDocente.Secciones.Obras.Icono text-@estadisticasDocente.Secciones.Obras.Color me-2"></i>
+                                            <strong>@estadisticasDocente.Secciones.Obras.Titulo</strong>
+                                            @if (estadisticasDocente.Secciones.Obras.Datos.Cumple)
+                                            {
+                                                <i class="fas fa-check-circle text-success ms-auto"></i>
+                                            }
+                                            else
+                                            {
+                                                <i class="fas fa-times-circle text-danger ms-auto"></i>
+                                            }
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="row">
+                                                <div class="col-6">
+                                                    <small class="text-muted">Obras con UTA:</small>
+                                                    <div class="h5">@estadisticasDocente.Secciones.Obras.Datos.ObrasConUTA</div>
+                                                </div>
+                                                <div class="col-6">
+                                                    <small class="text-muted">Total obras:</small>
+                                                    <div class="h5">@estadisticasDocente.Secciones.Obras.Datos.TotalObras</div>
+                                                </div>
+                                            </div>
+                                            <p class="mt-2 mb-0">@estadisticasDocente.Secciones.Obras.Datos.Detalles</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Evaluaciones -->
+                                <div class="col-md-6 mb-3">
+                                    <div class="card">
+                                        <div class="card-header d-flex align-items-center">
+                                            <i class="@estadisticasDocente.Secciones.Evaluaciones.Icono text-@estadisticasDocente.Secciones.Evaluaciones.Color me-2"></i>
+                                            <strong>@estadisticasDocente.Secciones.Evaluaciones.Titulo</strong>
+                                            @if (estadisticasDocente.Secciones.Evaluaciones.Datos.Cumple)
+                                            {
+                                                <i class="fas fa-check-circle text-success ms-auto"></i>
+                                            }
+                                            else
+                                            {
+                                                <i class="fas fa-times-circle text-danger ms-auto"></i>
+                                            }
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="row">
+                                                <div class="col-6">
+                                                    <small class="text-muted">Promedio obtenido:</small>
+                                                    <div class="h5">@estadisticasDocente.Secciones.Evaluaciones.Datos.PromedioObtenido%</div>
+                                                </div>
+                                                <div class="col-6">
+                                                    <small class="text-muted">Requerido:</small>
+                                                    <div class="h5">@estadisticasDocente.Secciones.Evaluaciones.Datos.Requiere75%</div>
+                                                </div>
+                                            </div>
+                                            <p class="mt-2 mb-0">@estadisticasDocente.Secciones.Evaluaciones.Datos.Detalles</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Capacitaciones -->
+                                <div class="col-md-6 mb-3">
+                                    <div class="card">
+                                        <div class="card-header d-flex align-items-center">
+                                            <i class="@estadisticasDocente.Secciones.Capacitaciones.Icono text-@estadisticasDocente.Secciones.Capacitaciones.Color me-2"></i>
+                                            <strong>@estadisticasDocente.Secciones.Capacitaciones.Titulo</strong>
+                                            @if (estadisticasDocente.Secciones.Capacitaciones.Datos.Cumple)
+                                            {
+                                                <i class="fas fa-check-circle text-success ms-auto"></i>
+                                            }
+                                            else
+                                            {
+                                                <i class="fas fa-times-circle text-danger ms-auto"></i>
+                                            }
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="row">
+                                                <div class="col-6">
+                                                    <small class="text-muted">Horas obtenidas:</small>
+                                                    <div class="h6">@estadisticasDocente.Secciones.Capacitaciones.Datos.HorasObtenidas / @estadisticasDocente.Secciones.Capacitaciones.Datos.HorasRequeridas</div>
+                                                    <small class="text-muted">Pedagógicas:</small>
+                                                    <div class="h6">@estadisticasDocente.Secciones.Capacitaciones.Datos.HorasPedagogicasObtenidas / @estadisticasDocente.Secciones.Capacitaciones.Datos.HorasPedagogicasRequeridas</div>
+                                                </div>
+                                                <div class="col-6">
+                                                    <small class="text-muted">Estado:</small>
+                                                    <div class="h6">
+                                                        @if (estadisticasDocente.Secciones.Capacitaciones.Datos.Cumple)
+                                                        {
+                                                            <span class="badge bg-success">✅ Cumple</span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span class="badge bg-danger">❌ No cumple</span>
+                                                        }
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <p class="mt-2 mb-0">@estadisticasDocente.Secciones.Capacitaciones.Datos.Detalles</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                No se pudieron cargar las estadísticas. Inténtalo más tarde.
+                            </div>
+                        }
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-outline-primary" @onclick="CargarEstadisticas">
+                            <i class="fas fa-refresh me-1"></i>
+                            Actualizar
+                        </button>
+                        <button class="btn btn-secondary" @onclick="CloseEstadisticasModal">Cerrar</button>
                     </div>
                 </div>
             </div>
@@ -676,56 +888,109 @@
                 </div>
             </div>
         </div>
-    }
-
-    <!-- Tarjetas de Resumen -->
+    }    <!-- Tarjetas de Estadísticas de Promoción -->
     <div class="stats-section">
-        <div class="row">
-            <div class="col-lg-3 col-md-6 mb-4">
-                <div class="stat-card">
-                    <div class="stat-icon courses">
-                        <i class="fas fa-book"></i>
+        @if (estadisticasDocente == null)
+        {
+            <div class="text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Cargando estadísticas...</span>
+                </div>
+                <p class="mt-3">Cargando estadísticas de promoción...</p>
+            </div>
+        }
+        else
+        {
+            <div class="row">
+                <!-- Experiencia -->
+                <div class="col-lg-3 col-md-6 mb-4">
+                    <div class="stat-card @(estadisticasDocente.Secciones.Experiencia.Datos.Cumple ? "border-success" : "border-warning")">
+                        <div class="stat-icon @(estadisticasDocente.Secciones.Experiencia.Datos.Cumple ? "courses" : "pending")">
+                            <i class="@estadisticasDocente.Secciones.Experiencia.Icono"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 class="stat-number">@estadisticasDocente.Secciones.Experiencia.Datos.AñosObtenidos.ToString("F1")</h3>
+                            <p class="stat-label">Años Experiencia</p>
+                            <small class="text-muted">Requiere: @estadisticasDocente.Secciones.Experiencia.Datos.AñosRequeridos años</small>
+                            @if (estadisticasDocente.Secciones.Experiencia.Datos.Cumple)
+                            {
+                                <div class="mt-1"><i class="fas fa-check-circle text-success"></i> Cumple</div>
+                            }
+                            else
+                            {
+                                <div class="mt-1"><i class="fas fa-times-circle text-warning"></i> Pendiente</div>
+                            }
+                        </div>
                     </div>
-                    <div class="stat-content">
-                        <h3 class="stat-number">@totalCourses</h3>
-                        <p class="stat-label">Mis Cursos</p>
+                </div>
+                
+                <!-- Obras -->
+                <div class="col-lg-3 col-md-6 mb-4">
+                    <div class="stat-card @(estadisticasDocente.Secciones.Obras.Datos.Cumple ? "border-success" : "border-warning")">
+                        <div class="stat-icon @(estadisticasDocente.Secciones.Obras.Datos.Cumple ? "students" : "pending")">
+                            <i class="@estadisticasDocente.Secciones.Obras.Icono"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 class="stat-number">@estadisticasDocente.Secciones.Obras.Datos.ObrasConUTA</h3>
+                            <p class="stat-label">Obras con UTA</p>
+                            <small class="text-muted">Total obras: @estadisticasDocente.Secciones.Obras.Datos.TotalObras</small>
+                            @if (estadisticasDocente.Secciones.Obras.Datos.Cumple)
+                            {
+                                <div class="mt-1"><i class="fas fa-check-circle text-success"></i> Cumple</div>
+                            }
+                            else
+                            {
+                                <div class="mt-1"><i class="fas fa-times-circle text-warning"></i> Pendiente</div>
+                            }
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Evaluaciones -->
+                <div class="col-lg-3 col-md-6 mb-4">
+                    <div class="stat-card @(estadisticasDocente.Secciones.Evaluaciones.Datos.Cumple ? "border-success" : "border-warning")">
+                        <div class="stat-icon @(estadisticasDocente.Secciones.Evaluaciones.Datos.Cumple ? "courses" : "pending")">
+                            <i class="@estadisticasDocente.Secciones.Evaluaciones.Icono"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 class="stat-number">@estadisticasDocente.Secciones.Evaluaciones.Datos.PromedioObtenido.ToString("F1")%</h3>
+                            <p class="stat-label">Promedio Evaluaciones</p>
+                            <small class="text-muted">Requiere: @estadisticasDocente.Secciones.Evaluaciones.Datos.Requiere75%</small>
+                            @if (estadisticasDocente.Secciones.Evaluaciones.Datos.Cumple)
+                            {
+                                <div class="mt-1"><i class="fas fa-check-circle text-success"></i> Cumple</div>
+                            }
+                            else
+                            {
+                                <div class="mt-1"><i class="fas fa-times-circle text-warning"></i> Pendiente</div>
+                            }
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Capacitaciones -->
+                <div class="col-lg-3 col-md-6 mb-4">
+                    <div class="stat-card @(estadisticasDocente.Secciones.Capacitaciones.Datos.Cumple ? "border-success" : "border-warning")">
+                        <div class="stat-icon @(estadisticasDocente.Secciones.Capacitaciones.Datos.Cumple ? "schedule" : "pending")">
+                            <i class="@estadisticasDocente.Secciones.Capacitaciones.Icono"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 class="stat-number">@estadisticasDocente.Secciones.Capacitaciones.Datos.HorasObtenidas</h3>
+                            <p class="stat-label">Horas Capacitación</p>
+                            <small class="text-muted">Requiere: @estadisticasDocente.Secciones.Capacitaciones.Datos.HorasRequeridas h (Ped: @estadisticasDocente.Secciones.Capacitaciones.Datos.HorasPedagogicasObtenidas/@estadisticasDocente.Secciones.Capacitaciones.Datos.HorasPedagogicasRequeridas)</small>
+                            @if (estadisticasDocente.Secciones.Capacitaciones.Datos.Cumple)
+                            {
+                                <div class="mt-1"><i class="fas fa-check-circle text-success"></i> Cumple</div>
+                            }
+                            else
+                            {
+                                <div class="mt-1"><i class="fas fa-times-circle text-warning"></i> Pendiente</div>
+                            }
+                        </div>
                     </div>
                 </div>
             </div>
-            <div class="col-lg-3 col-md-6 mb-4">
-                <div class="stat-card">
-                    <div class="stat-icon students">
-                        <i class="fas fa-users"></i>
-                    </div>
-                    <div class="stat-content">
-                        <h3 class="stat-number">@totalStudents</h3>
-                        <p class="stat-label">Estudiantes</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-3 col-md-6 mb-4">
-                <div class="stat-card">
-                    <div class="stat-icon pending">
-                        <i class="fas fa-clock"></i>
-                    </div>
-                    <div class="stat-content">
-                        <h3 class="stat-number">@pendingTasks</h3>
-                        <p class="stat-label">Tareas Pendientes</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-3 col-md-6 mb-4">
-                <div class="stat-card">
-                    <div class="stat-icon schedule">
-                        <i class="fas fa-calendar-alt"></i>
-                    </div>
-                    <div class="stat-content">
-                        <h3 class="stat-number">@weeklyHours</h3>
-                        <p class="stat-label">Horas Semanales</p>
-                    </div>
-                </div>
-            </div>
-        </div>
+        }
     </div>
 
     <!-- Sección de Acciones Rápidas -->
@@ -803,6 +1068,9 @@
     private int pendingTasks = 0;
     private int weeklyHours = 0;
     private List<ClassItem> upcomingClasses = new();    private bool showRequisitosModal = false;
+    private bool showEstadisticasModal = false;
+    private bool isLoadingEstadisticas = false;
+    private EstadisticasDocenteResponse? estadisticasDocente = null;
     private bool showInvestigacionesModal = false;
     private bool showEvaluacionesModal = false;
     private bool showCapacitacionesModal = false;
@@ -886,23 +1154,20 @@
         }
 
         await LoadDashboardData();
-    }
-
-    private Task LoadDashboardData()
+    }    private async Task LoadDashboardData()
     {
-        // Simular carga de datos - aquí conectarías con tu API
-        totalCourses = 4;
-        totalStudents = 120;
-        pendingTasks = 8;
-        weeklyHours = 16;
-
-        // Simular clases próximas
-        upcomingClasses = new List<ClassItem>
+        try
         {
-            new ClassItem 
-            { 
-                CourseName = "Programación Web",
-                Topic = "Frameworks Frontend",
+            // Cargar estadísticas de promoción
+            await CargarEstadisticas();
+            
+            // Simular clases próximas
+            upcomingClasses = new List<ClassItem>
+            {
+                new ClassItem 
+                { 
+                    CourseName = "Programación Web",
+                    Topic = "Frameworks Frontend",
                 Time = "08:00 - 10:00",
                 Date = DateTime.Today.AddDays(1),
                 Location = "Aula 301"
@@ -921,11 +1186,15 @@
                 Topic = "Scrum Framework",
                 Time = "14:00 - 16:00",
                 Date = DateTime.Today.AddDays(2),
-                Location = "Aula 205"
-            }        };
-        
-        return Task.CompletedTask;
-    }    private void NavigateToInvestigaciones()
+                Location = "Aula 205"            }
+        };
+        }
+        catch (Exception ex)
+        {
+            // En caso de error, mostrar mensaje en consola
+            Console.WriteLine($"Error cargando estadísticas: {ex.Message}");
+        }
+    }private void NavigateToInvestigaciones()
     {
         showInvestigacionesModal = true;
         // No cargar automáticamente - solo mostrar tabla vacía
@@ -1347,11 +1616,47 @@
     {
         requisitosVerificacion = null; // Limpiar verificación anterior
         showRequisitosModal = true;
-    }
-
-    private void CloseRequisitosModal()
+    }    private void CloseRequisitosModal()
     {
         showRequisitosModal = false;
+    }
+
+    private async Task ShowEstadisticasModal()
+    {
+        showEstadisticasModal = true;
+        await CargarEstadisticas();
+    }
+
+    private void CloseEstadisticasModal()
+    {
+        showEstadisticasModal = false;
+    }
+
+    private async Task CargarEstadisticas()
+    {
+        var cedula = UserSession.CurrentUser?.Cedula;
+        if (string.IsNullOrEmpty(cedula))
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "No se pudo obtener la cédula del usuario actual.");
+            return;
+        }
+
+        try
+        {
+            isLoadingEstadisticas = true;
+            StateHasChanged();
+
+            estadisticasDocente = await AuthService.ObtenerEstadisticasDocente(cedula);
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error al cargar estadísticas: {ex.Message}");
+        }
+        finally
+        {
+            isLoadingEstadisticas = false;
+            StateHasChanged();
+        }
     }
 
     private void ShowEvaluacionesModal()

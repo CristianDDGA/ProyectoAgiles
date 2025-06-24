@@ -23,7 +23,9 @@ namespace proyectoAgiles.Services
         {
             _httpClient = httpClient;
             _apiBaseUrl = configuration["ApiSettings:BaseUrl"] ?? "http://localhost:5200";
-        }        public async Task<bool> Register(RegisterRequest request)
+        }
+
+        public async Task<bool> Register(RegisterRequest request)
         {
             // Mapear RegisterRequest a RegisterDto (formato del backend)
             var registerDto = new
@@ -49,7 +51,9 @@ namespace proyectoAgiles.Services
             
             var errorContent = await response.Content.ReadAsStringAsync();
             throw new Exception($"Error al registrar usuario: {errorContent}");
-        }        public async Task<RegisterResponse> RegisterAsync(RegisterRequest request)
+        }
+
+        public async Task<RegisterResponse> RegisterAsync(RegisterRequest request)
         {
             try
             {                // Mapear RegisterRequest a RegisterDto (formato del backend)
@@ -546,6 +550,7 @@ namespace proyectoAgiles.Services
         }
 
         // Métodos para trabajar con investigaciones
+        
         public async Task<List<InvestigacionDto>> GetInvestigacionesPorCedula(string cedula)
         {
             try
@@ -556,6 +561,27 @@ namespace proyectoAgiles.Services
             catch (Exception ex)
             {
                 throw new Exception($"Error al obtener investigaciones: {ex.Message}");
+            }
+        }
+
+        public async Task<EstadisticasDocenteResponse> ObtenerEstadisticasDocente(string cedula)
+        {
+            try
+            {
+                var response = await _httpClient.GetFromJsonAsync<EstadisticasDocenteResponse>($"{_apiBaseUrl}/api/EvaluacionesDesempeno/estadisticas-docente/{cedula}");
+                return response ?? new EstadisticasDocenteResponse
+                {
+                    Cedula = cedula,
+                    Resumen = new ResumenEstadisticas { TotalRequisitos = 4, RequisitosCumplidos = 0, PorcentajeCompletitud = 0, PuedeSubirNivel = false }
+                };
+            }
+            catch (Exception)
+            {
+                return new EstadisticasDocenteResponse
+                {
+                    Cedula = cedula,
+                    Resumen = new ResumenEstadisticas { TotalRequisitos = 4, RequisitosCumplidos = 0, PorcentajeCompletitud = 0, PuedeSubirNivel = false }
+                };
             }
         }
 
@@ -577,7 +603,9 @@ namespace proyectoAgiles.Services
             {
                 throw new Exception($"Error al crear investigación: {ex.Message}");
             }
-        }        public async Task<InvestigacionDto> CrearInvestigacionConPdf(CreateInvestigacionWithPdfDto createDto)
+        }
+
+        public async Task<InvestigacionDto> CrearInvestigacionConPdf(CreateInvestigacionWithPdfDto createDto)
         {
             try
             {
@@ -856,11 +884,69 @@ namespace proyectoAgiles.Services
     public class TTHHDto
     {
         public int Id { get; set; }
-        public string Cedula { get; set; } = string.Empty;
-        public DateTime FechaInicio { get; set; }
+        public string Cedula { get; set; } = string.Empty;        public DateTime FechaInicio { get; set; }
         public double AniosCumplidos { get; set; }
         public string Observacion { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
+    }
+
+    // DTOs para estadísticas del docente
+    public class EstadisticasDocenteResponse
+    {
+        public string Cedula { get; set; } = string.Empty;
+        public DateTime FechaConsulta { get; set; }
+        public ResumenEstadisticas Resumen { get; set; } = new();
+        public SeccionesEstadisticas Secciones { get; set; } = new();
+    }
+
+    public class ResumenEstadisticas
+    {
+        public int TotalRequisitos { get; set; }
+        public int RequisitosCumplidos { get; set; }
+        public double PorcentajeCompletitud { get; set; }
+        public bool PuedeSubirNivel { get; set; }
+    }
+
+    public class SeccionesEstadisticas
+    {
+        public SeccionEstadistica Experiencia { get; set; } = new();
+        public SeccionEstadistica Obras { get; set; } = new();
+        public SeccionEstadistica Evaluaciones { get; set; } = new();
+        public SeccionEstadistica Capacitaciones { get; set; } = new();
+    }
+
+    public class SeccionEstadistica
+    {
+        public string Titulo { get; set; } = string.Empty;
+        public string Icono { get; set; } = string.Empty;
+        public string Color { get; set; } = string.Empty;
+        public DatosSeccion Datos { get; set; } = new();
+    }
+
+    public class DatosSeccion
+    {
+        // Experiencia
+        public int AñosRequeridos { get; set; }
+        public double AñosObtenidos { get; set; }
+        
+        // Obras
+        public int TotalObras { get; set; }
+        public int ObrasConUTA { get; set; }
+        
+        // Evaluaciones
+        public int EvaluacionesAnalizadas { get; set; }
+        public decimal PromedioObtenido { get; set; }
+        public decimal Requiere75 { get; set; }
+        
+        // Capacitaciones
+        public int HorasRequeridas { get; set; }
+        public int HorasObtenidas { get; set; }
+        public int HorasPedagogicasRequeridas { get; set; }
+        public int HorasPedagogicasObtenidas { get; set; }
+        
+        // Común
+        public bool Cumple { get; set; }
+        public string Detalles { get; set; } = string.Empty;
     }
 }
