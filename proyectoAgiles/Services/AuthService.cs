@@ -927,7 +927,7 @@ namespace proyectoAgiles.Services
         {
             try
             {
-                var response = await _httpClient.GetFromJsonAsync<List<ProyectoAgiles.Application.DTOs.SolicitudEscalafonDto>>($"{_apiBaseUrl}/api/solicitudes-escalafon/by-cedula/{cedula}");
+                var response = await _httpClient.GetFromJsonAsync<List<ProyectoAgiles.Application.DTOs.SolicitudEscalafonDto>>($"{_apiBaseUrl}/api/solicitudes-escalafon/docente/{cedula}");
                 return response ?? new List<ProyectoAgiles.Application.DTOs.SolicitudEscalafonDto>();
             }
             catch (Exception ex)
