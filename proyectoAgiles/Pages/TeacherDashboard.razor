@@ -2067,7 +2067,10 @@ private bool isLoadingInvestigaciones = false;
 
         try
         {
-            // Crear la solicitud de escalafón
+            // Obtener estadísticas del docente para completar la solicitud
+            var estadisticas = await AuthService.ObtenerEstadisticasDocente(cedula);
+            
+            // Crear la solicitud de escalafón con datos completos
             var createSolicitudDto = new CreateSolicitudEscalafonDto
             {
                 DocenteCedula = cedula,
@@ -2075,6 +2078,11 @@ private bool isLoadingInvestigaciones = false;
                 DocenteEmail = UserSession.CurrentUser?.Email ?? "Email no disponible",
                 NivelActual = UserSession.CurrentUser?.Nivel ?? "Titular Auxiliar 1",
                 NivelSolicitado = "Titular Auxiliar 2", // Por ahora fijo, se puede hacer dinámico
+                AnosExperiencia = (int)(estadisticas?.Secciones?.Experiencia?.Datos?.AñosObtenidos ?? 0),
+                Titulos = "Información disponible en el perfil académico",
+                Publicaciones = estadisticas?.Secciones?.Obras?.Datos?.TotalObras > 0 ? $"{estadisticas.Secciones.Obras.Datos.TotalObras} obras registradas" : "Sin publicaciones registradas",
+                ProyectosInvestigacion = estadisticas?.Secciones?.Obras?.Datos?.ObrasConUTA > 0 ? $"{estadisticas.Secciones.Obras.Datos.ObrasConUTA} obras con filiación UTA" : "Sin proyectos registrados",
+                Capacitaciones = estadisticas?.Secciones?.Capacitaciones?.Datos?.HorasObtenidas > 0 ? $"{estadisticas.Secciones.Capacitaciones.Datos.HorasObtenidas} horas totales ({estadisticas.Secciones.Capacitaciones.Datos.HorasPedagogicasObtenidas} horas pedagógicas)" : "Sin capacitaciones registradas",
                 Observaciones = "Solicitud generada automáticamente desde el panel del docente"
             };
 
