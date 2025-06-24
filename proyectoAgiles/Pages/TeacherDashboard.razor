@@ -16,7 +16,6 @@
         <span class="fw-bold me-3">Nivel actual:</span>
         <span class="badge bg-info text-dark me-3" style="font-size:1.1em;">@UserSession.GetUserNivel()</span>
         <button class="btn btn-sm btn-success me-2" @onclick="ShowRequisitosModal">Subir de nivel</button>
-        <button class="btn btn-sm btn-primary me-2" @onclick="ShowEstadisticasModal">Ver estadísticas</button>
     </div>@if (showRequisitosModal)
     {
         <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,0.3);">
@@ -267,221 +266,7 @@
                     </div>
                 </div>
             </div>
-        </div>
-    }
-
-    @if (showEstadisticasModal)
-    {
-        <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,0.3);">
-            <div class="modal-dialog modal-xl">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">
-                            <i class="fas fa-chart-bar me-2"></i>
-                            Estadísticas de Requisitos para Promoción
-                        </h5>
-                        <button type="button" class="btn-close" @onclick="CloseEstadisticasModal"></button>
-                    </div>
-                    <div class="modal-body">
-                        @if (isLoadingEstadisticas)
-                        {
-                            <div class="text-center py-4">
-                                <div class="spinner-border text-primary" role="status">
-                                    <span class="visually-hidden">Cargando estadísticas...</span>
-                                </div>
-                                <p class="mt-3">Cargando estadísticas...</p>
-                            </div>
-                        }
-                        else if (estadisticasDocente != null)
-                        {
-                            <!-- Resumen general -->
-                            <div class="alert @(estadisticasDocente.Resumen.PuedeSubirNivel ? "alert-success" : "alert-info") mb-4">
-                                <h6 class="alert-heading mb-2">
-                                    <i class="fas fa-chart-pie me-2"></i>
-                                    Resumen General
-                                </h6>
-                                <div class="row">
-                                    <div class="col-md-3">
-                                        <strong>Requisitos cumplidos:</strong>
-                                        <div class="h4">@estadisticasDocente.Resumen.RequisitosCumplidos / @estadisticasDocente.Resumen.TotalRequisitos</div>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <strong>Porcentaje:</strong>
-                                        <div class="h4">@estadisticasDocente.Resumen.PorcentajeCompletitud%</div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <strong>Estado:</strong>
-                                        <div class="h5">
-                                            @if (estadisticasDocente.Resumen.PuedeSubirNivel)
-                                            {
-                                                <span class="badge bg-success">✅ Listo para ascender</span>
-                                            }
-                                            else
-                                            {
-                                                <span class="badge bg-warning text-dark">⏳ En progreso</span>
-                                            }
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Estadísticas por sección -->
-                            <div class="row">
-                                <!-- Experiencia -->
-                                <div class="col-md-6 mb-3">
-                                    <div class="card">
-                                        <div class="card-header d-flex align-items-center">
-                                            <i class="@estadisticasDocente.Secciones.Experiencia.Icono text-@estadisticasDocente.Secciones.Experiencia.Color me-2"></i>
-                                            <strong>@estadisticasDocente.Secciones.Experiencia.Titulo</strong>
-                                            @if (estadisticasDocente.Secciones.Experiencia.Datos.Cumple)
-                                            {
-                                                <i class="fas fa-check-circle text-success ms-auto"></i>
-                                            }
-                                            else
-                                            {
-                                                <i class="fas fa-times-circle text-danger ms-auto"></i>
-                                            }
-                                        </div>
-                                        <div class="card-body">
-                                            <div class="row">
-                                                <div class="col-6">
-                                                    <small class="text-muted">Años obtenidos:</small>
-                                                    <div class="h5">@estadisticasDocente.Secciones.Experiencia.Datos.AñosObtenidos</div>
-                                                </div>
-                                                <div class="col-6">
-                                                    <small class="text-muted">Años requeridos:</small>
-                                                    <div class="h5">@estadisticasDocente.Secciones.Experiencia.Datos.AñosRequeridos</div>
-                                                </div>
-                                            </div>
-                                            <p class="mt-2 mb-0">@estadisticasDocente.Secciones.Experiencia.Datos.Detalles</p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Obras -->
-                                <div class="col-md-6 mb-3">
-                                    <div class="card">
-                                        <div class="card-header d-flex align-items-center">
-                                            <i class="@estadisticasDocente.Secciones.Obras.Icono text-@estadisticasDocente.Secciones.Obras.Color me-2"></i>
-                                            <strong>@estadisticasDocente.Secciones.Obras.Titulo</strong>
-                                            @if (estadisticasDocente.Secciones.Obras.Datos.Cumple)
-                                            {
-                                                <i class="fas fa-check-circle text-success ms-auto"></i>
-                                            }
-                                            else
-                                            {
-                                                <i class="fas fa-times-circle text-danger ms-auto"></i>
-                                            }
-                                        </div>
-                                        <div class="card-body">
-                                            <div class="row">
-                                                <div class="col-6">
-                                                    <small class="text-muted">Obras con UTA:</small>
-                                                    <div class="h5">@estadisticasDocente.Secciones.Obras.Datos.ObrasConUTA</div>
-                                                </div>
-                                                <div class="col-6">
-                                                    <small class="text-muted">Total obras:</small>
-                                                    <div class="h5">@estadisticasDocente.Secciones.Obras.Datos.TotalObras</div>
-                                                </div>
-                                            </div>
-                                            <p class="mt-2 mb-0">@estadisticasDocente.Secciones.Obras.Datos.Detalles</p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Evaluaciones -->
-                                <div class="col-md-6 mb-3">
-                                    <div class="card">
-                                        <div class="card-header d-flex align-items-center">
-                                            <i class="@estadisticasDocente.Secciones.Evaluaciones.Icono text-@estadisticasDocente.Secciones.Evaluaciones.Color me-2"></i>
-                                            <strong>@estadisticasDocente.Secciones.Evaluaciones.Titulo</strong>
-                                            @if (estadisticasDocente.Secciones.Evaluaciones.Datos.Cumple)
-                                            {
-                                                <i class="fas fa-check-circle text-success ms-auto"></i>
-                                            }
-                                            else
-                                            {
-                                                <i class="fas fa-times-circle text-danger ms-auto"></i>
-                                            }
-                                        </div>
-                                        <div class="card-body">
-                                            <div class="row">
-                                                <div class="col-6">
-                                                    <small class="text-muted">Promedio obtenido:</small>
-                                                    <div class="h5">@estadisticasDocente.Secciones.Evaluaciones.Datos.PromedioObtenido%</div>
-                                                </div>
-                                                <div class="col-6">
-                                                    <small class="text-muted">Requerido:</small>
-                                                    <div class="h5">@estadisticasDocente.Secciones.Evaluaciones.Datos.Requiere75%</div>
-                                                </div>
-                                            </div>
-                                            <p class="mt-2 mb-0">@estadisticasDocente.Secciones.Evaluaciones.Datos.Detalles</p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Capacitaciones -->
-                                <div class="col-md-6 mb-3">
-                                    <div class="card">
-                                        <div class="card-header d-flex align-items-center">
-                                            <i class="@estadisticasDocente.Secciones.Capacitaciones.Icono text-@estadisticasDocente.Secciones.Capacitaciones.Color me-2"></i>
-                                            <strong>@estadisticasDocente.Secciones.Capacitaciones.Titulo</strong>
-                                            @if (estadisticasDocente.Secciones.Capacitaciones.Datos.Cumple)
-                                            {
-                                                <i class="fas fa-check-circle text-success ms-auto"></i>
-                                            }
-                                            else
-                                            {
-                                                <i class="fas fa-times-circle text-danger ms-auto"></i>
-                                            }
-                                        </div>
-                                        <div class="card-body">
-                                            <div class="row">
-                                                <div class="col-6">
-                                                    <small class="text-muted">Horas obtenidas:</small>
-                                                    <div class="h6">@estadisticasDocente.Secciones.Capacitaciones.Datos.HorasObtenidas / @estadisticasDocente.Secciones.Capacitaciones.Datos.HorasRequeridas</div>
-                                                    <small class="text-muted">Pedagógicas:</small>
-                                                    <div class="h6">@estadisticasDocente.Secciones.Capacitaciones.Datos.HorasPedagogicasObtenidas / @estadisticasDocente.Secciones.Capacitaciones.Datos.HorasPedagogicasRequeridas</div>
-                                                </div>
-                                                <div class="col-6">
-                                                    <small class="text-muted">Estado:</small>
-                                                    <div class="h6">
-                                                        @if (estadisticasDocente.Secciones.Capacitaciones.Datos.Cumple)
-                                                        {
-                                                            <span class="badge bg-success">✅ Cumple</span>
-                                                        }
-                                                        else
-                                                        {
-                                                            <span class="badge bg-danger">❌ No cumple</span>
-                                                        }
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <p class="mt-2 mb-0">@estadisticasDocente.Secciones.Capacitaciones.Datos.Detalles</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        }
-                        else
-                        {
-                            <div class="alert alert-warning">
-                                <i class="fas fa-exclamation-triangle me-2"></i>
-                                No se pudieron cargar las estadísticas. Inténtalo más tarde.
-                            </div>
-                        }
-                    </div>
-                    <div class="modal-footer">
-                        <button class="btn btn-outline-primary" @onclick="CargarEstadisticas">
-                            <i class="fas fa-refresh me-1"></i>
-                            Actualizar
-                        </button>
-                        <button class="btn btn-secondary" @onclick="CloseEstadisticasModal">Cerrar</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    }
+        </div>    }
 
     @if (showInvestigacionesModal)
     {
@@ -1021,60 +806,20 @@
                     <h3>Capacitaciones DITIC</h3>
                     <p>Gestionar capacitaciones y actualización profesional</p>
                 </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Sección de Próximas Clases -->
-    <div class="upcoming-classes">
-        <h2 class="section-title">Próximas Clases</h2>
-        <div class="classes-list">
-            @if (upcomingClasses.Any())
-            {
-                @foreach (var classItem in upcomingClasses)
-                {
-                    <div class="class-item">
-                        <div class="class-time">
-                            <span class="time">@classItem.Time</span>
-                            <span class="date">@classItem.Date.ToString("dd/MM")</span>
-                        </div>
-                        <div class="class-content">
-                            <h4 class="class-name">@classItem.CourseName</h4>
-                            <p class="class-details">@classItem.Topic</p>
-                            <span class="class-location">
-                                <i class="fas fa-map-marker-alt"></i>
-                                @classItem.Location
-                            </span>
-                        </div>
-                        <div class="class-actions">
-                            <button class="btn btn-sm btn-outline-primary">Ver Detalles</button>
-                        </div>
-                    </div>
-                }
-            }
-            else
-            {
-                <div class="no-classes">
-                    <i class="fas fa-calendar-times"></i>
-                    <p>No tienes clases programadas próximamente</p>
-                </div>
-            }
-        </div>
+            </div>        </div>
     </div>
 </div>
 
 @code {    private int totalCourses = 0;
     private int totalStudents = 0;
     private int pendingTasks = 0;
-    private int weeklyHours = 0;
-    private List<ClassItem> upcomingClasses = new();    private bool showRequisitosModal = false;
-    private bool showEstadisticasModal = false;
+    private int weeklyHours = 0;    private bool showRequisitosModal = false;
     private bool isLoadingEstadisticas = false;
     private EstadisticasDocenteResponse? estadisticasDocente = null;
     private bool showInvestigacionesModal = false;
     private bool showEvaluacionesModal = false;
     private bool showCapacitacionesModal = false;
-    private bool showAgregarModal = false;    private bool isLoadingInvestigaciones = false;
+    private bool showAgregarModal = false;private bool isLoadingInvestigaciones = false;
     private bool isLoadingEvaluaciones = false;
     private bool isLoadingCapacitaciones = false;
     private bool isLoadingRequisitos = false;
@@ -1160,34 +905,6 @@
         {
             // Cargar estadísticas de promoción
             await CargarEstadisticas();
-            
-            // Simular clases próximas
-            upcomingClasses = new List<ClassItem>
-            {
-                new ClassItem 
-                { 
-                    CourseName = "Programación Web",
-                    Topic = "Frameworks Frontend",
-                Time = "08:00 - 10:00",
-                Date = DateTime.Today.AddDays(1),
-                Location = "Aula 301"
-            },
-            new ClassItem 
-            { 
-                CourseName = "Base de Datos",
-                Topic = "Normalización",
-                Time = "10:00 - 12:00",
-                Date = DateTime.Today.AddDays(1),
-                Location = "Lab. Sistemas"
-            },
-            new ClassItem 
-            { 
-                CourseName = "Metodologías Ágiles",
-                Topic = "Scrum Framework",
-                Time = "14:00 - 16:00",
-                Date = DateTime.Today.AddDays(2),
-                Location = "Aula 205"            }
-        };
         }
         catch (Exception ex)
         {
@@ -1616,20 +1333,8 @@
     {
         requisitosVerificacion = null; // Limpiar verificación anterior
         showRequisitosModal = true;
-    }    private void CloseRequisitosModal()
-    {
+    }    private void CloseRequisitosModal()    {
         showRequisitosModal = false;
-    }
-
-    private async Task ShowEstadisticasModal()
-    {
-        showEstadisticasModal = true;
-        await CargarEstadisticas();
-    }
-
-    private void CloseEstadisticasModal()
-    {
-        showEstadisticasModal = false;
     }
 
     private async Task CargarEstadisticas()
