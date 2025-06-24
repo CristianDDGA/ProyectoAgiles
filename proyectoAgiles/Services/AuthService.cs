@@ -257,17 +257,276 @@ namespace proyectoAgiles.Services
             {
                 return new ResetPasswordResponse { Success = false, Message = ex.Message };
             }
+        }        public async Task<bool> SubirNivel(string cedula)
+        {
+            try
+            {
+                // Primero verificar si cumple todos los requisitos
+                var verificacion = await VerificarRequisitosSubirNivel(cedula);
+                
+                if (!verificacion.CumpleTodosRequisitos)
+                {
+                    throw new Exception($"No cumple con los requisitos para subir de nivel: {verificacion.Mensaje}");
+                }
+
+                // Si cumple todos los requisitos, proceder con el cambio de nivel
+                var response = await _httpClient.PostAsync($"{_apiBaseUrl}/api/users/by-cedula/{cedula}/subir-nivel", null);
+                return response.IsSuccessStatusCode;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error al subir de nivel: {ex.Message}");
+            }
+        }public async Task<VerificacionRequisitosSubirNivelDto> VerificarRequisitosSubirNivel(string cedula)
+        {
+            try
+            {
+                var verificacion = new VerificacionRequisitosSubirNivelDto
+                {
+                    Cedula = cedula,
+                    CumpleTodosRequisitos = false,
+                    Mensaje = "Verificando requisitos para subir de nivel..."
+                };
+
+                // 1. Verificar experiencia mínima de 4 años
+                verificacion.Experiencia = await VerificarExperienciaMinima(cedula);
+
+                // 2. Verificar obra relevante o artículo indexado con filiación UTA
+                verificacion.ObraRelevante = await VerificarObraRelevante(cedula);
+
+                // 3. Verificar evaluación 75% en últimos 4 períodos
+                verificacion.Evaluacion75Porciento = await VerificarEvaluacion75Porciento(cedula);
+
+                // 4. Verificar 96 horas de capacitación (24 horas pedagógicas)
+                verificacion.Capacitacion96Horas = await VerificarCapacitacion96Horas(cedula);
+
+                // Determinar si cumple todos los requisitos
+                verificacion.CumpleTodosRequisitos = 
+                    verificacion.Experiencia.Cumple &&
+                    verificacion.ObraRelevante.Cumple &&
+                    verificacion.Evaluacion75Porciento.Cumple &&
+                    verificacion.Capacitacion96Horas.Cumple;
+
+                // Generar mensaje final
+                if (verificacion.CumpleTodosRequisitos)
+                {
+                    verificacion.Mensaje = "✅ CUMPLE con todos los requisitos para subir de nivel a Titular Auxiliar 2";
+                }
+                else
+                {
+                    var requisitosIncumplidos = new List<string>();
+                    if (!verificacion.Experiencia.Cumple) requisitosIncumplidos.Add("Experiencia mínima");
+                    if (!verificacion.ObraRelevante.Cumple) requisitosIncumplidos.Add("Obra relevante/artículo indexado");
+                    if (!verificacion.Evaluacion75Porciento.Cumple) requisitosIncumplidos.Add("Evaluación 75%");
+                    if (!verificacion.Capacitacion96Horas.Cumple) requisitosIncumplidos.Add("Capacitación 96 horas");
+                    
+                    verificacion.Mensaje = $"❌ NO CUMPLE con los siguientes requisitos: {string.Join(", ", requisitosIncumplidos)}";
+                }
+
+                return verificacion;
+            }
+            catch (Exception ex)
+            {
+                return new VerificacionRequisitosSubirNivelDto
+                {
+                    Cedula = cedula,
+                    CumpleTodosRequisitos = false,
+                    Mensaje = $"Error al verificar requisitos: {ex.Message}"
+                };
+            }
         }
 
-        public async Task<bool> SubirNivel(int userId)
+        private async Task<RequisitoCumplimientoDto> VerificarExperienciaMinima(string cedula)
         {
-            var response = await _httpClient.PostAsync($"{_apiBaseUrl}/api/users/{userId}/subir-nivel", null);
-            return response.IsSuccessStatusCode;
-        }        public async Task<bool> VerificarRequisitosSubirNivel(int userId)
+            try
+            {
+                // Obtener información del usuario para verificar fecha de ingreso como titular auxiliar 1
+                var response = await _httpClient.GetAsync($"{_apiBaseUrl}/api/users/by-cedula/{cedula}");
+                if (response.IsSuccessStatusCode)
+                {
+                    var userInfo = await response.Content.ReadFromJsonAsync<UserDto>();
+                    if (userInfo != null)
+                    {
+                        // Calcular años desde la fecha de creación del usuario (asumiendo que es cuando inició como titular auxiliar 1)
+                        var añosExperiencia = (DateTime.Now - userInfo.CreatedAt).TotalDays / 365.25;
+                        
+                        return new RequisitoCumplimientoDto
+                        {
+                            Cumple = añosExperiencia >= 4,
+                            Mensaje = $"Experiencia: {añosExperiencia:F1} años como personal académico titular auxiliar 1 " +
+                                     (añosExperiencia >= 4 ? "(✅ Cumple - mínimo 4 años)" : "(❌ No cumple - requiere mínimo 4 años)"),
+                            ValorObtenido = $"{añosExperiencia:F1} años",
+                            ValorRequerido = "4 años mínimo"
+                        };
+                    }
+                }
+                
+                return new RequisitoCumplimientoDto
+                {
+                    Cumple = false,
+                    Mensaje = "❌ No se pudo verificar la experiencia mínima",
+                    ValorObtenido = "No disponible",
+                    ValorRequerido = "4 años mínimo"
+                };
+            }
+            catch (Exception ex)
+            {
+                return new RequisitoCumplimientoDto
+                {
+                    Cumple = false,
+                    Mensaje = $"❌ Error al verificar experiencia: {ex.Message}",
+                    ValorObtenido = "Error",
+                    ValorRequerido = "4 años mínimo"
+                };
+            }
+        }
+
+        private async Task<RequisitoCumplimientoDto> VerificarObraRelevante(string cedula)
         {
-            // Simulación: siempre retorna true (cumple requisitos)
-            await Task.Delay(500); // Simula espera de red
-            return true;        }
+            try
+            {
+                var investigaciones = await GetInvestigacionesPorCedula(cedula);
+                
+                // Buscar investigaciones con filiación UTA
+                var investigacionesUTA = investigaciones.Where(i => 
+                    i.Filiacion.Contains("UTA", StringComparison.OrdinalIgnoreCase) ||
+                    i.Filiacion.Contains("Universidad Técnica de Ambato", StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+
+                if (investigacionesUTA.Any())
+                {
+                    return new RequisitoCumplimientoDto
+                    {
+                        Cumple = true,
+                        Mensaje = $"✅ Tiene {investigacionesUTA.Count} obra(s) relevante(s) con filiación UTA",
+                        ValorObtenido = $"{investigacionesUTA.Count} investigación(es) con filiación UTA",
+                        ValorRequerido = "Al menos 1 obra relevante con filiación UTA"
+                    };
+                }
+                else
+                {
+                    return new RequisitoCumplimientoDto
+                    {
+                        Cumple = false,
+                        Mensaje = $"❌ No tiene obras relevantes con filiación UTA (Total: {investigaciones.Count})",
+                        ValorObtenido = $"{investigaciones.Count} investigación(es) sin filiación UTA",
+                        ValorRequerido = "Al menos 1 obra relevante con filiación UTA"
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                return new RequisitoCumplimientoDto
+                {
+                    Cumple = false,
+                    Mensaje = $"❌ Error al verificar obra relevante: {ex.Message}",
+                    ValorObtenido = "Error",
+                    ValorRequerido = "Al menos 1 obra relevante con filiación UTA"
+                };
+            }
+        }
+
+        private async Task<RequisitoCumplimientoDto> VerificarEvaluacion75Porciento(string cedula)
+        {
+            try
+            {
+                var response = await _httpClient.GetAsync($"{_apiBaseUrl}/api/evaluaciones-desempeno/verificar-requisito-75/{cedula}");
+                if (response.IsSuccessStatusCode)
+                {
+                    var verificacion = await response.Content.ReadFromJsonAsync<VerificacionRequisito75Response>();
+                    if (verificacion != null)
+                    {
+                        return new RequisitoCumplimientoDto
+                        {
+                            Cumple = verificacion.CumpleRequisito,
+                            Mensaje = verificacion.CumpleRequisito 
+                                ? $"✅ Cumple evaluación 75%: {verificacion.PorcentajePromedioUltimasCuatro:F1}% promedio en últimos {verificacion.EvaluacionesAnalizadas} períodos"
+                                : $"❌ No cumple evaluación 75%: {verificacion.PorcentajePromedioUltimasCuatro:F1}% promedio en últimos {verificacion.EvaluacionesAnalizadas} períodos",
+                            ValorObtenido = $"{verificacion.PorcentajePromedioUltimasCuatro:F1}% promedio",
+                            ValorRequerido = "75% mínimo en últimos 4 períodos"
+                        };
+                    }
+                }
+                
+                return new RequisitoCumplimientoDto
+                {
+                    Cumple = false,
+                    Mensaje = "❌ No se pudo verificar las evaluaciones de desempeño",
+                    ValorObtenido = "No disponible",
+                    ValorRequerido = "75% mínimo en últimos 4 períodos"
+                };
+            }
+            catch (Exception ex)
+            {
+                return new RequisitoCumplimientoDto
+                {
+                    Cumple = false,
+                    Mensaje = $"❌ Error al verificar evaluación: {ex.Message}",
+                    ValorObtenido = "Error",
+                    ValorRequerido = "75% mínimo en últimos 4 períodos"
+                };
+            }
+        }
+
+        private async Task<RequisitoCumplimientoDto> VerificarCapacitacion96Horas(string cedula)
+        {
+            try
+            {
+                var response = await _httpClient.GetAsync($"{_apiBaseUrl}/api/ditic/verify-requirement/{cedula}");
+                if (response.IsSuccessStatusCode)
+                {
+                    var verificacion = await response.Content.ReadFromJsonAsync<VerificacionRequisitoDiticResponse>();
+                    if (verificacion != null)
+                    {
+                        var cumpleHoras = verificacion.HorasObtenidas >= 96;
+                        var cumplePedagogico = verificacion.HorasPedagogicasObtenidas >= 24;
+                        var cumpleRequisito = (cumpleHoras && cumplePedagogico) || verificacion.TieneExencionAutoridad;
+
+                        string mensaje;
+                        if (verificacion.TieneExencionAutoridad)
+                        {
+                            mensaje = $"✅ Exento por autoridad: {verificacion.CargoAutoridad} ({verificacion.AñosComoAutoridad:F1} años)";
+                        }
+                        else if (cumpleRequisito)
+                        {
+                            mensaje = $"✅ Cumple capacitación: {verificacion.HorasObtenidas}h totales ({verificacion.HorasPedagogicasObtenidas}h pedagógicas)";
+                        }
+                        else
+                        {
+                            mensaje = $"❌ No cumple capacitación: {verificacion.HorasObtenidas}h totales ({verificacion.HorasPedagogicasObtenidas}h pedagógicas)";
+                        }
+
+                        return new RequisitoCumplimientoDto
+                        {
+                            Cumple = cumpleRequisito,
+                            Mensaje = mensaje,
+                            ValorObtenido = verificacion.TieneExencionAutoridad 
+                                ? $"Exento - {verificacion.CargoAutoridad}"
+                                : $"{verificacion.HorasObtenidas}h ({verificacion.HorasPedagogicasObtenidas}h pedagógicas)",
+                            ValorRequerido = "96h totales (24h pedagógicas mín.) en últimos 3 años"
+                        };
+                    }
+                }
+                
+                return new RequisitoCumplimientoDto
+                {
+                    Cumple = false,
+                    Mensaje = "❌ No se pudo verificar las capacitaciones",
+                    ValorObtenido = "No disponible",
+                    ValorRequerido = "96h totales (24h pedagógicas mín.) en últimos 3 años"
+                };
+            }
+            catch (Exception ex)
+            {
+                return new RequisitoCumplimientoDto
+                {
+                    Cumple = false,
+                    Mensaje = $"❌ Error al verificar capacitación: {ex.Message}",
+                    ValorObtenido = "Error",
+                    ValorRequerido = "96h totales (24h pedagógicas mín.) en últimos 3 años"
+                };
+            }
+        }
 
         // Métodos para trabajar con investigaciones
         public async Task<List<InvestigacionDto>> GetInvestigacionesPorCedula(string cedula)
@@ -535,5 +794,55 @@ namespace proyectoAgiles.Services
         public string Filiacion { get; set; } = string.Empty;
         public string Observacion { get; set; } = string.Empty;
         public IBrowserFile? ArchivoPdf { get; set; }
+    }
+
+    // DTOs para verificación de requisitos para subir de nivel
+    public class VerificacionRequisitosSubirNivelDto
+    {
+        public string Cedula { get; set; } = string.Empty;
+        public bool CumpleTodosRequisitos { get; set; }
+        public string Mensaje { get; set; } = string.Empty;
+        public RequisitoCumplimientoDto Experiencia { get; set; } = new();
+        public RequisitoCumplimientoDto ObraRelevante { get; set; } = new();
+        public RequisitoCumplimientoDto Evaluacion75Porciento { get; set; } = new();
+        public RequisitoCumplimientoDto Capacitacion96Horas { get; set; } = new();
+        public DateTime FechaVerificacion { get; set; } = DateTime.Now;
+    }
+
+    public class RequisitoCumplimientoDto
+    {
+        public bool Cumple { get; set; }
+        public string Mensaje { get; set; } = string.Empty;
+        public string ValorObtenido { get; set; } = string.Empty;
+        public string ValorRequerido { get; set; } = string.Empty;
+    }
+
+    // DTOs para respuestas de APIs
+    public class VerificacionRequisito75Response
+    {
+        public string Cedula { get; set; } = string.Empty;
+        public bool CumpleRequisito { get; set; }
+        public int EvaluacionesAnalizadas { get; set; }
+        public int EvaluacionesQueAlcanzan75 { get; set; }
+        public decimal PorcentajePromedioUltimasCuatro { get; set; }
+        public string Mensaje { get; set; } = string.Empty;
+    }
+
+    public class VerificacionRequisitoDiticResponse
+    {
+        public string Cedula { get; set; } = string.Empty;
+        public bool CumpleRequisito { get; set; }
+        public bool CumpleHorasTotales { get; set; }
+        public bool CumpleHorasPedagogicas { get; set; }
+        public bool TieneExencionAutoridad { get; set; }
+        public int HorasRequeridas { get; set; } = 96;
+        public int HorasPedagogicasRequeridas { get; set; } = 24;
+        public int HorasObtenidas { get; set; }
+        public int HorasPedagogicasObtenidas { get; set; }
+        public decimal PorcentajePedagogico { get; set; }
+        public int CapacitacionesAnalizadas { get; set; }
+        public string MensajeDetallado { get; set; } = string.Empty;
+        public string? CargoAutoridad { get; set; }
+        public decimal? AñosComoAutoridad { get; set; }
     }
 }

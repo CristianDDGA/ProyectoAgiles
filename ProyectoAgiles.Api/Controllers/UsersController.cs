@@ -132,4 +132,68 @@ public class UsersController : ControllerBase
         await _userService.UpdateUserNivelAsync(id, user.Nivel);
         return Ok();
     }
+
+    [HttpGet("by-cedula/{cedula}")]
+    public async Task<ActionResult<UserDto>> GetUserByCedula(string cedula)
+    {
+        try
+        {
+            var users = await _userService.GetAllUsersAsync();
+            var user = users.FirstOrDefault(u => u.Cedula == cedula);
+            
+            if (user == null)
+            {
+                return NotFound(new { message = "Usuario no encontrado" });
+            }
+
+            return Ok(user);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "Error interno del servidor", details = ex.Message });
+        }
+    }
+
+    [HttpPost("by-cedula/{cedula}/subir-nivel")]
+    public async Task<IActionResult> SubirNivelPorCedula(string cedula)
+    {
+        try
+        {
+            var users = await _userService.GetAllUsersAsync();
+            var user = users.FirstOrDefault(u => u.Cedula == cedula);
+            
+            if (user == null)
+                return NotFound(new { message = "Usuario no encontrado" });
+                
+            if (user.UserType != ProyectoAgiles.Domain.Enums.UserType.Docente)
+                return BadRequest(new { message = "Solo los docentes pueden subir de nivel." });
+
+            // Lógica para subir de nivel
+            var niveles = new[] { "titular auxiliar 1", "titular auxiliar 2", "titular principal", "titular agregado" };
+            var nivelActual = user.Nivel?.ToLower() ?? "titular auxiliar 1";
+            var actual = Array.IndexOf(niveles, nivelActual);
+            
+            if (actual < 0)
+            {
+                // Si no se encuentra el nivel, asumir titular auxiliar 1
+                actual = 0;
+            }
+            
+            if (actual == niveles.Length - 1)
+                return BadRequest(new { message = "Ya tienes el nivel más alto." });
+                
+            var nuevoNivel = niveles[actual + 1];
+            await _userService.UpdateUserNivelAsync(user.Id, nuevoNivel);
+            
+            return Ok(new { 
+                message = $"¡Felicidades! Has subido de nivel a {nuevoNivel}",
+                nivelAnterior = nivelActual,
+                nuevoNivel = nuevoNivel
+            });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "Error interno del servidor", details = ex.Message });
+        }
+    }
 }

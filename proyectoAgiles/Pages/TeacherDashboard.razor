@@ -1,6 +1,8 @@
 @page "/docente"
 @using Microsoft.AspNetCore.Components.Web
 @using System.Text.Json
+@using Microsoft.AspNetCore.Components.Forms
+@using proyectoAgiles.Services
 @layout proyectoAgiles.Layout.MainLayout
 @inject NavigationManager Navigation
 @inject proyectoAgiles.Services.AuthService AuthService
@@ -15,26 +17,253 @@
         <span class="fw-bold me-3">Nivel actual:</span>
         <span class="badge bg-info text-dark me-3" style="font-size:1.1em;">@UserSession.GetUserNivel()</span>
         <button class="btn btn-sm btn-success me-2" @onclick="ShowRequisitosModal">Subir de nivel</button>
-    </div>
-
-    @if (showRequisitosModal)
+    </div>    @if (showRequisitosModal)
     {
         <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,0.3);">
-            <div class="modal-dialog modal-lg">
+            <div class="modal-dialog modal-xl">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title">Requisitos para subir de nivel</h5>
+                        <h5 class="modal-title">
+                            <i class="fas fa-level-up-alt me-2"></i>
+                            Requisitos para subir de nivel - Titular Auxiliar 2
+                        </h5>
                         <button type="button" class="btn-close" @onclick="CloseRequisitosModal"></button>
                     </div>
                     <div class="modal-body">
-                        <ol>
-                            <li>Experiencia mínima de 4 años como personal académico titular auxiliar 1 en la práctica docente en la Universidad Técnica de Ambato.</li>
-                            <li>Haber creado o publicado una obra de relevancia o un artículo indexado, con filiación UTA, en el campo amplio de conocimiento vinculado a sus actividades de docencia o investigación. La publicación deberá ser realizada durante el ejercicio de sus actividades en el grado que se encuentra. (Conforme lo establecido en el Reglamento para consideración de obras relevantes de la UTA)</li>
-                            <li>Haber obtenido como mínimo el setenta y cinco por ciento (75 %) del puntaje de la evaluación integral en los últimos cuatro periodos académicos de evaluación de desempeño en los que ejerció la docencia.</li>
-                            <li>Haber realizado y aprobado noventa y seis horas de capacitación y actualización profesional y científica en los últimos tres (3) años en una Universidad o Escuela Politécnica acreditada. Al menos 24 Horas (25%) de estas deberán ser de actualización pedagógica. El cumplimiento de este literal se exceptúa si se ha desempeñado como autoridad en una Universidad o Escuela Politécnica por más de dos (2) años.</li>
-                        </ol>
-                    </div>                    <div class="modal-footer">
-                        <button class="btn btn-outline-primary" @onclick="VerificarRequisitos">Verificar requisitos</button>
+                        @if (isLoadingRequisitos)
+                        {
+                            <div class="text-center py-4">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Verificando requisitos...</span>
+                                </div>
+                                <p class="mt-3">Verificando requisitos...</p>
+                            </div>
+                        }
+                        else if (requisitosVerificacion != null)
+                        {
+                            <!-- Resultado de verificación -->
+                            <div class="alert @(requisitosVerificacion.CumpleTodosRequisitos ? "alert-success" : "alert-warning") mb-4">                                <h6 class="alert-heading mb-2">
+                                    @if (requisitosVerificacion.CumpleTodosRequisitos)
+                                    {
+                                        <i class="fas fa-check-circle me-2"></i>@("¡FELICIDADES!")
+                                    }
+                                    else
+                                    {
+                                        <i class="fas fa-exclamation-triangle me-2"></i>@("REQUISITOS PENDIENTES")
+                                    }
+                                </h6>
+                                <p class="mb-0">@requisitosVerificacion.Mensaje</p>
+                                <small class="text-muted">Verificación realizada el: @requisitosVerificacion.FechaVerificacion.ToString("dd/MM/yyyy HH:mm")</small>
+                            </div>
+
+                            <!-- Detalles de cada requisito -->
+                            <div class="row">
+                                <div class="col-12">
+                                    <div class="card mb-3">
+                                        <div class="card-header d-flex align-items-center">
+                                            @if (requisitosVerificacion.Experiencia.Cumple)
+                                            {
+                                                <i class="fas fa-check-circle text-success me-2"></i>
+                                            }
+                                            else
+                                            {
+                                                <i class="fas fa-times-circle text-danger me-2"></i>
+                                            }
+                                            <strong>1. Experiencia Mínima (4 años)</strong>
+                                        </div>
+                                        <div class="card-body">
+                                            <p class="mb-2">@requisitosVerificacion.Experiencia.Mensaje</p>
+                                            <div class="row">
+                                                <div class="col-sm-6">
+                                                    <small class="text-muted">Valor obtenido:</small>
+                                                    <div>@requisitosVerificacion.Experiencia.ValorObtenido</div>
+                                                </div>
+                                                <div class="col-sm-6">
+                                                    <small class="text-muted">Requerido:</small>
+                                                    <div>@requisitosVerificacion.Experiencia.ValorRequerido</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="card mb-3">
+                                        <div class="card-header d-flex align-items-center">
+                                            @if (requisitosVerificacion.ObraRelevante.Cumple)
+                                            {
+                                                <i class="fas fa-check-circle text-success me-2"></i>
+                                            }
+                                            else
+                                            {
+                                                <i class="fas fa-times-circle text-danger me-2"></i>
+                                            }
+                                            <strong>2. Obra Relevante/Artículo Indexado (Filiación UTA)</strong>
+                                        </div>
+                                        <div class="card-body">
+                                            <p class="mb-2">@requisitosVerificacion.ObraRelevante.Mensaje</p>
+                                            <div class="row">
+                                                <div class="col-sm-6">
+                                                    <small class="text-muted">Valor obtenido:</small>
+                                                    <div>@requisitosVerificacion.ObraRelevante.ValorObtenido</div>
+                                                </div>
+                                                <div class="col-sm-6">
+                                                    <small class="text-muted">Requerido:</small>
+                                                    <div>@requisitosVerificacion.ObraRelevante.ValorRequerido</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="card mb-3">
+                                        <div class="card-header d-flex align-items-center">
+                                            @if (requisitosVerificacion.Evaluacion75Porciento.Cumple)
+                                            {
+                                                <i class="fas fa-check-circle text-success me-2"></i>
+                                            }
+                                            else
+                                            {
+                                                <i class="fas fa-times-circle text-danger me-2"></i>
+                                            }
+                                            <strong>3. Evaluación 75% (Últimos 4 períodos)</strong>
+                                        </div>
+                                        <div class="card-body">
+                                            <p class="mb-2">@requisitosVerificacion.Evaluacion75Porciento.Mensaje</p>
+                                            <div class="row">
+                                                <div class="col-sm-6">
+                                                    <small class="text-muted">Valor obtenido:</small>
+                                                    <div>@requisitosVerificacion.Evaluacion75Porciento.ValorObtenido</div>
+                                                </div>
+                                                <div class="col-sm-6">
+                                                    <small class="text-muted">Requerido:</small>
+                                                    <div>@requisitosVerificacion.Evaluacion75Porciento.ValorRequerido</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="card mb-3">
+                                        <div class="card-header d-flex align-items-center">
+                                            @if (requisitosVerificacion.Capacitacion96Horas.Cumple)
+                                            {
+                                                <i class="fas fa-check-circle text-success me-2"></i>
+                                            }
+                                            else
+                                            {
+                                                <i class="fas fa-times-circle text-danger me-2"></i>
+                                            }
+                                            <strong>4. Capacitación 96 horas (24h pedagógicas)</strong>
+                                        </div>
+                                        <div class="card-body">
+                                            <p class="mb-2">@requisitosVerificacion.Capacitacion96Horas.Mensaje</p>
+                                            <div class="row">
+                                                <div class="col-sm-6">
+                                                    <small class="text-muted">Valor obtenido:</small>
+                                                    <div>@requisitosVerificacion.Capacitacion96Horas.ValorObtenido</div>
+                                                </div>
+                                                <div class="col-sm-6">
+                                                    <small class="text-muted">Requerido:</small>
+                                                    <div>@requisitosVerificacion.Capacitacion96Horas.ValorRequerido</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <!-- Lista inicial de requisitos -->
+                            <div class="alert alert-info mb-4">
+                                <h6 class="alert-heading">Requisitos para ascender a Titular Auxiliar 2</h6>
+                                <p class="mb-0">Haz clic en "Verificar requisitos" para comprobar si cumples con todos los requisitos necesarios.</p>
+                            </div>
+
+                            <div class="accordion" id="requisitosAccordion">
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header" id="headingOne">
+                                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne">
+                                            <strong>1. Experiencia mínima de 4 años</strong>
+                                        </button>
+                                    </h2>
+                                    <div id="collapseOne" class="accordion-collapse collapse show" data-bs-parent="#requisitosAccordion">
+                                        <div class="accordion-body">
+                                            Experiencia mínima de 4 años como personal académico titular auxiliar 1 en la práctica docente en la Universidad Técnica de Ambato.
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header" id="headingTwo">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo">
+                                            <strong>2. Obra relevante o artículo indexado</strong>
+                                        </button>
+                                    </h2>
+                                    <div id="collapseTwo" class="accordion-collapse collapse" data-bs-parent="#requisitosAccordion">
+                                        <div class="accordion-body">
+                                            Haber creado o publicado una obra de relevancia o un artículo indexado, con filiación UTA, en el campo amplio de conocimiento vinculado a sus actividades de docencia o investigación. La publicación deberá ser realizada durante el ejercicio de sus actividades en el grado que se encuentra.
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header" id="headingThree">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree">
+                                            <strong>3. Evaluación 75% mínimo</strong>
+                                        </button>
+                                    </h2>
+                                    <div id="collapseThree" class="accordion-collapse collapse" data-bs-parent="#requisitosAccordion">
+                                        <div class="accordion-body">
+                                            Haber obtenido como mínimo el setenta y cinco por ciento (75 %) del puntaje de la evaluación integral en los últimos cuatro periodos académicos de evaluación de desempeño en los que ejerció la docencia.
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header" id="headingFour">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFour">
+                                            <strong>4. Capacitación 96 horas</strong>
+                                        </button>
+                                    </h2>
+                                    <div id="collapseFour" class="accordion-collapse collapse" data-bs-parent="#requisitosAccordion">
+                                        <div class="accordion-body">
+                                            Haber realizado y aprobado noventa y seis horas de capacitación y actualización profesional y científica en los últimos tres (3) años en una Universidad o Escuela Politécnica acreditada. Al menos 24 Horas (25%) de estas deberán ser de actualización pedagógica. 
+                                            <br><br>
+                                            <strong>Excepción:</strong> El cumplimiento de este literal se exceptúa si se ha desempeñado como autoridad en una Universidad o Escuela Politécnica por más de dos (2) años.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                    <div class="modal-footer">
+                        @if (requisitosVerificacion == null)
+                        {
+                            <button class="btn btn-primary" @onclick="VerificarRequisitos" disabled="@isLoadingRequisitos">
+                                @if (isLoadingRequisitos)
+                                {
+                                    <span class="spinner-border spinner-border-sm me-2"></span>
+                                }
+                                <i class="fas fa-search me-1"></i>
+                                Verificar requisitos
+                            </button>
+                        }
+                        else if (requisitosVerificacion.CumpleTodosRequisitos)
+                        {
+                            <button class="btn btn-success me-2" @onclick="SubirNivel">
+                                <i class="fas fa-arrow-up me-1"></i>
+                                Subir de nivel
+                            </button>
+                            <button class="btn btn-outline-primary" @onclick="VerificarRequisitos">
+                                <i class="fas fa-refresh me-1"></i>
+                                Verificar nuevamente
+                            </button>
+                        }
+                        else
+                        {
+                            <button class="btn btn-outline-primary" @onclick="VerificarRequisitos">
+                                <i class="fas fa-refresh me-1"></i>
+                                Verificar nuevamente
+                            </button>
+                        }
                         <button class="btn btn-secondary" @onclick="CloseRequisitosModal">Cerrar</button>
                     </div>
                 </div>
@@ -622,10 +851,10 @@
     private bool showInvestigacionesModal = false;
     private bool showEvaluacionesModal = false;
     private bool showCapacitacionesModal = false;
-    private bool showAgregarModal = false;
-    private bool isLoadingInvestigaciones = false;
+    private bool showAgregarModal = false;    private bool isLoadingInvestigaciones = false;
     private bool isLoadingEvaluaciones = false;
     private bool isLoadingCapacitaciones = false;
+    private bool isLoadingRequisitos = false;
     private bool isSaving = false;
     
     private List<Investigacion> investigaciones = new();
@@ -640,6 +869,8 @@
     private DiticDto? editingCapacitacion = null;
     private VerificacionRequisitoDiticDto? verificacionRequisitoDitic = null;
     private ResumenCapacitacionesDto? resumenCapacitaciones = null;
+      // Variables para verificación de requisitos de subir de nivel
+    private proyectoAgiles.Services.VerificacionRequisitosSubirNivelDto? requisitosVerificacion = null;
     
     private Investigacion nuevaInvestigacion = new();
     private Investigacion? editingInvestigacion = null;
@@ -1150,29 +1381,38 @@
     {
         await UserSession.ClearSessionAsync();
         Navigation.NavigateTo("/");
-    }
-
-    private async Task VerificarRequisitos()
+    }    private async Task VerificarRequisitos()
     {
-        var userId = UserSession.CurrentUser?.Id ?? 0;
-        if (userId == 0)
+        var cedula = UserSession.CurrentUser?.Cedula;
+        if (string.IsNullOrEmpty(cedula))
         {
-            await JSRuntime.InvokeVoidAsync("alert", "No se pudo obtener el usuario actual.");
+            await JSRuntime.InvokeVoidAsync("alert", "No se pudo obtener la cédula del usuario actual.");
             return;
         }
-        var requisitosCumplidos = await AuthService.VerificarRequisitosSubirNivel(userId);
-        if (requisitosCumplidos)
-        {
-            await JSRuntime.InvokeVoidAsync("alert", "¡Cumples con todos los requisitos para subir de nivel!");
-        }
-        else
-        {
-            await JSRuntime.InvokeVoidAsync("alert", "No cumples con todos los requisitos para subir de nivel.");
-        }
-    }
 
-    private void ShowRequisitosModal()
+        try
+        {
+            isLoadingRequisitos = true;
+            StateHasChanged();
+
+            var verificacion = await AuthService.VerificarRequisitosSubirNivel(cedula);
+            
+            // Mostrar modal con detalles de la verificación
+            requisitosVerificacion = verificacion;
+            showRequisitosModal = true;
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error al verificar requisitos: {ex.Message}");
+        }
+        finally
+        {
+            isLoadingRequisitos = false;
+            StateHasChanged();
+        }
+    }    private void ShowRequisitosModal()
     {
+        requisitosVerificacion = null; // Limpiar verificación anterior
         showRequisitosModal = true;
     }
 
@@ -1185,30 +1425,37 @@
     {
         showEvaluacionesModal = true;
         StateHasChanged();
-    }
-
-    private async Task SubirNivel()
+    }    private async Task SubirNivel()
     {
         // Lógica para subir de nivel
-        var userId = UserSession.CurrentUser?.Id ?? 0;
-        if (userId == 0)
+        var cedula = UserSession.CurrentUser?.Cedula;
+        if (string.IsNullOrEmpty(cedula))
         {
-            await JSRuntime.InvokeVoidAsync("alert", "No se pudo obtener el usuario actual.");
+            await JSRuntime.InvokeVoidAsync("alert", "No se pudo obtener la cédula del usuario actual.");
             return;
         }
-        var result = await AuthService.SubirNivel(userId);
-        if (result)
+
+        try
         {
-            // Actualizar la sesión del usuario
-            await UserSession.InitializeAsync();
-            // Mostrar mensaje de éxito
-            await JSRuntime.InvokeVoidAsync("alert", "¡Felicidades! Has subido de nivel.");        }
-        else
-        {
-            // Mostrar mensaje de error
-            await JSRuntime.InvokeVoidAsync("alert", "Error al intentar subir de nivel. Inténtalo más tarde.");
+            var result = await AuthService.SubirNivel(cedula);
+            if (result)
+            {
+                // Actualizar la sesión del usuario
+                await UserSession.InitializeAsync();
+                // Mostrar mensaje de éxito
+                await JSRuntime.InvokeVoidAsync("alert", "¡Felicidades! Has subido de nivel.");
+            }
+            else
+            {
+                // Mostrar mensaje de error
+                await JSRuntime.InvokeVoidAsync("alert", "Error al intentar subir de nivel. Inténtalo más tarde.");
+            }
         }
-    }    // Métodos para notificaciones mejoradas
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error: {ex.Message}");
+        }
+    }// Métodos para notificaciones mejoradas
     private async Task MostrarNotificacionExito(string titulo, string mensaje)
     {
         await JSRuntime.InvokeVoidAsync("eval", $@"
@@ -1518,16 +1765,13 @@
             "en progreso" => "bg-warning",
             "reprobada" => "bg-danger",
             _ => "bg-secondary"
-        };
-    }
+        };    }
 
     private class ImportResult
     {
         public string message { get; set; } = "";
         public int imported { get; set; } = 0;
     }
-
-    #endregion
 
     // DTOs para DITIC
     public class DiticDto
@@ -1598,4 +1842,6 @@
         public string MensajeEstado { get; set; } = string.Empty;
         public List<DiticDto> CapacitacionesUltimosTresAnios { get; set; } = new();
     }
+
+#endregion
 }
