@@ -335,28 +335,47 @@ namespace proyectoAgiles.Services
                 };
             }
         }
-
-        private async Task<RequisitoCumplimientoDto> VerificarExperienciaMinima(string cedula)
+          private async Task<RequisitoCumplimientoDto> VerificarExperienciaMinima(string cedula)
         {
             try
-            {
-                // Obtener información del usuario para verificar fecha de ingreso como titular auxiliar 1
-                var response = await _httpClient.GetAsync($"{_apiBaseUrl}/api/users/by-cedula/{cedula}");
+            {                // Obtener información de TTHH para verificar fecha de ingreso como titular auxiliar 1
+                var response = await _httpClient.GetAsync($"{_apiBaseUrl}/api/tthh/by-cedula/{cedula}");
                 if (response.IsSuccessStatusCode)
                 {
-                    var userInfo = await response.Content.ReadFromJsonAsync<UserDto>();
+                    var tthhInfo = await response.Content.ReadFromJsonAsync<TTHHDto>();
+                    if (tthhInfo != null)
+                    {
+                        // Calcular años desde la fecha de inicio registrada en TTHH
+                        var añosExperiencia = (DateTime.Now - tthhInfo.FechaInicio).TotalDays / 365.25;
+                        
+                        return new RequisitoCumplimientoDto
+                        {
+                            Cumple = añosExperiencia >= 4,
+                            Mensaje = $"Experiencia: {añosExperiencia:F1} años como titular auxiliar 1 desde {tthhInfo.FechaInicio:dd/MM/yyyy} " +
+                                     (añosExperiencia >= 4 ? "(✅ Cumple - mínimo 4 años)" : "(❌ No cumple - requiere mínimo 4 años)"),
+                            ValorObtenido = $"{añosExperiencia:F1} años desde {tthhInfo.FechaInicio:dd/MM/yyyy}",
+                            ValorRequerido = "4 años mínimo como titular auxiliar 1"
+                        };
+                    }
+                }
+                
+                // Fallback: Si no existe TTHH, usar fecha de creación del usuario
+                var userResponse = await _httpClient.GetAsync($"{_apiBaseUrl}/api/users/by-cedula/{cedula}");
+                if (userResponse.IsSuccessStatusCode)
+                {
+                    var userInfo = await userResponse.Content.ReadFromJsonAsync<UserDto>();
                     if (userInfo != null)
                     {
-                        // Calcular años desde la fecha de creación del usuario (asumiendo que es cuando inició como titular auxiliar 1)
                         var añosExperiencia = (DateTime.Now - userInfo.CreatedAt).TotalDays / 365.25;
                         
                         return new RequisitoCumplimientoDto
                         {
                             Cumple = añosExperiencia >= 4,
-                            Mensaje = $"Experiencia: {añosExperiencia:F1} años como personal académico titular auxiliar 1 " +
-                                     (añosExperiencia >= 4 ? "(✅ Cumple - mínimo 4 años)" : "(❌ No cumple - requiere mínimo 4 años)"),
-                            ValorObtenido = $"{añosExperiencia:F1} años",
-                            ValorRequerido = "4 años mínimo"
+                            Mensaje = $"Experiencia (estimada): {añosExperiencia:F1} años desde registro {userInfo.CreatedAt:dd/MM/yyyy} " +
+                                     (añosExperiencia >= 4 ? "(✅ Cumple - mínimo 4 años)" : "(❌ No cumple - requiere mínimo 4 años)") +
+                                     " (Datos TTHH no disponibles)",
+                            ValorObtenido = $"{añosExperiencia:F1} años (estimado)",
+                            ValorRequerido = "4 años mínimo como titular auxiliar 1"
                         };
                     }
                 }
@@ -364,9 +383,9 @@ namespace proyectoAgiles.Services
                 return new RequisitoCumplimientoDto
                 {
                     Cumple = false,
-                    Mensaje = "❌ No se pudo verificar la experiencia mínima",
+                    Mensaje = "❌ No se pudo verificar la experiencia mínima - Sin datos TTHH ni información de usuario",
                     ValorObtenido = "No disponible",
-                    ValorRequerido = "4 años mínimo"
+                    ValorRequerido = "4 años mínimo como titular auxiliar 1"
                 };
             }
             catch (Exception ex)
@@ -376,7 +395,7 @@ namespace proyectoAgiles.Services
                     Cumple = false,
                     Mensaje = $"❌ Error al verificar experiencia: {ex.Message}",
                     ValorObtenido = "Error",
-                    ValorRequerido = "4 años mínimo"
+                    ValorRequerido = "4 años mínimo como titular auxiliar 1"
                 };
             }
         }
@@ -466,13 +485,11 @@ namespace proyectoAgiles.Services
                     ValorRequerido = "75% mínimo en últimos 4 períodos"
                 };
             }
-        }
-
-        private async Task<RequisitoCumplimientoDto> VerificarCapacitacion96Horas(string cedula)
+        }        private async Task<RequisitoCumplimientoDto> VerificarCapacitacion96Horas(string cedula)
         {
             try
             {
-                var response = await _httpClient.GetAsync($"{_apiBaseUrl}/api/ditic/verify-requirement/{cedula}");
+                var response = await _httpClient.GetAsync($"{_apiBaseUrl}/api/ditic/verificar-requisito/{cedula}");
                 if (response.IsSuccessStatusCode)
                 {
                     var verificacion = await response.Content.ReadFromJsonAsync<VerificacionRequisitoDiticResponse>();
@@ -511,7 +528,7 @@ namespace proyectoAgiles.Services
                 return new RequisitoCumplimientoDto
                 {
                     Cumple = false,
-                    Mensaje = "❌ No se pudo verificar las capacitaciones",
+                    Mensaje = "❌ No se pudo verificar las capacitaciones DITIC",
                     ValorObtenido = "No disponible",
                     ValorRequerido = "96h totales (24h pedagógicas mín.) en últimos 3 años"
                 };
@@ -521,7 +538,7 @@ namespace proyectoAgiles.Services
                 return new RequisitoCumplimientoDto
                 {
                     Cumple = false,
-                    Mensaje = $"❌ Error al verificar capacitación: {ex.Message}",
+                    Mensaje = $"❌ Error al verificar capacitación DITIC: {ex.Message}",
                     ValorObtenido = "Error",
                     ValorRequerido = "96h totales (24h pedagógicas mín.) en últimos 3 años"
                 };
@@ -844,5 +861,17 @@ namespace proyectoAgiles.Services
         public string MensajeDetallado { get; set; } = string.Empty;
         public string? CargoAutoridad { get; set; }
         public decimal? AñosComoAutoridad { get; set; }
+    }
+
+    // DTO para TTHH
+    public class TTHHDto
+    {
+        public int Id { get; set; }
+        public string Cedula { get; set; } = string.Empty;
+        public DateTime FechaInicio { get; set; }
+        public double AniosCumplidos { get; set; }
+        public string Observacion { get; set; } = string.Empty;
+        public DateTime CreatedAt { get; set; }
+        public DateTime? UpdatedAt { get; set; }
     }
 }
