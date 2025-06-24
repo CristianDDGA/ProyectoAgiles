@@ -236,6 +236,41 @@ public class EvaluacionesDesempenoController : ControllerBase
     }
 
     /// <summary>
+    /// Actualiza una evaluación existente con archivo PDF
+    /// </summary>
+    [HttpPut("{id}/con-pdf")]
+    public async Task<ActionResult<EvaluacionDesempenoDto>> UpdateWithPdf(int id, [FromForm] UpdateEvaluacionWithPdfDto dto)
+    {
+        try
+        {
+            if (id != dto.Id)
+                return BadRequest(new { message = "El ID de la URL no coincide con el ID del objeto" });
+
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var exists = await _evaluacionService.ExistsAsync(id);
+            if (!exists)
+                return NotFound(new { message = "Evaluación no encontrada" });
+
+            var evaluacion = await _evaluacionService.UpdateWithPdfAsync(dto);
+            return Ok(evaluacion);
+        }
+        catch (ArgumentException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "Error interno del servidor", error = ex.Message });
+        }
+    }
+
+    /// <summary>
     /// Elimina una evaluación (soft delete)
     /// </summary>
     [HttpDelete("{id}")]

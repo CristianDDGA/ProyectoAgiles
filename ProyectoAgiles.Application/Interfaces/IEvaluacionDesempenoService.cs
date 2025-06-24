@@ -58,6 +58,11 @@ public interface IEvaluacionDesempenoService
     Task<EvaluacionDesempenoDto> UpdateAsync(UpdateEvaluacionDesempenoDto updateDto);
 
     /// <summary>
+    /// Actualiza una evaluación existente con archivo PDF
+    /// </summary>
+    Task<EvaluacionDesempenoDto> UpdateWithPdfAsync(UpdateEvaluacionWithPdfDto updateDto);
+
+    /// <summary>
     /// Elimina una evaluación (soft delete)
     /// </summary>
     Task<bool> DeleteAsync(int id);

@@ -38,5 +38,11 @@ public class EvaluacionDesempenoMappingProfile : Profile
             .ForMember(dest => dest.IsDeleted, opt => opt.Ignore())
             .ForMember(dest => dest.ArchivoRespaldo, opt => opt.Ignore())
             .ForMember(dest => dest.NombreArchivoRespaldo, opt => opt.Ignore());
+
+        // Mapeo de UpdateEvaluacionWithPdfDto a EvaluacionDesempeno
+        CreateMap<UpdateEvaluacionWithPdfDto, EvaluacionDesempeno>()
+            .IncludeBase<UpdateEvaluacionDesempenoDto, EvaluacionDesempeno>()
+            .ForMember(dest => dest.ArchivoRespaldo, opt => opt.Ignore()) // Se maneja en el servicio
+            .ForMember(dest => dest.NombreArchivoRespaldo, opt => opt.Ignore()); // Se maneja en el servicio
     }
 }

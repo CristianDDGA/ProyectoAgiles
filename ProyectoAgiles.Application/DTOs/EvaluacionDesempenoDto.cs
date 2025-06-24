@@ -128,6 +128,15 @@ public class UpdateEvaluacionDesempenoDto
 }
 
 /// <summary>
+/// DTO para actualizar evaluación con archivo PDF
+/// </summary>
+public class UpdateEvaluacionWithPdfDto : UpdateEvaluacionDesempenoDto
+{
+    [Required(ErrorMessage = "El archivo PDF es obligatorio")]
+    public IFormFile ArchivoPdf { get; set; } = null!;
+}
+
+/// <summary>
 /// DTO para mostrar resumen de evaluaciones de un docente
 /// </summary>
 public class ResumenEvaluacionesDto

@@ -162,6 +162,44 @@ public class EvaluacionDesempenoService : IEvaluacionDesempenoService
     }
 
     /// <summary>
+    /// Actualiza una evaluación existente con archivo PDF
+    /// </summary>
+    public async Task<EvaluacionDesempenoDto> UpdateWithPdfAsync(UpdateEvaluacionWithPdfDto updateDto)
+    {
+        var existingEvaluacion = await _repository.GetByIdAsync(updateDto.Id);
+        if (existingEvaluacion == null)
+        {
+            throw new ArgumentException($"Evaluación con ID {updateDto.Id} no encontrada");
+        }
+
+        // Verificar si el cambio de período causa duplicados
+        if (existingEvaluacion.PeriodoAcademico != updateDto.PeriodoAcademico ||
+            existingEvaluacion.Cedula != updateDto.Cedula)
+        {
+            var existe = await _repository.ExisteEvaluacionParaPeriodoAsync(updateDto.Cedula, updateDto.PeriodoAcademico);
+            if (existe)
+            {
+                throw new InvalidOperationException($"Ya existe una evaluación para la cédula {updateDto.Cedula} en el período {updateDto.PeriodoAcademico}");
+            }
+        }
+
+        _mapper.Map(updateDto, existingEvaluacion);
+        existingEvaluacion.UpdatedAt = DateTime.UtcNow;
+
+        // Procesar el archivo PDF
+        if (updateDto.ArchivoPdf != null && updateDto.ArchivoPdf.Length > 0)
+        {
+            using var memoryStream = new MemoryStream();
+            await updateDto.ArchivoPdf.CopyToAsync(memoryStream);
+            existingEvaluacion.ArchivoRespaldo = memoryStream.ToArray();
+            existingEvaluacion.NombreArchivoRespaldo = updateDto.ArchivoPdf.FileName;
+        }
+
+        var updated = await _repository.UpdateAsync(existingEvaluacion);
+        return _mapper.Map<EvaluacionDesempenoDto>(updated);
+    }
+
+    /// <summary>
     /// Elimina una evaluación (soft delete)
     /// </summary>
     public async Task<bool> DeleteAsync(int id)
