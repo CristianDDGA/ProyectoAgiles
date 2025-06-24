@@ -2071,7 +2071,7 @@ private bool isLoadingInvestigaciones = false;
             var createSolicitudDto = new CreateSolicitudEscalafonDto
             {
                 DocenteCedula = cedula,
-                DocenteNombre = UserSession.CurrentUser?.Nombre ?? "Nombre no disponible",
+                DocenteNombre = UserSession.CurrentUser?.FullName ?? "Nombre no disponible",
                 DocenteEmail = UserSession.CurrentUser?.Email ?? "Email no disponible",
                 NivelActual = UserSession.CurrentUser?.Nivel ?? "Titular Auxiliar 1",
                 NivelSolicitado = "Titular Auxiliar 2", // Por ahora fijo, se puede hacer dinámico
