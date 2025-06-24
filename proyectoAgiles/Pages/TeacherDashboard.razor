@@ -387,7 +387,47 @@
                                             </tr>
                                         }
                                     </tbody>
-                                </table>
+                                </table>                            </div>
+                        }
+                        
+                        @* Mostrar resumen de investigaciones con filiación UTA *@
+                        @if (investigaciones.Any())
+                        {
+                            <div class="mt-4">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6 class="card-title mb-0">
+                                            <i class="fas fa-chart-line"></i> Verificación Requisito Obras con UTA
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        @{
+                                            var investigacionesConUTA = investigaciones.Where(i => 
+                                                !string.IsNullOrWhiteSpace(i.Filiacion) && (
+                                                    i.Filiacion.Contains("UTA", StringComparison.OrdinalIgnoreCase) ||
+                                                    i.Filiacion.Contains("Universidad Técnica de Ambato", StringComparison.OrdinalIgnoreCase)
+                                                )).ToList();
+                                            var cumpleRequisito = investigacionesConUTA.Any();
+                                            var porcentajeUTA = investigaciones.Count > 0 ? Math.Round((double)investigacionesConUTA.Count / investigaciones.Count * 100, 1) : 0;
+                                        }
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="d-flex align-items-center">
+                                                    <span class="badge @(cumpleRequisito ? "bg-success" : "bg-danger") me-2">
+                                                        <i class="fas @(cumpleRequisito ? "fa-check" : "fa-times")"></i>
+                                                    </span>
+                                                    <strong>@(cumpleRequisito ? "CUMPLE" : "NO CUMPLE")</strong>
+                                                </div>
+                                                <p class="mb-1 mt-2">@(cumpleRequisito ? $"El docente tiene {investigacionesConUTA.Count} obra(s) relevante(s) con filiación UTA." : "El docente no tiene obras relevantes con filiación UTA.")</p>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <p class="mb-1"><strong>Investigaciones analizadas:</strong> @investigaciones.Count</p>
+                                                <p class="mb-1"><strong>Con filiación UTA:</strong> @investigacionesConUTA.Count</p>
+                                                <p class="mb-0"><strong>Porcentaje UTA:</strong> @porcentajeUTA%</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         }
                     </div>
@@ -693,7 +733,52 @@
                                             </tr>
                                         }
                                     </tbody>
-                                </table>
+                                </table>                            </div>
+                        }
+                        
+                        @* Mostrar resumen de capacitaciones DITIC *@
+                        @if (capacitaciones.Any())
+                        {
+                            <div class="mt-4">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6 class="card-title mb-0">
+                                            <i class="fas fa-chart-line"></i> Verificación Requisito 96 Horas
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        @{
+                                            var fechaLimite = DateTime.Now.AddYears(-3);
+                                            var capacitacionesValidas = capacitaciones.Where(c => c.FechaFin >= fechaLimite).ToList();
+                                            var totalHoras = capacitacionesValidas.Sum(c => c.HorasAcademicas);
+                                            var horasPedagogicas = capacitacionesValidas.Where(c => 
+                                                c.TipoCapacitacion.Contains("pedagógica", StringComparison.OrdinalIgnoreCase) ||
+                                                c.TipoCapacitacion.Contains("pedagogica", StringComparison.OrdinalIgnoreCase) ||
+                                                c.NombreCapacitacion.Contains("pedagógica", StringComparison.OrdinalIgnoreCase) ||
+                                                c.NombreCapacitacion.Contains("pedagogica", StringComparison.OrdinalIgnoreCase)
+                                            ).Sum(c => c.HorasAcademicas);
+                                            var cumpleHorasTotales = totalHoras >= 96;
+                                            var cumpleHorasPedagogicas = horasPedagogicas >= 24;
+                                            var cumpleRequisito = cumpleHorasTotales && cumpleHorasPedagogicas;
+                                        }
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="d-flex align-items-center">
+                                                    <span class="badge @(cumpleRequisito ? "bg-success" : "bg-danger") me-2">
+                                                        <i class="fas @(cumpleRequisito ? "fa-check" : "fa-times")"></i>
+                                                    </span>
+                                                    <strong>@(cumpleRequisito ? "CUMPLE" : "NO CUMPLE")</strong>
+                                                </div>
+                                                <p class="mb-1 mt-2">@(cumpleRequisito ? "El docente cumple con el requisito de 96 horas de capacitación." : "El docente no cumple con el requisito de 96 horas de capacitación.")</p>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <p class="mb-1"><strong>Capacitaciones válidas:</strong> @capacitacionesValidas.Count (últimos 3 años)</p>
+                                                <p class="mb-1"><strong>Horas totales:</strong> @totalHoras / 96</p>
+                                                <p class="mb-0"><strong>Horas pedagógicas:</strong> @horasPedagogicas / 24</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         }
                     </div>

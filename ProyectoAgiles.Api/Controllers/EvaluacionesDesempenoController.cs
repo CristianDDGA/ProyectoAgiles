@@ -762,9 +762,16 @@ public class EvaluacionesDesempenoController : ControllerBase
                     totalObras = 0,
                     obrasConUTA = 0,
                     cumple = false,
-                    detalles = "Obras relevantes con filiación UTA"
+                    mensaje = "NO CUMPLE",
+                    detalles = "Obras relevantes con filiación UTA",
+                    estadisticas = new
+                    {
+                        investigacionesAnalizadas = 0,
+                        conFiliacionUTA = 0,
+                        porcentajeUTA = 0.0
+                    }
                 }
-            };            try
+            };try
             {
                 // Usar el mismo endpoint que usa AuthService para garantizar consistencia
                 using var httpClient = new HttpClient();
@@ -787,21 +794,27 @@ public class EvaluacionesDesempenoController : ControllerBase
                     ));
 
                 Console.WriteLine($"DEBUG: Obras con UTA detectadas: {obrasConUTA}");
-                
-                obrasStats = new
+                  obrasStats = new
                 {
                     titulo = "Obras e Investigaciones",
                     icono = "fas fa-book",
-                    color = "success",                    datos = new
+                    color = "success",
+                    datos = new
                     {
                         totalObras = investigaciones.Count,
                         obrasConUTA = obrasConUTA,
                         cumple = obrasConUTA > 0,
-                        detalles = $"Obras con filiación UTA: {obrasConUTA} de {investigaciones.Count}"
+                        mensaje = obrasConUTA > 0 ? "CUMPLE" : "NO CUMPLE",
+                        detalles = $"El docente {(obrasConUTA > 0 ? "cumple" : "no cumple")} con el requisito de obra relevante con filiación UTA.",
+                        estadisticas = new
+                        {
+                            investigacionesAnalizadas = investigaciones.Count,
+                            conFiliacionUTA = obrasConUTA,
+                            porcentajeUTA = investigaciones.Count > 0 ? Math.Round((double)obrasConUTA / investigaciones.Count * 100, 1) : 0
+                        }
                     }
                 };
-            }
-            catch (Exception ex)
+            }            catch (Exception ex)
             {
                 obrasStats = new
                 {
@@ -813,7 +826,14 @@ public class EvaluacionesDesempenoController : ControllerBase
                         totalObras = 0,
                         obrasConUTA = 0,
                         cumple = false,
-                        detalles = $"Error al obtener datos: {ex.Message}"
+                        mensaje = "ERROR",
+                        detalles = $"Error al obtener datos: {ex.Message}",
+                        estadisticas = new
+                        {
+                            investigacionesAnalizadas = 0,
+                            conFiliacionUTA = 0,
+                            porcentajeUTA = 0.0
+                        }
                     }
                 };
             }
@@ -881,13 +901,21 @@ public class EvaluacionesDesempenoController : ControllerBase
                     horasPedagogicasRequeridas = 24,
                     horasPedagogicasObtenidas = 0,
                     cumple = false,
-                    detalles = "Capacitaciones últimos 3 años"
+                    mensaje = "NO CUMPLE",
+                    detalles = "Capacitaciones últimos 3 años",
+                    estadisticas = new
+                    {
+                        capacitacionesAnalizadas = 0,
+                        horasAcumuladas = 0,
+                        horasPedagogicasAcumuladas = 0,
+                        porcentajeCompletitud = 0.0
+                    }
                 }
-            };
-
-            try
+            };            try
             {
                 var verificacionCapacitacion = await _diticService.VerifyRequirementAsync(cedula);
+                var porcentajeCompletitudCapacitacion = verificacionCapacitacion.HorasObtenidas > 0 ? Math.Round((double)verificacionCapacitacion.HorasObtenidas / 96 * 100, 1) : 0;
+                
                 capacitacionStats = new
                 {
                     titulo = "Capacitaciones Profesionales",
@@ -900,11 +928,18 @@ public class EvaluacionesDesempenoController : ControllerBase
                         horasPedagogicasRequeridas = 24,
                         horasPedagogicasObtenidas = verificacionCapacitacion.HorasPedagogicasObtenidas,
                         cumple = verificacionCapacitacion.CumpleRequisito,
-                        detalles = verificacionCapacitacion.MensajeDetallado
+                        mensaje = verificacionCapacitacion.CumpleRequisito ? "CUMPLE" : "NO CUMPLE",
+                        detalles = $"El docente {(verificacionCapacitacion.CumpleRequisito ? "cumple" : "no cumple")} con el requisito de 96 horas de capacitación.",
+                        estadisticas = new
+                        {
+                            capacitacionesAnalizadas = verificacionCapacitacion.CapacitacionesAnalizadas,
+                            horasAcumuladas = verificacionCapacitacion.HorasObtenidas,
+                            horasPedagogicasAcumuladas = verificacionCapacitacion.HorasPedagogicasObtenidas,
+                            porcentajeCompletitud = porcentajeCompletitudCapacitacion
+                        }
                     }
                 };
-            }
-            catch (Exception ex)
+            }            catch (Exception ex)
             {
                 capacitacionStats = new
                 {
@@ -918,7 +953,15 @@ public class EvaluacionesDesempenoController : ControllerBase
                         horasPedagogicasRequeridas = 24,
                         horasPedagogicasObtenidas = 0,
                         cumple = false,
-                        detalles = $"Error al obtener datos: {ex.Message}"
+                        mensaje = "ERROR",
+                        detalles = $"Error al obtener datos: {ex.Message}",
+                        estadisticas = new
+                        {
+                            capacitacionesAnalizadas = 0,
+                            horasAcumuladas = 0,
+                            horasPedagogicasAcumuladas = 0,
+                            porcentajeCompletitud = 0.0
+                        }
                     }
                 };
             }
