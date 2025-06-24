@@ -764,24 +764,40 @@ public class EvaluacionesDesempenoController : ControllerBase
                     cumple = false,
                     detalles = "Obras relevantes con filiación UTA"
                 }
-            };
-
-            try
+            };            try
             {
-                var investigaciones = await _investigacionService.GetByCedulaAsync(cedula);
-                var obrasConUTA = investigaciones.Count(i => i.Filiacion?.Contains("UTA") == true);
+                // Usar el mismo endpoint que usa AuthService para garantizar consistencia
+                using var httpClient = new HttpClient();
+                httpClient.BaseAddress = new Uri(Request.Scheme + "://" + Request.Host);
+                var investigacionesResponse = await httpClient.GetFromJsonAsync<List<InvestigacionDto>>($"/api/investigaciones/by-cedula/{cedula}");
+                var investigaciones = investigacionesResponse ?? new List<InvestigacionDto>();
+                
+                // Logging para debug
+                Console.WriteLine($"DEBUG: Total investigaciones encontradas: {investigaciones.Count}");
+                foreach (var inv in investigaciones)
+                {
+                    Console.WriteLine($"DEBUG: Investigación: {inv.Titulo} - Filiación: '{inv.Filiacion}'");
+                }
+                
+                // Usar exactamente la misma lógica que AuthService
+                var obrasConUTA = investigaciones.Count(i => 
+                    !string.IsNullOrWhiteSpace(i.Filiacion) && (
+                        i.Filiacion.Contains("UTA", StringComparison.OrdinalIgnoreCase) ||
+                        i.Filiacion.Contains("Universidad Técnica de Ambato", StringComparison.OrdinalIgnoreCase)
+                    ));
+
+                Console.WriteLine($"DEBUG: Obras con UTA detectadas: {obrasConUTA}");
                 
                 obrasStats = new
                 {
                     titulo = "Obras e Investigaciones",
                     icono = "fas fa-book",
-                    color = "success",
-                    datos = new
+                    color = "success",                    datos = new
                     {
-                        totalObras = investigaciones.Count(),
+                        totalObras = investigaciones.Count,
                         obrasConUTA = obrasConUTA,
                         cumple = obrasConUTA > 0,
-                        detalles = $"Obras con filiación UTA: {obrasConUTA} de {investigaciones.Count()}"
+                        detalles = $"Obras con filiación UTA: {obrasConUTA} de {investigaciones.Count}"
                     }
                 };
             }
