@@ -736,52 +736,7 @@
                     <div class="action-icon">
                         <i class="fas fa-microscope"></i>
                     </div>
-                    <h3>Investigaciones</h3>
-                    <p>Gestionar y consultar tus proyectos de investigación</p>
-                </div>
-            </div>
-            <div class="col-lg-4 col-md-6 mb-4">
-                <div class="action-card" @onclick="() => NavigateToGrades()">
-                    <div class="action-icon">
-                        <i class="fas fa-clipboard-list"></i>
-                    </div>
-                    <h3>Calificaciones</h3>
-                    <p>Registrar y consultar calificaciones de estudiantes</p>
-                </div>
-            </div>
-            <div class="col-lg-4 col-md-6 mb-4">
-                <div class="action-card" @onclick="() => NavigateToSchedule()">
-                    <div class="action-icon">
-                        <i class="fas fa-calendar-week"></i>
-                    </div>
-                    <h3>Horarios</h3>
-                    <p>Ver y gestionar tu horario de clases semanal</p>
-                </div>
-            </div>
-            <div class="col-lg-4 col-md-6 mb-4">
-                <div class="action-card" @onclick="() => NavigateToMaterials()">
-                    <div class="action-icon">
-                        <i class="fas fa-file-alt"></i>
-                    </div>
-                    <h3>Material Didáctico</h3>
-                    <p>Subir y organizar material de apoyo para tus clases</p>
-                </div>
-            </div>
-            <div class="col-lg-4 col-md-6 mb-4">
-                <div class="action-card" @onclick="() => NavigateToAttendance()">
-                    <div class="action-icon">
-                        <i class="fas fa-user-check"></i>
-                    </div>
-                    <h3>Asistencia</h3>
-                    <p>Registrar y consultar asistencia de estudiantes</p>
-                </div>
-            </div>            <div class="col-lg-4 col-md-6 mb-4">
-                <div class="action-card" @onclick="() => NavigateToReports()">
-                    <div class="action-icon">
-                        <i class="fas fa-chart-line"></i>
-                    </div>
-                    <h3>Reportes</h3>
-                    <p>Generar reportes académicos y de desempeño</p>
+                    <h3>Investigaciones</h3>                    <p>Gestionar y consultar tus proyectos de investigación</p>
                 </div>
             </div>
             <div class="col-lg-4 col-md-6 mb-4">
@@ -976,34 +931,12 @@
         // No cargar automáticamente - solo mostrar tabla vacía
     }
 
-    private void NavigateToEvaluaciones()
-    {
+    private void NavigateToEvaluaciones()    {
         showEvaluacionesModal = true;
         // No cargar automáticamente - solo mostrar tabla vacía
     }
 
-    private void NavigateToGrades()
-    {
-        Navigation.NavigateTo("/docente/grades");
-    }
-
-    private void NavigateToSchedule()
-    {
-        Navigation.NavigateTo("/docente/schedule");
-    }
-
-    private void NavigateToMaterials()
-    {
-        Navigation.NavigateTo("/docente/materials");
-    }    private void NavigateToAttendance()
-    {
-        Navigation.NavigateTo("/docente/attendance");
-    }
-
-    private void NavigateToReports()
-    {
-        Navigation.NavigateTo("/docente/reports");
-    }    private async Task LoadInvestigaciones()
+    private async Task LoadInvestigaciones()
     {
         isLoadingInvestigaciones = true;
         StateHasChanged();
