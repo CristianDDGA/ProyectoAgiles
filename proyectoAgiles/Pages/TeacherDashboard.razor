@@ -1240,10 +1240,11 @@
     private bool isLoadingEstadisticas = false;
     private EstadisticasDocenteResponse? estadisticasDocente = null;
     private bool showInvestigacionesModal = false;
-    private bool showEvaluacionesModal = false;    private bool showCapacitacionesModal = false;
-    private bool showAgregarModal = false;
+    private bool showEvaluacionesModal = false;    private bool showCapacitacionesModal = false;    private bool showAgregarModal = false;
     private bool showAgregarEvaluacionModal = false;
-    private bool showAgregarCapacitacionModal = false;private bool isLoadingInvestigaciones = false;
+    private bool showAgregarCapacitacionModal = false;
+
+private bool isLoadingInvestigaciones = false;
     private bool isLoadingEvaluaciones = false;
     private bool isLoadingCapacitaciones = false;
     private bool isLoadingRequisitos = false;    private bool isSaving = false;
@@ -1791,7 +1792,7 @@
                     pdfContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/pdf");
                     content.Add(pdfContent, "ArchivoPdf", selectedEvaluacionPdf.Name);
 
-                    var response = await httpClient.PostAsync($"{apiBaseUrl}/api/evaluacionesdesempeno/with-pdf", content);
+                    var response = await httpClient.PostAsync($"{apiBaseUrl}/api/evaluacionesdesempeno/con-pdf", content);
 
                     if (response.IsSuccessStatusCode)
                     {
