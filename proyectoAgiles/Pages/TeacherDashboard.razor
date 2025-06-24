@@ -318,19 +318,19 @@
                                 </div>
                                 <p class="mt-2">Cargando investigaciones...</p>
                             </div>
-                        }
-                        else
+                        }                        else
                         {
                             <div class="table-responsive">
-                                <table class="table table-striped">                                    <thead>
+                                <table class="table professional-table">
+                                    <thead>
                                         <tr>
-                                            <th>Título</th>
-                                            <th>Área</th>
-                                            <th>Tipo</th>
-                                            <th>Estado</th>
-                                            <th>Fecha Publicación</th>
-                                            <th>Filiación</th>
-                                            <th>Acciones</th>
+                                            <th><i class="fas fa-book me-2"></i>Título</th>
+                                            <th><i class="fas fa-flask me-2"></i>Área</th>
+                                            <th><i class="fas fa-tag me-2"></i>Tipo</th>
+                                            <th><i class="fas fa-chart-line me-2"></i>Estado</th>
+                                            <th><i class="fas fa-calendar me-2"></i>Fecha Pub.</th>
+                                            <th><i class="fas fa-university me-2"></i>Filiación</th>
+                                            <th><i class="fas fa-cogs me-2"></i>Acciones</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -339,55 +339,87 @@
                                             @foreach (var investigacion in investigaciones)
                                             {
                                                 <tr>
-                                                    <td>@investigacion.Titulo</td>
-                                                    <td>@investigacion.Area</td>
-                                                    <td>@investigacion.Tipo</td>
+                                                    <td class="col-title">
+                                                        <div class="fw-medium">@investigacion.Titulo</div>
+                                                        @if (!string.IsNullOrEmpty(investigacion.RevistaOEditorial))
+                                                        {
+                                                            <small class="text-muted d-block mt-1">
+                                                                <i class="fas fa-newspaper me-1"></i>@investigacion.RevistaOEditorial
+                                                            </small>
+                                                        }
+                                                    </td>
                                                     <td>
-                                                        <span class="badge @GetEstadoBadgeClass(investigacion.Estado)">
+                                                        <span class="table-badge info">
+                                                            <i class="fas fa-atom"></i>
+                                                            @investigacion.Area
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <span class="table-badge secondary">
+                                                            @investigacion.Tipo
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <span class="table-badge @(investigacion.Estado == "Completado" ? "success" : "warning")">
+                                                            <i class="fas @(investigacion.Estado == "Completado" ? "fa-check-circle" : "fa-clock")"></i>
                                                             @investigacion.Estado
                                                         </span>
-                                                    </td>                                                    <td>@investigacion.FechaInicio.ToString("dd/MM/yyyy")</td>
+                                                    </td>
+                                                    <td class="col-date">
+                                                        <i class="fas fa-calendar-alt me-1"></i>
+                                                        @investigacion.FechaInicio.ToString("dd/MM/yyyy")
+                                                    </td>
                                                     <td>
                                                         @if (!string.IsNullOrEmpty(investigacion.Filiacion))
                                                         {
-                                                            <span class="badge @(investigacion.Filiacion.Contains("UTA", StringComparison.OrdinalIgnoreCase) || investigacion.Filiacion.Contains("Universidad Técnica de Ambato", StringComparison.OrdinalIgnoreCase) ? "bg-success" : "bg-secondary")">
+                                                            <span class="table-badge @(investigacion.Filiacion.Contains("UTA", StringComparison.OrdinalIgnoreCase) || investigacion.Filiacion.Contains("Universidad Técnica de Ambato", StringComparison.OrdinalIgnoreCase) ? "success" : "secondary")">
+                                                                @if (investigacion.Filiacion.Contains("UTA", StringComparison.OrdinalIgnoreCase) || investigacion.Filiacion.Contains("Universidad Técnica de Ambato", StringComparison.OrdinalIgnoreCase))
+                                                                {
+                                                                    <i class="fas fa-check-circle"></i>
+                                                                }
                                                                 @investigacion.Filiacion
                                                             </span>
                                                         }
                                                         else
                                                         {
-                                                            <span class="text-muted">Sin filiación</span>
+                                                            <span class="text-muted">
+                                                                <i class="fas fa-minus-circle me-1"></i>Sin filiación
+                                                            </span>
                                                         }
                                                     </td>
-                                                    <td>
-                                                        <button class="btn btn-sm btn-outline-primary me-1" @onclick="() => EditarInvestigacion(investigacion)">
-                                                            <i class="fas fa-edit"></i>
-                                                        </button>
-                                                        <button class="btn btn-sm btn-outline-danger" @onclick="() => EliminarInvestigacion(investigacion.Id)">
-                                                            <i class="fas fa-trash"></i>
-                                                        </button>
-                                                        @if (investigacion.TienePdf)
-                                                        {
-                                                            <button class="btn btn-outline-primary btn-sm" @onclick="() => VerPdf(investigacion.Id)">
-                                                                <i class="fas fa-file-pdf"></i> Ver PDF
+                                                    <td class="col-actions">
+                                                        <div class="action-btn-group">
+                                                            <button class="action-btn edit" @onclick="() => EditarInvestigacion(investigacion)" title="Editar">
+                                                                <i class="fas fa-edit"></i>
                                                             </button>
-                                                        }
+                                                            <button class="action-btn delete" @onclick="() => EliminarInvestigacion(investigacion.Id)" title="Eliminar">
+                                                                <i class="fas fa-trash"></i>
+                                                            </button>
+                                                            @if (investigacion.TienePdf)
+                                                            {
+                                                                <button class="action-btn view" @onclick="() => VerPdf(investigacion.Id)" title="Ver PDF">
+                                                                    <i class="fas fa-file-pdf"></i>
+                                                                </button>
+                                                            }
+                                                        </div>
                                                     </td>
                                                 </tr>
                                             }
-                                        }                                        else
+                                        }
+                                        else
                                         {
                                             <tr>
-                                                <td colspan="7" class="text-center text-muted py-4">
-                                                    <i class="fas fa-search fa-2x mb-2"></i>
-                                                    <p class="mb-1">No hay investigaciones cargadas</p>
-                                                    <small>Haz clic en "Importar" para cargar tus investigaciones desde la base de datos</small>
-                                                    <br><small class="text-info">Cédula actual: @(UserSession.CurrentUser?.Cedula ?? "No disponible")</small>
+                                                <td colspan="7" class="empty-state">
+                                                    <i class="fas fa-search"></i>
+                                                    <h6>No hay investigaciones cargadas</h6>
+                                                    <p>Haz clic en "Importar" para cargar tus investigaciones desde la base de datos</p>
+                                                    <small class="text-info">Cédula actual: @(UserSession.CurrentUser?.Cedula ?? "No disponible")</small>
                                                 </td>
                                             </tr>
                                         }
                                     </tbody>
-                                </table>                            </div>
+                                </table>
+                            </div>
                         }
                         
                         @* Mostrar resumen de investigaciones con filiación UTA *@
@@ -529,20 +561,19 @@
                             </div>
                         }
                         else
-                        {
-                            <div class="table-responsive">
-                                <table class="table table-striped">
+                        {                            <div class="table-responsive">
+                                <table class="table professional-table">
                                     <thead>
                                         <tr>
-                                            <th>Período</th>
-                                            <th>Año</th>
-                                            <th>Semestre</th>
-                                            <th>Puntaje</th>
-                                            <th>Porcentaje</th>
-                                            <th>Estado</th>
-                                            <th>Fecha Evaluación</th>
-                                            <th>Evaluador</th>
-                                            <th>Acciones</th>
+                                            <th><i class="fas fa-calendar-alt me-2"></i>Período</th>
+                                            <th><i class="fas fa-calendar me-2"></i>Año</th>
+                                            <th><i class="fas fa-list-ol me-2"></i>Sem.</th>
+                                            <th><i class="fas fa-chart-bar me-2"></i>Puntaje</th>
+                                            <th><i class="fas fa-percentage me-2"></i>Porcentaje</th>
+                                            <th><i class="fas fa-check-circle me-2"></i>Estado</th>
+                                            <th><i class="fas fa-clock me-2"></i>Fecha Eval.</th>
+                                            <th><i class="fas fa-user-tie me-2"></i>Evaluador</th>
+                                            <th><i class="fas fa-cogs me-2"></i>Acciones</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -551,31 +582,64 @@
                                             @foreach (var evaluacion in evaluaciones)
                                             {
                                                 <tr>
-                                                    <td>@evaluacion.PeriodoAcademico</td>
-                                                    <td>@evaluacion.Anio</td>
-                                                    <td>@evaluacion.Semestre</td>
-                                                    <td>@evaluacion.PuntajeObtenido/@evaluacion.PuntajeMaximo</td>
-                                                    <td>
-                                                        <span class="badge @GetPorcentajeBadgeClass(evaluacion.PorcentajeObtenido)">
+                                                    <td class="fw-medium">
+                                                        <i class="fas fa-graduation-cap me-2 text-primary"></i>
+                                                        @evaluacion.PeriodoAcademico
+                                                    </td>
+                                                    <td class="col-date">
+                                                        <span class="table-badge info">@evaluacion.Anio</span>
+                                                    </td>
+                                                    <td class="text-center">
+                                                        <span class="table-badge secondary">@evaluacion.Semestre</span>
+                                                    </td>
+                                                    <td class="col-score">
+                                                        <div class="fw-bold">@evaluacion.PuntajeObtenido</div>
+                                                        <small class="text-muted">/ @evaluacion.PuntajeMaximo</small>
+                                                    </td>
+                                                    <td class="col-score">
+                                                        <span class="table-badge @(evaluacion.PorcentajeObtenido >= 90 ? "success" : evaluacion.PorcentajeObtenido >= 75 ? "warning" : "danger")">
+                                                            <i class="fas @(evaluacion.PorcentajeObtenido >= 90 ? "fa-trophy" : evaluacion.PorcentajeObtenido >= 75 ? "fa-star" : "fa-exclamation-triangle")"></i>
                                                             @evaluacion.PorcentajeObtenido.ToString("F1")%
                                                         </span>
                                                     </td>
-                                                    <td>@evaluacion.Estado</td>
-                                                    <td>@evaluacion.FechaEvaluacion.ToString("dd/MM/yyyy")</td>
-                                                    <td>@evaluacion.Evaluador</td>
                                                     <td>
-                                                        <button class="btn btn-sm btn-outline-primary me-1" @onclick="() => EditarEvaluacion(evaluacion)">
-                                                            <i class="fas fa-edit"></i>
-                                                        </button>
-                                                        <button class="btn btn-sm btn-outline-danger" @onclick="() => EliminarEvaluacion(evaluacion.Id)">
-                                                            <i class="fas fa-trash"></i>
-                                                        </button>
-                                                        @if (!string.IsNullOrEmpty(evaluacion.NombreArchivoRespaldo))
+                                                        <span class="table-badge @(evaluacion.CumpleMinimo ? "success" : "danger")">
+                                                            <i class="fas @(evaluacion.CumpleMinimo ? "fa-check" : "fa-times")"></i>
+                                                            @evaluacion.Estado
+                                                        </span>
+                                                    </td>
+                                                    <td class="col-date">
+                                                        <i class="fas fa-calendar-check me-1"></i>
+                                                        @evaluacion.FechaEvaluacion.ToString("dd/MM/yyyy")
+                                                    </td>
+                                                    <td>
+                                                        @if (!string.IsNullOrEmpty(evaluacion.Evaluador))
                                                         {
-                                                            <button class="btn btn-outline-primary btn-sm" @onclick="() => VerPdfEvaluacion(evaluacion.Id)">
-                                                                <i class="fas fa-file-pdf"></i> Ver PDF
-                                                            </button>
+                                                            <div class="fw-medium">@evaluacion.Evaluador</div>
+                                                            <small class="text-muted">@evaluacion.TipoEvaluacion</small>
                                                         }
+                                                        else
+                                                        {
+                                                            <span class="text-muted">
+                                                                <i class="fas fa-user-slash me-1"></i>Sin asignar
+                                                            </span>
+                                                        }
+                                                    </td>
+                                                    <td class="col-actions">
+                                                        <div class="action-btn-group">
+                                                            <button class="action-btn edit" @onclick="() => EditarEvaluacion(evaluacion)" title="Editar">
+                                                                <i class="fas fa-edit"></i>
+                                                            </button>
+                                                            <button class="action-btn delete" @onclick="() => EliminarEvaluacion(evaluacion.Id)" title="Eliminar">
+                                                                <i class="fas fa-trash"></i>
+                                                            </button>
+                                                            @if (!string.IsNullOrEmpty(evaluacion.NombreArchivoRespaldo))
+                                                            {
+                                                                <button class="action-btn view" @onclick="() => VerPdfEvaluacion(evaluacion.Id)" title="Ver PDF">
+                                                                    <i class="fas fa-file-pdf"></i>
+                                                                </button>
+                                                            }
+                                                        </div>
                                                     </td>
                                                 </tr>
                                             }
@@ -583,11 +647,11 @@
                                         else
                                         {
                                             <tr>
-                                                <td colspan="9" class="text-center text-muted py-4">
-                                                    <i class="fas fa-star fa-2x mb-2"></i>
-                                                    <p class="mb-1">No hay evaluaciones de desempeño cargadas</p>
-                                                    <small>Haz clic en "Importar" para cargar tus evaluaciones desde la base de datos DAC</small>
-                                                    <br><small class="text-info">Cédula actual: @(UserSession.CurrentUser?.Cedula ?? "No disponible")</small>
+                                                <td colspan="9" class="empty-state">
+                                                    <i class="fas fa-star"></i>
+                                                    <h6>No hay evaluaciones de desempeño cargadas</h6>
+                                                    <p>Haz clic en "Importar" para cargar tus evaluaciones desde la base de datos DAC</p>
+                                                    <small class="text-info">Cédula actual: @(UserSession.CurrentUser?.Cedula ?? "No disponible")</small>
                                                 </td>
                                             </tr>
                                         }
@@ -671,20 +735,19 @@
                             </div>
                         }
                         else
-                        {
-                            <div class="table-responsive">
-                                <table class="table table-striped">
+                        {                            <div class="table-responsive">
+                                <table class="table professional-table">
                                     <thead>
                                         <tr>
-                                            <th>Nombre</th>
-                                            <th>Institución</th>
-                                            <th>Tipo</th>
-                                            <th>Modalidad</th>
-                                            <th>Horas</th>
-                                            <th>Fecha Inicio</th>
-                                            <th>Fecha Fin</th>
-                                            <th>Estado</th>
-                                            <th>Acciones</th>
+                                            <th><i class="fas fa-graduation-cap me-2"></i>Nombre</th>
+                                            <th><i class="fas fa-university me-2"></i>Institución</th>
+                                            <th><i class="fas fa-tag me-2"></i>Tipo</th>
+                                            <th><i class="fas fa-laptop me-2"></i>Modalidad</th>
+                                            <th><i class="fas fa-clock me-2"></i>Horas</th>
+                                            <th><i class="fas fa-calendar-plus me-2"></i>Fecha Inicio</th>
+                                            <th><i class="fas fa-calendar-check me-2"></i>Fecha Fin</th>
+                                            <th><i class="fas fa-chart-line me-2"></i>Estado</th>
+                                            <th><i class="fas fa-cogs me-2"></i>Acciones</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -693,42 +756,88 @@
                                             @foreach (var capacitacion in capacitaciones)
                                             {
                                                 <tr>
-                                                    <td>@capacitacion.NombreCapacitacion</td>
-                                                    <td>@capacitacion.Institucion</td>
-                                                    <td>@capacitacion.TipoCapacitacion</td>
-                                                    <td>@capacitacion.Modalidad</td>
-                                                    <td>@capacitacion.HorasAcademicas</td>
-                                                    <td>@capacitacion.FechaInicio.ToString("dd/MM/yyyy")</td>
-                                                    <td>@capacitacion.FechaFin.ToString("dd/MM/yyyy")</td>
+                                                    <td class="col-title">
+                                                        <div class="fw-medium">@capacitacion.NombreCapacitacion</div>
+                                                        @if (!string.IsNullOrEmpty(capacitacion.Descripcion))
+                                                        {
+                                                            <small class="text-muted d-block mt-1" title="@capacitacion.Descripcion">
+                                                                <i class="fas fa-info-circle me-1"></i>@capacitacion.Descripcion.Substring(0, Math.Min(50, capacitacion.Descripcion.Length))...
+                                                            </small>
+                                                        }
+                                                    </td>
                                                     <td>
-                                                        <span class="badge @GetCapacitacionEstadoBadgeClass(capacitacion.Estado)">
-                                                            @capacitacion.Estado
+                                                        <div class="fw-medium">@capacitacion.Institucion</div>
+                                                        @if (!string.IsNullOrEmpty(capacitacion.Instructor))
+                                                        {
+                                                            <small class="text-muted d-block mt-1">
+                                                                <i class="fas fa-user-tie me-1"></i>@capacitacion.Instructor
+                                                            </small>
+                                                        }
+                                                    </td>
+                                                    <td>
+                                                        <span class="table-badge @(capacitacion.EsPedagogica ? "success" : "info")">
+                                                            <i class="fas @(capacitacion.EsPedagogica ? "fa-chalkboard-teacher" : "fa-cogs")"></i>
+                                                            @capacitacion.TipoCapacitacion
                                                         </span>
                                                     </td>
                                                     <td>
-                                                        <button class="btn btn-sm btn-outline-primary me-1" @onclick="() => EditarCapacitacion(capacitacion)">
-                                                            <i class="fas fa-edit"></i>
-                                                        </button>
-                                                        <button class="btn btn-sm btn-outline-danger" @onclick="() => EliminarCapacitacion(capacitacion.Id)">
-                                                            <i class="fas fa-trash"></i>
-                                                        </button>
-                                                        @if (!string.IsNullOrEmpty(capacitacion.NombreArchivoCertificado))
+                                                        <span class="table-badge secondary">
+                                                            <i class="fas @(capacitacion.Modalidad.Contains("Virtual", StringComparison.OrdinalIgnoreCase) ? "fa-laptop" : capacitacion.Modalidad.Contains("Presencial", StringComparison.OrdinalIgnoreCase) ? "fa-users" : "fa-sync-alt")"></i>
+                                                            @capacitacion.Modalidad
+                                                        </span>
+                                                    </td>
+                                                    <td class="col-score">
+                                                        <div class="fw-bold text-primary">@capacitacion.HorasAcademicas</div>
+                                                        <small class="text-muted">horas</small>
+                                                    </td>
+                                                    <td class="col-date">
+                                                        <i class="fas fa-calendar-alt me-1"></i>
+                                                        @capacitacion.FechaInicio.ToString("dd/MM/yyyy")
+                                                    </td>
+                                                    <td class="col-date">
+                                                        <i class="fas fa-calendar-check me-1"></i>
+                                                        @capacitacion.FechaFin.ToString("dd/MM/yyyy")
+                                                    </td>
+                                                    <td>
+                                                        <span class="table-badge @(capacitacion.Estado?.ToLower() switch { "aprobada" or "completada" => "success", "en progreso" => "warning", "reprobada" => "danger", _ => "secondary" })">
+                                                            <i class="fas @(capacitacion.Estado?.ToLower() switch { "aprobada" or "completada" => "fa-check-circle", "en progreso" => "fa-clock", "reprobada" => "fa-times-circle", _ => "fa-question-circle" })"></i>
+                                                            @capacitacion.Estado
+                                                        </span>
+                                                        @if (capacitacion.Calificacion.HasValue)
                                                         {
-                                                            <button class="btn btn-outline-primary btn-sm" @onclick="() => VerPdfCapacitacion(capacitacion.Id)">
-                                                                <i class="fas fa-file-pdf"></i> Ver PDF
-                                                            </button>
+                                                            <div class="mt-1">
+                                                                <small class="text-muted">
+                                                                    <i class="fas fa-star me-1"></i>@capacitacion.Calificacion.Value.ToString("F1")
+                                                                </small>
+                                                            </div>
                                                         }
+                                                    </td>
+                                                    <td class="col-actions">
+                                                        <div class="action-btn-group">
+                                                            <button class="action-btn edit" @onclick="() => EditarCapacitacion(capacitacion)" title="Editar">
+                                                                <i class="fas fa-edit"></i>
+                                                            </button>
+                                                            <button class="action-btn delete" @onclick="() => EliminarCapacitacion(capacitacion.Id)" title="Eliminar">
+                                                                <i class="fas fa-trash"></i>
+                                                            </button>
+                                                            @if (!string.IsNullOrEmpty(capacitacion.NombreArchivoCertificado))
+                                                            {
+                                                                <button class="action-btn view" @onclick="() => VerPdfCapacitacion(capacitacion.Id)" title="Ver Certificado">
+                                                                    <i class="fas fa-file-pdf"></i>
+                                                                </button>
+                                                            }
+                                                        </div>
                                                     </td>
                                                 </tr>
                                             }
                                         }                                        else
                                         {
                                             <tr>
-                                                <td colspan="9" class="text-center text-muted py-4">
-                                                    <i class="fas fa-search fa-2x mb-2"></i>
-                                                    <p class="mb-1">No hay capacitaciones cargadas</p>
-                                                    <small>Haz clic en "Importar" para cargar tus capacitaciones desde la base de datos</small>
-                                                    <br><small class="text-info">Cédula actual: @(UserSession.CurrentUser?.Cedula ?? "No disponible")</small>
+                                                <td colspan="9" class="empty-state">
+                                                    <i class="fas fa-search"></i>
+                                                    <h6>No hay capacitaciones cargadas</h6>
+                                                    <p>Haz clic en "Importar" para cargar tus capacitaciones desde la base de datos</p>
+                                                    <small class="text-info">Cédula actual: @(UserSession.CurrentUser?.Cedula ?? "No disponible")</small>
                                                 </td>
                                             </tr>
                                         }
@@ -1389,34 +1498,19 @@
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("alert", $"Error al abrir PDF: {ex.Message}");
-        }
+            await JSRuntime.InvokeVoidAsync("alert", $"Error al abrir PDF: {ex.Message}");        }
     }
 
-    private string GetPorcentajeBadgeClass(decimal porcentaje)
-    {
-        return porcentaje switch
-        {
-            >= 90 => "bg-success",
-            >= 75 => "bg-warning text-dark",
-            _ => "bg-danger"
-        };
-    }    private void CloseAgregarModal()
+    private void CloseAgregarModal()
     {
         showAgregarModal = false;
         nuevaInvestigacion = new Investigacion();
         editingInvestigacion = null;
         selectedPdf = null;
         pdfFileName = null;
-    }private string GetEstadoBadgeClass(string estado)
-    {
-        return estado switch
-        {
-            "Completado" => "bg-success",
-            "En revisión" => "bg-warning text-dark",
-            _ => "bg-secondary"
-        };
-    }private string DeterminarEstado(DateTime fechaPublicacion)
+    }
+
+    private string DeterminarEstado(DateTime fechaPublicacion)
     {
         // Si la fecha de publicación es futura, está en revisión
         if (fechaPublicacion > DateTime.Now)
@@ -1858,19 +1952,8 @@
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("alert", $"Error al abrir certificado: {ex.Message}");
-        }
+            await JSRuntime.InvokeVoidAsync("alert", $"Error al abrir certificado: {ex.Message}");        }
     }
-
-    private string GetCapacitacionEstadoBadgeClass(string estado)
-    {
-        return estado?.ToLower() switch
-        {
-            "aprobada" or "completada" => "bg-success",
-            "en progreso" => "bg-warning",
-            "reprobada" => "bg-danger",
-            _ => "bg-secondary"
-        };    }
 
     private class ImportResult
     {
