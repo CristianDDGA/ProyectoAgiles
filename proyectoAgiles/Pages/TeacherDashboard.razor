@@ -2082,7 +2082,6 @@ private bool isLoadingInvestigaciones = false;
                 NivelActual = UserSession.CurrentUser?.Nivel ?? "Titular Auxiliar 1",
                 NivelSolicitado = "Titular Auxiliar 2", // Por ahora fijo, se puede hacer dinámico
                 AnosExperiencia = ObtenerAnosExperiencia(estadisticas),
-                Titulos = GenerarResumenTitulos(estadisticas),
                 Publicaciones = GenerarResumenPublicaciones(estadisticas),
                 ProyectosInvestigacion = GenerarResumenProyectos(estadisticas),
                 Capacitaciones = GenerarResumenCapacitaciones(estadisticas),
@@ -2147,12 +2146,6 @@ private bool isLoadingInvestigaciones = false;
 
         // Como último recurso, retornar 0
         return 0;
-    }
-
-    private string GenerarResumenTitulos(EstadisticasDocenteResponse? estadisticas)
-    {
-        // Por el momento, retornar información genérica ya que no hay sección de títulos en la estructura actual
-        return "Títulos académicos registrados en el sistema";
     }
 
     private string GenerarResumenPublicaciones(EstadisticasDocenteResponse? estadisticas)
