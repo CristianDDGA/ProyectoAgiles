@@ -95,9 +95,7 @@ public class InvestigacionService : IInvestigacionService
         Console.WriteLine($"CreateWithPdfAsync - Investigación creada ID: {createdInvestigacion.Id}, PDF guardado: {createdInvestigacion.ArchivoPdf?.Length ?? 0} bytes");
         
         return MapToDto(createdInvestigacion);
-    }
-
-    public async Task<InvestigacionDto> UpdateAsync(UpdateInvestigacionDto updateDto)
+    }    public async Task<InvestigacionDto> UpdateAsync(UpdateInvestigacionDto updateDto)
     {
         var existingInvestigacion = await _investigacionRepository.GetByIdAsync(updateDto.Id);
         if (existingInvestigacion == null)
@@ -111,6 +109,40 @@ public class InvestigacionService : IInvestigacionService
         existingInvestigacion.CampoConocimiento = updateDto.CampoConocimiento;
         existingInvestigacion.Filiacion = updateDto.Filiacion;
         existingInvestigacion.Observacion = updateDto.Observacion;
+
+        var updatedInvestigacion = await _investigacionRepository.UpdateAsync(existingInvestigacion);
+        return MapToDto(updatedInvestigacion);
+    }
+
+    public async Task<InvestigacionDto> UpdateWithPdfAsync(UpdateInvestigacionWithPdfDto updateDto)
+    {
+        var existingInvestigacion = await _investigacionRepository.GetByIdAsync(updateDto.Id);
+        if (existingInvestigacion == null)
+            throw new ArgumentException($"No se encontró la investigación con ID {updateDto.Id}");
+
+        // Actualizar campos básicos
+        existingInvestigacion.Cedula = updateDto.Cedula;
+        existingInvestigacion.Titulo = updateDto.Titulo;
+        existingInvestigacion.Tipo = updateDto.Tipo;
+        existingInvestigacion.RevistaOEditorial = updateDto.RevistaOEditorial;
+        existingInvestigacion.FechaPublicacion = updateDto.FechaPublicacion;
+        existingInvestigacion.CampoConocimiento = updateDto.CampoConocimiento;
+        existingInvestigacion.Filiacion = updateDto.Filiacion;
+        existingInvestigacion.Observacion = updateDto.Observacion;
+
+        // Actualizar PDF si se proporciona uno nuevo
+        if (updateDto.ArchivoPdf != null && updateDto.ArchivoPdf.Length > 0)
+        {
+            using var memoryStream = new MemoryStream();
+            await updateDto.ArchivoPdf.CopyToAsync(memoryStream);
+            existingInvestigacion.ArchivoPdf = memoryStream.ToArray();
+            
+            Console.WriteLine($"UpdateWithPdfAsync - PDF actualizado: {existingInvestigacion.ArchivoPdf.Length} bytes");
+        }
+        else
+        {
+            Console.WriteLine("UpdateWithPdfAsync - No se proporcionó PDF nuevo, manteniendo el existente");
+        }
 
         var updatedInvestigacion = await _investigacionRepository.UpdateAsync(existingInvestigacion);
         return MapToDto(updatedInvestigacion);

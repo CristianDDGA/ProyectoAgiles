@@ -642,9 +642,7 @@ namespace proyectoAgiles.Services
                 Console.WriteLine($"CrearInvestigacionConPdf - Error: {ex.Message}");
                 throw;
             }
-        }
-
-        public async Task<InvestigacionDto> ActualizarInvestigacion(UpdateInvestigacionDto updateDto)
+        }        public async Task<InvestigacionDto> ActualizarInvestigacion(UpdateInvestigacionDto updateDto)
         {
             try
             {
@@ -661,6 +659,46 @@ namespace proyectoAgiles.Services
             catch (Exception ex)
             {
                 throw new Exception($"Error al actualizar investigación: {ex.Message}");
+            }
+        }
+
+        public async Task<InvestigacionDto> ActualizarInvestigacionConPdf(UpdateInvestigacionWithPdfDto updateDto)
+        {
+            try
+            {
+                Console.WriteLine($"ActualizarInvestigacionConPdf - ID: {updateDto.Id}, PDF: {updateDto.ArchivoPdf?.Name}, Size: {updateDto.ArchivoPdf?.Size ?? 0}");
+                
+                using var form = new MultipartFormDataContent();
+                form.Add(new StringContent(updateDto.Id.ToString()), "Id");
+                form.Add(new StringContent(updateDto.Cedula), "Cedula");
+                form.Add(new StringContent(updateDto.Titulo), "Titulo");
+                form.Add(new StringContent(updateDto.Tipo), "Tipo");
+                form.Add(new StringContent(updateDto.RevistaOEditorial), "RevistaOEditorial");
+                form.Add(new StringContent(updateDto.FechaPublicacion.ToString("o")), "FechaPublicacion");
+                form.Add(new StringContent(updateDto.CampoConocimiento), "CampoConocimiento");
+                form.Add(new StringContent(updateDto.Filiacion), "Filiacion");
+                form.Add(new StringContent(updateDto.Observacion), "Observacion");
+                
+                if (updateDto.ArchivoPdf != null)
+                {
+                    var stream = updateDto.ArchivoPdf.OpenReadStream(10 * 1024 * 1024); // 10MB máx
+                    form.Add(new StreamContent(stream), "ArchivoPdf", updateDto.ArchivoPdf.Name);
+                    Console.WriteLine($"ActualizarInvestigacionConPdf - PDF agregado al form: {updateDto.ArchivoPdf.Name}");
+                }
+                else
+                {
+                    Console.WriteLine("ActualizarInvestigacionConPdf - No hay PDF para actualizar");
+                }
+
+                var response = await _httpClient.PutAsync($"{_apiBaseUrl}/api/investigaciones/{updateDto.Id}/con-pdf", form);
+                Console.WriteLine($"ActualizarInvestigacionConPdf - Response: {response.StatusCode}");
+                response.EnsureSuccessStatusCode();
+                return await response.Content.ReadFromJsonAsync<InvestigacionDto>() ?? new InvestigacionDto();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"ActualizarInvestigacionConPdf - Error: {ex.Message}");
+                throw;
             }
         }
 
@@ -727,9 +765,7 @@ namespace proyectoAgiles.Services
         public string CampoConocimiento { get; set; } = string.Empty;
         public string Filiacion { get; set; } = string.Empty;
         public string Observacion { get; set; } = string.Empty;
-    }
-
-    public class UpdateInvestigacionDto
+    }    public class UpdateInvestigacionDto
     {
         public int Id { get; set; }
         public string Cedula { get; set; } = string.Empty;
@@ -740,6 +776,20 @@ namespace proyectoAgiles.Services
         public string CampoConocimiento { get; set; } = string.Empty;
         public string Filiacion { get; set; } = string.Empty;
         public string Observacion { get; set; } = string.Empty;
+    }
+
+    public class UpdateInvestigacionWithPdfDto
+    {
+        public int Id { get; set; }
+        public string Cedula { get; set; } = string.Empty;
+        public string Titulo { get; set; } = string.Empty;
+        public string Tipo { get; set; } = string.Empty;
+        public string RevistaOEditorial { get; set; } = string.Empty;
+        public DateTime FechaPublicacion { get; set; }
+        public string CampoConocimiento { get; set; } = string.Empty;
+        public string Filiacion { get; set; } = string.Empty;
+        public string Observacion { get; set; } = string.Empty;
+        public IBrowserFile? ArchivoPdf { get; set; }
     }public class RegisterRequest
     {
         public string Name { get; set; } = string.Empty;

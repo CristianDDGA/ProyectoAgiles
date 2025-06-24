@@ -1175,27 +1175,57 @@
                 return;
             }            if (editingInvestigacion != null)
             {
-                // Actualizar investigación existente
-                var updateDto = new proyectoAgiles.Services.UpdateInvestigacionDto
+                // Verificar si se ha seleccionado un nuevo PDF
+                if (selectedPdf != null)
                 {
-                    Id = editingInvestigacion.Id,
-                    Cedula = cedula,
-                    Titulo = nuevaInvestigacion.Titulo,
-                    Tipo = "Artículo", // Valor por defecto
-                    RevistaOEditorial = !string.IsNullOrWhiteSpace(nuevaInvestigacion.RevistaOEditorial) ? nuevaInvestigacion.RevistaOEditorial : "N/A",
-                    FechaPublicacion = nuevaInvestigacion.FechaInicio,
-                    CampoConocimiento = nuevaInvestigacion.Area,
-                    Filiacion = "Universidad Técnica de Ambato",
-                    Observacion = nuevaInvestigacion.Descripcion ?? ""
-                };
+                    // Actualizar con PDF
+                    var updateWithPdfDto = new proyectoAgiles.Services.UpdateInvestigacionWithPdfDto
+                    {
+                        Id = editingInvestigacion.Id,
+                        Cedula = cedula,
+                        Titulo = nuevaInvestigacion.Titulo,
+                        Tipo = "Artículo", // Valor por defecto
+                        RevistaOEditorial = !string.IsNullOrWhiteSpace(nuevaInvestigacion.RevistaOEditorial) ? nuevaInvestigacion.RevistaOEditorial : "N/A",
+                        FechaPublicacion = nuevaInvestigacion.FechaInicio,
+                        CampoConocimiento = nuevaInvestigacion.Area,
+                        Filiacion = "Universidad Técnica de Ambato",
+                        Observacion = nuevaInvestigacion.Descripcion ?? "",
+                        ArchivoPdf = selectedPdf
+                    };
 
-                var updated = await AuthService.ActualizarInvestigacion(updateDto);
-                
-                // Actualizar en la lista local
-                var index = investigaciones.FindIndex(i => i.Id == editingInvestigacion.Id);
-                if (index >= 0)
+                    var updatedWithPdf = await AuthService.ActualizarInvestigacionConPdf(updateWithPdfDto);
+                    
+                    // Actualizar en la lista local
+                    var index = investigaciones.FindIndex(i => i.Id == editingInvestigacion.Id);
+                    if (index >= 0)
+                    {
+                        investigaciones[index] = MapearDesdeDto(updatedWithPdf);
+                    }
+                }
+                else
                 {
-                    investigaciones[index] = MapearDesdeDto(updated);
+                    // Actualizar sin PDF (solo datos)
+                    var updateDto = new proyectoAgiles.Services.UpdateInvestigacionDto
+                    {
+                        Id = editingInvestigacion.Id,
+                        Cedula = cedula,
+                        Titulo = nuevaInvestigacion.Titulo,
+                        Tipo = "Artículo", // Valor por defecto
+                        RevistaOEditorial = !string.IsNullOrWhiteSpace(nuevaInvestigacion.RevistaOEditorial) ? nuevaInvestigacion.RevistaOEditorial : "N/A",
+                        FechaPublicacion = nuevaInvestigacion.FechaInicio,
+                        CampoConocimiento = nuevaInvestigacion.Area,
+                        Filiacion = "Universidad Técnica de Ambato",
+                        Observacion = nuevaInvestigacion.Descripcion ?? ""
+                    };
+
+                    var updated = await AuthService.ActualizarInvestigacion(updateDto);
+                    
+                    // Actualizar en la lista local
+                    var index = investigaciones.FindIndex(i => i.Id == editingInvestigacion.Id);
+                    if (index >= 0)
+                    {
+                        investigaciones[index] = MapearDesdeDto(updated);
+                    }
                 }
             }
             else
@@ -1371,14 +1401,14 @@
             >= 75 => "bg-warning text-dark",
             _ => "bg-danger"
         };
-    }
-
-    private void CloseAgregarModal()
+    }    private void CloseAgregarModal()
     {
         showAgregarModal = false;
         nuevaInvestigacion = new Investigacion();
         editingInvestigacion = null;
-    }    private string GetEstadoBadgeClass(string estado)
+        selectedPdf = null;
+        pdfFileName = null;
+    }private string GetEstadoBadgeClass(string estado)
     {
         return estado switch
         {

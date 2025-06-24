@@ -146,9 +146,7 @@ public class InvestigacionesController : ControllerBase
             Console.WriteLine($"CreateWithPdf - Error: {ex.Message}");
             return StatusCode(500, new { message = "Error interno del servidor", error = ex.Message });
         }
-    }
-
-    /// <summary>
+    }    /// <summary>
     /// Actualiza una investigación existente
     /// </summary>
     [HttpPut("{id}")]
@@ -175,6 +173,44 @@ public class InvestigacionesController : ControllerBase
         }
         catch (Exception ex)
         {
+            return StatusCode(500, new { message = "Error interno del servidor", error = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Actualiza una investigación existente con PDF
+    /// </summary>
+    [HttpPut("{id}/con-pdf")]
+    public async Task<ActionResult<InvestigacionDto>> UpdateWithPdf(int id, [FromForm] UpdateInvestigacionWithPdfDto updateDto)
+    {
+        try
+        {
+            if (id != updateDto.Id)
+                return BadRequest(new { message = "El ID de la URL no coincide con el ID del objeto" });
+
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var exists = await _investigacionService.ExistsAsync(id);
+            if (!exists)
+                return NotFound(new { message = "Investigación no encontrada" });
+
+            // Log para depuración
+            Console.WriteLine($"UpdateWithPdf - ID: {id}, Archivo recibido: {updateDto.ArchivoPdf?.FileName ?? "null"}, Tamaño: {updateDto.ArchivoPdf?.Length ?? 0}");
+
+            var investigacion = await _investigacionService.UpdateWithPdfAsync(updateDto);
+            
+            Console.WriteLine($"UpdateWithPdf - Investigación actualizada exitosamente con ID: {investigacion.Id}");
+            
+            return Ok(investigacion);
+        }
+        catch (ArgumentException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error en UpdateWithPdf - ID: {id}, Error: {ex.Message}");
             return StatusCode(500, new { message = "Error interno del servidor", error = ex.Message });
         }
     }
