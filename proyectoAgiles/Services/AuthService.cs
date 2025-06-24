@@ -10,6 +10,7 @@ using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.Extensions.Configuration;
+using ProyectoAgiles.Application.DTOs;
 
 namespace proyectoAgiles.Services
 {
@@ -448,11 +449,10 @@ namespace proyectoAgiles.Services
         private async Task<RequisitoCumplimientoDto> VerificarEvaluacion75Porciento(string cedula)
         {
             try
-            {
-                var response = await _httpClient.GetAsync($"{_apiBaseUrl}/api/evaluaciones-desempeno/verificar-requisito-75/{cedula}");
+            {                var response = await _httpClient.GetAsync($"{_apiBaseUrl}/api/evaluaciones-desempeno/verificar-requisito-75/{cedula}");
                 if (response.IsSuccessStatusCode)
                 {
-                    var verificacion = await response.Content.ReadFromJsonAsync<VerificacionRequisito75Response>();
+                    var verificacion = await response.Content.ReadFromJsonAsync<VerificacionRequisito75Dto>();
                     if (verificacion != null)
                     {
                         return new RequisitoCumplimientoDto
@@ -831,20 +831,9 @@ namespace proyectoAgiles.Services
         public bool Cumple { get; set; }
         public string Mensaje { get; set; } = string.Empty;
         public string ValorObtenido { get; set; } = string.Empty;
-        public string ValorRequerido { get; set; } = string.Empty;
-    }
+        public string ValorRequerido { get; set; } = string.Empty;    }
 
     // DTOs para respuestas de APIs
-    public class VerificacionRequisito75Response
-    {
-        public string Cedula { get; set; } = string.Empty;
-        public bool CumpleRequisito { get; set; }
-        public int EvaluacionesAnalizadas { get; set; }
-        public int EvaluacionesQueAlcanzan75 { get; set; }
-        public decimal PorcentajePromedioUltimasCuatro { get; set; }
-        public string Mensaje { get; set; } = string.Empty;
-    }
-
     public class VerificacionRequisitoDiticResponse
     {
         public string Cedula { get; set; } = string.Empty;
