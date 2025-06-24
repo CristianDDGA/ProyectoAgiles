@@ -2299,7 +2299,30 @@ private bool isLoadingInvestigaciones = false;
         }
         catch (Exception ex)
         {
-            await MostrarNotificacionError("Error inesperado", $"Ocurrió un error: {ex.Message}");
+            // Si la excepción contiene un mensaje de error del backend, mostrarlo
+            var mensajeError = ex.Message;
+            if (ex.InnerException != null)
+            {
+                mensajeError += $"\nDetalle: {ex.InnerException.Message}";
+            }
+            // Si el mensaje parece contener JSON, intentar extraer el mensaje
+            if (mensajeError.Contains("{"))
+            {
+                try
+                {
+                    var jsonDoc = JsonDocument.Parse(mensajeError.Substring(mensajeError.IndexOf('{')));
+                    if (jsonDoc.RootElement.TryGetProperty("message", out var msgProp))
+                    {
+                        mensajeError = msgProp.GetString() ?? mensajeError;
+                    }
+                    else if (jsonDoc.RootElement.TryGetProperty("error", out var errProp))
+                    {
+                        mensajeError = errProp.GetString() ?? mensajeError;
+                    }
+                }
+                catch { /* Ignorar errores de parseo */ }
+            }
+            await MostrarNotificacionError("Error al guardar capacitación", mensajeError);
         }
         finally
         {
@@ -2377,6 +2400,7 @@ private bool isLoadingInvestigaciones = false;
                 {
                     await MostrarNotificacionExito("Capacitación eliminada", "La capacitación se ha eliminado correctamente.");
                     await CargarCapacitaciones();
+                    StateHasChanged();
                 }
                 else
                 {

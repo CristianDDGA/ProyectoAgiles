@@ -1016,11 +1016,12 @@ namespace proyectoAgiles.Services
                 
                 if (fechaFinAutoridad.HasValue)
                     form.Add(new StringContent(fechaFinAutoridad.Value.ToString("o")), "FechaFinAutoridad");
-                
-                if (archivoCertificado != null)
+                  if (archivoCertificado != null)
                 {
                     var stream = archivoCertificado.OpenReadStream(10 * 1024 * 1024); // 10MB máx
-                    form.Add(new StreamContent(stream), "CertificadoPdf", archivoCertificado.Name);
+                    var pdfContent = new StreamContent(stream);
+                    pdfContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/pdf");
+                    form.Add(pdfContent, "ArchivoCertificado", archivoCertificado.Name);
                     Console.WriteLine($"CrearCapacitacionConPdf - PDF agregado al form: {archivoCertificado.Name}");
                 }
                 else
@@ -1028,7 +1029,7 @@ namespace proyectoAgiles.Services
                     Console.WriteLine("CrearCapacitacionConPdf - No hay PDF para enviar");
                 }
                 
-                var response = await _httpClient.PostAsync($"{_apiBaseUrl}/api/ditic/with-pdf", form);
+                var response = await _httpClient.PostAsync($"{_apiBaseUrl}/api/ditic/con-certificado", form);
                 Console.WriteLine($"CrearCapacitacionConPdf - Response: {response.StatusCode}");
                 response.EnsureSuccessStatusCode();
                 return await response.Content.ReadFromJsonAsync<ProyectoAgiles.Application.DTOs.DiticDto>() ?? new ProyectoAgiles.Application.DTOs.DiticDto();
