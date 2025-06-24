@@ -1,4 +1,6 @@
 // Sistema de notificaciones toast profesionales para UTA
+console.log('notifications.js cargado correctamente');
+
 window.toastNotifications = {
     show: function(type, title, message, duration = 5000) {
         // Crear el contenedor si no existe
@@ -77,9 +79,9 @@ window.toastNotifications = {
 
     info: function(title, message, duration = 5000) {
         return this.show('info', title, message, duration);
-    },
-
-    warning: function(title, message, duration = 6000) {
+    },    warning: function(title, message, duration = 6000) {
         return this.show('warning', title, message, duration);
     }
 };
+
+console.log('toastNotifications inicializado:', window.toastNotifications);

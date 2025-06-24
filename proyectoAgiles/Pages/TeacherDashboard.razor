@@ -1652,8 +1652,7 @@ private bool isLoadingInvestigaciones = false;
                 {
                     Console.WriteLine($"Error al obtener verificación requisito 75%: {ex.Message}");
                 }
-                
-                await MostrarNotificacionExito($"✅ Importación exitosa", 
+                  await MostrarNotificacionExito($"📊 Evaluaciones Importadas", 
                     $"Se han cargado {evaluaciones.Count} evaluación{(evaluaciones.Count != 1 ? "es" : "")} desde la base de datos DAC.");
             }
             else
@@ -2234,7 +2233,7 @@ private bool isLoadingInvestigaciones = false;
                 {
                     await AuthService.ActualizarCertificadoCapacitacion(editingCapacitacion.Id, selectedCapacitacionPdf);
                 }                
-                await MostrarNotificacionExito("🎓 Capacitación Actualizada", "La capacitación DITIC ha sido actualizada correctamente en el sistema.");
+                await MostrarNotificacionExito("🎓 Capacitación Actualizada", "La capacitación DITIC ha sido actualizada correctamente en el sistema académico.");
                 await CargarCapacitaciones();
                 CloseAgregarCapacitacionModal();
             }
