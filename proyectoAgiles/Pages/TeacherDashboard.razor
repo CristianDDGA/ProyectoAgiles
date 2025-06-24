@@ -1814,91 +1814,98 @@ private bool isLoadingInvestigaciones = false;
                         await MostrarNotificacionError("Error al actualizar", $"No se pudo actualizar la evaluación: {errorContent}");
                     }
                 }
-            }
-            else
+            }            else
             {
                 // Crear nueva evaluación
-                if (selectedEvaluacionPdf is not null)
+                // Primero crear la evaluación sin PDF
+                var createDto = new CreateEvaluacionDesempenoDto
                 {
-                    // Crear con archivo PDF
-                    using var content = new MultipartFormDataContent();
-                    
-                    // Agregar campos del formulario
-                    content.Add(new StringContent(nuevaEvaluacion.Cedula), "Cedula");
-                    content.Add(new StringContent(nuevaEvaluacion.PeriodoAcademico), "PeriodoAcademico");
-                    content.Add(new StringContent(nuevaEvaluacion.Anio.ToString()), "Anio");
-                    content.Add(new StringContent(nuevaEvaluacion.Semestre.ToString()), "Semestre");
-                    content.Add(new StringContent(nuevaEvaluacion.PuntajeObtenido.ToString()), "PuntajeObtenido");
-                    content.Add(new StringContent(nuevaEvaluacion.PuntajeMaximo.ToString()), "PuntajeMaximo");
-                    content.Add(new StringContent(nuevaEvaluacion.FechaEvaluacion.ToString("yyyy-MM-dd")), "FechaEvaluacion");
-                    content.Add(new StringContent(nuevaEvaluacion.TipoEvaluacion), "TipoEvaluacion");
-                    content.Add(new StringContent(nuevaEvaluacion.Estado), "Estado");
-                    
-                    if (!string.IsNullOrEmpty(nuevaEvaluacion.Observaciones))
-                        content.Add(new StringContent(nuevaEvaluacion.Observaciones), "Observaciones");
-                    
-                    if (!string.IsNullOrEmpty(nuevaEvaluacion.Evaluador))
-                        content.Add(new StringContent(nuevaEvaluacion.Evaluador), "Evaluador");
+                    Cedula = nuevaEvaluacion.Cedula,
+                    PeriodoAcademico = nuevaEvaluacion.PeriodoAcademico,
+                    Anio = nuevaEvaluacion.Anio,
+                    Semestre = nuevaEvaluacion.Semestre,
+                    PuntajeObtenido = nuevaEvaluacion.PuntajeObtenido,
+                    PuntajeMaximo = nuevaEvaluacion.PuntajeMaximo,
+                    FechaEvaluacion = nuevaEvaluacion.FechaEvaluacion,
+                    TipoEvaluacion = nuevaEvaluacion.TipoEvaluacion,
+                    Observaciones = nuevaEvaluacion.Observaciones,
+                    Estado = nuevaEvaluacion.Estado,
+                    Evaluador = nuevaEvaluacion.Evaluador
+                };
 
-                    // Agregar archivo PDF
-                    var pdfStream = selectedEvaluacionPdf.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024); // 10MB max
-                    var pdfContent = new StreamContent(pdfStream);
-                    pdfContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/pdf");
-                    content.Add(pdfContent, "ArchivoPdf", selectedEvaluacionPdf.Name);
+                var json = System.Text.Json.JsonSerializer.Serialize(createDto);
+                var stringContent = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
 
-                    // Usar el endpoint correcto para crear con PDF
-                    var response = await httpClient.PostAsync($"{apiBaseUrl}/api/EvaluacionesDesempeno/crear-con-pdf", content);
+                var response = await httpClient.PostAsync($"{apiBaseUrl}/api/EvaluacionesDesempeno", stringContent);
 
-                    if (response.IsSuccessStatusCode)
+                if (response.IsSuccessStatusCode)
+                {
+                    var responseContent = await response.Content.ReadAsStringAsync();
+                    var evaluacionCreada = System.Text.Json.JsonSerializer.Deserialize<EvaluacionDesempenoDto>(responseContent, 
+                        new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+                    // Si se seleccionó un PDF y la evaluación se creó exitosamente, subirlo
+                    if (selectedEvaluacionPdf is not null && evaluacionCreada is not null)
                     {
-                        await MostrarNotificacionExito("Evaluación creada", "La evaluación se ha creado correctamente con su archivo PDF.");
-                        
-                        // Recargar evaluaciones
-                        await ImportarEvaluaciones();
-                        CloseAgregarEvaluacionModal();
+                        try
+                        {
+                            using var content = new MultipartFormDataContent();
+                            
+                            // Agregar campos del formulario para la actualización
+                            content.Add(new StringContent(evaluacionCreada.Id.ToString()), "Id");
+                            content.Add(new StringContent(nuevaEvaluacion.Cedula), "Cedula");
+                            content.Add(new StringContent(nuevaEvaluacion.PeriodoAcademico), "PeriodoAcademico");
+                            content.Add(new StringContent(nuevaEvaluacion.Anio.ToString()), "Anio");
+                            content.Add(new StringContent(nuevaEvaluacion.Semestre.ToString()), "Semestre");
+                            content.Add(new StringContent(nuevaEvaluacion.PuntajeObtenido.ToString()), "PuntajeObtenido");
+                            content.Add(new StringContent(nuevaEvaluacion.PuntajeMaximo.ToString()), "PuntajeMaximo");
+                            content.Add(new StringContent(nuevaEvaluacion.FechaEvaluacion.ToString("yyyy-MM-dd")), "FechaEvaluacion");
+                            content.Add(new StringContent(nuevaEvaluacion.TipoEvaluacion), "TipoEvaluacion");
+                            content.Add(new StringContent(nuevaEvaluacion.Estado), "Estado");
+                            
+                            if (!string.IsNullOrEmpty(nuevaEvaluacion.Observaciones))
+                                content.Add(new StringContent(nuevaEvaluacion.Observaciones), "Observaciones");
+                            
+                            if (!string.IsNullOrEmpty(nuevaEvaluacion.Evaluador))
+                                content.Add(new StringContent(nuevaEvaluacion.Evaluador), "Evaluador");
+
+                            // Agregar archivo PDF
+                            var pdfStream = selectedEvaluacionPdf.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024); // 10MB max
+                            var pdfContent = new StreamContent(pdfStream);
+                            pdfContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/pdf");
+                            content.Add(pdfContent, "ArchivoPdf", selectedEvaluacionPdf.Name);
+
+                            // Actualizar con el PDF usando el endpoint de actualización
+                            var updateResponse = await httpClient.PutAsync($"{apiBaseUrl}/api/EvaluacionesDesempeno/{evaluacionCreada.Id}/actualizar-con-pdf", content);
+
+                            if (updateResponse.IsSuccessStatusCode)
+                            {
+                                await MostrarNotificacionExito("Evaluación creada", "La evaluación se ha creado correctamente con su archivo PDF.");
+                            }
+                            else
+                            {
+                                await MostrarNotificacionInfo("Evaluación creada parcialmente", "La evaluación se creó correctamente, pero no se pudo adjuntar el archivo PDF.");
+                            }
+                        }
+                        catch (Exception pdfEx)
+                        {
+                            Console.WriteLine($"Error al subir PDF: {pdfEx.Message}");
+                            await MostrarNotificacionInfo("Evaluación creada parcialmente", "La evaluación se creó correctamente, pero no se pudo adjuntar el archivo PDF.");
+                        }
                     }
                     else
                     {
-                        var errorContent = await response.Content.ReadAsStringAsync();
-                        await MostrarNotificacionError("Error al crear evaluación", $"No se pudo crear la evaluación: {errorContent}");
+                        await MostrarNotificacionExito("Evaluación creada", "La evaluación se ha creado correctamente.");
                     }
+                    
+                    // Recargar evaluaciones
+                    await ImportarEvaluaciones();
+                    CloseAgregarEvaluacionModal();
                 }
                 else
                 {
-                    // Crear sin archivo PDF
-                    var createDto = new CreateEvaluacionDesempenoDto
-                    {
-                        Cedula = nuevaEvaluacion.Cedula,
-                        PeriodoAcademico = nuevaEvaluacion.PeriodoAcademico,
-                        Anio = nuevaEvaluacion.Anio,
-                        Semestre = nuevaEvaluacion.Semestre,
-                        PuntajeObtenido = nuevaEvaluacion.PuntajeObtenido,
-                        PuntajeMaximo = nuevaEvaluacion.PuntajeMaximo,
-                        FechaEvaluacion = nuevaEvaluacion.FechaEvaluacion,
-                        TipoEvaluacion = nuevaEvaluacion.TipoEvaluacion,
-                        Observaciones = nuevaEvaluacion.Observaciones,
-                        Estado = nuevaEvaluacion.Estado,
-                        Evaluador = nuevaEvaluacion.Evaluador
-                    };
-
-                    var json = System.Text.Json.JsonSerializer.Serialize(createDto);
-                    var stringContent = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
-
-                    var response = await httpClient.PostAsync($"{apiBaseUrl}/api/EvaluacionesDesempeno", stringContent);
-
-                    if (response.IsSuccessStatusCode)
-                    {
-                        await MostrarNotificacionExito("Evaluación creada", "La evaluación se ha creado correctamente.");
-                        
-                        // Recargar evaluaciones
-                        await ImportarEvaluaciones();
-                        CloseAgregarEvaluacionModal();
-                    }
-                    else
-                    {
-                        var errorContent = await response.Content.ReadAsStringAsync();
-                        await MostrarNotificacionError("Error al crear evaluación", $"No se pudo crear la evaluación: {errorContent}");
-                    }
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    await MostrarNotificacionError("Error al crear evaluación", $"No se pudo crear la evaluación: {errorContent}");
                 }
             }
         }
