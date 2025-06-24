@@ -527,9 +527,7 @@
                     </div>
                 </div>
             </div>        </div>
-    }
-
-    @* Modal para Evaluaciones de Desempeño *@
+    }    @* Modal para Evaluaciones de Desempeño *@
     @if (showEvaluacionesModal)
     {
         <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,0.3);">
@@ -624,8 +622,7 @@
                                                                 <i class="fas fa-user-slash me-1"></i>Sin asignar
                                                             </span>
                                                         }
-                                                    </td>
-                                                    <td class="col-actions">
+                                                    </td>                                                    <td class="col-actions">
                                                         <div class="action-btn-group">
                                                             <button class="action-btn edit" @onclick="() => EditarEvaluacion(evaluacion)" title="Editar">
                                                                 <i class="fas fa-edit"></i>
@@ -897,7 +894,109 @@
                 </div>
             </div>
         </div>
-    }    <!-- Tarjetas de Estadísticas de Promoción -->
+    }
+
+    @* Modal para Agregar/Editar Evaluaciones *@
+    @if (showAgregarEvaluacionModal)
+    {
+        <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,0.3);">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">@(editingEvaluacion != null ? "Editar" : "Agregar") Evaluación DAC</h5>
+                        <button type="button" class="btn-close" @onclick="CloseAgregarEvaluacionModal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Período Académico *</label>
+                                    <input type="text" class="form-control" @bind="nuevaEvaluacion.PeriodoAcademico" 
+                                           placeholder="Ej: 2024-1" required />
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">Año *</label>
+                                    <input type="number" class="form-control" @bind="nuevaEvaluacion.Anio" 
+                                           min="2020" max="2030" required />
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">Semestre *</label>
+                                    <select class="form-select" @bind="nuevaEvaluacion.Semestre" required>
+                                        <option value="1">1</option>
+                                        <option value="2">2</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Puntaje Obtenido *</label>
+                                    <input type="number" class="form-control" @bind="nuevaEvaluacion.PuntajeObtenido" 
+                                           min="0" max="100" step="0.01" required />
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Puntaje Máximo</label>
+                                    <input type="number" class="form-control" @bind="nuevaEvaluacion.PuntajeMaximo" 
+                                           min="0" max="100" step="0.01" />
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Fecha de Evaluación *</label>
+                                    <input type="date" class="form-control" @bind="nuevaEvaluacion.FechaEvaluacion" required />
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Tipo de Evaluación</label>
+                                    <select class="form-select" @bind="nuevaEvaluacion.TipoEvaluacion">
+                                        <option value="Integral">Integral</option>
+                                        <option value="Docencia">Docencia</option>
+                                        <option value="Investigación">Investigación</option>
+                                        <option value="Vinculación">Vinculación</option>
+                                        <option value="Gestión">Gestión</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Evaluador</label>
+                                    <input type="text" class="form-control" @bind="nuevaEvaluacion.Evaluador" 
+                                           placeholder="Nombre del evaluador" />
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Estado</label>
+                                    <select class="form-select" @bind="nuevaEvaluacion.Estado">
+                                        <option value="Completada">Completada</option>
+                                        <option value="En Proceso">En Proceso</option>
+                                        <option value="Pendiente">Pendiente</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-12 mb-3">
+                                    <label class="form-label">Observaciones</label>
+                                    <textarea class="form-control" rows="3" @bind="nuevaEvaluacion.Observaciones" 
+                                              placeholder="Observaciones adicionales sobre la evaluación"></textarea>
+                                </div>
+                                <div class="col-md-12 mb-3">
+                                    <label class="form-label">Archivo PDF</label>
+                                    <InputFile OnChange="HandleEvaluacionPdfSelected" accept=".pdf" />
+                                    @if (!string.IsNullOrEmpty(evaluacionPdfFileName))
+                                    {
+                                        <div class="mt-2 text-success">
+                                            <i class="fas fa-file-pdf"></i> @evaluacionPdfFileName
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-success" @onclick="GuardarEvaluacion" disabled="@isSavingEvaluacion">
+                            @if (isSavingEvaluacion)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                            }
+                            @(editingEvaluacion != null ? "Actualizar" : "Guardar")
+                        </button>
+                        <button class="btn btn-secondary" @onclick="CloseAgregarEvaluacionModal">Cancelar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Tarjetas de Estadísticas de Promoción -->
     <div class="stats-section">
         @if (estadisticasDocente == null)
         {
@@ -1043,11 +1142,13 @@
     private bool showInvestigacionesModal = false;
     private bool showEvaluacionesModal = false;
     private bool showCapacitacionesModal = false;
-    private bool showAgregarModal = false;private bool isLoadingInvestigaciones = false;
+    private bool showAgregarModal = false;
+    private bool showAgregarEvaluacionModal = false;private bool isLoadingInvestigaciones = false;
     private bool isLoadingEvaluaciones = false;
     private bool isLoadingCapacitaciones = false;
     private bool isLoadingRequisitos = false;
     private bool isSaving = false;
+    private bool isSavingEvaluacion = false;
     
     private List<Investigacion> investigaciones = new();
     private List<EvaluacionDesempenoDto> evaluaciones = new();
@@ -1063,17 +1164,22 @@
     private ResumenCapacitacionesDto? resumenCapacitaciones = null;
       // Variables para verificación de requisitos de subir de nivel
     private proyectoAgiles.Services.VerificacionRequisitosSubirNivelDto? requisitosVerificacion = null;
-    
-    private Investigacion nuevaInvestigacion = new();
+      private Investigacion nuevaInvestigacion = new();
     private Investigacion? editingInvestigacion = null;
     private IBrowserFile? selectedPdf;
     private string? pdfFileName;
-
-    private void HandlePdfSelected(InputFileChangeEventArgs e)
+    private IBrowserFile? selectedEvaluacionPdf;
+    private string? evaluacionPdfFileName;    private void HandlePdfSelected(InputFileChangeEventArgs e)
     {
         selectedPdf = e.File;
         pdfFileName = selectedPdf?.Name;
-    }    private async Task VerPdf(int investigacionId)
+    }
+
+    private void HandleEvaluacionPdfSelected(InputFileChangeEventArgs e)
+    {
+        selectedEvaluacionPdf = e.File;
+        evaluacionPdfFileName = selectedEvaluacionPdf?.Name;
+    }private async Task VerPdf(int investigacionId)
     {
         try
         {
@@ -1468,23 +1574,239 @@
             isLoadingEvaluaciones = false;
             StateHasChanged();
         }
-    }    private async Task ShowAgregarEvaluacion()
+    }    private void ShowAgregarEvaluacion()
     {
-        // Por ahora solo mostrar mensaje
-        await JSRuntime.InvokeVoidAsync("alert", "Funcionalidad de agregar evaluación en desarrollo");
+        nuevaEvaluacion = new EvaluacionDesempenoDto
+        {
+            Cedula = UserSession.CurrentUser?.Cedula ?? "",
+            FechaEvaluacion = DateTime.Now,
+            Anio = DateTime.Now.Year,
+            Semestre = DateTime.Now.Month <= 6 ? 1 : 2,
+            PuntajeMaximo = 100,
+            TipoEvaluacion = "Integral",
+            Estado = "Completada"
+        };
+        editingEvaluacion = null;
+        selectedEvaluacionPdf = null;
+        evaluacionPdfFileName = null;
+        showAgregarEvaluacionModal = true;
+        StateHasChanged();
     }
 
-    private async Task EditarEvaluacion(EvaluacionDesempenoDto evaluacion)
+    private void CloseAgregarEvaluacionModal()
     {
-        // Por ahora solo mostrar mensaje
-        await JSRuntime.InvokeVoidAsync("alert", $"Editar evaluación del período {evaluacion.PeriodoAcademico}");
+        showAgregarEvaluacionModal = false;
+        editingEvaluacion = null;
+        nuevaEvaluacion = new EvaluacionDesempenoDto();
+        selectedEvaluacionPdf = null;
+        evaluacionPdfFileName = null;
+        StateHasChanged();
+    }
+
+    private async Task GuardarEvaluacion()
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(nuevaEvaluacion.PeriodoAcademico) ||
+                string.IsNullOrWhiteSpace(nuevaEvaluacion.Cedula))
+            {
+                await MostrarNotificacionError("Error de validación", "Todos los campos obligatorios deben estar completados.");
+                return;
+            }
+
+            isSavingEvaluacion = true;
+            StateHasChanged();
+
+            var apiBaseUrl = "http://localhost:5200";
+            using var httpClient = new HttpClient();
+
+            if (editingEvaluacion != null)
+            {
+                // Actualizar evaluación existente
+                var updateDto = new UpdateEvaluacionDesempenoDto
+                {
+                    Id = editingEvaluacion.Id,
+                    Cedula = nuevaEvaluacion.Cedula,
+                    PeriodoAcademico = nuevaEvaluacion.PeriodoAcademico,
+                    Anio = nuevaEvaluacion.Anio,
+                    Semestre = nuevaEvaluacion.Semestre,
+                    PuntajeObtenido = nuevaEvaluacion.PuntajeObtenido,
+                    PuntajeMaximo = nuevaEvaluacion.PuntajeMaximo,
+                    FechaEvaluacion = nuevaEvaluacion.FechaEvaluacion,
+                    TipoEvaluacion = nuevaEvaluacion.TipoEvaluacion,
+                    Observaciones = nuevaEvaluacion.Observaciones,
+                    Estado = nuevaEvaluacion.Estado,
+                    Evaluador = nuevaEvaluacion.Evaluador
+                };                var updateJson = System.Text.Json.JsonSerializer.Serialize(updateDto);
+                var updateContent = new StringContent(updateJson, System.Text.Encoding.UTF8, "application/json");
+
+                var updateResponse = await httpClient.PutAsync($"{apiBaseUrl}/api/evaluacionesdesempeno/{editingEvaluacion.Id}", updateContent);
+
+                if (updateResponse.IsSuccessStatusCode)
+                {
+                    await MostrarNotificacionExito("Evaluación actualizada", "La evaluación se ha actualizado correctamente.");
+                    
+                    // Recargar evaluaciones
+                    await ImportarEvaluaciones();
+                    CloseAgregarEvaluacionModal();
+                }
+                else
+                {
+                    await MostrarNotificacionError("Error al actualizar", "No se pudo actualizar la evaluación.");
+                }
+            }
+            else
+            {
+                // Crear nueva evaluación
+                if (selectedEvaluacionPdf != null)
+                {
+                    // Crear con archivo PDF
+                    using var content = new MultipartFormDataContent();
+                    
+                    // Agregar campos del formulario
+                    content.Add(new StringContent(nuevaEvaluacion.Cedula), "Cedula");
+                    content.Add(new StringContent(nuevaEvaluacion.PeriodoAcademico), "PeriodoAcademico");
+                    content.Add(new StringContent(nuevaEvaluacion.Anio.ToString()), "Anio");
+                    content.Add(new StringContent(nuevaEvaluacion.Semestre.ToString()), "Semestre");
+                    content.Add(new StringContent(nuevaEvaluacion.PuntajeObtenido.ToString()), "PuntajeObtenido");
+                    content.Add(new StringContent(nuevaEvaluacion.PuntajeMaximo.ToString()), "PuntajeMaximo");
+                    content.Add(new StringContent(nuevaEvaluacion.FechaEvaluacion.ToString("yyyy-MM-dd")), "FechaEvaluacion");
+                    content.Add(new StringContent(nuevaEvaluacion.TipoEvaluacion), "TipoEvaluacion");
+                    content.Add(new StringContent(nuevaEvaluacion.Estado), "Estado");
+                    
+                    if (!string.IsNullOrEmpty(nuevaEvaluacion.Observaciones))
+                        content.Add(new StringContent(nuevaEvaluacion.Observaciones), "Observaciones");
+                    
+                    if (!string.IsNullOrEmpty(nuevaEvaluacion.Evaluador))
+                        content.Add(new StringContent(nuevaEvaluacion.Evaluador), "Evaluador");
+
+                    // Agregar archivo PDF
+                    var pdfStream = selectedEvaluacionPdf.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024); // 10MB max
+                    var pdfContent = new StreamContent(pdfStream);
+                    pdfContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/pdf");
+                    content.Add(pdfContent, "ArchivoPdf", selectedEvaluacionPdf.Name);
+
+                    var response = await httpClient.PostAsync($"{apiBaseUrl}/api/evaluacionesdesempeno/with-pdf", content);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        await MostrarNotificacionExito("Evaluación creada", "La evaluación se ha creado correctamente con su archivo PDF.");
+                        
+                        // Recargar evaluaciones
+                        await ImportarEvaluaciones();
+                        CloseAgregarEvaluacionModal();
+                    }
+                    else
+                    {
+                        var errorContent = await response.Content.ReadAsStringAsync();
+                        await MostrarNotificacionError("Error al crear evaluación", $"No se pudo crear la evaluación: {errorContent}");
+                    }
+                }
+                else
+                {
+                    // Crear sin archivo PDF
+                    var createDto = new CreateEvaluacionDesempenoDto
+                    {
+                        Cedula = nuevaEvaluacion.Cedula,
+                        PeriodoAcademico = nuevaEvaluacion.PeriodoAcademico,
+                        Anio = nuevaEvaluacion.Anio,
+                        Semestre = nuevaEvaluacion.Semestre,
+                        PuntajeObtenido = nuevaEvaluacion.PuntajeObtenido,
+                        PuntajeMaximo = nuevaEvaluacion.PuntajeMaximo,
+                        FechaEvaluacion = nuevaEvaluacion.FechaEvaluacion,
+                        TipoEvaluacion = nuevaEvaluacion.TipoEvaluacion,
+                        Observaciones = nuevaEvaluacion.Observaciones,
+                        Estado = nuevaEvaluacion.Estado,
+                        Evaluador = nuevaEvaluacion.Evaluador
+                    };
+
+                    var json = System.Text.Json.JsonSerializer.Serialize(createDto);
+                    var stringContent = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+
+                    var response = await httpClient.PostAsync($"{apiBaseUrl}/api/evaluacionesdesempeno", stringContent);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        await MostrarNotificacionExito("Evaluación creada", "La evaluación se ha creado correctamente.");
+                        
+                        // Recargar evaluaciones
+                        await ImportarEvaluaciones();
+                        CloseAgregarEvaluacionModal();
+                    }
+                    else
+                    {
+                        var errorContent = await response.Content.ReadAsStringAsync();
+                        await MostrarNotificacionError("Error al crear evaluación", $"No se pudo crear la evaluación: {errorContent}");
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            await MostrarNotificacionError("Error inesperado", $"Ocurrió un error: {ex.Message}");
+        }
+        finally
+        {
+            isSavingEvaluacion = false;
+            StateHasChanged();
+        }
+    }
+
+    private void EditarEvaluacion(EvaluacionDesempenoDto evaluacion)
+    {
+        editingEvaluacion = evaluacion;
+        nuevaEvaluacion = new EvaluacionDesempenoDto
+        {
+            Id = evaluacion.Id,
+            Cedula = evaluacion.Cedula,
+            PeriodoAcademico = evaluacion.PeriodoAcademico,
+            Anio = evaluacion.Anio,
+            Semestre = evaluacion.Semestre,
+            PuntajeObtenido = evaluacion.PuntajeObtenido,
+            PuntajeMaximo = evaluacion.PuntajeMaximo,
+            FechaEvaluacion = evaluacion.FechaEvaluacion,
+            TipoEvaluacion = evaluacion.TipoEvaluacion,
+            Observaciones = evaluacion.Observaciones,
+            Estado = evaluacion.Estado,
+            Evaluador = evaluacion.Evaluador
+        };
+        
+        selectedEvaluacionPdf = null;
+        evaluacionPdfFileName = null;
+        showAgregarEvaluacionModal = true;
+        StateHasChanged();
     }
 
     private async Task EliminarEvaluacion(int id)
     {
-        var confirmacion = await JSRuntime.InvokeAsync<bool>("confirm", "¿Estás seguro de que quieres eliminar esta evaluación?");        if (confirmacion)
+        var confirmacion = await JSRuntime.InvokeAsync<bool>("confirm", "¿Estás seguro de que quieres eliminar esta evaluación? Esta acción no se puede deshacer.");
+        
+        if (confirmacion)
         {
-            await JSRuntime.InvokeVoidAsync("alert", "Funcionalidad de eliminar evaluación en desarrollo");
+            try
+            {
+                var apiBaseUrl = "http://localhost:5200";
+                using var httpClient = new HttpClient();
+                
+                var response = await httpClient.DeleteAsync($"{apiBaseUrl}/api/evaluacionesdesempeno/{id}");
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    await MostrarNotificacionExito("Evaluación eliminada", "La evaluación se ha eliminado correctamente.");
+                    
+                    // Recargar evaluaciones
+                    await ImportarEvaluaciones();
+                }
+                else
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    await MostrarNotificacionError("Error al eliminar", $"No se pudo eliminar la evaluación: {errorContent}");
+                }
+            }
+            catch (Exception ex)
+            {
+                await MostrarNotificacionError("Error inesperado", $"Ocurrió un error al eliminar la evaluación: {ex.Message}");
+            }
         }
     }
 
@@ -1750,9 +2072,7 @@
         public string? NombreArchivoRespaldo { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
-    }
-
-    public class VerificacionRequisito75Dto
+    }    public class VerificacionRequisito75Dto
     {
         public string Cedula { get; set; } = string.Empty;
         public bool CumpleRequisito { get; set; }
@@ -1761,6 +2081,37 @@
         public decimal PorcentajePromedioUltimasCuatro { get; set; }
         public string Mensaje { get; set; } = string.Empty;
         public List<EvaluacionDesempenoDto> EvaluacionesConsideradas { get; set; } = new();
+    }
+
+    public class CreateEvaluacionDesempenoDto
+    {
+        public string Cedula { get; set; } = string.Empty;
+        public string PeriodoAcademico { get; set; } = string.Empty;
+        public int Anio { get; set; }
+        public int Semestre { get; set; }
+        public decimal PuntajeObtenido { get; set; }
+        public decimal PuntajeMaximo { get; set; } = 100;
+        public DateTime FechaEvaluacion { get; set; }
+        public string TipoEvaluacion { get; set; } = "Integral";
+        public string? Observaciones { get; set; }
+        public string Estado { get; set; } = "Completada";
+        public string? Evaluador { get; set; }
+    }
+
+    public class UpdateEvaluacionDesempenoDto
+    {
+        public int Id { get; set; }
+        public string Cedula { get; set; } = string.Empty;
+        public string PeriodoAcademico { get; set; } = string.Empty;
+        public int Anio { get; set; }
+        public int Semestre { get; set; }
+        public decimal PuntajeObtenido { get; set; }
+        public decimal PuntajeMaximo { get; set; } = 100;
+        public DateTime FechaEvaluacion { get; set; }
+        public string TipoEvaluacion { get; set; } = "Integral";
+        public string? Observaciones { get; set; }
+        public string Estado { get; set; } = "Completada";
+        public string? Evaluador { get; set; }
     }
 
     #region Métodos para DITIC
