@@ -1563,12 +1563,14 @@ private bool isLoadingInvestigaciones = false;
                 };
 
                 var created = await AuthService.CrearInvestigacionConPdf(createDto);
-                investigaciones.Add(MapearDesdeDto(created));            }
-              CloseAgregarModal();
+                investigaciones.Add(MapearDesdeDto(created));            }              CloseAgregarModal();
             await MostrarNotificacionExito("🎉 Investigación Guardada",
                 editingInvestigacion is not null ? 
                 "La investigación ha sido actualizada exitosamente en el sistema." : 
                 "La nueva investigación ha sido registrada correctamente y está disponible en tu perfil académico.");
+            
+            // Actualizar estadísticas automáticamente
+            await CargarEstadisticas();
         }
         catch (Exception ex)
         {
@@ -1594,6 +1596,9 @@ private bool isLoadingInvestigaciones = false;
                 {                    // Eliminar de la lista local
                     investigaciones.RemoveAll(i => i.Id == id);
                     await MostrarNotificacionExito("🗑️ Eliminación Exitosa", "La investigación ha sido eliminada permanentemente del sistema.");
+                    
+                    // Actualizar estadísticas automáticamente
+                    await CargarEstadisticas();
                     StateHasChanged();
                 }                else
                 {
@@ -1605,7 +1610,7 @@ private bool isLoadingInvestigaciones = false;
                 await JSRuntime.InvokeVoidAsync("alert", $"Error al eliminar: {ex.Message}");
             }
         }
-    }    private void CloseInvestigacionesModal()
+    }private void CloseInvestigacionesModal()
     {
         showInvestigacionesModal = false;
     }
@@ -1824,12 +1829,14 @@ private bool isLoadingInvestigaciones = false;
                     var created = await AuthService.CrearEvaluacion(createDto);
                     evaluaciones.Add(created);
                 }
-            }
-              CloseAgregarEvaluacionModal();
+            }              CloseAgregarEvaluacionModal();
             await MostrarNotificacionExito("🎯 Evaluación Registrada",
                 editingEvaluacion is not null ? 
                 "La evaluación de desempeño ha sido actualizada correctamente en el sistema académico." : 
                 "La nueva evaluación DAC ha sido registrada exitosamente y contribuye a tu perfil de promoción.");
+            
+            // Actualizar estadísticas automáticamente
+            await CargarEstadisticas();
         }
         catch (Exception ex)
         {
@@ -1877,6 +1884,9 @@ private bool isLoadingInvestigaciones = false;
                 {                    // Eliminar de la lista local
                     evaluaciones.RemoveAll(e => e.Id == id);
                     await MostrarNotificacionExito("🗑️ Evaluación Eliminada", "La evaluación de desempeño ha sido eliminada permanentemente del sistema.");
+                    
+                    // Actualizar estadísticas automáticamente
+                    await CargarEstadisticas();
                     StateHasChanged();
                 }                else
                 {
@@ -2232,9 +2242,11 @@ private bool isLoadingInvestigaciones = false;
                 if (selectedCapacitacionPdf is not null)
                 {
                     await AuthService.ActualizarCertificadoCapacitacion(editingCapacitacion.Id, selectedCapacitacionPdf);
-                }                
-                await MostrarNotificacionExito("🎓 Capacitación Actualizada", "La capacitación DITIC ha sido actualizada correctamente en el sistema académico.");
+                }                  await MostrarNotificacionExito("🎓 Capacitación Actualizada", "La capacitación DITIC ha sido actualizada correctamente en el sistema académico.");
                 await CargarCapacitaciones();
+                
+                // Actualizar estadísticas automáticamente
+                await CargarEstadisticas();
                 CloseAgregarCapacitacionModal();
             }
             else            {                if (selectedCapacitacionPdf is not null)
@@ -2264,6 +2276,9 @@ private bool isLoadingInvestigaciones = false;
                         selectedCapacitacionPdf
                     );                    await MostrarNotificacionExito("🎓 Capacitación Registrada", "La capacitación DITIC ha sido creada exitosamente con su certificado PDF adjunto.");
                     await CargarCapacitaciones();
+                    
+                    // Actualizar estadísticas automáticamente
+                    await CargarEstadisticas();
                     CloseAgregarCapacitacionModal();
                 }else
                 {
@@ -2291,9 +2306,11 @@ private bool isLoadingInvestigaciones = false;
                         FechaInicioAutoridad = nuevaCapacitacion.FechaInicioAutoridad,
                         FechaFinAutoridad = nuevaCapacitacion.FechaFinAutoridad
                     };
-                    var created = await AuthService.CrearCapacitacion(createDto);
-                    await MostrarNotificacionExito("🎓 Capacitación Registrada", "La capacitación DITIC ha sido creada correctamente en el sistema académico.");
+                    var created = await AuthService.CrearCapacitacion(createDto);                    await MostrarNotificacionExito("🎓 Capacitación Registrada", "La capacitación DITIC ha sido creada correctamente en el sistema académico.");
                     await CargarCapacitaciones();
+                    
+                    // Actualizar estadísticas automáticamente
+                    await CargarEstadisticas();
                     CloseAgregarCapacitacionModal();
                 }
             }
@@ -2387,9 +2404,7 @@ private bool isLoadingInvestigaciones = false;
         capacitacionPdfFileName = null;
         showAgregarCapacitacionModal = true;
         StateHasChanged();
-    }
-
-    private async Task EliminarCapacitacion(int id)
+    }    private async Task EliminarCapacitacion(int id)
     {
         var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", "¿Está seguro de que desea eliminar esta capacitación? Esta acción no se puede deshacer.");
         if (confirmed)
@@ -2400,6 +2415,9 @@ private bool isLoadingInvestigaciones = false;
                 {
                     await MostrarNotificacionExito("🗑️ Capacitación Eliminada", "La capacitación DITIC ha sido eliminada permanentemente del sistema.");
                     await CargarCapacitaciones();
+                    
+                    // Actualizar estadísticas automáticamente
+                    await CargarEstadisticas();
                     StateHasChanged();
                 }                else
                 {
