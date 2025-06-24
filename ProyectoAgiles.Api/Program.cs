@@ -73,7 +73,6 @@ app.UseHttpsRedirection();
 app.UseCors("AllowBlazorApp");
 
 app.UseRouting();
-app.UseAuthorization();
 app.MapControllers();
 
 // Aplicar migraciones automáticamente en desarrollo
