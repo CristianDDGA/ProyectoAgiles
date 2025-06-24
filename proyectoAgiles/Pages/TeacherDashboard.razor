@@ -2235,41 +2235,36 @@ private bool isLoadingInvestigaciones = false;
                 await CargarCapacitaciones();
                 CloseAgregarCapacitacionModal();
             }
-            else
-            {                if (selectedCapacitacionPdf is not null)
+            else            {                if (selectedCapacitacionPdf is not null)
                 {
-                    // Crear con PDF usando AuthService
-                    var createWithPdfDto = new ProyectoAgiles.Application.DTOs.CreateDiticWithPdfDto
-                    {
-                        Cedula = cedula,
-                        NombreCapacitacion = nuevaCapacitacion.NombreCapacitacion,
-                        Institucion = nuevaCapacitacion.Institucion,
-                        TipoCapacitacion = nuevaCapacitacion.TipoCapacitacion,
-                        Modalidad = nuevaCapacitacion.Modalidad,
-                        HorasAcademicas = nuevaCapacitacion.HorasAcademicas,
-                        FechaInicio = nuevaCapacitacion.FechaInicio,
-                        FechaFin = nuevaCapacitacion.FechaFin,
-                        Anio = nuevaCapacitacion.Anio,
-                        Estado = nuevaCapacitacion.Estado,
-                        Calificacion = nuevaCapacitacion.Calificacion,
-                        CalificacionMinima = nuevaCapacitacion.CalificacionMinima,
-                        Descripcion = nuevaCapacitacion.Descripcion,
-                        NumeroCertificado = nuevaCapacitacion.NumeroCertificado,
-                        Instructor = nuevaCapacitacion.Instructor,
-                        Observaciones = nuevaCapacitacion.Observaciones,
-                        ExencionPorAutoridad = nuevaCapacitacion.ExencionPorAutoridad,
-                        CargoAutoridad = nuevaCapacitacion.CargoAutoridad,
-                        FechaInicioAutoridad = nuevaCapacitacion.FechaInicioAutoridad,
-                        FechaFinAutoridad = nuevaCapacitacion.FechaFinAutoridad
-                        // Note: no asignamos ArchivoCertificado aquí porque es IFormFile y necesitamos IBrowserFile
-                    };
-                    
-                    // Usar método diferente o adaptar
-                    var created = await AuthService.CrearCapacitacion(createWithPdfDto);
-                    await MostrarNotificacionExito("Capacitación creada", "La capacitación se ha creado correctamente.");
+                    // Crear con PDF usando AuthService con parámetros individuales
+                    var created = await AuthService.CrearCapacitacionConPdf(
+                        cedula,
+                        nuevaCapacitacion.NombreCapacitacion,
+                        nuevaCapacitacion.Institucion,
+                        nuevaCapacitacion.TipoCapacitacion,
+                        nuevaCapacitacion.Modalidad,
+                        nuevaCapacitacion.HorasAcademicas,
+                        nuevaCapacitacion.FechaInicio,
+                        nuevaCapacitacion.FechaFin,
+                        nuevaCapacitacion.Anio,
+                        nuevaCapacitacion.Estado,
+                        nuevaCapacitacion.Calificacion,
+                        nuevaCapacitacion.CalificacionMinima,
+                        nuevaCapacitacion.Descripcion,
+                        nuevaCapacitacion.NumeroCertificado,
+                        nuevaCapacitacion.Instructor,
+                        nuevaCapacitacion.Observaciones,
+                        nuevaCapacitacion.ExencionPorAutoridad,
+                        nuevaCapacitacion.CargoAutoridad,
+                        nuevaCapacitacion.FechaInicioAutoridad,
+                        nuevaCapacitacion.FechaFinAutoridad,
+                        selectedCapacitacionPdf
+                    );
+                    await MostrarNotificacionExito("Capacitación creada", "La capacitación se ha creado correctamente con su certificado PDF.");
                     await CargarCapacitaciones();
                     CloseAgregarCapacitacionModal();
-                }                else
+                }else
                 {
                     // Crear sin PDF
                     var createDto = new ProyectoAgiles.Application.DTOs.CreateDiticDto

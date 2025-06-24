@@ -922,28 +922,25 @@ namespace proyectoAgiles.Services
         }
 
         // Métodos para trabajar con capacitaciones DITIC
-        
-        public async Task<List<DiticDto>> GetCapacitacionesPorCedula(string cedula)
+          public async Task<List<ProyectoAgiles.Application.DTOs.DiticDto>> GetCapacitacionesPorCedula(string cedula)
         {
             try
             {
-                var response = await _httpClient.GetFromJsonAsync<List<DiticDto>>($"{_apiBaseUrl}/api/ditic/docente/{cedula}");
-                return response ?? new List<DiticDto>();
+                var response = await _httpClient.GetFromJsonAsync<List<ProyectoAgiles.Application.DTOs.DiticDto>>($"{_apiBaseUrl}/api/ditic/docente/{cedula}");
+                return response ?? new List<ProyectoAgiles.Application.DTOs.DiticDto>();
             }
             catch (Exception ex)
             {
                 throw new Exception($"Error al obtener capacitaciones: {ex.Message}");
             }
-        }
-
-        public async Task<DiticDto> CrearCapacitacion(CreateDiticDto createDto)
+        }        public async Task<ProyectoAgiles.Application.DTOs.DiticDto> CrearCapacitacion(ProyectoAgiles.Application.DTOs.CreateDiticDto createDto)
         {
             try
             {
                 var response = await _httpClient.PostAsJsonAsync($"{_apiBaseUrl}/api/ditic", createDto);
                 if (response.IsSuccessStatusCode)
                 {
-                    var result = await response.Content.ReadFromJsonAsync<DiticDto>();
+                    var result = await response.Content.ReadFromJsonAsync<ProyectoAgiles.Application.DTOs.DiticDto>();
                     return result!;
                 }
                 
@@ -954,58 +951,77 @@ namespace proyectoAgiles.Services
             {
                 throw new Exception($"Error al crear capacitación: {ex.Message}");
             }
-        }
-
-        public async Task<DiticDto> CrearCapacitacionConPdf(CreateDiticWithPdfDto createDto)
+        }public async Task<ProyectoAgiles.Application.DTOs.DiticDto> CrearCapacitacionConPdf(
+            string cedula,
+            string nombreCapacitacion,
+            string institucion,
+            string tipoCapacitacion,
+            string modalidad,
+            int horasAcademicas,
+            DateTime fechaInicio,
+            DateTime fechaFin,
+            int anio,
+            string estado,
+            decimal? calificacion,
+            decimal calificacionMinima,
+            string? descripcion,
+            string? numeroCertificado,
+            string? instructor,
+            string? observaciones,
+            bool exencionPorAutoridad,
+            string? cargoAutoridad,
+            DateTime? fechaInicioAutoridad,
+            DateTime? fechaFinAutoridad,
+            IBrowserFile? archivoCertificado)
         {
             try
             {
-                Console.WriteLine($"CrearCapacitacionConPdf - PDF: {createDto.ArchivoCertificado?.Name}, Size: {createDto.ArchivoCertificado?.Length ?? 0}");
+                Console.WriteLine($"CrearCapacitacionConPdf - PDF: {archivoCertificado?.Name}, Size: {archivoCertificado?.Size ?? 0}");
                 
                 using var form = new MultipartFormDataContent();
-                form.Add(new StringContent(createDto.Cedula), "Cedula");
-                form.Add(new StringContent(createDto.NombreCapacitacion), "NombreCapacitacion");
-                form.Add(new StringContent(createDto.Institucion), "Institucion");
-                form.Add(new StringContent(createDto.TipoCapacitacion), "TipoCapacitacion");
-                form.Add(new StringContent(createDto.Modalidad), "Modalidad");
-                form.Add(new StringContent(createDto.HorasAcademicas.ToString()), "HorasAcademicas");
-                form.Add(new StringContent(createDto.FechaInicio.ToString("o")), "FechaInicio");
-                form.Add(new StringContent(createDto.FechaFin.ToString("o")), "FechaFin");
-                form.Add(new StringContent(createDto.Anio.ToString()), "Anio");
-                form.Add(new StringContent(createDto.Estado), "Estado");
-                form.Add(new StringContent(createDto.CalificacionMinima.ToString()), "CalificacionMinima");
+                form.Add(new StringContent(cedula), "Cedula");
+                form.Add(new StringContent(nombreCapacitacion), "NombreCapacitacion");
+                form.Add(new StringContent(institucion), "Institucion");
+                form.Add(new StringContent(tipoCapacitacion), "TipoCapacitacion");
+                form.Add(new StringContent(modalidad), "Modalidad");
+                form.Add(new StringContent(horasAcademicas.ToString()), "HorasAcademicas");
+                form.Add(new StringContent(fechaInicio.ToString("o")), "FechaInicio");
+                form.Add(new StringContent(fechaFin.ToString("o")), "FechaFin");
+                form.Add(new StringContent(anio.ToString()), "Anio");
+                form.Add(new StringContent(estado), "Estado");
+                form.Add(new StringContent(calificacionMinima.ToString()), "CalificacionMinima");
                 
-                if (createDto.Calificacion.HasValue)
-                    form.Add(new StringContent(createDto.Calificacion.Value.ToString()), "Calificacion");
+                if (calificacion.HasValue)
+                    form.Add(new StringContent(calificacion.Value.ToString()), "Calificacion");
                 
-                if (!string.IsNullOrEmpty(createDto.Descripcion))
-                    form.Add(new StringContent(createDto.Descripcion), "Descripcion");
+                if (!string.IsNullOrEmpty(descripcion))
+                    form.Add(new StringContent(descripcion), "Descripcion");
                 
-                if (!string.IsNullOrEmpty(createDto.NumeroCertificado))
-                    form.Add(new StringContent(createDto.NumeroCertificado), "NumeroCertificado");
+                if (!string.IsNullOrEmpty(numeroCertificado))
+                    form.Add(new StringContent(numeroCertificado), "NumeroCertificado");
                 
-                if (!string.IsNullOrEmpty(createDto.Instructor))
-                    form.Add(new StringContent(createDto.Instructor), "Instructor");
+                if (!string.IsNullOrEmpty(instructor))
+                    form.Add(new StringContent(instructor), "Instructor");
                 
-                if (!string.IsNullOrEmpty(createDto.Observaciones))
-                    form.Add(new StringContent(createDto.Observaciones), "Observaciones");
+                if (!string.IsNullOrEmpty(observaciones))
+                    form.Add(new StringContent(observaciones), "Observaciones");
                 
-                form.Add(new StringContent(createDto.ExencionPorAutoridad.ToString()), "ExencionPorAutoridad");
+                form.Add(new StringContent(exencionPorAutoridad.ToString()), "ExencionPorAutoridad");
                 
-                if (!string.IsNullOrEmpty(createDto.CargoAutoridad))
-                    form.Add(new StringContent(createDto.CargoAutoridad), "CargoAutoridad");
+                if (!string.IsNullOrEmpty(cargoAutoridad))
+                    form.Add(new StringContent(cargoAutoridad), "CargoAutoridad");
                 
-                if (createDto.FechaInicioAutoridad.HasValue)
-                    form.Add(new StringContent(createDto.FechaInicioAutoridad.Value.ToString("o")), "FechaInicioAutoridad");
+                if (fechaInicioAutoridad.HasValue)
+                    form.Add(new StringContent(fechaInicioAutoridad.Value.ToString("o")), "FechaInicioAutoridad");
                 
-                if (createDto.FechaFinAutoridad.HasValue)
-                    form.Add(new StringContent(createDto.FechaFinAutoridad.Value.ToString("o")), "FechaFinAutoridad");
+                if (fechaFinAutoridad.HasValue)
+                    form.Add(new StringContent(fechaFinAutoridad.Value.ToString("o")), "FechaFinAutoridad");
                 
-                if (createDto.ArchivoCertificado != null)
+                if (archivoCertificado != null)
                 {
-                    var stream = createDto.ArchivoCertificado.OpenReadStream(); // 10MB máx
-                    form.Add(new StreamContent(stream), "CertificadoPdf", createDto.ArchivoCertificado.Name);
-                    Console.WriteLine($"CrearCapacitacionConPdf - PDF agregado al form: {createDto.ArchivoCertificado.Name}");
+                    var stream = archivoCertificado.OpenReadStream(10 * 1024 * 1024); // 10MB máx
+                    form.Add(new StreamContent(stream), "CertificadoPdf", archivoCertificado.Name);
+                    Console.WriteLine($"CrearCapacitacionConPdf - PDF agregado al form: {archivoCertificado.Name}");
                 }
                 else
                 {
@@ -1015,23 +1031,21 @@ namespace proyectoAgiles.Services
                 var response = await _httpClient.PostAsync($"{_apiBaseUrl}/api/ditic/with-pdf", form);
                 Console.WriteLine($"CrearCapacitacionConPdf - Response: {response.StatusCode}");
                 response.EnsureSuccessStatusCode();
-                return await response.Content.ReadFromJsonAsync<DiticDto>() ?? new DiticDto();
+                return await response.Content.ReadFromJsonAsync<ProyectoAgiles.Application.DTOs.DiticDto>() ?? new ProyectoAgiles.Application.DTOs.DiticDto();
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"CrearCapacitacionConPdf - Error: {ex.Message}");
                 throw;
             }
-        }
-
-        public async Task<DiticDto> ActualizarCapacitacion(UpdateDiticDto updateDto)
+        }        public async Task<ProyectoAgiles.Application.DTOs.DiticDto> ActualizarCapacitacion(ProyectoAgiles.Application.DTOs.UpdateDiticDto updateDto)
         {
             try
             {
                 var response = await _httpClient.PutAsJsonAsync($"{_apiBaseUrl}/api/ditic/{updateDto.Id}", updateDto);
                 if (response.IsSuccessStatusCode)
                 {
-                    var result = await response.Content.ReadFromJsonAsync<DiticDto>();
+                    var result = await response.Content.ReadFromJsonAsync<ProyectoAgiles.Application.DTOs.DiticDto>();
                     return result!;
                 }
                 
@@ -1430,5 +1444,64 @@ public class RegisterRequest
         // Común
         public bool Cumple { get; set; }
         public string Detalles { get; set; } = string.Empty;
+    }
+
+    // DTOs específicos para AuthService que usan IBrowserFile
+    public class CreateDiticWithPdfDto
+    {
+        public string Cedula { get; set; } = string.Empty;
+        public string NombreCapacitacion { get; set; } = string.Empty;
+        public string Institucion { get; set; } = string.Empty;
+        public string TipoCapacitacion { get; set; } = string.Empty;
+        public string Modalidad { get; set; } = "Presencial";
+        public int HorasAcademicas { get; set; }
+        public DateTime FechaInicio { get; set; }
+        public DateTime FechaFin { get; set; }
+        public int Anio { get; set; }
+        public string Estado { get; set; } = "Completada";
+        public decimal? Calificacion { get; set; }
+        public decimal CalificacionMinima { get; set; } = 70;
+        public string? Descripcion { get; set; }
+        public string? NumeroCertificado { get; set; }
+        public string? Instructor { get; set; }
+        public string? Observaciones { get; set; }
+        public bool ExencionPorAutoridad { get; set; } = false;
+        public string? CargoAutoridad { get; set; }
+        public DateTime? FechaInicioAutoridad { get; set; }
+        public DateTime? FechaFinAutoridad { get; set; }
+        public IBrowserFile? ArchivoCertificado { get; set; }
+    }
+
+    // Alias del DTO para capacitaciones DITIC compatible con AuthService
+    public class DiticDto
+    {
+        public int Id { get; set; }
+        public string Cedula { get; set; } = string.Empty;
+        public string NombreCapacitacion { get; set; } = string.Empty;
+        public string Institucion { get; set; } = string.Empty;
+        public string TipoCapacitacion { get; set; } = string.Empty;
+        public string Modalidad { get; set; } = string.Empty;
+        public int HorasAcademicas { get; set; }
+        public DateTime FechaInicio { get; set; }
+        public DateTime FechaFin { get; set; }
+        public int Anio { get; set; }
+        public string Estado { get; set; } = string.Empty;
+        public decimal? Calificacion { get; set; }
+        public decimal CalificacionMinima { get; set; }
+        public bool Aprobada { get; set; }
+        public bool EsPedagogica { get; set; }
+        public string? Descripcion { get; set; }
+        public string? NumeroCertificado { get; set; }
+        public string? Instructor { get; set; }
+        public string? Observaciones { get; set; }
+        public string? NombreArchivoCertificado { get; set; }
+        public bool ExencionPorAutoridad { get; set; }
+        public string? CargoAutoridad { get; set; }
+        public DateTime? FechaInicioAutoridad { get; set; }
+        public DateTime? FechaFinAutoridad { get; set; }
+        public decimal AñosComoAutoridad { get; set; }
+        public bool CumpleExencionAutoridad { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public DateTime? UpdatedAt { get; set; }
     }
 }
