@@ -117,6 +117,24 @@ public class SolicitudesEscalafonController : ControllerBase
     }
 
     /// <summary>
+    /// Obtiene el conteo de solicitudes pendientes (endpoint alternativo)
+    /// </summary>
+    [HttpGet("pending-count")]
+    public async Task<ActionResult<int>> GetPendingCountAlternative()
+    {
+        try
+        {
+            var count = await _solicitudService.GetPendingCountAsync();
+            return Ok(count);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al obtener conteo de solicitudes pendientes");
+            return StatusCode(500, "Error interno del servidor");
+        }
+    }
+
+    /// <summary>
     /// Crea una nueva solicitud de escalafón
     /// </summary>
     [HttpPost]
@@ -156,6 +174,31 @@ public class SolicitudesEscalafonController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error al actualizar estado de solicitud {Id}", updateDto.Id);
+            return StatusCode(500, "Error interno del servidor");
+        }
+    }
+
+    /// <summary>
+    /// Actualiza el estado de una solicitud específica por ID
+    /// </summary>
+    [HttpPut("{id}/status")]
+    public async Task<ActionResult<SolicitudEscalafonDto>> UpdateSolicitudStatusById(int id, [FromBody] UpdateSolicitudStatusDto updateDto)
+    {
+        try
+        {
+            // Asegurar que el ID del DTO coincida con el ID de la ruta
+            updateDto.Id = id;
+            
+            var solicitud = await _solicitudService.UpdateSolicitudStatusAsync(updateDto);
+            return Ok(solicitud);
+        }
+        catch (ArgumentException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al actualizar estado de solicitud {Id}", id);
             return StatusCode(500, "Error interno del servidor");
         }
     }
