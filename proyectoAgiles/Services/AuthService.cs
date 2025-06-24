@@ -449,7 +449,7 @@ namespace proyectoAgiles.Services
         private async Task<RequisitoCumplimientoDto> VerificarEvaluacion75Porciento(string cedula)
         {
             try
-            {                var response = await _httpClient.GetAsync($"{_apiBaseUrl}/api/evaluaciones-desempeno/verificar-requisito-75/{cedula}");
+            {                var response = await _httpClient.GetAsync($"{_apiBaseUrl}/api/EvaluacionesDesempeno/verificar-requisito-75/{cedula}");
                 if (response.IsSuccessStatusCode)
                 {
                     var verificacion = await response.Content.ReadFromJsonAsync<VerificacionRequisito75Dto>();

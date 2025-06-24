@@ -66,4 +66,9 @@ public interface IEvaluacionDesempenoRepository : IRepository<EvaluacionDesempen
     /// Obtiene estadísticas generales de evaluaciones
     /// </summary>
     Task<object> GetEstadisticasGeneralesAsync();
+
+    /// <summary>
+    /// Método de prueba para verificar conexión a tabla DAC
+    /// </summary>
+    Task<object> TestDacConnectionAsync();
 }

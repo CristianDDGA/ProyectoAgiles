@@ -101,4 +101,9 @@ public interface IEvaluacionDesempenoService
     /// Verifica si existe evaluación para un período específico
     /// </summary>
     Task<bool> ExisteEvaluacionParaPeriodoAsync(string cedula, string periodoAcademico);
+
+    /// <summary>
+    /// Método de prueba para verificar conexión a tabla DAC
+    /// </summary>
+    Task<object> TestDacConnectionAsync();
 }

@@ -297,4 +297,12 @@ public class EvaluacionDesempenoService : IEvaluacionDesempenoService
     {
         return await _repository.ExisteEvaluacionParaPeriodoAsync(cedula, periodoAcademico);
     }
+
+    /// <summary>
+    /// Método de prueba para verificar conexión a tabla DAC
+    /// </summary>
+    public async Task<object> TestDacConnectionAsync()
+    {
+        return await _repository.TestDacConnectionAsync();
+    }
 }

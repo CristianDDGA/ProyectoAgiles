@@ -586,5 +586,96 @@ public class EvaluacionesDesempenoController : ControllerBase
         {
             return StatusCode(500, new { message = "Error al insertar datos", error = ex.Message });
         }
+    }    /// <summary>
+    /// Método de prueba para verificar conexión y datos en tabla DAC
+    /// </summary>
+    [HttpGet("test-dac-connection")]
+    public async Task<ActionResult> TestDacConnection()
+    {
+        try
+        {
+            var resultado = await _evaluacionService.TestDacConnectionAsync();
+            return Ok(resultado);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new 
+            { 
+                message = "Error al conectar con tabla DAC", 
+                error = ex.Message,
+                innerException = ex.InnerException?.Message
+            });
+        }
+    }
+
+    /// <summary>
+    /// Método de prueba específico para obtener evaluaciones por cédula
+    /// </summary>
+    [HttpGet("test-by-cedula/{cedula}")]
+    public async Task<ActionResult> TestByCedula(string cedula)
+    {
+        try
+        {
+            var evaluaciones = await _evaluacionService.GetByCedulaAsync(cedula);
+            var count = evaluaciones.Count();
+            
+            return Ok(new 
+            { 
+                message = $"Búsqueda exitosa para cédula {cedula}",
+                cedula = cedula,
+                totalEvaluaciones = count,
+                evaluaciones = evaluaciones,
+                timestamp = DateTime.Now
+            });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new 
+            { 
+                message = $"Error al buscar evaluaciones para cédula {cedula}", 
+                error = ex.Message,
+                innerException = ex.InnerException?.Message
+            });
+        }
+    }
+
+    /// <summary>
+    /// Verifica la estructura de la tabla DAC
+    /// </summary>
+    [HttpGet("verify-dac-structure")]
+    public async Task<ActionResult> VerifyDacStructure()
+    {
+        try
+        {
+            // Obtener información sobre la tabla DAC directamente
+            var result = await _evaluacionService.TestDacConnectionAsync();
+            
+            return Ok(new
+            {
+                message = "Verificación de estructura DAC completada",
+                structure = result,
+                tableInfo = new
+                {
+                    tableName = "DAC",
+                    entityName = "EvaluacionDesempeno",
+                    expectedColumns = new[] 
+                    { 
+                        "Id", "Cedula", "Anio", "Semestre", "PeriodoAcademico", 
+                        "PuntajeObtenido", "PuntajeMaximo", "ArchivoRespaldo", 
+                        "CreatedAt", "UpdatedAt", "IsDeleted" 
+                    }
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new 
+            { 
+                message = "Error al verificar estructura DAC", 
+                error = ex.Message,
+                stackTrace = ex.StackTrace,
+                innerException = ex.InnerException?.Message
+            });
+        }
     }
 }
