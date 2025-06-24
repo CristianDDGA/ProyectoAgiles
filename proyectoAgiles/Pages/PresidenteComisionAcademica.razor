@@ -1,9 +1,12 @@
 @page "/admin/presidente-comision-academica"
 @using Microsoft.AspNetCore.Components.Web
 @using Microsoft.AspNetCore.Components
+@using ProyectoAgiles.Application.DTOs
 @layout proyectoAgiles.Layout.MainLayout
 @inject NavigationManager Navigation
 @inject proyectoAgiles.Services.UserSessionService UserSession
+@inject HttpClient HttpClient
+@inject IJSRuntime JSRuntime
 
 <PageTitle>Presidente de la Comisión Académica - UTA</PageTitle>
 
@@ -351,50 +354,60 @@
 
     private async Task LoadSolicitudes()
     {
-        // Simular datos de solicitudes (aquí conectarías con tu base de datos)
-        solicitudes = new List<SolicitudEscalafon>
+        try
         {
-            new SolicitudEscalafon
+            // Cargar solicitudes desde la API
+            var response = await HttpClient.GetAsync("/api/solicitudes-escalafon");
+            
+            if (response.IsSuccessStatusCode)
             {
-                Id = 1,
-                DocenteNombre = "Dr. Juan Pérez García",
-                DocenteCedula = "1234567890",
-                DocenteEmail = "juan.perez@uta.edu.ec",
-                DocenteTelefono = "0987654321",
-                Facultad = "Facultad de Ingeniería",
-                Carrera = "Ingeniería en Sistemas",
-                NivelActual = "Auxiliar 1",
-                NivelSolicitado = "Auxiliar 2",
-                AnosExperiencia = 5,
-                Titulos = "Licenciado en Sistemas, Magíster en Tecnologías de la Información",
-                Publicaciones = "3 artículos en revistas indexadas",
-                ProyectosInvestigacion = "2 proyectos de investigación completados",
-                Capacitaciones = "Certificación en Cloud Computing, Curso de Metodologías Ágiles",
-                FechaSolicitud = DateTime.Now.AddDays(-2),
-                Status = "Pendiente",
-                Observaciones = "Cumple con todos los requisitos académicos"
-            },
-            new SolicitudEscalafon
-            {
-                Id = 2,
-                DocenteNombre = "Dra. María Elena Rodríguez",
-                DocenteCedula = "0987654321",
-                DocenteEmail = "maria.rodriguez@uta.edu.ec",
-                DocenteTelefono = "0987654322",
-                Facultad = "Facultad de Ciencias Humanas",
-                Carrera = "Psicología",
-                NivelActual = "Agregado 1",
-                NivelSolicitado = "Agregado 2",
-                AnosExperiencia = 8,
-                Titulos = "Licenciada en Psicología, Magíster en Psicología Clínica, PhD en Neuropsicología",
-                Publicaciones = "5 artículos en revistas indexadas, 2 capítulos de libro",
-                ProyectosInvestigacion = "3 proyectos de investigación, 1 proyecto internacional",
-                Capacitaciones = "Certificación en Terapia Cognitivo-Conductual, Diplomado en Neuropsicología",
-                FechaSolicitud = DateTime.Now.AddDays(-5),
-                Status = "Aprobado",
-                Observaciones = "Excelente trayectoria académica y de investigación"
+                var solicitudesDto = await response.Content.ReadFromJsonAsync<List<SolicitudEscalafonDto>>();
+                
+                if (solicitudesDto != null)
+                {
+                    // Convertir DTOs a modelo local
+                    solicitudes = solicitudesDto.Select(dto => new SolicitudEscalafon
+                    {
+                        Id = dto.Id,
+                        DocenteNombre = dto.DocenteNombre,
+                        DocenteCedula = dto.DocenteCedula,
+                        DocenteEmail = dto.DocenteEmail,
+                        DocenteTelefono = dto.DocenteTelefono ?? "",
+                        Facultad = dto.Facultad ?? "",
+                        Carrera = dto.Carrera ?? "",
+                        NivelActual = dto.NivelActual,
+                        NivelSolicitado = dto.NivelSolicitado,
+                        AnosExperiencia = dto.AnosExperiencia,
+                        Titulos = dto.Titulos ?? "",
+                        Publicaciones = dto.Publicaciones ?? "",
+                        ProyectosInvestigacion = dto.ProyectosInvestigacion ?? "",
+                        Capacitaciones = dto.Capacitaciones ?? "",
+                        FechaSolicitud = dto.FechaSolicitud,
+                        FechaAprobacion = dto.FechaAprobacion,
+                        FechaRechazo = dto.FechaRechazo,
+                        Status = dto.Status,
+                        Observaciones = dto.Observaciones ?? "",
+                        MotivoRechazo = dto.MotivoRechazo ?? ""
+                    }).ToList();
+                }
+                else
+                {
+                    solicitudes = new List<SolicitudEscalafon>();
+                }
             }
-        };
+            else
+            {
+                // En caso de error de API, inicializar lista vacía
+                solicitudes = new List<SolicitudEscalafon>();
+                await JSRuntime.InvokeVoidAsync("console.error", $"Error loading solicitudes: {response.StatusCode}");
+            }
+        }
+        catch (Exception ex)
+        {
+            // En caso de error, inicializar lista vacía
+            solicitudes = new List<SolicitudEscalafon>();
+            await JSRuntime.InvokeVoidAsync("console.error", $"Exception loading solicitudes: {ex.Message}");
+        }
 
         FilterSolicitudes();
         UpdateSummary();
@@ -434,16 +447,37 @@
 
     private async Task AprobarSolicitud(int solicitudId)
     {
-        var solicitud = solicitudes.FirstOrDefault(s => s.Id == solicitudId);
-        if (solicitud != null)
+        try
         {
-            solicitud.Status = "Aprobado";
-            solicitud.FechaAprobacion = DateTime.Now;
+            var updateDto = new UpdateSolicitudStatusDto
+            {
+                Id = solicitudId,
+                Status = "Aprobado"
+            };
+
+            var response = await HttpClient.PutAsJsonAsync($"/api/solicitudes-escalafon/{solicitudId}/status", updateDto);
             
-            // Aquí agregarías la lógica para actualizar en la base de datos
-            
-            await LoadSolicitudes();
-            CloseDetailsModal();
+            if (response.IsSuccessStatusCode)
+            {
+                await JSRuntime.InvokeVoidAsync("toastNotifications.success", 
+                    "Solicitud Aprobada", 
+                    "La solicitud de escalafón ha sido aprobada exitosamente.");
+                
+                await LoadSolicitudes();
+                CloseDetailsModal();
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("toastNotifications.error", 
+                    "Error", 
+                    "No se pudo aprobar la solicitud. Inténtalo más tarde.");
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("toastNotifications.error", 
+                "Error", 
+                $"Error al aprobar la solicitud: {ex.Message}");
         }
     }
 
@@ -455,18 +489,47 @@
 
     private async Task ConfirmReject()
     {
-        var solicitud = solicitudes.FirstOrDefault(s => s.Id == selectedSolicitudId);
-        if (solicitud != null)
+        try
         {
-            solicitud.Status = "Rechazado";
-            solicitud.MotivoRechazo = motivoRechazo;
-            solicitud.FechaRechazo = DateTime.Now;
+            if (string.IsNullOrWhiteSpace(motivoRechazo))
+            {
+                await JSRuntime.InvokeVoidAsync("toastNotifications.warning", 
+                    "Motivo Requerido", 
+                    "Debe proporcionar un motivo para rechazar la solicitud.");
+                return;
+            }
+
+            var updateDto = new UpdateSolicitudStatusDto
+            {
+                Id = selectedSolicitudId,
+                Status = "Rechazado",
+                MotivoRechazo = motivoRechazo
+            };
+
+            var response = await HttpClient.PutAsJsonAsync($"/api/solicitudes-escalafon/{selectedSolicitudId}/status", updateDto);
             
-            // Aquí agregarías la lógica para actualizar en la base de datos
-            
-            await LoadSolicitudes();
-            CloseRejectModal();
-            CloseDetailsModal();
+            if (response.IsSuccessStatusCode)
+            {
+                await JSRuntime.InvokeVoidAsync("toastNotifications.success", 
+                    "Solicitud Rechazada", 
+                    "La solicitud de escalafón ha sido rechazada.");
+                
+                await LoadSolicitudes();
+                CloseRejectModal();
+                CloseDetailsModal();
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("toastNotifications.error", 
+                    "Error", 
+                    "No se pudo rechazar la solicitud. Inténtalo más tarde.");
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("toastNotifications.error", 
+                "Error", 
+                $"Error al rechazar la solicitud: {ex.Message}");
         }
     }
 

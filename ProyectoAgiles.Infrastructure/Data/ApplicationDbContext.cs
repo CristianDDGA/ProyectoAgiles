@@ -14,6 +14,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<Investigacion> Investigaciones { get; set; }
     public DbSet<EvaluacionDesempeno> DAC { get; set; }
     public DbSet<DITIC> DITIC { get; set; }
+    public DbSet<SolicitudEscalafon> SolicitudesEscalafon { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -290,6 +291,85 @@ public class ApplicationDbContext : DbContext
             
             // Índice compuesto para verificación de duplicados
             entity.HasIndex(e => new { e.Cedula, e.NombreCapacitacion, e.Institucion, e.FechaInicio });
+
+            // Filtro global para soft delete
+            entity.HasQueryFilter(e => !e.IsDeleted);
+        });
+
+        // Configuración de la entidad SolicitudEscalafon
+        modelBuilder.Entity<SolicitudEscalafon>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            
+            entity.Property(e => e.DocenteCedula)
+                .IsRequired()
+                .HasMaxLength(10);
+            
+            entity.Property(e => e.DocenteNombre)
+                .IsRequired()
+                .HasMaxLength(200);
+            
+            entity.Property(e => e.DocenteEmail)
+                .IsRequired()
+                .HasMaxLength(255);
+            
+            entity.Property(e => e.DocenteTelefono)
+                .HasMaxLength(20);
+            
+            entity.Property(e => e.Facultad)
+                .HasMaxLength(200);
+            
+            entity.Property(e => e.Carrera)
+                .HasMaxLength(200);
+            
+            entity.Property(e => e.NivelActual)
+                .IsRequired()
+                .HasMaxLength(100);
+            
+            entity.Property(e => e.NivelSolicitado)
+                .IsRequired()
+                .HasMaxLength(100);
+            
+            entity.Property(e => e.Titulos)
+                .HasMaxLength(1000);
+            
+            entity.Property(e => e.Publicaciones)
+                .HasMaxLength(1000);
+            
+            entity.Property(e => e.ProyectosInvestigacion)
+                .HasMaxLength(1000);
+            
+            entity.Property(e => e.Capacitaciones)
+                .HasMaxLength(1000);
+            
+            entity.Property(e => e.Status)
+                .IsRequired()
+                .HasMaxLength(20)
+                .HasDefaultValue("Pendiente");
+            
+            entity.Property(e => e.Observaciones)
+                .HasMaxLength(1000);
+            
+            entity.Property(e => e.MotivoRechazo)
+                .HasMaxLength(1000);
+            
+            entity.Property(e => e.ProcesadoPor)
+                .HasMaxLength(100);
+            
+            entity.Property(e => e.FechaSolicitud)
+                .IsRequired();
+            
+            entity.Property(e => e.CreatedAt)
+                .IsRequired();
+            
+            entity.Property(e => e.IsDeleted)
+                .HasDefaultValue(false);
+
+            // Índice para búsquedas por cédula
+            entity.HasIndex(e => e.DocenteCedula);
+            
+            // Índice para búsquedas por estado
+            entity.HasIndex(e => e.Status);
 
             // Filtro global para soft delete
             entity.HasQueryFilter(e => !e.IsDeleted);

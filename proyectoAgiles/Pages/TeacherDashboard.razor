@@ -10,6 +10,7 @@
 @inject proyectoAgiles.Services.AuthService AuthService
 @inject UserSessionService UserSession
 @inject IJSRuntime JSRuntime
+@inject HttpClient HttpClient
 
 <PageTitle>Panel de Docente - UTA</PageTitle>
 
@@ -2056,34 +2057,54 @@ private bool isLoadingInvestigaciones = false;
         StateHasChanged();
     }    private async Task SubirNivel()
     {
-        // Lógica para subir de nivel
+        // Crear solicitud de escalafón en lugar de cambiar nivel directamente
         var cedula = UserSession.CurrentUser?.Cedula;
         if (string.IsNullOrEmpty(cedula))
         {
-            await JSRuntime.InvokeVoidAsync("alert", "No se pudo obtener la cédula del usuario actual.");
+            await MostrarNotificacionError("Error", "No se pudo obtener la cédula del usuario actual.");
             return;
         }
 
         try
         {
-            var result = await AuthService.SubirNivel(cedula);
-            if (result)
+            // Crear la solicitud de escalafón
+            var createSolicitudDto = new CreateSolicitudEscalafonDto
             {
-                // Actualizar la sesión del usuario
-                await UserSession.InitializeAsync();
-                // Mostrar mensaje de éxito
-                await JSRuntime.InvokeVoidAsync("alert", "¡Felicidades! Has subido de nivel.");
+                DocenteCedula = cedula,
+                DocenteNombre = UserSession.CurrentUser?.Nombre ?? "Nombre no disponible",
+                DocenteEmail = UserSession.CurrentUser?.Email ?? "Email no disponible",
+                NivelActual = UserSession.CurrentUser?.Nivel ?? "Titular Auxiliar 1",
+                NivelSolicitado = "Titular Auxiliar 2", // Por ahora fijo, se puede hacer dinámico
+                Observaciones = "Solicitud generada automáticamente desde el panel del docente"
+            };
+
+            var response = await HttpClient.PostAsJsonAsync("/api/solicitudes-escalafon", createSolicitudDto);
+
+            if (response.IsSuccessStatusCode)
+            {
+                // Cerrar el modal de requisitos
+                showRequisitosModal = false;
+                
+                // Mostrar notificación de éxito
+                await MostrarNotificacionExito(
+                    "Solicitud Enviada", 
+                    "Tu solicitud de escalafón ha sido enviada exitosamente y está siendo revisada por la Comisión Académica."
+                );
+
+                // Limpiar la verificación de requisitos para forzar una nueva verificación
+                requisitosVerificacion = null;
             }
             else
             {
-                // Mostrar mensaje de error
-                await JSRuntime.InvokeVoidAsync("alert", "Error al intentar subir de nivel. Inténtalo más tarde.");
+                var errorContent = await response.Content.ReadAsStringAsync();
+                await MostrarNotificacionError("Error", $"No se pudo crear la solicitud: {errorContent}");
             }
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("alert", $"Error: {ex.Message}");
-        }    }    // Métodos para notificaciones profesionales con toast
+            await MostrarNotificacionError("Error", $"Error al crear la solicitud: {ex.Message}");
+        }
+    }    // Métodos para notificaciones profesionales con toast
     private async Task MostrarNotificacionExito(string titulo, string mensaje, int duracion = 5000)
     {
         await JSRuntime.InvokeVoidAsync("toastNotifications.success", titulo, mensaje, duracion);

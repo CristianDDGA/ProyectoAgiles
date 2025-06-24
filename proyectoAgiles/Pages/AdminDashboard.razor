@@ -223,12 +223,25 @@
     {
         try
         {
-            // Simular carga de solicitudes pendientes (aquí conectarías con tu base de datos)
-            // En un escenario real, harías una llamada a la API
-            await Task.Delay(100); // Simular delay de red
+            // Obtener el conteo real de solicitudes pendientes desde la API
+            var response = await HttpClient.GetAsync("/api/solicitudes-escalafon/pending-count");
             
-            // Por ahora, simular que hay 2 solicitudes pendientes
-            pendingSolicitudesCount = 2;
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                if (int.TryParse(content, out int count))
+                {
+                    pendingSolicitudesCount = count;
+                }
+                else
+                {
+                    pendingSolicitudesCount = 0;
+                }
+            }
+            else
+            {
+                pendingSolicitudesCount = 0;
+            }
             
             StateHasChanged();
         }

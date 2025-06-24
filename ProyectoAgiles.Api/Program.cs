@@ -17,7 +17,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Configuración de AutoMapper
-builder.Services.AddAutoMapper(typeof(EvaluacionDesempenoMappingProfile), typeof(DiticMappingProfile));
+builder.Services.AddAutoMapper(typeof(EvaluacionDesempenoMappingProfile), typeof(DiticMappingProfile), typeof(SolicitudEscalafonMappingProfile));
 
 // Inyección de dependencias
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
@@ -28,6 +28,7 @@ builder.Services.AddScoped<ITTHHRepository, TTHHRepository>();
 builder.Services.AddScoped<IInvestigacionRepository, InvestigacionRepository>();
 builder.Services.AddScoped<IEvaluacionDesempenoRepository, EvaluacionDesempenoRepository>();
 builder.Services.AddScoped<IDiticRepository, DiticRepository>();
+builder.Services.AddScoped<ISolicitudEscalafonRepository, SolicitudEscalafonRepository>();
 
 // Servicio para manejo de archivos
 builder.Services.AddScoped<IFileService, FileService>();
@@ -41,6 +42,7 @@ builder.Services.AddScoped<ITeacherManagementService, TeacherManagementService>(
 builder.Services.AddScoped<IInvestigacionService, InvestigacionService>();
 builder.Services.AddScoped<IEvaluacionDesempenoService, EvaluacionDesempenoService>();
 builder.Services.AddScoped<IDiticService, DiticService>();
+builder.Services.AddScoped<ISolicitudEscalafonService, SolicitudEscalafonService>();
 
 // Configuración de CORS
 builder.Services.AddCors(options =>
