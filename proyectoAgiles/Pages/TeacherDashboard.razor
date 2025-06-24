@@ -2071,18 +2071,21 @@ private bool isLoadingInvestigaciones = false;
             var estadisticas = await AuthService.ObtenerEstadisticasDocente(cedula);
             
             // Crear la solicitud de escalafón con datos completos
-            var createSolicitudDto = new CreateSolicitudEscalafonDto
+            var createSolicitudDto = new proyectoAgiles.Services.CreateSolicitudEscalafonDto
             {
                 DocenteCedula = cedula,
                 DocenteNombre = UserSession.CurrentUser?.FullName ?? "Nombre no disponible",
                 DocenteEmail = UserSession.CurrentUser?.Email ?? "Email no disponible",
+                DocenteTelefono = "", // No disponible en UserSession actual
+                Facultad = "", // No disponible en UserSession actual  
+                Carrera = "", // No disponible en UserSession actual
                 NivelActual = UserSession.CurrentUser?.Nivel ?? "Titular Auxiliar 1",
                 NivelSolicitado = "Titular Auxiliar 2", // Por ahora fijo, se puede hacer dinámico
-                AnosExperiencia = (int)(estadisticas?.Secciones?.Experiencia?.Datos?.AñosObtenidos ?? 0),
-                Titulos = "Información disponible en el perfil académico",
-                Publicaciones = estadisticas?.Secciones?.Obras?.Datos?.TotalObras > 0 ? $"{estadisticas.Secciones.Obras.Datos.TotalObras} obras registradas" : "Sin publicaciones registradas",
-                ProyectosInvestigacion = estadisticas?.Secciones?.Obras?.Datos?.ObrasConUTA > 0 ? $"{estadisticas.Secciones.Obras.Datos.ObrasConUTA} obras con filiación UTA" : "Sin proyectos registrados",
-                Capacitaciones = estadisticas?.Secciones?.Capacitaciones?.Datos?.HorasObtenidas > 0 ? $"{estadisticas.Secciones.Capacitaciones.Datos.HorasObtenidas} horas totales ({estadisticas.Secciones.Capacitaciones.Datos.HorasPedagogicasObtenidas} horas pedagógicas)" : "Sin capacitaciones registradas",
+                AnosExperiencia = ObtenerAnosExperiencia(estadisticas),
+                Titulos = GenerarResumenTitulos(estadisticas),
+                Publicaciones = GenerarResumenPublicaciones(estadisticas),
+                ProyectosInvestigacion = GenerarResumenProyectos(estadisticas),
+                Capacitaciones = GenerarResumenCapacitaciones(estadisticas),
                 Observaciones = "Solicitud generada automáticamente desde el panel del docente"
             };
 
@@ -2131,6 +2134,69 @@ private bool isLoadingInvestigaciones = false;
     private async Task MostrarNotificacionAdvertencia(string titulo, string mensaje, int duracion = 6000)
     {
         await JSRuntime.InvokeVoidAsync("toastNotifications.warning", titulo, mensaje, duracion);
+    }
+
+    // Métodos auxiliares para generar resúmenes detallados de la solicitud
+    private int ObtenerAnosExperiencia(EstadisticasDocenteResponse? estadisticas)
+    {
+        if (estadisticas?.Secciones?.Experiencia?.Datos != null)
+        {
+            var datosExperiencia = estadisticas.Secciones.Experiencia.Datos;
+            return (int)Math.Round(datosExperiencia.AñosObtenidos);
+        }
+
+        // Como último recurso, retornar 0
+        return 0;
+    }
+
+    private string GenerarResumenTitulos(EstadisticasDocenteResponse? estadisticas)
+    {
+        // Por el momento, retornar información genérica ya que no hay sección de títulos en la estructura actual
+        return "Títulos académicos registrados en el sistema";
+    }
+
+    private string GenerarResumenPublicaciones(EstadisticasDocenteResponse? estadisticas)
+    {
+        if (estadisticas?.Secciones?.Obras?.Datos == null)
+            return "Sin publicaciones registradas";
+
+        var datos = estadisticas.Secciones.Obras.Datos;
+        var totalObras = datos.TotalObras;
+        var obrasConUTA = datos.ObrasConUTA;
+
+        if (totalObras == 0)
+            return "Sin publicaciones registradas";
+
+        return $"Total: {totalObras} obra(s) registrada(s). Con filiación UTA: {obrasConUTA} obra(s).";
+    }
+
+    private string GenerarResumenProyectos(EstadisticasDocenteResponse? estadisticas)
+    {
+        if (estadisticas?.Secciones?.Obras?.Datos == null)
+            return "Sin proyectos de investigación registrados";
+
+        var datos = estadisticas.Secciones.Obras.Datos;
+        var obrasConUTA = datos.ObrasConUTA;
+
+        if (obrasConUTA == 0)
+            return "Sin proyectos de investigación con filiación UTA registrados";
+
+        return $"Proyectos con filiación UTA: {obrasConUTA} proyecto(s) registrado(s).";
+    }
+
+    private string GenerarResumenCapacitaciones(EstadisticasDocenteResponse? estadisticas)
+    {
+        if (estadisticas?.Secciones?.Capacitaciones?.Datos == null)
+            return "Sin capacitaciones registradas";
+
+        var datos = estadisticas.Secciones.Capacitaciones.Datos;
+        var horasObtenidas = datos.HorasObtenidas;
+        var horasPedagogicas = datos.HorasPedagogicasObtenidas;
+
+        if (horasObtenidas == 0)
+            return "Sin capacitaciones registradas";
+
+        return $"Total: {horasObtenidas} horas de capacitación. Horas pedagógicas: {horasPedagogicas} horas.";
     }
 
     public class ClassItem
