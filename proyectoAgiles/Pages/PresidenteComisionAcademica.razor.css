@@ -464,6 +464,8 @@ body, html {
 .table td {
     padding: 0.75rem;
     border-bottom: 1px solid #e2e8f0;
+    vertical-align: middle;
+    line-height: 1.5;
 }
 
 .table td:first-child {
@@ -483,6 +485,38 @@ body, html {
 
 .btn-close:hover {
     color: #1a365d;
+}
+
+/* Estilos para indicadores de cumplimiento de requisitos */
+.cumple-requisito, .no-cumple-requisito {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 10px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 12px;
+    gap: 4px;
+}
+
+.cumple-requisito {
+    background-color: #dcfce7;
+    color: #15803d;
+    border: 1px solid #bbf7d0;
+}
+
+.no-cumple-requisito {
+    background-color: #fef2f2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+}
+
+.cumple-requisito i {
+    font-size: 0.875rem;
+}
+
+.no-cumple-requisito i {
+    font-size: 0.875rem;
 }
 
 /* Responsive Design */

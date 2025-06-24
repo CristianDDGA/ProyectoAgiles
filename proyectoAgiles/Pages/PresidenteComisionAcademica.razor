@@ -113,7 +113,31 @@
                             </div>
                             <div class="detail-row">
                                 <span class="detail-label">Años de Experiencia:</span>
-                                <span class="detail-value">@solicitud.AnosExperiencia años</span>
+                                <span class="detail-value">
+                                    @solicitud.AnosExperiencia años 
+                                    @((MarkupString)GetIndicadorCumplimiento(CumpleRequisitosExperiencia(solicitud.AnosExperiencia)))
+                                </span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Estado de Requisitos:</span>
+                                <span class="detail-value">
+                                    @{
+                                        var cumpleExp = CumpleRequisitosExperiencia(solicitud.AnosExperiencia);
+                                        var cumplePub = CumpleRequisitosPublicaciones(solicitud.Publicaciones);
+                                        var cumpleProy = CumpleRequisitosProyectos(solicitud.ProyectosInvestigacion);
+                                        var cumpleCap = CumpleRequisitosCapacitaciones(solicitud.Capacitaciones);
+                                        var cumpleTotal = cumpleExp && cumplePub && cumpleProy && cumpleCap;
+                                        var totalCumplidos = (cumpleExp ? 1 : 0) + (cumplePub ? 1 : 0) + (cumpleProy ? 1 : 0) + (cumpleCap ? 1 : 0);
+                                    }
+                                    @if (cumpleTotal)
+                                    {
+                                        <span class="cumple-requisito"><i class="fas fa-check-circle"></i> Cumple todos los requisitos</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="no-cumple-requisito"><i class="fas fa-exclamation-triangle"></i> Cumple @totalCumplidos de 4 requisitos</span>
+                                    }
+                                </span>
                             </div>
                         </div>
 
@@ -162,6 +186,20 @@
                 <div class="modal-body">
                     @if (selectedSolicitud != null)
                     {
+                        <!-- Información de Requisitos Mínimos -->
+                        <div class="details-section mb-4">
+                            <h6><i class="fas fa-info-circle"></i> Criterios de Evaluación</h6>
+                            <div class="alert alert-info">
+                                <small>
+                                    <strong>Requisitos mínimos para escalafón:</strong><br>
+                                    • Experiencia: Mínimo 3 años<br>
+                                    • Publicaciones: Mínimo 2 obras registradas<br>
+                                    • Proyectos: Mínimo 1 proyecto con filiación UTA<br>
+                                    • Capacitaciones: Mínimo 60 horas totales y 20 horas pedagógicas
+                                </small>
+                            </div>
+                        </div>
+
                         <!-- Información Personal -->
                         <div class="details-section">
                             <h6><i class="fas fa-user"></i> Información Personal</h6>
@@ -201,19 +239,31 @@
                                         </tr>
                                         <tr>
                                             <td><strong>Años de Experiencia:</strong></td>
-                                            <td>@selectedSolicitud.AnosExperiencia años</td>
+                                            <td>
+                                                @selectedSolicitud.AnosExperiencia años 
+                                                @((MarkupString)GetIndicadorCumplimiento(CumpleRequisitosExperiencia(selectedSolicitud.AnosExperiencia)))
+                                            </td>
                                         </tr>
                                         <tr>
                                             <td><strong>Publicaciones:</strong></td>
-                                            <td>@selectedSolicitud.Publicaciones</td>
+                                            <td>
+                                                @selectedSolicitud.Publicaciones 
+                                                @((MarkupString)GetIndicadorCumplimiento(CumpleRequisitosPublicaciones(selectedSolicitud.Publicaciones)))
+                                            </td>
                                         </tr>
                                         <tr>
                                             <td><strong>Proyectos de Investigación:</strong></td>
-                                            <td>@selectedSolicitud.ProyectosInvestigacion</td>
+                                            <td>
+                                                @selectedSolicitud.ProyectosInvestigacion 
+                                                @((MarkupString)GetIndicadorCumplimiento(CumpleRequisitosProyectos(selectedSolicitud.ProyectosInvestigacion)))
+                                            </td>
                                         </tr>
                                         <tr>
                                             <td><strong>Capacitaciones:</strong></td>
-                                            <td>@selectedSolicitud.Capacitaciones</td>
+                                            <td>
+                                                @selectedSolicitud.Capacitaciones 
+                                                @((MarkupString)GetIndicadorCumplimiento(CumpleRequisitosCapacitaciones(selectedSolicitud.Capacitaciones)))
+                                            </td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -545,11 +595,78 @@
     {
         return status switch
         {
-            "Pendiente" => "Pendiente",
+            "Pendiente" => "Pendiente de Revisión",
             "Aprobado" => "Aprobado",
             "Rechazado" => "Rechazado",
             _ => status
         };
+    }
+
+    // Métodos para verificar cumplimiento de requisitos
+    private bool CumpleRequisitosExperiencia(int anosExperiencia)
+    {
+        return anosExperiencia >= 3; // Mínimo 3 años de experiencia
+    }
+
+    private bool CumpleRequisitosPublicaciones(string publicaciones)
+    {
+        if (string.IsNullOrEmpty(publicaciones) || publicaciones.Contains("Sin publicaciones"))
+            return false;
+        
+        // Extraer número total de obras
+        var match = System.Text.RegularExpressions.Regex.Match(publicaciones, @"Total:\s*(\d+)\s*obra");
+        if (match.Success && int.TryParse(match.Groups[1].Value, out int totalObras))
+        {
+            return totalObras >= 2; // Mínimo 2 publicaciones
+        }
+        return false;
+    }
+
+    private bool CumpleRequisitosProyectos(string proyectos)
+    {
+        if (string.IsNullOrEmpty(proyectos) || proyectos.Contains("Sin proyectos"))
+            return false;
+        
+        // Extraer número de proyectos con UTA
+        var match = System.Text.RegularExpressions.Regex.Match(proyectos, @"(\d+)\s*proyecto");
+        if (match.Success && int.TryParse(match.Groups[1].Value, out int numProyectos))
+        {
+            return numProyectos >= 1; // Mínimo 1 proyecto con filiación UTA
+        }
+        return false;
+    }
+
+    private bool CumpleRequisitosCapacitaciones(string capacitaciones)
+    {
+        if (string.IsNullOrEmpty(capacitaciones) || capacitaciones.Contains("Sin capacitaciones"))
+            return false;
+        
+        // Extraer total de horas
+        var matchHoras = System.Text.RegularExpressions.Regex.Match(capacitaciones, @"Total:\s*(\d+)\s*horas");
+        // Extraer horas pedagógicas
+        var matchPedagogicas = System.Text.RegularExpressions.Regex.Match(capacitaciones, @"Horas pedagógicas:\s*(\d+)\s*horas");
+        
+        bool cumpleHorasTotal = false;
+        bool cumpleHorasPedagogicas = false;
+        
+        if (matchHoras.Success && int.TryParse(matchHoras.Groups[1].Value, out int totalHoras))
+        {
+            cumpleHorasTotal = totalHoras >= 60; // Mínimo 60 horas totales
+        }
+        
+        if (matchPedagogicas.Success && int.TryParse(matchPedagogicas.Groups[1].Value, out int horasPedagogicas))
+        {
+            cumpleHorasPedagogicas = horasPedagogicas >= 20; // Mínimo 20 horas pedagógicas
+        }
+        
+        return cumpleHorasTotal && cumpleHorasPedagogicas;
+    }
+
+    private string GetIndicadorCumplimiento(bool cumple)
+    {
+        return cumple ? 
+            "<span class='cumple-requisito'><i class='fas fa-check-circle text-success'></i> Cumple</span>" : 
+            "<span class='no-cumple-requisito'><i class='fas fa-times-circle text-danger'></i> No Cumple</span>";
     }
 
     public class SolicitudEscalafon
