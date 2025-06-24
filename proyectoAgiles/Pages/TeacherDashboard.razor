@@ -1940,44 +1940,40 @@ private bool isLoadingInvestigaciones = false;
 
             var cedula = UserSession.CurrentUser.Cedula;
 
-            // Simular carga de solicitudes (aquí iría la llamada real al servicio)
-            await Task.Delay(1000); // Simular tiempo de carga
+            // Obtener solicitudes reales desde la API
+            var apiSolicitudes = await AuthService.GetSolicitudesPorCedula(cedula);
             
-            // Datos de ejemplo para solicitudes
-            solicitudes = new List<SolicitudDto>
+            if (apiSolicitudes is not null && apiSolicitudes.Any())
             {
-                new SolicitudDto
+                // Mapear las solicitudes de la API a nuestro modelo local
+                solicitudes = apiSolicitudes.Select(s => new SolicitudDto
                 {
-                    Id = 1,
-                    TipoSolicitud = "Promoción de Escalafón",
-                    Estado = "En Revisión",
-                    FechaSolicitud = DateTime.Now.AddDays(-15),
-                    NivelActual = "Titular Auxiliar 1",
-                    NivelSolicitado = "Titular Auxiliar 2",
-                    Observaciones = "Solicitud de promoción cumpliendo todos los requisitos",
-                    ResponsableRevision = "Dirección de Talento Humano"
-                },
-                new SolicitudDto
-                {
-                    Id = 2,
-                    TipoSolicitud = "Cambio de Régimen",
-                    Estado = "Aprobada",
-                    FechaSolicitud = DateTime.Now.AddMonths(-2),
-                    FechaRespuesta = DateTime.Now.AddDays(-10),
-                    NivelActual = "Ocasional",
-                    NivelSolicitado = "Titular",
-                    Observaciones = "Cambio de régimen aprobado por cumplir requisitos académicos",
-                    ResponsableRevision = "Comisión Académica"
-                }
-            };
-            
-            await MostrarNotificacionExito($"📋 Solicitudes Cargadas", 
-                $"Se han cargado {solicitudes.Count} solicitud{(solicitudes.Count != 1 ? "es" : "")}.");
+                    Id = s.Id,
+                    TipoSolicitud = "Promoción de Escalafón", // No hay TipoSolicitud en el DTO, usar valor fijo
+                    Estado = s.Status ?? "Pendiente", // Usar Status como Estado
+                    FechaSolicitud = s.FechaSolicitud,
+                    FechaRespuesta = s.FechaAprobacion ?? s.FechaRechazo, // Usar la fecha que esté disponible
+                    NivelActual = s.NivelActual ?? "No especificado",
+                    NivelSolicitado = s.NivelSolicitado ?? "No especificado",
+                    Observaciones = s.Observaciones ?? s.MotivoRechazo ?? "Sin observaciones",
+                    ResponsableRevision = s.ProcesadoPor ?? "Sin asignar"
+                }).ToList();
+                
+                await MostrarNotificacionExito($"📋 Solicitudes Importadas", 
+                    $"Se han cargado {solicitudes.Count} solicitud{(solicitudes.Count != 1 ? "es" : "")} desde la base de datos.");
+            }
+            else
+            {
+                solicitudes = new List<SolicitudDto>();
+                await MostrarNotificacionInfo("ℹ️ Sin Datos Disponibles", 
+                    "No se encontraron solicitudes asociadas a tu cédula en la base de datos.");
+            }
         }
         catch (Exception ex)
         {
-            await MostrarNotificacionError("❌ Error de carga", 
+            await MostrarNotificacionError("❌ Error de importación", 
                 $"No se pudieron cargar las solicitudes: {ex.Message}");
+            solicitudes = new List<SolicitudDto>();
         }
         finally
         {

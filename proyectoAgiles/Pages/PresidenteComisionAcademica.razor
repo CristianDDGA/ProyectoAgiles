@@ -341,7 +341,7 @@
             
             if (response.IsSuccessStatusCode)
             {
-                var solicitudesDto = await response.Content.ReadFromJsonAsync<List<SolicitudEscalafonDto>>();
+                var solicitudesDto = await response.Content.ReadFromJsonAsync<List<ProyectoAgiles.Application.DTOs.SolicitudEscalafonDto>>();
                 
                 if (solicitudesDto != null)
                 {

@@ -921,6 +921,21 @@ namespace proyectoAgiles.Services
             }
         }
 
+        // Métodos para trabajar con solicitudes
+        
+        public async Task<List<ProyectoAgiles.Application.DTOs.SolicitudEscalafonDto>> GetSolicitudesPorCedula(string cedula)
+        {
+            try
+            {
+                var response = await _httpClient.GetFromJsonAsync<List<ProyectoAgiles.Application.DTOs.SolicitudEscalafonDto>>($"{_apiBaseUrl}/api/solicitudes-escalafon/by-cedula/{cedula}");
+                return response ?? new List<ProyectoAgiles.Application.DTOs.SolicitudEscalafonDto>();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error al obtener solicitudes: {ex.Message}");
+            }
+        }
+
         // Métodos para trabajar con capacitaciones DITIC
           public async Task<List<ProyectoAgiles.Application.DTOs.DiticDto>> GetCapacitacionesPorCedula(string cedula)
         {
