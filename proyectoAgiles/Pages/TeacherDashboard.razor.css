@@ -3,9 +3,8 @@
     padding: 20px;
     background-color: #f8f9fa;
     min-height: 100vh;
-    max-width: 1200px;
-    margin: 0 auto;
     width: 100%;
+    margin: 0;
 }
 
 /* Sección de Nivel Académico - Centrada y Responsive */
@@ -14,7 +13,7 @@
     justify-content: center;
     align-items: center;
     margin-bottom: 30px;
-    padding: 0 20px;
+    padding: 0 40px;
     width: 100%;
 }
 
@@ -24,7 +23,7 @@
     box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
     padding: 32px;
     width: 100%;
-    max-width: 480px;
+    max-width: 600px;
     border: 1px solid rgba(0, 0, 0, 0.06);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     margin: 0 auto;
@@ -397,111 +396,7 @@
 
 .no-classes i {
     font-size: 3rem;
-    margin-bottom: 15px;
-    opacity: 0.5;
-}
-
-/* Sección de Nivel Académico */
-.nivel-section-container {
-    display: flex;
-    justify-content: center;
-    margin-bottom: 30px;
-}
-
-.nivel-card {
-    background: white;
-    border-radius: 15px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-    padding: 25px;
-    max-width: 600px;
-    width: 100%;
-    border: 1px solid #e9ecef;
-    transition: all 0.3s ease;
-}
-
-.nivel-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-}
-
-.nivel-header {
-    text-align: center;
-    margin-bottom: 20px;
-    padding-bottom: 15px;
-    border-bottom: 2px solid #f8f9fa;
-}
-
-.nivel-title {
-    font-size: 1.4rem;
-    font-weight: 600;
-    color: #2c3e50;
-    margin: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.nivel-content {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 20px;
-}
-
-.nivel-info {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-    text-align: center;
-}
-
-.nivel-label {
-    font-size: 1.1rem;
-    font-weight: 500;
-    color: #495057;
-    margin-bottom: 5px;
-}
-
-.nivel-badge-container {
-    display: flex;
-    justify-content: center;
-}
-
-.nivel-badge {
-    font-size: 1.2rem !important;
-    padding: 12px 24px !important;
-    border-radius: 25px !important;
-    font-weight: 600 !important;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-    box-shadow: 0 2px 8px rgba(23, 162, 184, 0.2);
-}
-
-.nivel-actions {
-    display: flex;
-    justify-content: center;
-}
-
-.nivel-btn {
-    font-size: 1.1rem;
-    font-weight: 600;
-    padding: 12px 30px;
-    border-radius: 25px;
-    border: none;
-    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
-    transition: all 0.3s ease;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.nivel-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
-}
-
-.nivel-btn:active {
-    transform: translateY(0);
+    margin-bottom: 15px;    opacity: 0.5;
 }
 
 /* Responsive Design */
@@ -551,12 +446,12 @@
     }
     
     .class-time {
-        flex-direction: row;
-        min-width: auto;
+        flex-direction: row;        min-width: auto;
         margin-right: 0;
         gap: 10px;
     }
-      .class-actions {
+    
+    .class-actions {
         margin-left: 0;
         width: 100%;
     }
@@ -565,13 +460,11 @@
         width: 100%;
     }
 }
-}
 
 /* Media Queries Específicas para Sección de Nivel */
 @media (max-width: 768px) {
     .teacher-dashboard {
         padding: 15px;
-        max-width: 100%;
     }
     
     .nivel-section-container {
