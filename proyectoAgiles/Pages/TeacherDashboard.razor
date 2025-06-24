@@ -897,6 +897,222 @@
         </div>
     }
 
+    @* Modal para Solicitudes *@
+    @if (showSolicitudesModal)
+    {
+        <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,0.3);">
+            <div class="modal-dialog modal-xl">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Gestión de Solicitudes</h5>
+                        <button type="button" class="btn-close" @onclick="CloseSolicitudesModal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="d-flex justify-content-between mb-3">
+                            <h6>Mis Solicitudes</h6>
+                            <div>
+                                <button class="btn btn-primary" @onclick="ImportarSolicitudes">
+                                    <i class="fas fa-download"></i> Cargar Solicitudes
+                                </button>
+                            </div>
+                        </div>
+                        
+                        @if (isLoadingSolicitudes)
+                        {
+                            <div class="text-center">
+                                <div class="spinner-border" role="status">
+                                    <span class="visually-hidden">Cargando...</span>
+                                </div>
+                                <p class="mt-2">Cargando solicitudes...</p>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="table-responsive">
+                                <table class="table professional-table">
+                                    <thead>
+                                        <tr>
+                                            <th><i class="fas fa-file-alt me-2"></i>Tipo de Solicitud</th>
+                                            <th><i class="fas fa-traffic-light me-2"></i>Estado</th>
+                                            <th><i class="fas fa-calendar-plus me-2"></i>Fecha Solicitud</th>
+                                            <th><i class="fas fa-calendar-check me-2"></i>Fecha Respuesta</th>
+                                            <th><i class="fas fa-level-down-alt me-2"></i>Nivel Actual</th>
+                                            <th><i class="fas fa-level-up-alt me-2"></i>Nivel Solicitado</th>
+                                            <th><i class="fas fa-user-tie me-2"></i>Responsable</th>
+                                            <th><i class="fas fa-cogs me-2"></i>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @if (solicitudes.Any())
+                                        {
+                                            @foreach (var solicitud in solicitudes)
+                                            {
+                                                <tr>
+                                                    <td class="col-title">
+                                                        <div class="fw-medium">@solicitud.TipoSolicitud</div>
+                                                        @if (!string.IsNullOrEmpty(solicitud.Observaciones))
+                                                        {
+                                                            <small class="text-muted d-block mt-1">
+                                                                <i class="fas fa-comment me-1"></i>@solicitud.Observaciones.Substring(0, Math.Min(50, solicitud.Observaciones.Length))@(solicitud.Observaciones.Length > 50 ? "..." : "")
+                                                            </small>
+                                                        }
+                                                    </td>
+                                                    <td>
+                                                        <span class="table-badge @(solicitud.Estado.ToLower() switch { "aprobada" => "success", "en revisión" or "en revision" => "warning", "rechazada" => "danger", _ => "secondary" })">
+                                                            <i class="fas @(solicitud.Estado.ToLower() switch { "aprobada" => "fa-check-circle", "en revisión" or "en revision" => "fa-clock", "rechazada" => "fa-times-circle", _ => "fa-question-circle" })"></i>
+                                                            @solicitud.Estado
+                                                        </span>
+                                                    </td>
+                                                    <td class="col-date">
+                                                        <i class="fas fa-calendar-alt me-1"></i>
+                                                        @solicitud.FechaSolicitud.ToString("dd/MM/yyyy")
+                                                    </td>
+                                                    <td class="col-date">
+                                                        @if (solicitud.FechaRespuesta.HasValue)
+                                                        {
+                                                            <i class="fas fa-calendar-check me-1 text-success"></i>
+                                                            @solicitud.FechaRespuesta.Value.ToString("dd/MM/yyyy")
+                                                        }
+                                                        else
+                                                        {
+                                                            <span class="text-muted">
+                                                                <i class="fas fa-clock me-1"></i>Pendiente
+                                                            </span>
+                                                        }
+                                                    </td>
+                                                    <td>
+                                                        <span class="table-badge secondary">
+                                                            @solicitud.NivelActual
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <span class="table-badge info">
+                                                            <i class="fas fa-arrow-up"></i>
+                                                            @solicitud.NivelSolicitado
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        @if (!string.IsNullOrEmpty(solicitud.ResponsableRevision))
+                                                        {
+                                                            <span class="table-badge primary">
+                                                                <i class="fas fa-user-tie"></i>
+                                                                @solicitud.ResponsableRevision
+                                                            </span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span class="text-muted">
+                                                                <i class="fas fa-minus-circle me-1"></i>Sin asignar
+                                                            </span>
+                                                        }
+                                                    </td>
+                                                    <td class="col-actions">
+                                                        <div class="action-btn-group">
+                                                            <button class="action-btn view" @onclick="() => VerDetalleSolicitud(solicitud.Id)" title="Ver Detalle">
+                                                                <i class="fas fa-eye"></i>
+                                                            </button>
+                                                            @if (solicitud.Estado.ToLower() == "en revisión" || solicitud.Estado.ToLower() == "en revision")
+                                                            {
+                                                                <button class="action-btn delete" @onclick="() => CancelarSolicitud(solicitud.Id)" title="Cancelar">
+                                                                    <i class="fas fa-times"></i>
+                                                                </button>
+                                                            }
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <tr>
+                                                <td colspan="8" class="empty-state">
+                                                    <i class="fas fa-file-alt"></i>
+                                                    <h6>No hay solicitudes registradas</h6>
+                                                    <p>Haz clic en "Cargar Solicitudes" para ver el estado de tus solicitudes</p>
+                                                    <small class="text-info">Cédula actual: @(UserSession.CurrentUser?.Cedula ?? "No disponible")</small>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                        
+                        @* Mostrar resumen de solicitudes *@
+                        @if (solicitudes.Any())
+                        {
+                            <div class="mt-4">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6 class="card-title mb-0">
+                                            <i class="fas fa-chart-pie"></i> Resumen de Solicitudes
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        @{
+                                            var aprobadas = solicitudes.Count(s => s.Estado.ToLower() == "aprobada");
+                                            var enRevision = solicitudes.Count(s => s.Estado.ToLower() == "en revisión" || s.Estado.ToLower() == "en revision");
+                                            var rechazadas = solicitudes.Count(s => s.Estado.ToLower() == "rechazada");
+                                        }
+                                        <div class="row">
+                                            <div class="col-md-3">
+                                                <div class="d-flex align-items-center">
+                                                    <span class="badge bg-primary me-2">
+                                                        <i class="fas fa-list"></i>
+                                                    </span>
+                                                    <div>
+                                                        <strong>Total: @solicitudes.Count</strong>
+                                                        <small class="d-block text-muted">Solicitudes</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="d-flex align-items-center">
+                                                    <span class="badge bg-success me-2">
+                                                        <i class="fas fa-check"></i>
+                                                    </span>
+                                                    <div>
+                                                        <strong>Aprobadas: @aprobadas</strong>
+                                                        <small class="d-block text-muted">@Math.Round((double)aprobadas / solicitudes.Count * 100, 1)%</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="d-flex align-items-center">
+                                                    <span class="badge bg-warning me-2">
+                                                        <i class="fas fa-clock"></i>
+                                                    </span>
+                                                    <div>
+                                                        <strong>En Revisión: @enRevision</strong>
+                                                        <small class="d-block text-muted">@Math.Round((double)enRevision / solicitudes.Count * 100, 1)%</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="d-flex align-items-center">
+                                                    <span class="badge bg-danger me-2">
+                                                        <i class="fas fa-times"></i>
+                                                    </span>
+                                                    <div>
+                                                        <strong>Rechazadas: @rechazadas</strong>
+                                                        <small class="d-block text-muted">@Math.Round((double)rechazadas / solicitudes.Count * 100, 1)%</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" @onclick="CloseSolicitudesModal">Cerrar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
     @* Modal para Agregar/Editar Evaluaciones *@
     @if (showAgregarEvaluacionModal)
     {
@@ -1206,15 +1422,17 @@
     <!-- Sección de Acciones Rápidas -->
     <div class="quick-actions">
         <h2 class="section-title">Acciones Rápidas</h2>
-        <div class="row">            <div class="col-lg-4 col-md-6 mb-4">
+        <div class="row">
+            <div class="col-lg-3 col-md-6 mb-4">
                 <div class="action-card" @onclick="() => NavigateToInvestigaciones()">
                     <div class="action-icon">
                         <i class="fas fa-microscope"></i>
                     </div>
-                    <h3>Investigaciones</h3>                    <p>Gestionar y consultar tus proyectos de investigación</p>
+                    <h3>Investigaciones</h3>
+                    <p>Gestionar y consultar tus proyectos de investigación</p>
                 </div>
             </div>
-            <div class="col-lg-4 col-md-6 mb-4">
+            <div class="col-lg-3 col-md-6 mb-4">
                 <div class="action-card" @onclick="() => ShowEvaluacionesModal()">
                     <div class="action-icon">
                         <i class="fas fa-star"></i>
@@ -1223,12 +1441,38 @@
                     <p>Consultar evaluaciones de desempeño docente</p>
                 </div>
             </div>
-            <div class="col-lg-4 col-md-6 mb-4">                <div class="action-card" @onclick="() => ShowCapacitacionesModal()">
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="action-card" @onclick="() => ShowCapacitacionesModal()">
                     <div class="action-icon">
                         <i class="fas fa-graduation-cap"></i>
                     </div>
                     <h3>Capacitaciones DITIC</h3>
                     <p>Gestionar capacitaciones y actualización profesional</p>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="action-card" @onclick="() => ShowSolicitudesModal()">
+                    <div class="action-icon">
+                        <i class="fas fa-file-alt"></i>
+                    </div>
+                    <h3>Solicitudes</h3>
+                    <p>Ver estado de solicitudes de promoción y escalafón</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sección de Instituciones -->
+    <div class="instituciones-section">
+        <h2 class="section-title">Instituciones</h2>
+        <div class="row">
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="action-card" @onclick="() => NavigateToTalentoHumano()">
+                    <div class="action-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h3>Talento Humano</h3>
+                    <p>Gestionar información de recursos humanos y personal</p>
                 </div>
             </div>
         </div>
@@ -1242,13 +1486,17 @@
     private bool isLoadingEstadisticas = false;
     private EstadisticasDocenteResponse? estadisticasDocente = null;
     private bool showInvestigacionesModal = false;
-    private bool showEvaluacionesModal = false;    private bool showCapacitacionesModal = false;    private bool showAgregarModal = false;
+    private bool showEvaluacionesModal = false;
+    private bool showCapacitacionesModal = false;
+    private bool showSolicitudesModal = false;
+    private bool showAgregarModal = false;
     private bool showAgregarEvaluacionModal = false;
     private bool showAgregarCapacitacionModal = false;
 
 private bool isLoadingInvestigaciones = false;
     private bool isLoadingEvaluaciones = false;
     private bool isLoadingCapacitaciones = false;
+    private bool isLoadingSolicitudes = false;
     private bool isLoadingRequisitos = false;    private bool isSaving = false;
     private bool isSavingEvaluacion = false;
     private bool isSavingCapacitacion = false;
@@ -1261,6 +1509,9 @@ private bool isLoadingInvestigaciones = false;
     private List<ProyectoAgiles.Application.DTOs.DiticDto> capacitaciones = new();
     private ProyectoAgiles.Application.DTOs.DiticDto nuevaCapacitacion = new();
     private ProyectoAgiles.Application.DTOs.DiticDto? editingCapacitacion = null;
+    
+    // Variables para Solicitudes
+    private List<SolicitudDto> solicitudes = new();
     private ProyectoAgiles.Application.DTOs.VerificacionRequisitoDiticDto? verificacionRequisitoDitic = null;
     private ProyectoAgiles.Application.DTOs.ResumenCapacitacionesDto? resumenCapacitaciones = null;
       // Variables para verificación de requisitos de subir de nivel
@@ -1355,6 +1606,12 @@ private bool isLoadingInvestigaciones = false;
     private void NavigateToEvaluaciones()    {
         showEvaluacionesModal = true;
         // No cargar automáticamente - solo mostrar tabla vacía
+    }
+
+    private void NavigateToTalentoHumano()
+    {
+        // Navegar a la página de Talento Humano o mostrar modal
+        Navigation.NavigateTo("/talento-humano");
     }
 
     private async Task LoadInvestigaciones()
@@ -1620,6 +1877,11 @@ private bool isLoadingInvestigaciones = false;
     private void CloseEvaluacionesModal()
     {
         showEvaluacionesModal = false;
+    }
+
+    private void CloseSolicitudesModal()
+    {
+        showSolicitudesModal = false;
     }    private async Task ImportarEvaluaciones()
     {
         try
@@ -1659,6 +1921,67 @@ private bool isLoadingInvestigaciones = false;
         finally
         {
             isLoadingEvaluaciones = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task ImportarSolicitudes()
+    {
+        try
+        {
+            if (UserSession.CurrentUser?.Cedula == null)
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "No se pudo obtener la cédula del usuario");
+                return;
+            }
+
+            isLoadingSolicitudes = true;
+            StateHasChanged();
+
+            var cedula = UserSession.CurrentUser.Cedula;
+
+            // Simular carga de solicitudes (aquí iría la llamada real al servicio)
+            await Task.Delay(1000); // Simular tiempo de carga
+            
+            // Datos de ejemplo para solicitudes
+            solicitudes = new List<SolicitudDto>
+            {
+                new SolicitudDto
+                {
+                    Id = 1,
+                    TipoSolicitud = "Promoción de Escalafón",
+                    Estado = "En Revisión",
+                    FechaSolicitud = DateTime.Now.AddDays(-15),
+                    NivelActual = "Titular Auxiliar 1",
+                    NivelSolicitado = "Titular Auxiliar 2",
+                    Observaciones = "Solicitud de promoción cumpliendo todos los requisitos",
+                    ResponsableRevision = "Dirección de Talento Humano"
+                },
+                new SolicitudDto
+                {
+                    Id = 2,
+                    TipoSolicitud = "Cambio de Régimen",
+                    Estado = "Aprobada",
+                    FechaSolicitud = DateTime.Now.AddMonths(-2),
+                    FechaRespuesta = DateTime.Now.AddDays(-10),
+                    NivelActual = "Ocasional",
+                    NivelSolicitado = "Titular",
+                    Observaciones = "Cambio de régimen aprobado por cumplir requisitos académicos",
+                    ResponsableRevision = "Comisión Académica"
+                }
+            };
+            
+            await MostrarNotificacionExito($"📋 Solicitudes Cargadas", 
+                $"Se han cargado {solicitudes.Count} solicitud{(solicitudes.Count != 1 ? "es" : "")}.");
+        }
+        catch (Exception ex)
+        {
+            await MostrarNotificacionError("❌ Error de carga", 
+                $"No se pudieron cargar las solicitudes: {ex.Message}");
+        }
+        finally
+        {
+            isLoadingSolicitudes = false;
             StateHasChanged();
         }
     }private void ShowAgregarEvaluacion()
@@ -2033,6 +2356,12 @@ private bool isLoadingInvestigaciones = false;
     {
         showEvaluacionesModal = true;
         StateHasChanged();
+    }
+
+    private void ShowSolicitudesModal()
+    {
+        showSolicitudesModal = true;
+        StateHasChanged();
     }    private async Task SubirNivel()
     {
         // Crear solicitud de escalafón en lugar de cambiar nivel directamente
@@ -2111,6 +2440,49 @@ private bool isLoadingInvestigaciones = false;
     private async Task MostrarNotificacionAdvertencia(string titulo, string mensaje, int duracion = 6000)
     {
         await JSRuntime.InvokeVoidAsync("toastNotifications.warning", titulo, mensaje, duracion);
+    }
+
+    // Métodos para Solicitudes
+    private async Task VerDetalleSolicitud(int solicitudId)
+    {
+        var solicitud = solicitudes.FirstOrDefault(s => s.Id == solicitudId);
+        if (solicitud != null)
+        {
+            var mensaje = $"Tipo: {solicitud.TipoSolicitud}\n" +
+                         $"Estado: {solicitud.Estado}\n" +
+                         $"Fecha Solicitud: {solicitud.FechaSolicitud:dd/MM/yyyy}\n" +
+                         $"Nivel Actual: {solicitud.NivelActual}\n" +
+                         $"Nivel Solicitado: {solicitud.NivelSolicitado}\n" +
+                         $"Responsable: {solicitud.ResponsableRevision}\n\n" +
+                         $"Observaciones: {solicitud.Observaciones}";
+            
+            await JSRuntime.InvokeVoidAsync("alert", mensaje);
+        }
+    }
+
+    private async Task CancelarSolicitud(int solicitudId)
+    {
+        var confirmacion = await JSRuntime.InvokeAsync<bool>("confirm", 
+            "¿Está seguro de que desea cancelar esta solicitud?");
+        
+        if (confirmacion)
+        {
+            try
+            {
+                // Aquí iría la lógica para cancelar la solicitud en el servidor
+                var solicitud = solicitudes.FirstOrDefault(s => s.Id == solicitudId);
+                if (solicitud != null)
+                {
+                    solicitud.Estado = "Cancelada";
+                    StateHasChanged();
+                    await MostrarNotificacionExito("Solicitud Cancelada", "La solicitud ha sido cancelada exitosamente.");
+                }
+            }
+            catch (Exception ex)
+            {
+                await MostrarNotificacionError("Error", $"No se pudo cancelar la solicitud: {ex.Message}");
+            }
+        }
     }
 
     // Métodos auxiliares para generar resúmenes detallados de la solicitud
@@ -2200,6 +2572,19 @@ private bool isLoadingInvestigaciones = false;
         public decimal PorcentajePromedioUltimasCuatro { get; set; }
         public string Mensaje { get; set; } = string.Empty;
         public List<proyectoAgiles.Services.EvaluacionDesempenoDto> EvaluacionesConsideradas { get; set; } = new();
+    }
+
+    public class SolicitudDto
+    {
+        public int Id { get; set; }
+        public string TipoSolicitud { get; set; } = string.Empty;
+        public string Estado { get; set; } = string.Empty;
+        public DateTime FechaSolicitud { get; set; }
+        public DateTime? FechaRespuesta { get; set; }
+        public string NivelActual { get; set; } = string.Empty;
+        public string NivelSolicitado { get; set; } = string.Empty;
+        public string Observaciones { get; set; } = string.Empty;
+        public string ResponsableRevision { get; set; } = string.Empty;
     }
 
     // Métodos para DITIC
