@@ -1034,9 +1034,23 @@
                                     </div>
                                     <div class="card-body">
                                         @{
-                                            var aprobadas = solicitudes.Count(s => s.Estado.ToLower() == "aprobada");
-                                            var enRevision = solicitudes.Count(s => s.Estado.ToLower() == "en revisión" || s.Estado.ToLower() == "en revision");
-                                            var rechazadas = solicitudes.Count(s => s.Estado.ToLower() == "rechazada");
+                                            var aprobadas = solicitudes.Count(s => 
+                                                s.Estado.ToLower().Contains("aprobada") || 
+                                                s.Estado.ToLower().Contains("aprobado") ||
+                                                s.Estado.ToLower() == "completada" ||
+                                                s.Estado.ToLower() == "completado");
+                                            
+                                            var enRevision = solicitudes.Count(s => 
+                                                s.Estado.ToLower().Contains("revisión") || 
+                                                s.Estado.ToLower().Contains("revision") ||
+                                                s.Estado.ToLower() == "pendiente" ||
+                                                s.Estado.ToLower() == "en proceso");
+                                            
+                                            var rechazadas = solicitudes.Count(s => 
+                                                s.Estado.ToLower().Contains("rechazada") || 
+                                                s.Estado.ToLower().Contains("rechazado") ||
+                                                s.Estado.ToLower() == "denegada" ||
+                                                s.Estado.ToLower() == "denegado");
                                         }
                                         <div class="row">
                                             <div class="col-md-3">
@@ -1057,7 +1071,7 @@
                                                     </span>
                                                     <div>
                                                         <strong>Aprobadas: @aprobadas</strong>
-                                                        <small class="d-block text-muted">@Math.Round((double)aprobadas / solicitudes.Count * 100, 1)%</small>
+                                                        <small class="d-block text-muted">@(solicitudes.Count > 0 ? Math.Round((double)aprobadas / solicitudes.Count * 100, 1) : 0)%</small>
                                                     </div>
                                                 </div>
                                             </div>
@@ -1068,7 +1082,7 @@
                                                     </span>
                                                     <div>
                                                         <strong>En Revisión: @enRevision</strong>
-                                                        <small class="d-block text-muted">@Math.Round((double)enRevision / solicitudes.Count * 100, 1)%</small>
+                                                        <small class="d-block text-muted">@(solicitudes.Count > 0 ? Math.Round((double)enRevision / solicitudes.Count * 100, 1) : 0)%</small>
                                                     </div>
                                                 </div>
                                             </div>
@@ -1079,7 +1093,7 @@
                                                     </span>
                                                     <div>
                                                         <strong>Rechazadas: @rechazadas</strong>
-                                                        <small class="d-block text-muted">@Math.Round((double)rechazadas / solicitudes.Count * 100, 1)%</small>
+                                                        <small class="d-block text-muted">@(solicitudes.Count > 0 ? Math.Round((double)rechazadas / solicitudes.Count * 100, 1) : 0)%</small>
                                                     </div>
                                                 </div>
                                             </div>
