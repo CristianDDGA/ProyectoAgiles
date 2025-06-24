@@ -14,26 +14,29 @@
 <div class="teacher-dashboard">    <!-- Sección de Nivel -->
     <div class="nivel-section-container mb-4">
         <div class="nivel-card">
-            <div class="nivel-header">
-                <h5 class="nivel-title">
-                    <i class="fas fa-graduation-cap me-2"></i>
-                    Nivel Académico Actual
-                </h5>
-            </div>
-            <div class="nivel-content">
-                <div class="nivel-info">
+            <div class="nivel-content-horizontal">
+                <div class="nivel-title-section">
+                    <h5 class="nivel-title">
+                        <i class="fas fa-graduation-cap"></i>
+                        Nivel Académico Actual
+                    </h5>
+                </div>
+                
+                <div class="nivel-current-info">
                     <div class="nivel-label">Nivel actual:</div>
                     <div class="nivel-badge-container">
                         <span class="badge bg-info text-dark nivel-badge">@UserSession.GetUserNivel()</span>
                     </div>
                 </div>
+                
                 <div class="nivel-actions">
                     <button class="btn btn-success nivel-btn" @onclick="ShowRequisitosModal">
                         <i class="fas fa-arrow-up me-2"></i>
                         Subir de Nivel
                     </button>
                 </div>
-            </div>        </div>
+            </div>
+        </div>
     </div>
 
     @if (showRequisitosModal)
