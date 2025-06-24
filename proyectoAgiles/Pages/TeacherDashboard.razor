@@ -1461,22 +1461,6 @@
             </div>
         </div>
     </div>
-
-    <!-- Sección de Instituciones -->
-    <div class="instituciones-section">
-        <h2 class="section-title">Instituciones</h2>
-        <div class="row">
-            <div class="col-lg-4 col-md-6 mb-4">
-                <div class="action-card" @onclick="() => NavigateToTalentoHumano()">
-                    <div class="action-icon">
-                        <i class="fas fa-users"></i>
-                    </div>
-                    <h3>Talento Humano</h3>
-                    <p>Gestionar información de recursos humanos y personal</p>
-                </div>
-            </div>
-        </div>
-    </div>
 </div>
 
 @code {    private int totalCourses = 0;
@@ -1606,12 +1590,6 @@ private bool isLoadingInvestigaciones = false;
     private void NavigateToEvaluaciones()    {
         showEvaluacionesModal = true;
         // No cargar automáticamente - solo mostrar tabla vacía
-    }
-
-    private void NavigateToTalentoHumano()
-    {
-        // Navegar a la página de Talento Humano o mostrar modal
-        Navigation.NavigateTo("/talento-humano");
     }
 
     private async Task LoadInvestigaciones()
