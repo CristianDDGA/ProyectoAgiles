@@ -8,164 +8,304 @@
 <PageTitle>Talento Humano - UTA</PageTitle>
 
 <style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body, html {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        overflow-x: hidden;
+    }
+
     .talento-humano-page {
-        padding: 20px;
+        padding: 0;
+        margin: 0;
+        min-height: 100vh;
+        width: 100vw;
+        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        overflow-x: hidden;
+    }
+
+    .page-container {
+        max-width: 100%;
+        margin: 0;
+        padding: 1rem 0;
+        width: 100%;
+        box-sizing: border-box;
     }
 
     .page-header {
-        margin-bottom: 30px;
+        margin-bottom: 3rem;
+        text-align: center;
+        width: 100%;
+    }
+
+    .header-content {
+        max-width: 100%;
+        margin: 0 auto;
+        width: 100%;
     }
 
     .page-title {
-        color: #2c3e50;
-        font-weight: 600;
-        margin-bottom: 5px;
+        color: #1a365d;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        font-size: clamp(2rem, 5vw, 3rem);
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
 
     .page-subtitle {
-        color: #7f8c8d;
+        color: #4a5568;
         margin-bottom: 0;
+        font-size: clamp(1rem, 2.5vw, 1.25rem);
+        font-weight: 400;
+    }
+
+    .back-button-container {
+        position: absolute;
+        top: 1rem;
+        left: 1rem;
+        z-index: 10;
+    }
+
+    .talento-humano-cards {
+        margin-bottom: 4rem;
+        width: 100%;
+    }
+
+    .cards-container {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.5rem;
+        width: 100%;
+        max-width: none;
+        margin: 0;
+        padding: 0 1rem;
+        box-sizing: border-box;
     }
 
     .action-card {
-        background: #fff;
-        border-radius: 12px;
-        padding: 30px 25px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
-        border: 1px solid #e1e8ed;
-        transition: all 0.3s ease;
+        background: #ffffff;
+        border-radius: 20px;
+        padding: 2rem 1.5rem;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        border: 1px solid #e2e8f0;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         cursor: pointer;
-        height: 100%;
         display: flex;
         flex-direction: column;
         text-decoration: none;
+        position: relative;
+        overflow: hidden;
+        min-height: 280px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .action-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 5px;
+        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+        transform: scaleX(0);
+        transition: transform 0.4s ease;
+    }
+
+    .action-card:hover::before {
+        transform: scaleX(1);
     }
 
     .action-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-        border-color: #3498db;
+        transform: translateY(-12px) scale(1.02);
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+        border-color: #667eea;
     }
 
     .action-icon {
-        width: 60px;
-        height: 60px;
-        border-radius: 12px;
+        width: 80px;
+        height: 80px;
+        border-radius: 20px;
         display: flex;
         align-items: center;
         justify-content: center;
-        margin-bottom: 20px;
-        background: linear-gradient(135deg, #3498db, #2980b9);
+        margin: 0 auto 2rem auto;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
-        font-size: 24px;
+        font-size: 32px;
+        box-shadow: 0 12px 30px rgba(102, 126, 234, 0.3);
+        transition: all 0.3s ease;
+    }
+
+    .action-card:hover .action-icon {
+        transform: scale(1.1) rotate(5deg);
+        box-shadow: 0 15px 40px rgba(102, 126, 234, 0.4);
     }
 
     .action-card h3 {
-        color: #2c3e50;
-        font-size: 1.25rem;
-        font-weight: 600;
-        margin-bottom: 12px;
-        line-height: 1.3;
-    }
-
-    .action-card p {
-        color: #7f8c8d;
-        font-size: 14px;
-        line-height: 1.5;
-        margin-bottom: 0;
+        color: #1a365d;
+        font-size: clamp(1.1rem, 2.5vw, 1.5rem);
+        font-weight: 700;
+        margin-bottom: 1rem;
+        line-height: 1.4;
+        text-align: center;
         flex-grow: 1;
     }
 
+    .action-card p {
+        color: #4a5568;
+        font-size: clamp(0.875rem, 2vw, 1rem);
+        line-height: 1.6;
+        margin-bottom: 0;
+        text-align: center;
+    }
+
+    .info-section {
+        width: 100%;
+        margin: 0;
+        padding: 0 1rem;
+        box-sizing: border-box;
+    }
+
     .info-card {
-        background: #f8f9fa;
-        border-radius: 12px;
-        padding: 25px;
-        border: 1px solid #e1e8ed;
+        background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+        border-radius: 16px;
+        padding: 2rem;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        width: 100%;
+        box-sizing: border-box;
     }
 
     .info-header {
         display: flex;
         align-items: center;
-        margin-bottom: 15px;
+        margin-bottom: 1.5rem;
     }
 
     .info-header i {
-        color: #3498db;
-        font-size: 20px;
-        margin-right: 10px;
+        color: #667eea;
+        font-size: 24px;
+        margin-right: 12px;
     }
 
     .info-header h4 {
-        color: #2c3e50;
+        color: #1a365d;
         margin-bottom: 0;
-        font-weight: 600;
+        font-weight: 700;
+        font-size: 1.25rem;
     }
 
     .info-content {
-        color: #5a6c7d;
-        line-height: 1.6;
+        color: #4a5568;
+        line-height: 1.7;
+        font-size: 15px;
     }
 
     .info-content ul {
-        margin-top: 15px;
-        padding-left: 20px;
+        margin-top: 1rem;
+        padding-left: 1.5rem;
     }
 
     .info-content li {
-        margin-bottom: 8px;
+        margin-bottom: 0.75rem;
+    }
+
+    .info-content strong {
+        color: #2d3748;
+        font-weight: 600;
     }
 
     .btn-outline-secondary {
-        border-color: #6c757d;
-        color: #6c757d;
+        border-color: #718096;
+        color: #718096;
+        font-weight: 500;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        transition: all 0.3s ease;
     }
 
     .btn-outline-secondary:hover {
-        background-color: #6c757d;
-        border-color: #6c757d;
+        background-color: #718096;
+        border-color: #718096;
         color: white;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(113, 128, 150, 0.3);
+    }
+
+    /* Estilos responsivos usando CSS Grid y Flexbox */
+    .action-card {
+        width: 100%;
+        max-width: none;
+        animation: fadeIn 0.6s ease-out;
+        box-sizing: border-box;
+    }
+
+    .fade-in-1 { animation-delay: 0.1s; }
+    .fade-in-2 { animation-delay: 0.2s; }
+    .fade-in-3 { animation-delay: 0.3s; }
+
+    .fadeIn {
+        animation-name: fadeInAnimation;
+        animation-duration: 0.6s;
+        animation-fill-mode: both;
+    }
+
+    .fadeInAnimation {
+        0% {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        100% {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
 </style>
 
 <div class="talento-humano-page">
-    <!-- Título de la Página -->
-    <div class="page-header">
-        <div class="d-flex align-items-center mb-4">
-            <button class="btn btn-outline-secondary me-3" @onclick="GoBack">
-                <i class="fas fa-arrow-left"></i> Volver
-            </button>
-            <div>
+    <!-- Botón Volver Flotante -->
+    <div class="back-button-container">
+        <button class="btn btn-outline-secondary" @onclick="GoBack">
+            <i class="fas fa-arrow-left"></i> Volver
+        </button>
+    </div>
+
+    <div class="page-container">
+        <!-- Título de la Página -->
+        <div class="page-header">
+            <div class="header-content">
                 <h1 class="page-title">Talento Humano</h1>
                 <p class="page-subtitle">Gestión de recursos humanos y personal institucional</p>
             </div>
         </div>
-    </div>
 
-    <!-- Tarjetas de Talento Humano -->
-    <div class="talento-humano-cards">
-        <div class="row">
-            <div class="col-lg-6 col-md-6 mb-4">
-                <div class="action-card" @onclick="NavigateToPresidenteComision">
+        <!-- Tarjetas de Talento Humano -->
+        <div class="talento-humano-cards">
+            <div class="cards-container">
+                <div class="action-card fade-in-1" @onclick="NavigateToPresidenteComision">
                     <div class="action-icon">
                         <i class="fas fa-user-tie"></i>
                     </div>
                     <h3>Presidente de la Comisión Académica</h3>
                     <p>Escalafón y Promoción del personal académico</p>
                 </div>
-            </div>
-            
-            <div class="col-lg-6 col-md-6 mb-4">
-                <div class="action-card" @onclick="NavigateToDireccionTalentoHumano">
+                
+                <div class="action-card fade-in-2" @onclick="NavigateToDireccionTalentoHumano">
                     <div class="action-icon">
                         <i class="fas fa-building"></i>
                     </div>
                     <h3>Dirección de Talento Humano</h3>
                     <p>Gestión administrativa y operativa del personal</p>
                 </div>
-            </div>
-            
-            <div class="col-lg-6 col-md-6 mb-4">
-                <div class="action-card" @onclick="NavigateToComisionAcademica">
+                
+                <div class="action-card fade-in-3" @onclick="NavigateToComisionAcademica">
                     <div class="action-icon">
                         <i class="fas fa-users-cog"></i>
                     </div>
@@ -174,26 +314,22 @@
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Información Adicional -->
-    <div class="info-section mt-5">
-        <div class="row">
-            <div class="col-12">
-                <div class="info-card">
-                    <div class="info-header">
-                        <i class="fas fa-info-circle"></i>
-                        <h4>Información del Sistema de Talento Humano</h4>
-                    </div>
-                    <div class="info-content">
-                        <p>El sistema de Talento Humano de la Universidad Técnica de Ambato gestiona todos los procesos relacionados con el personal académico y administrativo, incluyendo:</p>
-                        <ul>
-                            <li><strong>Escalafón Docente:</strong> Gestión de promociones y ascensos del personal académico</li>
-                            <li><strong>Evaluación del Desempeño:</strong> Procesos de evaluación integral del personal</li>
-                            <li><strong>Capacitación:</strong> Programas de desarrollo profesional y actualización</li>
-                            <li><strong>Administración de Personal:</strong> Gestión administrativa y operativa</li>
-                        </ul>
-                    </div>
+        <!-- Información Adicional -->
+        <div class="info-section">
+            <div class="info-card">
+                <div class="info-header">
+                    <i class="fas fa-info-circle"></i>
+                    <h4>Información del Sistema de Talento Humano</h4>
+                </div>
+                <div class="info-content">
+                    <p>El sistema de Talento Humano de la Universidad Técnica de Ambato gestiona todos los procesos relacionados con el personal académico y administrativo, incluyendo:</p>
+                    <ul>
+                        <li><strong>Escalafón Docente:</strong> Gestión de promociones y ascensos del personal académico</li>
+                        <li><strong>Evaluación del Desempeño:</strong> Procesos de evaluación integral del personal</li>
+                        <li><strong>Capacitación:</strong> Programas de desarrollo profesional y actualización</li>
+                        <li><strong>Administración de Personal:</strong> Gestión administrativa y operativa</li>
+                    </ul>
                 </div>
             </div>
         </div>
