@@ -75,6 +75,22 @@
         </div>
     </div>
 
+    <!-- Sección de Instituciones -->
+    <div class="instituciones-section">
+        <h2 class="section-title">Instituciones</h2>
+        <div class="row">
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="action-card" @onclick="NavigateToTalentoHumano">
+                    <div class="action-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h3>Talento Humano</h3>
+                    <p>Gestionar información de recursos humanos y personal institucional</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Sección de Actividad Reciente -->
     <div class="recent-activity">
         <h2 class="section-title">Actividad Reciente</h2>
@@ -199,6 +215,11 @@
     private void NavigateToReports()
     {
         Navigation.NavigateTo("/admin/reports");
+    }
+
+    private void NavigateToTalentoHumano()
+    {
+        Navigation.NavigateTo("/admin/talento-humano");
     }
 
     private void NavigateToSettings()
