@@ -1635,35 +1635,19 @@ private bool isLoadingInvestigaciones = false;
             var cedula = UserSession.CurrentUser.Cedula;
 
             // Importar evaluaciones usando AuthService
-            var apiEvaluaciones = await AuthService.GetEvaluacionesPorCedula(cedula);
-
-            if (apiEvaluaciones is not null && apiEvaluaciones.Any())
+            var apiEvaluaciones = await AuthService.GetEvaluacionesPorCedula(cedula);            if (apiEvaluaciones is not null && apiEvaluaciones.Any())
             {
                 evaluaciones = apiEvaluaciones.ToList();
 
-                // Obtener verificación del requisito 75%
-                try
-                {
-                    var apiBaseUrl = "http://localhost:5200";
-                    var verificacionResponse = await new HttpClient().GetAsync($"{apiBaseUrl}/api/EvaluacionesDesempeno/verificar-requisito-75/{cedula}");
-                    if (verificacionResponse.IsSuccessStatusCode)
-                    {
-                        var verificacionJson = await verificacionResponse.Content.ReadAsStringAsync();
-                        verificacionRequisito = System.Text.Json.JsonSerializer.Deserialize<VerificacionRequisito75Dto>(verificacionJson, 
-                            new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Error al obtener verificación requisito 75%: {ex.Message}");
-                }
-                  await MostrarNotificacionExito($"📊 Evaluaciones Importadas", 
+                // Actualizar verificación del requisito 75%
+                await ActualizarVerificacionRequisito75();
+                  
+                await MostrarNotificacionExito($"📊 Evaluaciones Importadas", 
                     $"Se han cargado {evaluaciones.Count} evaluación{(evaluaciones.Count != 1 ? "es" : "")} desde la base de datos DAC.");
             }
             else
             {
-                evaluaciones = new List<proyectoAgiles.Services.EvaluacionDesempenoDto>();                await MostrarNotificacionInfo("ℹ️ Sin Datos Disponibles", 
-                    "No se encontraron evaluaciones de desempeño asociadas a tu cédula en la base de datos DAC.");
+                evaluaciones = new List<proyectoAgiles.Services.EvaluacionDesempenoDto>();                await MostrarNotificacionInfo("ℹ️ Sin Datos Disponibles", "No se encontraron evaluaciones de desempeño asociadas a tu cédula en la base de datos DAC.");
             }
         }
         catch (Exception ex)
@@ -1837,6 +1821,9 @@ private bool isLoadingInvestigaciones = false;
             
             // Actualizar estadísticas automáticamente
             await CargarEstadisticas();
+            
+            // Actualizar verificación del requisito 75%
+            await ActualizarVerificacionRequisito75();
         }
         catch (Exception ex)
         {
@@ -1879,16 +1866,18 @@ private bool isLoadingInvestigaciones = false;
             try
             {
                 var success = await AuthService.EliminarEvaluacion(id);
-                
-                if (success)
+                  if (success)
                 {                    // Eliminar de la lista local
                     evaluaciones.RemoveAll(e => e.Id == id);
                     await MostrarNotificacionExito("🗑️ Evaluación Eliminada", "La evaluación de desempeño ha sido eliminada permanentemente del sistema.");
                     
                     // Actualizar estadísticas automáticamente
                     await CargarEstadisticas();
+                    
+                    // Actualizar verificación del requisito 75%
+                    await ActualizarVerificacionRequisito75();
                     StateHasChanged();
-                }                else
+                }else
                 {
                     await MostrarNotificacionError("❌ Error de Eliminación", "No se pudo eliminar la evaluación. Verifica tu conexión e inténtalo nuevamente.");
                 }
@@ -2454,6 +2443,30 @@ private bool isLoadingInvestigaciones = false;
         }        catch (Exception ex)
         {
             await MostrarNotificacionError("Error", $"Error al obtener el PDF: {ex.Message}");
+        }
+    }
+
+    private async Task ActualizarVerificacionRequisito75()
+    {
+        try
+        {
+            var cedula = UserSession.CurrentUser?.Cedula;
+            if (string.IsNullOrEmpty(cedula))
+                return;
+
+            // Obtener verificación del requisito 75%
+            var apiBaseUrl = "http://localhost:5200";
+            var verificacionResponse = await new HttpClient().GetAsync($"{apiBaseUrl}/api/EvaluacionesDesempeno/verificar-requisito-75/{cedula}");
+            if (verificacionResponse.IsSuccessStatusCode)
+            {
+                var verificacionJson = await verificacionResponse.Content.ReadAsStringAsync();
+                verificacionRequisito = System.Text.Json.JsonSerializer.Deserialize<VerificacionRequisito75Dto>(verificacionJson, 
+                    new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al actualizar verificación requisito 75%: {ex.Message}");
         }
     }
 }
