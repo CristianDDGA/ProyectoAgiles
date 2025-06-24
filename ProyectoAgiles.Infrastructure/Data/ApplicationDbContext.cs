@@ -13,6 +13,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<TTHH> TTHH { get; set; }
     public DbSet<Investigacion> Investigaciones { get; set; }
     public DbSet<EvaluacionDesempeno> DAC { get; set; }
+    public DbSet<DITIC> DITIC { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -203,6 +204,92 @@ public class ApplicationDbContext : DbContext
             // Índice único compuesto para evitar duplicados de evaluación por período
             entity.HasIndex(e => new { e.Cedula, e.PeriodoAcademico })
                 .IsUnique();
+
+            // Filtro global para soft delete
+            entity.HasQueryFilter(e => !e.IsDeleted);
+        });        // Configuración de la entidad DITIC
+        modelBuilder.Entity<DITIC>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            
+            entity.Property(e => e.Cedula)
+                .IsRequired()
+                .HasMaxLength(10);
+            
+            entity.Property(e => e.NombreCapacitacion)
+                .IsRequired()
+                .HasMaxLength(500);
+            
+            entity.Property(e => e.Institucion)
+                .IsRequired()
+                .HasMaxLength(300);
+            
+            entity.Property(e => e.TipoCapacitacion)
+                .IsRequired()
+                .HasMaxLength(50);
+            
+            entity.Property(e => e.Modalidad)
+                .HasMaxLength(30)
+                .HasDefaultValue("Presencial");
+            
+            entity.Property(e => e.HorasAcademicas)
+                .IsRequired();
+            
+            entity.Property(e => e.FechaInicio)
+                .IsRequired();
+            
+            entity.Property(e => e.FechaFin)
+                .IsRequired();
+            
+            entity.Property(e => e.Anio)
+                .IsRequired();
+            
+            entity.Property(e => e.Estado)
+                .HasMaxLength(20)
+                .HasDefaultValue("Completada");
+            
+            entity.Property(e => e.Calificacion)
+                .HasColumnType("decimal(5,2)");
+            
+            entity.Property(e => e.CalificacionMinima)
+                .HasColumnType("decimal(5,2)")
+                .HasDefaultValue(70);
+            
+            entity.Property(e => e.Descripcion)
+                .HasMaxLength(1000);
+            
+            entity.Property(e => e.NumeroCertificado)
+                .HasMaxLength(100);
+            
+            entity.Property(e => e.Instructor)
+                .HasMaxLength(200);
+            
+            entity.Property(e => e.Observaciones)
+                .HasMaxLength(500);
+            
+            entity.Property(e => e.NombreArchivoCertificado)
+                .HasMaxLength(255);
+            
+            entity.Property(e => e.ExencionPorAutoridad)
+                .HasDefaultValue(false);
+            
+            entity.Property(e => e.CargoAutoridad)
+                .HasMaxLength(100);
+            
+            entity.Property(e => e.CreatedAt)
+                .IsRequired();
+            
+            entity.Property(e => e.IsDeleted)
+                .HasDefaultValue(false);
+
+            // Índice para búsquedas por cédula
+            entity.HasIndex(e => e.Cedula);
+            
+            // Índice para búsquedas por año
+            entity.HasIndex(e => e.Anio);
+            
+            // Índice compuesto para verificación de duplicados
+            entity.HasIndex(e => new { e.Cedula, e.NombreCapacitacion, e.Institucion, e.FechaInicio });
 
             // Filtro global para soft delete
             entity.HasQueryFilter(e => !e.IsDeleted);

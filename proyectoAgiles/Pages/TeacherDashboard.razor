@@ -1,5 +1,6 @@
 @page "/docente"
 @using Microsoft.AspNetCore.Components.Web
+@using System.Text.Json
 @layout proyectoAgiles.Layout.MainLayout
 @inject NavigationManager Navigation
 @inject proyectoAgiles.Services.AuthService AuthService
@@ -342,6 +343,112 @@
         </div>
     }
 
+    @* Modal para Capacitaciones DITIC *@
+    @if (showCapacitacionesModal)
+    {
+        <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,0.3);">
+            <div class="modal-dialog modal-xl">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Gestión de Capacitaciones DITIC</h5>
+                        <button type="button" class="btn-close" @onclick="CloseCapacitacionesModal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="d-flex justify-content-between mb-3">
+                            <h6>Mis Capacitaciones</h6>
+                            <div>
+                                <button class="btn btn-success me-2" @onclick="ShowAgregarCapacitacion">
+                                    <i class="fas fa-plus"></i> Agregar
+                                </button>
+                                <button class="btn btn-primary" @onclick="ImportarCapacitaciones">
+                                    <i class="fas fa-download"></i> Importar
+                                </button>
+                            </div>
+                        </div>
+                          @if (isLoadingCapacitaciones)
+                        {
+                            <div class="text-center">
+                                <div class="spinner-border" role="status">
+                                    <span class="visually-hidden">Cargando...</span>
+                                </div>
+                                <p class="mt-2">Cargando capacitaciones...</p>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Nombre</th>
+                                            <th>Institución</th>
+                                            <th>Tipo</th>
+                                            <th>Modalidad</th>
+                                            <th>Horas</th>
+                                            <th>Fecha Inicio</th>
+                                            <th>Fecha Fin</th>
+                                            <th>Estado</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @if (capacitaciones.Any())
+                                        {
+                                            @foreach (var capacitacion in capacitaciones)
+                                            {
+                                                <tr>
+                                                    <td>@capacitacion.NombreCapacitacion</td>
+                                                    <td>@capacitacion.Institucion</td>
+                                                    <td>@capacitacion.TipoCapacitacion</td>
+                                                    <td>@capacitacion.Modalidad</td>
+                                                    <td>@capacitacion.HorasAcademicas</td>
+                                                    <td>@capacitacion.FechaInicio.ToString("dd/MM/yyyy")</td>
+                                                    <td>@capacitacion.FechaFin.ToString("dd/MM/yyyy")</td>
+                                                    <td>
+                                                        <span class="badge @GetCapacitacionEstadoBadgeClass(capacitacion.Estado)">
+                                                            @capacitacion.Estado
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <button class="btn btn-sm btn-outline-primary me-1" @onclick="() => EditarCapacitacion(capacitacion)">
+                                                            <i class="fas fa-edit"></i>
+                                                        </button>
+                                                        <button class="btn btn-sm btn-outline-danger" @onclick="() => EliminarCapacitacion(capacitacion.Id)">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                        @if (!string.IsNullOrEmpty(capacitacion.NombreArchivoCertificado))
+                                                        {
+                                                            <button class="btn btn-outline-primary btn-sm" @onclick="() => VerPdfCapacitacion(capacitacion.Id)">
+                                                                <i class="fas fa-file-pdf"></i> Ver PDF
+                                                            </button>
+                                                        }
+                                                    </td>
+                                                </tr>
+                                            }
+                                        }                                        else
+                                        {
+                                            <tr>
+                                                <td colspan="9" class="text-center text-muted py-4">
+                                                    <i class="fas fa-search fa-2x mb-2"></i>
+                                                    <p class="mb-1">No hay capacitaciones cargadas</p>
+                                                    <small>Haz clic en "Importar" para cargar tus capacitaciones desde la base de datos</small>
+                                                    <br><small class="text-info">Cédula actual: @(UserSession.CurrentUser?.Cedula ?? "No disponible")</small>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" @onclick="CloseCapacitacionesModal">Cerrar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
     <!-- Tarjetas de Resumen -->
     <div class="stats-section">
         <div class="row">
@@ -449,12 +556,21 @@
                 </div>
             </div>
             <div class="col-lg-4 col-md-6 mb-4">
-                <div class="action-card" @onclick="() => NavigateToEvaluaciones()">
+                <div class="action-card" @onclick="() => ShowEvaluacionesModal()">
                     <div class="action-icon">
                         <i class="fas fa-star"></i>
                     </div>
-                    <h3>Evaluaciones de Desempeño</h3>
-                    <p>Consultar y gestionar evaluaciones DAC</p>
+                    <h3>Evaluaciones DAC</h3>
+                    <p>Consultar evaluaciones de desempeño docente</p>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="action-card" @onclick="() => ShowCapacitacionesModal()">
+                    <div class="action-icon">
+                        <i class="fas fa-graduation-cap"></i>
+                    </div>
+                    <h3>Capacitaciones DITIC</h3>
+                    <p>Gestionar capacitaciones y actualización profesional</p>
                 </div>
             </div>
         </div>
@@ -505,9 +621,11 @@
     private List<ClassItem> upcomingClasses = new();    private bool showRequisitosModal = false;
     private bool showInvestigacionesModal = false;
     private bool showEvaluacionesModal = false;
+    private bool showCapacitacionesModal = false;
     private bool showAgregarModal = false;
     private bool isLoadingInvestigaciones = false;
     private bool isLoadingEvaluaciones = false;
+    private bool isLoadingCapacitaciones = false;
     private bool isSaving = false;
     
     private List<Investigacion> investigaciones = new();
@@ -515,6 +633,14 @@
     private EvaluacionDesempenoDto nuevaEvaluacion = new();
     private EvaluacionDesempenoDto? editingEvaluacion = null;
     private VerificacionRequisito75Dto? verificacionRequisito = null;
+    
+    // Variables para DITIC
+    private List<DiticDto> capacitaciones = new();
+    private DiticDto nuevaCapacitacion = new();
+    private DiticDto? editingCapacitacion = null;
+    private VerificacionRequisitoDiticDto? verificacionRequisitoDitic = null;
+    private ResumenCapacitacionesDto? resumenCapacitaciones = null;
+    
     private Investigacion nuevaInvestigacion = new();
     private Investigacion? editingInvestigacion = null;
     private IBrowserFile? selectedPdf;
@@ -1055,6 +1181,12 @@
         showRequisitosModal = false;
     }
 
+    private void ShowEvaluacionesModal()
+    {
+        showEvaluacionesModal = true;
+        StateHasChanged();
+    }
+
     private async Task SubirNivel()
     {
         // Lógica para subir de nivel
@@ -1199,5 +1331,271 @@
         public decimal PorcentajePromedioUltimasCuatro { get; set; }
         public string Mensaje { get; set; } = string.Empty;
         public List<EvaluacionDesempenoDto> EvaluacionesConsideradas { get; set; } = new();
+    }
+
+    #region Métodos para DITIC
+    
+    private void ShowCapacitacionesModal()
+    {
+        showCapacitacionesModal = true;
+        StateHasChanged();
+    }
+
+    private void CloseCapacitacionesModal()
+    {
+        showCapacitacionesModal = false;
+        StateHasChanged();
+    }
+
+    private async Task ImportarCapacitaciones()
+    {
+        try
+        {
+            isLoadingCapacitaciones = true;
+            StateHasChanged();
+
+            var cedula = UserSession.CurrentUser?.Cedula;
+            if (string.IsNullOrEmpty(cedula))
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "No se pudo obtener la cédula del usuario");
+                return;
+            }
+
+            var apiBaseUrl = "http://localhost:5200";
+            var url = $"{apiBaseUrl}/api/ditic/importar/{cedula}";
+
+            var httpClient = new HttpClient();
+            var response = await httpClient.PostAsync(url, null);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                var result = System.Text.Json.JsonSerializer.Deserialize<ImportResult>(content);
+
+                await CargarCapacitaciones();
+                
+                var mensaje = result?.imported > 0 ? 
+                    $"Se importaron {result.imported} capacitaciones correctamente" :
+                    "No se encontraron nuevas capacitaciones para importar";
+                    
+                await JSRuntime.InvokeVoidAsync("alert", mensaje);
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Error al importar capacitaciones desde el sistema externo");
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error al importar capacitaciones: {ex.Message}");
+        }
+        finally
+        {
+            isLoadingCapacitaciones = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task CargarCapacitaciones()
+    {
+        try
+        {
+            var cedula = UserSession.CurrentUser?.Cedula;
+            if (string.IsNullOrEmpty(cedula))
+                return;
+
+            var apiBaseUrl = "http://localhost:5200";
+            var url = $"{apiBaseUrl}/api/ditic/docente/{cedula}";
+
+            var httpClient = new HttpClient();
+            var response = await httpClient.GetAsync(url);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var jsonContent = await response.Content.ReadAsStringAsync();
+                var apiCapacitaciones = System.Text.Json.JsonSerializer.Deserialize<DiticDto[]>(jsonContent, 
+                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+                if (apiCapacitaciones != null)
+                {
+                    capacitaciones = apiCapacitaciones.ToList();
+                    StateHasChanged();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error al cargar capacitaciones: {ex.Message}");
+        }
+    }
+
+    private async Task VerificarRequisitoDitic()
+    {
+        try
+        {
+            var cedula = UserSession.CurrentUser?.Cedula;
+            if (string.IsNullOrEmpty(cedula))
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "No se pudo obtener la cédula del usuario");
+                return;
+            }
+
+            var apiBaseUrl = "http://localhost:5200";
+            var url = $"{apiBaseUrl}/api/ditic/verificar-requisito/{cedula}";
+
+            var httpClient = new HttpClient();
+            var response = await httpClient.GetAsync(url);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var jsonContent = await response.Content.ReadAsStringAsync();
+                verificacionRequisitoDitic = System.Text.Json.JsonSerializer.Deserialize<VerificacionRequisitoDiticDto>(jsonContent, 
+                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                StateHasChanged();
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Error al verificar el requisito DITIC");
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error al verificar requisito DITIC: {ex.Message}");
+        }
+    }
+
+    private void ShowAgregarCapacitacion()
+    {
+        nuevaCapacitacion = new DiticDto
+        {
+            Cedula = UserSession.CurrentUser?.Cedula ?? "",
+            FechaInicio = DateTime.Now,
+            FechaFin = DateTime.Now.AddDays(30),
+            Anio = DateTime.Now.Year,
+            CalificacionMinima = 70,
+            Estado = "Completada",
+            Modalidad = "Presencial",
+            TipoCapacitacion = "Técnica"
+        };
+        showAgregarModal = true;
+        StateHasChanged();
+    }
+
+    private async Task EditarCapacitacion(DiticDto capacitacion)
+    {
+        editingCapacitacion = capacitacion;
+        await JSRuntime.InvokeVoidAsync("alert", "Funcionalidad de editar capacitación en desarrollo");
+    }
+
+    private async Task EliminarCapacitacion(int id)
+    {
+        var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", "¿Está seguro de que desea eliminar esta capacitación?");
+        if (confirmed)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "Funcionalidad de eliminar capacitación en desarrollo");
+        }
+    }
+
+    private async Task VerPdfCapacitacion(int id)
+    {
+        try
+        {
+            var apiBaseUrl = "http://localhost:5200";
+            var url = $"{apiBaseUrl}/api/ditic/{id}/certificado";
+            await JSRuntime.InvokeVoidAsync("open", url, "_blank");
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error al abrir certificado: {ex.Message}");
+        }
+    }
+
+    private string GetCapacitacionEstadoBadgeClass(string estado)
+    {
+        return estado?.ToLower() switch
+        {
+            "aprobada" or "completada" => "bg-success",
+            "en progreso" => "bg-warning",
+            "reprobada" => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+
+    private class ImportResult
+    {
+        public string message { get; set; } = "";
+        public int imported { get; set; } = 0;
+    }
+
+    #endregion
+
+    // DTOs para DITIC
+    public class DiticDto
+    {
+        public int Id { get; set; }
+        public string Cedula { get; set; } = string.Empty;
+        public string NombreCapacitacion { get; set; } = string.Empty;
+        public string Institucion { get; set; } = string.Empty;
+        public string TipoCapacitacion { get; set; } = string.Empty;
+        public string Modalidad { get; set; } = string.Empty;
+        public int HorasAcademicas { get; set; }
+        public DateTime FechaInicio { get; set; }
+        public DateTime FechaFin { get; set; }
+        public int Anio { get; set; }
+        public string Estado { get; set; } = string.Empty;
+        public decimal? Calificacion { get; set; }
+        public decimal CalificacionMinima { get; set; }
+        public bool Aprobada { get; set; }
+        public bool EsPedagogica { get; set; }
+        public string? Descripcion { get; set; }
+        public string? NumeroCertificado { get; set; }
+        public string? Instructor { get; set; }
+        public string? Observaciones { get; set; }
+        public string? NombreArchivoCertificado { get; set; }
+        public bool ExencionPorAutoridad { get; set; }
+        public string? CargoAutoridad { get; set; }
+        public DateTime? FechaInicioAutoridad { get; set; }
+        public DateTime? FechaFinAutoridad { get; set; }
+        public decimal AñosComoAutoridad { get; set; }
+        public bool CumpleExencionAutoridad { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public DateTime? UpdatedAt { get; set; }
+    }
+
+    public class VerificacionRequisitoDiticDto
+    {
+        public string Cedula { get; set; } = string.Empty;
+        public bool CumpleRequisito { get; set; }
+        public bool CumpleHorasTotales { get; set; }
+        public bool CumpleHorasPedagogicas { get; set; }
+        public bool TieneExencionAutoridad { get; set; }
+        public int HorasRequeridas { get; set; } = 96;
+        public int HorasPedagogicasRequeridas { get; set; } = 24;
+        public int HorasObtenidas { get; set; }
+        public int HorasPedagogicasObtenidas { get; set; }
+        public decimal PorcentajePedagogico { get; set; }
+        public int CapacitacionesAnalizadas { get; set; }
+        public string MensajeDetallado { get; set; } = string.Empty;
+        public string? CargoAutoridad { get; set; }
+        public decimal? AñosComoAutoridad { get; set; }
+        public List<DiticDto> CapacitacionesConsideradas { get; set; } = new();
+    }
+
+    public class ResumenCapacitacionesDto
+    {
+        public string Cedula { get; set; } = string.Empty;
+        public int TotalCapacitaciones { get; set; }
+        public int CapacitacionesAprobadas { get; set; }
+        public int HorasTotales { get; set; }
+        public int HorasPedagogicas { get; set; }
+        public int HorasUltimosTresAnios { get; set; }
+        public int HorasPedagogicasUltimosTresAnios { get; set; }
+        public bool CumpleRequisitoHoras { get; set; }
+        public bool CumpleRequisitoPedagogico { get; set; }
+        public bool CumpleExencionAutoridad { get; set; }
+        public bool CumpleRequisito { get; set; }
+        public decimal PorcentajePedagogico { get; set; }
+        public string MensajeEstado { get; set; } = string.Empty;
+        public List<DiticDto> CapacitacionesUltimosTresAnios { get; set; } = new();
     }
 }

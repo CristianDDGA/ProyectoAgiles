@@ -1,0 +1,13 @@
+{
+  "cedula": "1750000001",
+  "periodoAcademico": "2024-1",
+  "anio": 2024,
+  "semestre": 1,
+  "puntajeObtenido": 88.5,
+  "puntajeMaximo": 100,
+  "fechaEvaluacion": "2024-06-15T00:00:00",
+  "tipoEvaluacion": "Integral",
+  "observaciones": "Excelente desempeño en docencia e investigación",
+  "estado": "Completada",
+  "evaluador": "Comisión Evaluadora"
+}
