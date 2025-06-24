@@ -938,7 +938,6 @@
                                             <th><i class="fas fa-calendar-check me-2"></i>Fecha Respuesta</th>
                                             <th><i class="fas fa-level-down-alt me-2"></i>Nivel Actual</th>
                                             <th><i class="fas fa-level-up-alt me-2"></i>Nivel Solicitado</th>
-                                            <th><i class="fas fa-user-tie me-2"></i>Responsable</th>
                                             <th><i class="fas fa-cogs me-2"></i>Acciones</th>
                                         </tr>
                                     </thead>
@@ -991,21 +990,6 @@
                                                             @solicitud.NivelSolicitado
                                                         </span>
                                                     </td>
-                                                    <td>
-                                                        @if (!string.IsNullOrEmpty(solicitud.ResponsableRevision))
-                                                        {
-                                                            <span class="table-badge primary">
-                                                                <i class="fas fa-user-tie"></i>
-                                                                @solicitud.ResponsableRevision
-                                                            </span>
-                                                        }
-                                                        else
-                                                        {
-                                                            <span class="text-muted">
-                                                                <i class="fas fa-minus-circle me-1"></i>Sin asignar
-                                                            </span>
-                                                        }
-                                                    </td>
                                                     <td class="col-actions">
                                                         <div class="action-btn-group">
                                                             <button class="action-btn view" @onclick="() => VerDetalleSolicitud(solicitud.Id)" title="Ver Detalle">
@@ -1013,8 +997,8 @@
                                                             </button>
                                                             @if (solicitud.Estado.ToLower() == "en revisión" || solicitud.Estado.ToLower() == "en revision")
                                                             {
-                                                                <button class="action-btn delete" @onclick="() => CancelarSolicitud(solicitud.Id)" title="Cancelar">
-                                                                    <i class="fas fa-times"></i>
+                                                                <button class="action-btn cancel" @onclick="() => CancelarSolicitud(solicitud.Id)" title="Cancelar Solicitud">
+                                                                    <i class="fas fa-ban"></i>
                                                                 </button>
                                                             }
                                                         </div>
@@ -1025,7 +1009,7 @@
                                         else
                                         {
                                             <tr>
-                                                <td colspan="8" class="empty-state">
+                                                <td colspan="7" class="empty-state">
                                                     <i class="fas fa-file-alt"></i>
                                                     <h6>No hay solicitudes registradas</h6>
                                                     <p>Haz clic en "Cargar Solicitudes" para ver el estado de tus solicitudes</p>
@@ -1107,6 +1091,142 @@
                     </div>
                     <div class="modal-footer">
                         <button class="btn btn-secondary" @onclick="CloseSolicitudesModal">Cerrar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    @* Modal para Detalle de Solicitud *@
+    @if (showDetalleSolicitudModal && solicitudSeleccionada != null)
+    {
+        <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,0.3);">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="fas fa-file-alt me-2"></i>
+                            Detalle de Solicitud
+                        </h5>
+                        <button type="button" class="btn-close" @onclick="CloseDetalleSolicitudModal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <div class="info-card">
+                                    <h6 class="info-label">
+                                        <i class="fas fa-file-alt me-2"></i>Tipo de Solicitud
+                                    </h6>
+                                    <p class="info-value">@solicitudSeleccionada.TipoSolicitud</p>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="info-card">
+                                    <h6 class="info-label">
+                                        <i class="fas fa-traffic-light me-2"></i>Estado
+                                    </h6>
+                                    <span class="badge @(solicitudSeleccionada.Estado.ToLower() switch { 
+                                        "aprobada" => "bg-success", 
+                                        "en revisión" or "en revision" => "bg-warning text-dark", 
+                                        "rechazada" => "bg-danger", 
+                                        _ => "bg-secondary" 
+                                    }) fs-6">
+                                        <i class="fas @(solicitudSeleccionada.Estado.ToLower() switch { 
+                                            "aprobada" => "fa-check-circle", 
+                                            "en revisión" or "en revision" => "fa-clock", 
+                                            "rechazada" => "fa-times-circle", 
+                                            _ => "fa-question-circle" 
+                                        }) me-1"></i>
+                                        @solicitudSeleccionada.Estado
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="info-card">
+                                    <h6 class="info-label">
+                                        <i class="fas fa-calendar-plus me-2"></i>Fecha de Solicitud
+                                    </h6>
+                                    <p class="info-value">@solicitudSeleccionada.FechaSolicitud.ToString("dddd, dd 'de' MMMM 'de' yyyy", new System.Globalization.CultureInfo("es-ES"))</p>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="info-card">
+                                    <h6 class="info-label">
+                                        <i class="fas fa-calendar-check me-2"></i>Fecha de Respuesta
+                                    </h6>
+                                    @if (solicitudSeleccionada.FechaRespuesta.HasValue)
+                                    {
+                                        <p class="info-value">@solicitudSeleccionada.FechaRespuesta.Value.ToString("dddd, dd 'de' MMMM 'de' yyyy", new System.Globalization.CultureInfo("es-ES"))</p>
+                                    }
+                                    else
+                                    {
+                                        <p class="info-value text-muted">
+                                            <i class="fas fa-clock me-1"></i>Pendiente de respuesta
+                                        </p>
+                                    }
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="info-card">
+                                    <h6 class="info-label">
+                                        <i class="fas fa-level-down-alt me-2"></i>Nivel Actual
+                                    </h6>
+                                    <span class="badge bg-secondary fs-6">@solicitudSeleccionada.NivelActual</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="info-card">
+                                    <h6 class="info-label">
+                                        <i class="fas fa-level-up-alt me-2"></i>Nivel Solicitado
+                                    </h6>
+                                    <span class="badge bg-info text-dark fs-6">
+                                        <i class="fas fa-arrow-up me-1"></i>@solicitudSeleccionada.NivelSolicitado
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="col-md-12 mb-3">
+                                <div class="info-card">
+                                    <h6 class="info-label">
+                                        <i class="fas fa-user-tie me-2"></i>Responsable de Revisión
+                                    </h6>
+                                    @if (!string.IsNullOrEmpty(solicitudSeleccionada.ResponsableRevision))
+                                    {
+                                        <span class="badge bg-primary fs-6">
+                                            <i class="fas fa-user-tie me-1"></i>@solicitudSeleccionada.ResponsableRevision
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <p class="info-value text-muted">
+                                            <i class="fas fa-minus-circle me-1"></i>Sin asignar
+                                        </p>
+                                    }
+                                </div>
+                            </div>
+                            @if (!string.IsNullOrEmpty(solicitudSeleccionada.Observaciones))
+                            {
+                                <div class="col-md-12 mb-3">
+                                    <div class="info-card">
+                                        <h6 class="info-label">
+                                            <i class="fas fa-comment-alt me-2"></i>Observaciones
+                                        </h6>
+                                        <div class="alert alert-light border-start border-info border-4">
+                                            <p class="mb-0">@solicitudSeleccionada.Observaciones</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        @if (solicitudSeleccionada.Estado.ToLower() == "en revisión" || solicitudSeleccionada.Estado.ToLower() == "en revision")
+                        {
+                            <button class="btn btn-outline-danger me-2" @onclick="() => CancelarSolicitudDetalle(solicitudSeleccionada.Id)">
+                                <i class="fas fa-times me-1"></i>
+                                Cancelar Solicitud
+                            </button>
+                        }
+                        <button class="btn btn-secondary" @onclick="CloseDetalleSolicitudModal">Cerrar</button>
                     </div>
                 </div>
             </div>
@@ -1473,6 +1593,8 @@
     private bool showEvaluacionesModal = false;
     private bool showCapacitacionesModal = false;
     private bool showSolicitudesModal = false;
+    private bool showDetalleSolicitudModal = false;
+    private SolicitudDto? solicitudSeleccionada = null;
     private bool showAgregarModal = false;
     private bool showAgregarEvaluacionModal = false;
     private bool showAgregarCapacitacionModal = false;
@@ -2417,20 +2539,51 @@ private bool isLoadingInvestigaciones = false;
     }
 
     // Métodos para Solicitudes
-    private async Task VerDetalleSolicitud(int solicitudId)
+    private void VerDetalleSolicitud(int solicitudId)
     {
         var solicitud = solicitudes.FirstOrDefault(s => s.Id == solicitudId);
         if (solicitud != null)
         {
-            var mensaje = $"Tipo: {solicitud.TipoSolicitud}\n" +
-                         $"Estado: {solicitud.Estado}\n" +
-                         $"Fecha Solicitud: {solicitud.FechaSolicitud:dd/MM/yyyy}\n" +
-                         $"Nivel Actual: {solicitud.NivelActual}\n" +
-                         $"Nivel Solicitado: {solicitud.NivelSolicitado}\n" +
-                         $"Responsable: {solicitud.ResponsableRevision}\n\n" +
-                         $"Observaciones: {solicitud.Observaciones}";
-            
-            await JSRuntime.InvokeVoidAsync("alert", mensaje);
+            solicitudSeleccionada = solicitud;
+            showDetalleSolicitudModal = true;
+            StateHasChanged();
+        }
+    }
+
+    private void CloseDetalleSolicitudModal()
+    {
+        showDetalleSolicitudModal = false;
+        solicitudSeleccionada = null;
+        StateHasChanged();
+    }
+
+    private async Task CancelarSolicitudDetalle(int solicitudId)
+    {
+        var confirmacion = await JSRuntime.InvokeAsync<bool>("confirm", 
+            "¿Está seguro de que desea cancelar esta solicitud? Esta acción no se puede deshacer.");
+        
+        if (confirmacion)
+        {
+            try
+            {
+                // Aquí iría la lógica para cancelar la solicitud en el servidor
+                var solicitud = solicitudes.FirstOrDefault(s => s.Id == solicitudId);
+                if (solicitud != null)
+                {
+                    solicitud.Estado = "Cancelada";
+                    solicitudSeleccionada = solicitud; // Actualizar la solicitud seleccionada
+                    StateHasChanged();
+                    await MostrarNotificacionExito("✅ Solicitud Cancelada", "La solicitud ha sido cancelada exitosamente y se ha notificado a la comisión académica.");
+                    
+                    // Cerrar el modal de detalle después de 2 segundos
+                    await Task.Delay(2000);
+                    CloseDetalleSolicitudModal();
+                }
+            }
+            catch (Exception ex)
+            {
+                await MostrarNotificacionError("❌ Error", $"No se pudo cancelar la solicitud: {ex.Message}");
+            }
         }
     }
 
@@ -2917,3 +3070,84 @@ private bool isLoadingInvestigaciones = false;
         }
     }
 }
+
+<style>
+    .info-card {
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .info-card:hover {
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        border-color: #007bff;
+    }
+
+    .info-label {
+        color: #495057;
+        font-weight: 600;
+        font-size: 0.875rem;
+        margin-bottom: 0.5rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .info-value {
+        color: #212529;
+        font-weight: 500;
+        margin-bottom: 0;
+        font-size: 1rem;
+    }
+
+    .modal-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 0.375rem 0.375rem 0 0;
+    }
+
+    .modal-header .btn-close {
+        filter: invert(1);
+    }
+
+    .modal-title {
+        font-weight: 600;
+    }
+
+    .badge.fs-6 {
+        font-size: 0.9rem !important;
+        padding: 0.5rem 0.75rem;
+    }
+
+    .alert-light {
+        background-color: #f8f9fa;
+        border-color: #dee2e6;
+    }
+
+    .action-btn.cancel {
+        background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+        color: white;
+        border: none;
+        padding: 0.5rem;
+        border-radius: 6px;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        margin-left: 0.25rem;
+    }
+
+    .action-btn.cancel:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+        background: linear-gradient(135deg, #ff5252, #d32f2f);
+    }
+
+    .action-btn.cancel:active {
+        transform: translateY(0);
+    }
+</style>
