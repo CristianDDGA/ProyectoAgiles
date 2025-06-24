@@ -11,7 +11,7 @@ namespace ProyectoAgiles.Api.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
-[Authorize]
+// [Authorize] // Comentado temporalmente para pruebas
 public class DiticController : ControllerBase
 {
     private readonly IDiticService _diticService;

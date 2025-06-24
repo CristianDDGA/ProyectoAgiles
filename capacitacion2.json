@@ -1,0 +1,17 @@
+{
+  "cedula": "1750000001",
+  "nombreCapacitacion": "Tecnologias Emergentes en Educacion",
+  "institucion": "Escuela Politecnica Nacional",
+  "tipoCapacitacion": "Tecnica",
+  "modalidad": "Presencial",
+  "horasAcademicas": 32,
+  "fechaInicio": "2023-06-10T00:00:00",
+  "fechaFin": "2023-07-10T00:00:00",
+  "anio": 2023,
+  "estado": "Completada",
+  "calificacion": 92,
+  "calificacionMinima": 70,
+  "descripcion": "Uso de realidad virtual, inteligencia artificial y blockchain en educacion",
+  "numeroCertificado": "EPN-TECH-2023-045",
+  "instructor": "Ing. Carlos Vasquez"
+}
