@@ -1184,25 +1184,7 @@
                                     </span>
                                 </div>
                             </div>
-                            <div class="col-md-12 mb-3">
-                                <div class="info-card">
-                                    <h6 class="info-label">
-                                        <i class="fas fa-user-tie me-2"></i>Responsable de Revisión
-                                    </h6>
-                                    @if (!string.IsNullOrEmpty(solicitudSeleccionada.ResponsableRevision))
-                                    {
-                                        <span class="badge bg-primary fs-6">
-                                            <i class="fas fa-user-tie me-1"></i>@solicitudSeleccionada.ResponsableRevision
-                                        </span>
-                                    }
-                                    else
-                                    {
-                                        <p class="info-value text-muted">
-                                            <i class="fas fa-minus-circle me-1"></i>Sin asignar
-                                        </p>
-                                    }
-                                </div>
-                            </div>
+
                             @if (!string.IsNullOrEmpty(solicitudSeleccionada.Observaciones))
                             {
                                 <div class="col-md-12 mb-3">
@@ -2055,8 +2037,7 @@ private bool isLoadingInvestigaciones = false;
                     FechaRespuesta = s.FechaAprobacion ?? s.FechaRechazo, // Usar la fecha que esté disponible
                     NivelActual = s.NivelActual ?? "No especificado",
                     NivelSolicitado = s.NivelSolicitado ?? "No especificado",
-                    Observaciones = s.Observaciones ?? s.MotivoRechazo ?? "Sin observaciones",
-                    ResponsableRevision = s.ProcesadoPor ?? "Sin asignar"
+                    Observaciones = s.Observaciones ?? s.MotivoRechazo ?? "Sin observaciones"
                 }).ToList();
                 
                 await MostrarNotificacionExito($"📋 Solicitudes Importadas", 
@@ -2711,7 +2692,6 @@ private bool isLoadingInvestigaciones = false;
         public string NivelActual { get; set; } = string.Empty;
         public string NivelSolicitado { get; set; } = string.Empty;
         public string Observaciones { get; set; } = string.Empty;
-        public string ResponsableRevision { get; set; } = string.Empty;
     }
 
     // Métodos para DITIC
