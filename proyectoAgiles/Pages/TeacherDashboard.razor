@@ -993,6 +993,107 @@
                     </div>
                 </div>
             </div>
+        </div>    }
+
+    @* Modal para Agregar/Editar Capacitaciones *@
+    @if (showAgregarCapacitacionModal)
+    {
+        <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,0.3);">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">@(editingCapacitacion != null ? "Editar" : "Agregar") Capacitación DITIC</h5>
+                        <button type="button" class="btn-close" @onclick="CloseAgregarCapacitacionModal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form>
+                            <div class="row">
+                                <div class="col-md-12 mb-3">
+                                    <label class="form-label">Nombre de la Capacitación *</label>
+                                    <input type="text" class="form-control" @bind="nuevaCapacitacion.NombreCapacitacion" required />
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Institución *</label>
+                                    <input type="text" class="form-control" @bind="nuevaCapacitacion.Institucion" required />
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Instructor</label>
+                                    <input type="text" class="form-control" @bind="nuevaCapacitacion.Instructor" />
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Tipo de Capacitación</label>
+                                    <select class="form-select" @bind="nuevaCapacitacion.TipoCapacitacion">
+                                        <option value="Técnica">Técnica</option>
+                                        <option value="Pedagógica">Pedagógica</option>
+                                        <option value="Investigación">Investigación</option>
+                                        <option value="Gestión">Gestión</option>
+                                        <option value="Otra">Otra</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Modalidad</label>
+                                    <select class="form-select" @bind="nuevaCapacitacion.Modalidad">
+                                        <option value="Presencial">Presencial</option>
+                                        <option value="Virtual">Virtual</option>
+                                        <option value="Semipresencial">Semipresencial</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Horas Académicas *</label>
+                                    <input type="number" class="form-control" @bind="nuevaCapacitacion.HorasAcademicas" min="1" required />
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Fecha Inicio *</label>
+                                    <input type="date" class="form-control" @bind="nuevaCapacitacion.FechaInicio" required />
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Fecha Fin *</label>
+                                    <input type="date" class="form-control" @bind="nuevaCapacitacion.FechaFin" required />
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Estado</label>
+                                    <select class="form-select" @bind="nuevaCapacitacion.Estado">
+                                        <option value="Completada">Completada</option>
+                                        <option value="En Progreso">En Progreso</option>
+                                        <option value="Aprobada">Aprobada</option>
+                                        <option value="Reprobada">Reprobada</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Calificación</label>
+                                    <input type="number" class="form-control" @bind="nuevaCapacitacion.Calificacion" 
+                                           min="0" max="100" step="0.01" />
+                                </div>
+                                <div class="col-md-12 mb-3">
+                                    <label class="form-label">Descripción</label>
+                                    <textarea class="form-control" rows="3" @bind="nuevaCapacitacion.Descripcion" 
+                                              placeholder="Descripción de la capacitación"></textarea>
+                                </div>
+                                <div class="col-md-12 mb-3">
+                                    <label class="form-label">Certificado PDF</label>
+                                    <InputFile OnChange="HandleCapacitacionPdfSelected" accept=".pdf" />
+                                    @if (!string.IsNullOrEmpty(capacitacionPdfFileName))
+                                    {
+                                        <div class="mt-2 text-success">
+                                            <i class="fas fa-file-pdf"></i> @capacitacionPdfFileName
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-success" @onclick="GuardarCapacitacion" disabled="@isSavingCapacitacion">
+                            @if (isSavingCapacitacion)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                            }
+                            @(editingCapacitacion != null ? "Actualizar" : "Guardar")
+                        </button>
+                        <button class="btn btn-secondary" @onclick="CloseAgregarCapacitacionModal">Cancelar</button>
+                    </div>
+                </div>
+            </div>
         </div>
     }
 
@@ -1140,15 +1241,15 @@
     private bool isLoadingEstadisticas = false;
     private EstadisticasDocenteResponse? estadisticasDocente = null;
     private bool showInvestigacionesModal = false;
-    private bool showEvaluacionesModal = false;
-    private bool showCapacitacionesModal = false;
+    private bool showEvaluacionesModal = false;    private bool showCapacitacionesModal = false;
     private bool showAgregarModal = false;
-    private bool showAgregarEvaluacionModal = false;private bool isLoadingInvestigaciones = false;
+    private bool showAgregarEvaluacionModal = false;
+    private bool showAgregarCapacitacionModal = false;private bool isLoadingInvestigaciones = false;
     private bool isLoadingEvaluaciones = false;
     private bool isLoadingCapacitaciones = false;
-    private bool isLoadingRequisitos = false;
-    private bool isSaving = false;
+    private bool isLoadingRequisitos = false;    private bool isSaving = false;
     private bool isSavingEvaluacion = false;
+    private bool isSavingCapacitacion = false;
     
     private List<Investigacion> investigaciones = new();
     private List<EvaluacionDesempenoDto> evaluaciones = new();
@@ -1165,20 +1266,25 @@
       // Variables para verificación de requisitos de subir de nivel
     private proyectoAgiles.Services.VerificacionRequisitosSubirNivelDto? requisitosVerificacion = null;
       private Investigacion nuevaInvestigacion = new();
-    private Investigacion? editingInvestigacion = null;
-    private IBrowserFile? selectedPdf;
+    private Investigacion? editingInvestigacion = null;    private IBrowserFile? selectedPdf;
     private string? pdfFileName;
     private IBrowserFile? selectedEvaluacionPdf;
-    private string? evaluacionPdfFileName;    private void HandlePdfSelected(InputFileChangeEventArgs e)
+    private string? evaluacionPdfFileName;
+    private IBrowserFile? selectedCapacitacionPdf;
+    private string? capacitacionPdfFileName;private void HandlePdfSelected(InputFileChangeEventArgs e)
     {
         selectedPdf = e.File;
         pdfFileName = selectedPdf?.Name;
-    }
-
-    private void HandleEvaluacionPdfSelected(InputFileChangeEventArgs e)
+    }    private void HandleEvaluacionPdfSelected(InputFileChangeEventArgs e)
     {
         selectedEvaluacionPdf = e.File;
         evaluacionPdfFileName = selectedEvaluacionPdf?.Name;
+    }
+
+    private void HandleCapacitacionPdfSelected(InputFileChangeEventArgs e)
+    {
+        selectedCapacitacionPdf = e.File;
+        capacitacionPdfFileName = selectedCapacitacionPdf?.Name;
     }private async Task VerPdf(int investigacionId)
     {
         try
@@ -2259,9 +2365,7 @@
         {
             await JSRuntime.InvokeVoidAsync("alert", $"Error al verificar requisito DITIC: {ex.Message}");
         }
-    }
-
-    private void ShowAgregarCapacitacion()
+    }    private void ShowAgregarCapacitacion()
     {
         nuevaCapacitacion = new DiticDto
         {
@@ -2274,22 +2378,206 @@
             Modalidad = "Presencial",
             TipoCapacitacion = "Técnica"
         };
-        showAgregarModal = true;
+        editingCapacitacion = null;
+        selectedCapacitacionPdf = null;
+        capacitacionPdfFileName = null;
+        showAgregarCapacitacionModal = true;
         StateHasChanged();
     }
 
-    private async Task EditarCapacitacion(DiticDto capacitacion)
+    private void CloseAgregarCapacitacionModal()
+    {
+        showAgregarCapacitacionModal = false;
+        editingCapacitacion = null;
+        nuevaCapacitacion = new DiticDto();
+        selectedCapacitacionPdf = null;
+        capacitacionPdfFileName = null;
+        StateHasChanged();
+    }
+
+    private async Task GuardarCapacitacion()
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(nuevaCapacitacion.NombreCapacitacion) ||
+                string.IsNullOrWhiteSpace(nuevaCapacitacion.Institucion) ||
+                nuevaCapacitacion.HorasAcademicas <= 0)
+            {
+                await MostrarNotificacionError("Error de validación", "Todos los campos obligatorios deben estar completados.");
+                return;
+            }
+
+            isSavingCapacitacion = true;
+            StateHasChanged();
+
+            var apiBaseUrl = "http://localhost:5200";
+            using var httpClient = new HttpClient();
+
+            if (editingCapacitacion != null)
+            {
+                // Actualizar capacitación existente
+                var updateJson = System.Text.Json.JsonSerializer.Serialize(nuevaCapacitacion);
+                var updateContent = new StringContent(updateJson, System.Text.Encoding.UTF8, "application/json");
+
+                var updateResponse = await httpClient.PutAsync($"{apiBaseUrl}/api/ditic/{editingCapacitacion.Id}", updateContent);
+
+                if (updateResponse.IsSuccessStatusCode)
+                {
+                    await MostrarNotificacionExito("Capacitación actualizada", "La capacitación se ha actualizado correctamente.");
+                    
+                    // Recargar capacitaciones
+                    await CargarCapacitaciones();
+                    CloseAgregarCapacitacionModal();
+                }
+                else
+                {
+                    await MostrarNotificacionError("Error al actualizar", "No se pudo actualizar la capacitación.");
+                }
+            }
+            else
+            {
+                // Crear nueva capacitación
+                if (selectedCapacitacionPdf != null)
+                {
+                    // Crear con archivo PDF
+                    using var content = new MultipartFormDataContent();
+                    
+                    // Agregar campos del formulario
+                    content.Add(new StringContent(nuevaCapacitacion.Cedula), "Cedula");
+                    content.Add(new StringContent(nuevaCapacitacion.NombreCapacitacion), "NombreCapacitacion");
+                    content.Add(new StringContent(nuevaCapacitacion.Institucion), "Institucion");
+                    content.Add(new StringContent(nuevaCapacitacion.TipoCapacitacion), "TipoCapacitacion");
+                    content.Add(new StringContent(nuevaCapacitacion.Modalidad), "Modalidad");
+                    content.Add(new StringContent(nuevaCapacitacion.HorasAcademicas.ToString()), "HorasAcademicas");
+                    content.Add(new StringContent(nuevaCapacitacion.FechaInicio.ToString("yyyy-MM-dd")), "FechaInicio");
+                    content.Add(new StringContent(nuevaCapacitacion.FechaFin.ToString("yyyy-MM-dd")), "FechaFin");
+                    content.Add(new StringContent(nuevaCapacitacion.Anio.ToString()), "Anio");
+                    content.Add(new StringContent(nuevaCapacitacion.Estado), "Estado");
+                    content.Add(new StringContent(nuevaCapacitacion.CalificacionMinima.ToString()), "CalificacionMinima");
+                    
+                    if (nuevaCapacitacion.Calificacion.HasValue)
+                        content.Add(new StringContent(nuevaCapacitacion.Calificacion.Value.ToString()), "Calificacion");
+                    
+                    if (!string.IsNullOrEmpty(nuevaCapacitacion.Descripcion))
+                        content.Add(new StringContent(nuevaCapacitacion.Descripcion), "Descripcion");
+                    
+                    if (!string.IsNullOrEmpty(nuevaCapacitacion.Instructor))
+                        content.Add(new StringContent(nuevaCapacitacion.Instructor), "Instructor");
+
+                    // Agregar archivo PDF
+                    var pdfStream = selectedCapacitacionPdf.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024); // 10MB max
+                    var pdfContent = new StreamContent(pdfStream);
+                    pdfContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/pdf");
+                    content.Add(pdfContent, "CertificadoPdf", selectedCapacitacionPdf.Name);
+
+                    var response = await httpClient.PostAsync($"{apiBaseUrl}/api/ditic/with-pdf", content);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        await MostrarNotificacionExito("Capacitación creada", "La capacitación se ha creado correctamente con su certificado PDF.");
+                        
+                        // Recargar capacitaciones
+                        await CargarCapacitaciones();
+                        CloseAgregarCapacitacionModal();
+                    }
+                    else
+                    {
+                        var errorContent = await response.Content.ReadAsStringAsync();
+                        await MostrarNotificacionError("Error al crear capacitación", $"No se pudo crear la capacitación: {errorContent}");
+                    }
+                }
+                else
+                {
+                    // Crear sin archivo PDF
+                    var json = System.Text.Json.JsonSerializer.Serialize(nuevaCapacitacion);
+                    var stringContent = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+
+                    var response = await httpClient.PostAsync($"{apiBaseUrl}/api/ditic", stringContent);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        await MostrarNotificacionExito("Capacitación creada", "La capacitación se ha creado correctamente.");
+                        
+                        // Recargar capacitaciones
+                        await CargarCapacitaciones();
+                        CloseAgregarCapacitacionModal();
+                    }
+                    else
+                    {
+                        var errorContent = await response.Content.ReadAsStringAsync();
+                        await MostrarNotificacionError("Error al crear capacitación", $"No se pudo crear la capacitación: {errorContent}");
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            await MostrarNotificacionError("Error inesperado", $"Ocurrió un error: {ex.Message}");
+        }
+        finally
+        {
+            isSavingCapacitacion = false;
+            StateHasChanged();
+        }
+    }    private void EditarCapacitacion(DiticDto capacitacion)
     {
         editingCapacitacion = capacitacion;
-        await JSRuntime.InvokeVoidAsync("alert", "Funcionalidad de editar capacitación en desarrollo");
+        nuevaCapacitacion = new DiticDto
+        {
+            Id = capacitacion.Id,
+            Cedula = capacitacion.Cedula,
+            NombreCapacitacion = capacitacion.NombreCapacitacion,
+            Institucion = capacitacion.Institucion,
+            TipoCapacitacion = capacitacion.TipoCapacitacion,
+            Modalidad = capacitacion.Modalidad,
+            HorasAcademicas = capacitacion.HorasAcademicas,
+            FechaInicio = capacitacion.FechaInicio,
+            FechaFin = capacitacion.FechaFin,
+            Anio = capacitacion.Anio,
+            Estado = capacitacion.Estado,
+            Calificacion = capacitacion.Calificacion,
+            CalificacionMinima = capacitacion.CalificacionMinima,
+            Descripcion = capacitacion.Descripcion,
+            Instructor = capacitacion.Instructor,
+            EsPedagogica = capacitacion.EsPedagogica
+        };
+        
+        selectedCapacitacionPdf = null;
+        capacitacionPdfFileName = null;
+        showAgregarCapacitacionModal = true;
+        StateHasChanged();
     }
 
     private async Task EliminarCapacitacion(int id)
     {
-        var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", "¿Está seguro de que desea eliminar esta capacitación?");
+        var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", "¿Está seguro de que desea eliminar esta capacitación? Esta acción no se puede deshacer.");
+        
         if (confirmed)
         {
-            await JSRuntime.InvokeVoidAsync("alert", "Funcionalidad de eliminar capacitación en desarrollo");
+            try
+            {
+                var apiBaseUrl = "http://localhost:5200";
+                using var httpClient = new HttpClient();
+                
+                var response = await httpClient.DeleteAsync($"{apiBaseUrl}/api/ditic/{id}");
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    await MostrarNotificacionExito("Capacitación eliminada", "La capacitación se ha eliminado correctamente.");
+                    
+                    // Recargar capacitaciones
+                    await CargarCapacitaciones();
+                }
+                else
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    await MostrarNotificacionError("Error al eliminar", $"No se pudo eliminar la capacitación: {errorContent}");
+                }
+            }
+            catch (Exception ex)
+            {
+                await MostrarNotificacionError("Error inesperado", $"Ocurrió un error al eliminar la capacitación: {ex.Message}");
+            }
         }
     }
 
