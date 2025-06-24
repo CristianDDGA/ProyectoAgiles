@@ -1253,10 +1253,9 @@ private bool isLoadingInvestigaciones = false;
     private bool isSavingEvaluacion = false;
     private bool isSavingCapacitacion = false;
     
-    private List<Investigacion> investigaciones = new();
-    private List<EvaluacionDesempenoDto> evaluaciones = new();
-    private EvaluacionDesempenoDto nuevaEvaluacion = new();
-    private EvaluacionDesempenoDto? editingEvaluacion = null;
+    private List<Investigacion> investigaciones = new();    private List<proyectoAgiles.Services.EvaluacionDesempenoDto> evaluaciones = new();
+    private proyectoAgiles.Services.EvaluacionDesempenoDto nuevaEvaluacion = new();
+    private proyectoAgiles.Services.EvaluacionDesempenoDto? editingEvaluacion = null;
     private VerificacionRequisito75Dto? verificacionRequisito = null;
     
     // Variables para DITIC
@@ -1620,9 +1619,7 @@ private bool isLoadingInvestigaciones = false;
     private void CloseEvaluacionesModal()
     {
         showEvaluacionesModal = false;
-    }
-
-    private async Task ImportarEvaluaciones()
+    }    private async Task ImportarEvaluaciones()
     {
         try
         {
@@ -1635,23 +1632,19 @@ private bool isLoadingInvestigaciones = false;
             isLoadingEvaluaciones = true;
             StateHasChanged();
 
-            var apiBaseUrl = "http://localhost:5200"; // Deberías obtener esto de configuración
             var cedula = UserSession.CurrentUser.Cedula;
 
-            // Importar evaluaciones desde la API
-            var response = await new HttpClient().GetAsync($"{apiBaseUrl}/api/EvaluacionesDesempeno/by-cedula/{cedula}");
-            
-            if (response.IsSuccessStatusCode)
+            // Importar evaluaciones usando AuthService
+            var apiEvaluaciones = await AuthService.GetEvaluacionesPorCedula(cedula);
+
+            if (apiEvaluaciones is not null && apiEvaluaciones.Any())
             {
-                var jsonContent = await response.Content.ReadAsStringAsync();
-                var apiEvaluaciones = System.Text.Json.JsonSerializer.Deserialize<EvaluacionDesempenoDto[]>(jsonContent, 
-                    new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                evaluaciones = apiEvaluaciones.ToList();
 
-                if (apiEvaluaciones is not null)
+                // Obtener verificación del requisito 75%
+                try
                 {
-                    evaluaciones = apiEvaluaciones.ToList();
-
-                    // Obtener verificación del requisito 75%
+                    var apiBaseUrl = "http://localhost:5200";
                     var verificacionResponse = await new HttpClient().GetAsync($"{apiBaseUrl}/api/EvaluacionesDesempeno/verificar-requisito-75/{cedula}");
                     if (verificacionResponse.IsSuccessStatusCode)
                     {
@@ -1659,20 +1652,21 @@ private bool isLoadingInvestigaciones = false;
                         verificacionRequisito = System.Text.Json.JsonSerializer.Deserialize<VerificacionRequisito75Dto>(verificacionJson, 
                             new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                     }
-                    
-                    await MostrarNotificacionExito($"✅ Importación exitosa", 
-                        $"Se han cargado {evaluaciones.Count} evaluación{(evaluaciones.Count != 1 ? "es" : "")} desde la base de datos DAC.");
                 }
-                else
+                catch (Exception ex)
                 {
-                    await MostrarNotificacionInfo("ℹ️ Sin resultados", 
-                        "No se encontraron evaluaciones asociadas a tu cédula en la base de datos DAC.");
+                    Console.WriteLine($"Error al obtener verificación requisito 75%: {ex.Message}");
                 }
+                
+                await MostrarNotificacionExito($"✅ Importación exitosa", 
+                    $"Se han cargado {evaluaciones.Count} evaluación{(evaluaciones.Count != 1 ? "es" : "")} desde la base de datos DAC.");
             }
             else
             {
-                await MostrarNotificacionError("❌ Error de importación", 
-                    "Error al cargar evaluaciones desde la API DAC.");            }
+                evaluaciones = new List<proyectoAgiles.Services.EvaluacionDesempenoDto>();
+                await MostrarNotificacionInfo("ℹ️ Sin resultados", 
+                    "No se encontraron evaluaciones asociadas a tu cédula en la base de datos DAC.");
+            }
         }
         catch (Exception ex)
         {
@@ -1684,9 +1678,8 @@ private bool isLoadingInvestigaciones = false;
             isLoadingEvaluaciones = false;
             StateHasChanged();
         }
-    }    private void ShowAgregarEvaluacion()
-    {
-        nuevaEvaluacion = new EvaluacionDesempenoDto
+    }private void ShowAgregarEvaluacion()
+    {        nuevaEvaluacion = new proyectoAgiles.Services.EvaluacionDesempenoDto
         {
             Cedula = UserSession.CurrentUser?.Cedula ?? "",
             FechaEvaluacion = DateTime.Now,
@@ -1707,13 +1700,11 @@ private bool isLoadingInvestigaciones = false;
     {
         showAgregarEvaluacionModal = false;
         editingEvaluacion = null;
-        nuevaEvaluacion = new EvaluacionDesempenoDto();
+        nuevaEvaluacion = new proyectoAgiles.Services.EvaluacionDesempenoDto();
         selectedEvaluacionPdf = null;
         evaluacionPdfFileName = null;
         StateHasChanged();
-    }
-
-    private async Task GuardarEvaluacion()
+    }    private async Task GuardarEvaluacion()
     {
         try
         {
@@ -1725,64 +1716,54 @@ private bool isLoadingInvestigaciones = false;
             }
 
             isSavingEvaluacion = true;
-            StateHasChanged();            var apiBaseUrl = "http://localhost:5200";
-            using var httpClient = new HttpClient();
+            StateHasChanged();
+
+            var cedula = UserSession.CurrentUser?.Cedula ?? string.Empty;
+            if (string.IsNullOrEmpty(cedula))
+            {
+                await MostrarNotificacionError("Error", "No se pudo obtener la cédula del usuario.");
+                return;
+            }
             
             if (editingEvaluacion is not null)
-            {                // Actualizar evaluación existente
+            {
+                // Verificar si se ha seleccionado un nuevo PDF
                 if (selectedEvaluacionPdf is not null)
                 {
-                    // Actualizar con archivo PDF usando multipart/form-data
-                    using var content = new MultipartFormDataContent();
-                    
-                    // Agregar campos del formulario
-                    content.Add(new StringContent(editingEvaluacion.Id.ToString()), "Id");
-                    content.Add(new StringContent(nuevaEvaluacion.Cedula), "Cedula");
-                    content.Add(new StringContent(nuevaEvaluacion.PeriodoAcademico), "PeriodoAcademico");
-                    content.Add(new StringContent(nuevaEvaluacion.Anio.ToString()), "Anio");
-                    content.Add(new StringContent(nuevaEvaluacion.Semestre.ToString()), "Semestre");
-                    content.Add(new StringContent(nuevaEvaluacion.PuntajeObtenido.ToString()), "PuntajeObtenido");
-                    content.Add(new StringContent(nuevaEvaluacion.PuntajeMaximo.ToString()), "PuntajeMaximo");
-                    content.Add(new StringContent(nuevaEvaluacion.FechaEvaluacion.ToString("yyyy-MM-dd")), "FechaEvaluacion");
-                    content.Add(new StringContent(nuevaEvaluacion.TipoEvaluacion), "TipoEvaluacion");
-                    content.Add(new StringContent(nuevaEvaluacion.Estado), "Estado");
-                    
-                    if (!string.IsNullOrEmpty(nuevaEvaluacion.Observaciones))
-                        content.Add(new StringContent(nuevaEvaluacion.Observaciones), "Observaciones");
-                    
-                    if (!string.IsNullOrEmpty(nuevaEvaluacion.Evaluador))
-                        content.Add(new StringContent(nuevaEvaluacion.Evaluador), "Evaluador");
-
-                    // Agregar archivo PDF
-                    var pdfStream = selectedEvaluacionPdf.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024); // 10MB max
-                    var pdfContent = new StreamContent(pdfStream);
-                    pdfContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/pdf");
-                    content.Add(pdfContent, "ArchivoPdf", selectedEvaluacionPdf.Name);
-
-                    // Usar el endpoint correcto para actualización con PDF
-                    var updateResponse = await httpClient.PutAsync($"{apiBaseUrl}/api/EvaluacionesDesempeno/{editingEvaluacion.Id}/actualizar-con-pdf", content);
-
-                    if (updateResponse.IsSuccessStatusCode)
+                    // Actualizar con PDF
+                    var updateWithPdfDto = new proyectoAgiles.Services.UpdateEvaluacionDesempenoWithPdfDto
                     {
-                        await MostrarNotificacionExito("Evaluación actualizada", "La evaluación se ha actualizado correctamente con el nuevo PDF.");
-                        
-                        // Recargar evaluaciones
-                        await ImportarEvaluaciones();
-                        CloseAgregarEvaluacionModal();
-                    }
-                    else
+                        Id = editingEvaluacion.Id,
+                        Cedula = cedula,
+                        PeriodoAcademico = nuevaEvaluacion.PeriodoAcademico,
+                        Anio = nuevaEvaluacion.Anio,
+                        Semestre = nuevaEvaluacion.Semestre,
+                        PuntajeObtenido = nuevaEvaluacion.PuntajeObtenido,
+                        PuntajeMaximo = nuevaEvaluacion.PuntajeMaximo,
+                        FechaEvaluacion = nuevaEvaluacion.FechaEvaluacion,
+                        TipoEvaluacion = nuevaEvaluacion.TipoEvaluacion,
+                        Observaciones = nuevaEvaluacion.Observaciones,
+                        Estado = nuevaEvaluacion.Estado,
+                        Evaluador = nuevaEvaluacion.Evaluador,
+                        ArchivoPdf = selectedEvaluacionPdf
+                    };
+
+                    var updatedWithPdf = await AuthService.ActualizarEvaluacionConPdf(updateWithPdfDto);
+                    
+                    // Actualizar en la lista local
+                    var index = evaluaciones.FindIndex(e => e.Id == editingEvaluacion.Id);
+                    if (index >= 0)
                     {
-                        var errorContent = await updateResponse.Content.ReadAsStringAsync();
-                        await MostrarNotificacionError("Error al actualizar", $"No se pudo actualizar la evaluación: {errorContent}");
+                        evaluaciones[index] = updatedWithPdf;
                     }
                 }
                 else
                 {
-                    // Actualizar sin archivo PDF (solo datos)
-                    var updateDto = new UpdateEvaluacionDesempenoDto
+                    // Actualizar sin PDF (solo datos)
+                    var updateDto = new proyectoAgiles.Services.UpdateEvaluacionDesempenoDto
                     {
                         Id = editingEvaluacion.Id,
-                        Cedula = nuevaEvaluacion.Cedula,
+                        Cedula = cedula,
                         PeriodoAcademico = nuevaEvaluacion.PeriodoAcademico,
                         Anio = nuevaEvaluacion.Anio,
                         Semestre = nuevaEvaluacion.Semestre,
@@ -1795,119 +1776,67 @@ private bool isLoadingInvestigaciones = false;
                         Evaluador = nuevaEvaluacion.Evaluador
                     };
 
-                    var updateJson = System.Text.Json.JsonSerializer.Serialize(updateDto);
-                    var updateContent = new StringContent(updateJson, System.Text.Encoding.UTF8, "application/json");
-
-                    var updateResponse = await httpClient.PutAsync($"{apiBaseUrl}/api/EvaluacionesDesempeno/{editingEvaluacion.Id}", updateContent);
-
-                    if (updateResponse.IsSuccessStatusCode)
+                    var updated = await AuthService.ActualizarEvaluacion(updateDto);
+                    
+                    // Actualizar en la lista local
+                    var index = evaluaciones.FindIndex(e => e.Id == editingEvaluacion.Id);
+                    if (index >= 0)
                     {
-                        await MostrarNotificacionExito("Evaluación actualizada", "La evaluación se ha actualizado correctamente.");
-                        
-                        // Recargar evaluaciones
-                        await ImportarEvaluaciones();
-                        CloseAgregarEvaluacionModal();
-                    }
-                    else
-                    {
-                        var errorContent = await updateResponse.Content.ReadAsStringAsync();
-                        await MostrarNotificacionError("Error al actualizar", $"No se pudo actualizar la evaluación: {errorContent}");
+                        evaluaciones[index] = updated;
                     }
                 }
-            }            else
+            }
+            else
             {
                 // Crear nueva evaluación
-                // Primero crear la evaluación sin PDF
-                var createDto = new CreateEvaluacionDesempenoDto
+                if (selectedEvaluacionPdf is not null)
                 {
-                    Cedula = nuevaEvaluacion.Cedula,
-                    PeriodoAcademico = nuevaEvaluacion.PeriodoAcademico,
-                    Anio = nuevaEvaluacion.Anio,
-                    Semestre = nuevaEvaluacion.Semestre,
-                    PuntajeObtenido = nuevaEvaluacion.PuntajeObtenido,
-                    PuntajeMaximo = nuevaEvaluacion.PuntajeMaximo,
-                    FechaEvaluacion = nuevaEvaluacion.FechaEvaluacion,
-                    TipoEvaluacion = nuevaEvaluacion.TipoEvaluacion,
-                    Observaciones = nuevaEvaluacion.Observaciones,
-                    Estado = nuevaEvaluacion.Estado,
-                    Evaluador = nuevaEvaluacion.Evaluador
-                };
-
-                var json = System.Text.Json.JsonSerializer.Serialize(createDto);
-                var stringContent = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
-
-                var response = await httpClient.PostAsync($"{apiBaseUrl}/api/EvaluacionesDesempeno", stringContent);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var responseContent = await response.Content.ReadAsStringAsync();
-                    var evaluacionCreada = System.Text.Json.JsonSerializer.Deserialize<EvaluacionDesempenoDto>(responseContent, 
-                        new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-
-                    // Si se seleccionó un PDF y la evaluación se creó exitosamente, subirlo
-                    if (selectedEvaluacionPdf is not null && evaluacionCreada is not null)
+                    // Crear con PDF
+                    var createWithPdfDto = new proyectoAgiles.Services.CreateEvaluacionDesempenoWithPdfDto
                     {
-                        try
-                        {
-                            using var content = new MultipartFormDataContent();
-                            
-                            // Agregar campos del formulario para la actualización
-                            content.Add(new StringContent(evaluacionCreada.Id.ToString()), "Id");
-                            content.Add(new StringContent(nuevaEvaluacion.Cedula), "Cedula");
-                            content.Add(new StringContent(nuevaEvaluacion.PeriodoAcademico), "PeriodoAcademico");
-                            content.Add(new StringContent(nuevaEvaluacion.Anio.ToString()), "Anio");
-                            content.Add(new StringContent(nuevaEvaluacion.Semestre.ToString()), "Semestre");
-                            content.Add(new StringContent(nuevaEvaluacion.PuntajeObtenido.ToString()), "PuntajeObtenido");
-                            content.Add(new StringContent(nuevaEvaluacion.PuntajeMaximo.ToString()), "PuntajeMaximo");
-                            content.Add(new StringContent(nuevaEvaluacion.FechaEvaluacion.ToString("yyyy-MM-dd")), "FechaEvaluacion");
-                            content.Add(new StringContent(nuevaEvaluacion.TipoEvaluacion), "TipoEvaluacion");
-                            content.Add(new StringContent(nuevaEvaluacion.Estado), "Estado");
-                            
-                            if (!string.IsNullOrEmpty(nuevaEvaluacion.Observaciones))
-                                content.Add(new StringContent(nuevaEvaluacion.Observaciones), "Observaciones");
-                            
-                            if (!string.IsNullOrEmpty(nuevaEvaluacion.Evaluador))
-                                content.Add(new StringContent(nuevaEvaluacion.Evaluador), "Evaluador");
+                        Cedula = cedula,
+                        PeriodoAcademico = nuevaEvaluacion.PeriodoAcademico,
+                        Anio = nuevaEvaluacion.Anio,
+                        Semestre = nuevaEvaluacion.Semestre,
+                        PuntajeObtenido = nuevaEvaluacion.PuntajeObtenido,
+                        PuntajeMaximo = nuevaEvaluacion.PuntajeMaximo,
+                        FechaEvaluacion = nuevaEvaluacion.FechaEvaluacion,
+                        TipoEvaluacion = nuevaEvaluacion.TipoEvaluacion,
+                        Observaciones = nuevaEvaluacion.Observaciones,
+                        Estado = nuevaEvaluacion.Estado,
+                        Evaluador = nuevaEvaluacion.Evaluador,
+                        ArchivoPdf = selectedEvaluacionPdf
+                    };
 
-                            // Agregar archivo PDF
-                            var pdfStream = selectedEvaluacionPdf.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024); // 10MB max
-                            var pdfContent = new StreamContent(pdfStream);
-                            pdfContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/pdf");
-                            content.Add(pdfContent, "ArchivoPdf", selectedEvaluacionPdf.Name);
-
-                            // Actualizar con el PDF usando el endpoint de actualización
-                            var updateResponse = await httpClient.PutAsync($"{apiBaseUrl}/api/EvaluacionesDesempeno/{evaluacionCreada.Id}/actualizar-con-pdf", content);
-
-                            if (updateResponse.IsSuccessStatusCode)
-                            {
-                                await MostrarNotificacionExito("Evaluación creada", "La evaluación se ha creado correctamente con su archivo PDF.");
-                            }
-                            else
-                            {
-                                await MostrarNotificacionInfo("Evaluación creada parcialmente", "La evaluación se creó correctamente, pero no se pudo adjuntar el archivo PDF.");
-                            }
-                        }
-                        catch (Exception pdfEx)
-                        {
-                            Console.WriteLine($"Error al subir PDF: {pdfEx.Message}");
-                            await MostrarNotificacionInfo("Evaluación creada parcialmente", "La evaluación se creó correctamente, pero no se pudo adjuntar el archivo PDF.");
-                        }
-                    }
-                    else
-                    {
-                        await MostrarNotificacionExito("Evaluación creada", "La evaluación se ha creado correctamente.");
-                    }
-                    
-                    // Recargar evaluaciones
-                    await ImportarEvaluaciones();
-                    CloseAgregarEvaluacionModal();
+                    var created = await AuthService.CrearEvaluacionConPdf(createWithPdfDto);
+                    evaluaciones.Add(created);
                 }
                 else
                 {
-                    var errorContent = await response.Content.ReadAsStringAsync();
-                    await MostrarNotificacionError("Error al crear evaluación", $"No se pudo crear la evaluación: {errorContent}");
+                    // Crear sin PDF
+                    var createDto = new proyectoAgiles.Services.CreateEvaluacionDesempenoDto
+                    {
+                        Cedula = cedula,
+                        PeriodoAcademico = nuevaEvaluacion.PeriodoAcademico,
+                        Anio = nuevaEvaluacion.Anio,
+                        Semestre = nuevaEvaluacion.Semestre,
+                        PuntajeObtenido = nuevaEvaluacion.PuntajeObtenido,
+                        PuntajeMaximo = nuevaEvaluacion.PuntajeMaximo,
+                        FechaEvaluacion = nuevaEvaluacion.FechaEvaluacion,
+                        TipoEvaluacion = nuevaEvaluacion.TipoEvaluacion,
+                        Observaciones = nuevaEvaluacion.Observaciones,
+                        Estado = nuevaEvaluacion.Estado,
+                        Evaluador = nuevaEvaluacion.Evaluador
+                    };
+
+                    var created = await AuthService.CrearEvaluacion(createDto);
+                    evaluaciones.Add(created);
                 }
             }
+            
+            CloseAgregarEvaluacionModal();
+            await MostrarNotificacionExito("✅ Guardado exitoso",
+                editingEvaluacion is not null ? "La evaluación ha sido actualizada correctamente." : "La nueva evaluación ha sido agregada exitosamente.");
         }
         catch (Exception ex)
         {
@@ -1918,12 +1847,10 @@ private bool isLoadingInvestigaciones = false;
             isSavingEvaluacion = false;
             StateHasChanged();
         }
-    }
-
-    private void EditarEvaluacion(EvaluacionDesempenoDto evaluacion)
+    }    private void EditarEvaluacion(proyectoAgiles.Services.EvaluacionDesempenoDto evaluacion)
     {
         editingEvaluacion = evaluacion;
-        nuevaEvaluacion = new EvaluacionDesempenoDto
+        nuevaEvaluacion = new proyectoAgiles.Services.EvaluacionDesempenoDto
         {
             Id = evaluacion.Id,
             Cedula = evaluacion.Cedula,
@@ -1943,9 +1870,7 @@ private bool isLoadingInvestigaciones = false;
         evaluacionPdfFileName = null;
         showAgregarEvaluacionModal = true;
         StateHasChanged();
-    }
-
-    private async Task EliminarEvaluacion(int id)
+    }    private async Task EliminarEvaluacion(int id)
     {
         var confirmacion = await JSRuntime.InvokeAsync<bool>("confirm", "¿Estás seguro de que quieres eliminar esta evaluación? Esta acción no se puede deshacer.");
         
@@ -1953,22 +1878,18 @@ private bool isLoadingInvestigaciones = false;
         {
             try
             {
-                var apiBaseUrl = "http://localhost:5200";
-                using var httpClient = new HttpClient();
+                var success = await AuthService.EliminarEvaluacion(id);
                 
-                var response = await httpClient.DeleteAsync($"{apiBaseUrl}/api/EvaluacionesDesempeno/{id}");
-                
-                if (response.IsSuccessStatusCode)
+                if (success)
                 {
-                    await MostrarNotificacionExito("Evaluación eliminada", "La evaluación se ha eliminado correctamente.");
-                    
-                    // Recargar evaluaciones
-                    await ImportarEvaluaciones();
+                    // Eliminar de la lista local
+                    evaluaciones.RemoveAll(e => e.Id == id);
+                    await MostrarNotificacionExito("🗑️ Eliminado", "La evaluación ha sido eliminada correctamente.");
+                    StateHasChanged();
                 }
                 else
                 {
-                    var errorContent = await response.Content.ReadAsStringAsync();
-                    await MostrarNotificacionError("Error al eliminar", $"No se pudo eliminar la evaluación: {errorContent}");
+                    await MostrarNotificacionError("❌ Error", "No se pudo eliminar la evaluación.");
                 }
             }
             catch (Exception ex)
@@ -1976,49 +1897,35 @@ private bool isLoadingInvestigaciones = false;
                 await MostrarNotificacionError("Error inesperado", $"Ocurrió un error al eliminar la evaluación: {ex.Message}");
             }
         }
-    }    private async Task VerPdfEvaluacion(int id)
+    }private async Task VerPdfEvaluacion(int id)
     {
         try
         {
             Console.WriteLine($"VerPdfEvaluacion - Solicitando PDF para evaluación ID: {id}");
             
-            var apiBaseUrl = "http://localhost:5200";
-            using var httpClient = new HttpClient();
+            var pdfBytes = await AuthService.ObtenerPdfEvaluacion(id);
+            Console.WriteLine($"VerPdfEvaluacion - PDF recibido: {pdfBytes?.Length ?? 0} bytes");
             
-            // Obtener el PDF desde la API
-            var response = await httpClient.GetAsync($"{apiBaseUrl}/api/EvaluacionesDesempeno/{id}/pdf");
-            
-            if (response.IsSuccessStatusCode)
+            if (pdfBytes is not null && pdfBytes.Length > 0)
             {
-                var pdfBytes = await response.Content.ReadAsByteArrayAsync();
-                Console.WriteLine($"VerPdfEvaluacion - PDF recibido: {pdfBytes?.Length ?? 0} bytes");
+                var base64 = Convert.ToBase64String(pdfBytes);
+                var pdfDataUrl = $"data:application/pdf;base64,{base64}";
+                var fileName = $"evaluacion_{id}.pdf";
                 
-                if (pdfBytes is not null && pdfBytes.Length > 0)
+                Console.WriteLine($"VerPdfEvaluacion - DataURL generado: {pdfDataUrl.Substring(0, Math.Min(100, pdfDataUrl.Length))}...");
+                
+                // Usar la función JavaScript personalizada
+                var success = await JSRuntime.InvokeAsync<bool>("showPdf", pdfDataUrl, fileName);
+                
+                if (!success)
                 {
-                    var base64 = Convert.ToBase64String(pdfBytes);
-                    var pdfDataUrl = $"data:application/pdf;base64,{base64}";
-                    var fileName = $"evaluacion_{id}.pdf";
-                    
-                    Console.WriteLine($"VerPdfEvaluacion - DataURL generado: {pdfDataUrl.Substring(0, Math.Min(100, pdfDataUrl.Length))}...");
-                    
-                    // Usar la función JavaScript personalizada
-                    var success = await JSRuntime.InvokeAsync<bool>("showPdf", pdfDataUrl, fileName);
-                    
-                    if (!success)
-                    {
-                        await MostrarNotificacionExito("PDF descargado", "El PDF se ha descargado a tu carpeta de descargas.");
-                    }
-                }
-                else
-                {
-                    Console.WriteLine("VerPdfEvaluacion - PDF vacío o nulo");
-                    await MostrarNotificacionError("PDF no disponible", "No se encontró el archivo PDF para esta evaluación.");
+                    await MostrarNotificacionExito("PDF descargado", "El PDF se ha descargado a tu carpeta de descargas.");
                 }
             }
             else
             {
-                Console.WriteLine($"VerPdfEvaluacion - Error HTTP: {response.StatusCode}");
-                await MostrarNotificacionError("Error al obtener PDF", "No se pudo cargar el archivo PDF.");
+                Console.WriteLine("VerPdfEvaluacion - PDF vacío o nulo");
+                await MostrarNotificacionError("PDF no disponible", "No se encontró el archivo PDF para esta evaluación.");
             }
         }
         catch (Exception ex)
@@ -2201,27 +2108,6 @@ private bool isLoadingInvestigaciones = false;
         public string Descripcion { get; set; } = string.Empty; // Mapeado desde Observacion
         public string Filiacion { get; set; } = string.Empty;
         public bool TienePdf { get; set; } // Agregar propiedad para saber si tiene PDF
-    }
-
-    public class EvaluacionDesempenoDto
-    {
-        public int Id { get; set; }
-        public string Cedula { get; set; } = string.Empty;
-        public string PeriodoAcademico { get; set; } = string.Empty;
-        public int Anio { get; set; }
-        public int Semestre { get; set; }
-        public decimal PuntajeObtenido { get; set; }
-        public decimal PuntajeMaximo { get; set; }
-        public decimal PorcentajeObtenido { get; set; }
-        public bool CumpleMinimo { get; set; }
-        public DateTime FechaEvaluacion { get; set; }
-        public string TipoEvaluacion { get; set; } = string.Empty;
-        public string? Observaciones { get; set; }
-        public string Estado { get; set; } = string.Empty;
-        public string? Evaluador { get; set; }
-        public string? NombreArchivoRespaldo { get; set; }
-        public DateTime CreatedAt { get; set; }
-        public DateTime? UpdatedAt { get; set; }
     }    public class VerificacionRequisito75Dto
     {
         public string Cedula { get; set; } = string.Empty;
@@ -2230,41 +2116,10 @@ private bool isLoadingInvestigaciones = false;
         public int EvaluacionesQueAlcanzan75 { get; set; }
         public decimal PorcentajePromedioUltimasCuatro { get; set; }
         public string Mensaje { get; set; } = string.Empty;
-        public List<EvaluacionDesempenoDto> EvaluacionesConsideradas { get; set; } = new();
+        public List<proyectoAgiles.Services.EvaluacionDesempenoDto> EvaluacionesConsideradas { get; set; } = new();
     }
 
-    public class CreateEvaluacionDesempenoDto
-    {
-        public string Cedula { get; set; } = string.Empty;
-        public string PeriodoAcademico { get; set; } = string.Empty;
-        public int Anio { get; set; }
-        public int Semestre { get; set; }
-        public decimal PuntajeObtenido { get; set; }
-        public decimal PuntajeMaximo { get; set; } = 100;
-        public DateTime FechaEvaluacion { get; set; }
-        public string TipoEvaluacion { get; set; } = "Integral";
-        public string? Observaciones { get; set; }
-        public string Estado { get; set; } = "Completada";
-        public string? Evaluador { get; set; }
-    }
-
-    public class UpdateEvaluacionDesempenoDto
-    {
-        public int Id { get; set; }
-        public string Cedula { get; set; } = string.Empty;
-        public string PeriodoAcademico { get; set; } = string.Empty;
-        public int Anio { get; set; }
-        public int Semestre { get; set; }
-        public decimal PuntajeObtenido { get; set; }
-        public decimal PuntajeMaximo { get; set; } = 100;
-        public DateTime FechaEvaluacion { get; set; }
-        public string TipoEvaluacion { get; set; } = "Integral";
-        public string? Observaciones { get; set; }
-        public string Estado { get; set; } = "Completada";
-        public string? Evaluador { get; set; }
-    }
-
-    #region Métodos para DITIC
+    // Métodos para DITIC
     
     private void ShowCapacitacionesModal()
     {
@@ -2701,16 +2556,13 @@ private bool isLoadingInvestigaciones = false;
         public int CapacitacionesAprobadas { get; set; }
         public int HorasTotales { get; set; }
         public int HorasPedagogicas { get; set; }
-        public int HorasUltimosTresAnios { get; set; }
-        public int HorasPedagogicasUltimosTresAnios { get; set; }
+        public int HorasUltimosTresAnios { get; set; }        public int HorasPedagogicasUltimosTresAnios { get; set; }
         public bool CumpleRequisitoHoras { get; set; }
         public bool CumpleRequisitoPedagogico { get; set; }
         public bool CumpleExencionAutoridad { get; set; }
         public bool CumpleRequisito { get; set; }
         public decimal PorcentajePedagogico { get; set; }
-        public string MensajeEstado { get; set; } = string.Empty;
-        public List<DiticDto> CapacitacionesUltimosTresAnios { get; set; } = new();
+        public string MensajeEstado { get; set; } = string.Empty;        public List<DiticDto> CapacitacionesUltimosTresAnios { get; set; } = new();
     }
-
-#endregion
+}
 }

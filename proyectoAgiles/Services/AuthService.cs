@@ -732,7 +732,191 @@ namespace proyectoAgiles.Services
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"ObtenerPdfInvestigacion - Exception: {ex.Message}");
+                Console.WriteLine($"ObtenerPdfInvestigacion - Exception: {ex.Message}");                throw;
+            }
+        }
+
+        // Métodos para trabajar con evaluaciones de desempeño
+        
+        public async Task<List<EvaluacionDesempenoDto>> GetEvaluacionesPorCedula(string cedula)
+        {
+            try
+            {
+                var response = await _httpClient.GetFromJsonAsync<List<EvaluacionDesempenoDto>>($"{_apiBaseUrl}/api/EvaluacionesDesempeno/by-cedula/{cedula}");
+                return response ?? new List<EvaluacionDesempenoDto>();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error al obtener evaluaciones: {ex.Message}");
+            }
+        }
+
+        public async Task<EvaluacionDesempenoDto> CrearEvaluacion(CreateEvaluacionDesempenoDto createDto)
+        {
+            try
+            {
+                var response = await _httpClient.PostAsJsonAsync($"{_apiBaseUrl}/api/EvaluacionesDesempeno", createDto);
+                if (response.IsSuccessStatusCode)
+                {
+                    var result = await response.Content.ReadFromJsonAsync<EvaluacionDesempenoDto>();
+                    return result!;
+                }
+                
+                var errorContent = await response.Content.ReadAsStringAsync();
+                throw new Exception($"Error al crear evaluación: {errorContent}");
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error al crear evaluación: {ex.Message}");
+            }
+        }
+
+        public async Task<EvaluacionDesempenoDto> CrearEvaluacionConPdf(CreateEvaluacionDesempenoWithPdfDto createDto)
+        {
+            try
+            {
+                Console.WriteLine($"CrearEvaluacionConPdf - PDF: {createDto.ArchivoPdf?.Name}, Size: {createDto.ArchivoPdf?.Size ?? 0}");
+                
+                using var form = new MultipartFormDataContent();
+                form.Add(new StringContent(createDto.Cedula), "Cedula");
+                form.Add(new StringContent(createDto.PeriodoAcademico), "PeriodoAcademico");
+                form.Add(new StringContent(createDto.Anio.ToString()), "Anio");
+                form.Add(new StringContent(createDto.Semestre.ToString()), "Semestre");
+                form.Add(new StringContent(createDto.PuntajeObtenido.ToString()), "PuntajeObtenido");
+                form.Add(new StringContent(createDto.PuntajeMaximo.ToString()), "PuntajeMaximo");
+                form.Add(new StringContent(createDto.FechaEvaluacion.ToString("o")), "FechaEvaluacion");
+                form.Add(new StringContent(createDto.TipoEvaluacion), "TipoEvaluacion");
+                form.Add(new StringContent(createDto.Estado), "Estado");
+                
+                if (!string.IsNullOrEmpty(createDto.Observaciones))
+                    form.Add(new StringContent(createDto.Observaciones), "Observaciones");
+                
+                if (!string.IsNullOrEmpty(createDto.Evaluador))
+                    form.Add(new StringContent(createDto.Evaluador), "Evaluador");
+                
+                if (createDto.ArchivoPdf != null)
+                {
+                    var stream = createDto.ArchivoPdf.OpenReadStream(10 * 1024 * 1024); // 10MB máx
+                    form.Add(new StreamContent(stream), "ArchivoPdf", createDto.ArchivoPdf.Name);
+                    Console.WriteLine($"CrearEvaluacionConPdf - PDF agregado al form: {createDto.ArchivoPdf.Name}");
+                }
+                else
+                {
+                    Console.WriteLine("CrearEvaluacionConPdf - No hay PDF para enviar");
+                }
+                
+                var response = await _httpClient.PostAsync($"{_apiBaseUrl}/api/EvaluacionesDesempeno/con-pdf", form);
+                Console.WriteLine($"CrearEvaluacionConPdf - Response: {response.StatusCode}");
+                response.EnsureSuccessStatusCode();
+                return await response.Content.ReadFromJsonAsync<EvaluacionDesempenoDto>() ?? new EvaluacionDesempenoDto();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"CrearEvaluacionConPdf - Error: {ex.Message}");
+                throw;
+            }
+        }
+
+        public async Task<EvaluacionDesempenoDto> ActualizarEvaluacion(UpdateEvaluacionDesempenoDto updateDto)
+        {
+            try
+            {
+                var response = await _httpClient.PutAsJsonAsync($"{_apiBaseUrl}/api/EvaluacionesDesempeno/{updateDto.Id}", updateDto);
+                if (response.IsSuccessStatusCode)
+                {
+                    var result = await response.Content.ReadFromJsonAsync<EvaluacionDesempenoDto>();
+                    return result!;
+                }
+                
+                var errorContent = await response.Content.ReadAsStringAsync();
+                throw new Exception($"Error al actualizar evaluación: {errorContent}");
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error al actualizar evaluación: {ex.Message}");
+            }
+        }
+
+        public async Task<EvaluacionDesempenoDto> ActualizarEvaluacionConPdf(UpdateEvaluacionDesempenoWithPdfDto updateDto)
+        {
+            try
+            {
+                Console.WriteLine($"ActualizarEvaluacionConPdf - ID: {updateDto.Id}, PDF: {updateDto.ArchivoPdf?.Name}, Size: {updateDto.ArchivoPdf?.Size ?? 0}");
+                
+                using var form = new MultipartFormDataContent();
+                form.Add(new StringContent(updateDto.Id.ToString()), "Id");
+                form.Add(new StringContent(updateDto.Cedula), "Cedula");
+                form.Add(new StringContent(updateDto.PeriodoAcademico), "PeriodoAcademico");
+                form.Add(new StringContent(updateDto.Anio.ToString()), "Anio");
+                form.Add(new StringContent(updateDto.Semestre.ToString()), "Semestre");
+                form.Add(new StringContent(updateDto.PuntajeObtenido.ToString()), "PuntajeObtenido");
+                form.Add(new StringContent(updateDto.PuntajeMaximo.ToString()), "PuntajeMaximo");
+                form.Add(new StringContent(updateDto.FechaEvaluacion.ToString("o")), "FechaEvaluacion");
+                form.Add(new StringContent(updateDto.TipoEvaluacion), "TipoEvaluacion");
+                form.Add(new StringContent(updateDto.Estado), "Estado");
+                
+                if (!string.IsNullOrEmpty(updateDto.Observaciones))
+                    form.Add(new StringContent(updateDto.Observaciones), "Observaciones");
+                
+                if (!string.IsNullOrEmpty(updateDto.Evaluador))
+                    form.Add(new StringContent(updateDto.Evaluador), "Evaluador");
+                
+                if (updateDto.ArchivoPdf != null)
+                {
+                    var stream = updateDto.ArchivoPdf.OpenReadStream(10 * 1024 * 1024); // 10MB máx
+                    form.Add(new StreamContent(stream), "ArchivoPdf", updateDto.ArchivoPdf.Name);
+                    Console.WriteLine($"ActualizarEvaluacionConPdf - PDF agregado al form: {updateDto.ArchivoPdf.Name}");
+                }
+                else
+                {
+                    Console.WriteLine("ActualizarEvaluacionConPdf - No hay PDF para actualizar");
+                }
+
+                var response = await _httpClient.PutAsync($"{_apiBaseUrl}/api/EvaluacionesDesempeno/{updateDto.Id}/con-pdf", form);
+                Console.WriteLine($"ActualizarEvaluacionConPdf - Response: {response.StatusCode}");
+                response.EnsureSuccessStatusCode();
+                return await response.Content.ReadFromJsonAsync<EvaluacionDesempenoDto>() ?? new EvaluacionDesempenoDto();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"ActualizarEvaluacionConPdf - Error: {ex.Message}");
+                throw;
+            }
+        }
+
+        public async Task<bool> EliminarEvaluacion(int id)
+        {
+            try
+            {
+                var response = await _httpClient.DeleteAsync($"{_apiBaseUrl}/api/EvaluacionesDesempeno/{id}");
+                return response.IsSuccessStatusCode;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error al eliminar evaluación: {ex.Message}");
+            }
+        }
+
+        public async Task<byte[]?> ObtenerPdfEvaluacion(int evaluacionId)
+        {
+            try
+            {
+                Console.WriteLine($"ObtenerPdfEvaluacion - Solicitando PDF ID: {evaluacionId}");
+                var response = await _httpClient.GetAsync($"{_apiBaseUrl}/api/EvaluacionesDesempeno/{evaluacionId}/pdf");
+                Console.WriteLine($"ObtenerPdfEvaluacion - Response Status: {response.StatusCode}");
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    var bytes = await response.Content.ReadAsByteArrayAsync();
+                    Console.WriteLine($"ObtenerPdfEvaluacion - Bytes recibidos: {bytes.Length}");
+                    return bytes;
+                }
+                Console.WriteLine($"ObtenerPdfEvaluacion - Error: {response.StatusCode}");
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"ObtenerPdfEvaluacion - Exception: {ex.Message}");
                 throw;
             }
         }
@@ -788,9 +972,97 @@ namespace proyectoAgiles.Services
         public DateTime FechaPublicacion { get; set; }
         public string CampoConocimiento { get; set; } = string.Empty;
         public string Filiacion { get; set; } = string.Empty;
-        public string Observacion { get; set; } = string.Empty;
+        public string Observacion { get; set; } = string.Empty;        public IBrowserFile? ArchivoPdf { get; set; }
+    }
+
+    // DTOs para evaluaciones de desempeño
+    public class EvaluacionDesempenoDto
+    {
+        public int Id { get; set; }
+        public string Cedula { get; set; } = string.Empty;
+        public string PeriodoAcademico { get; set; } = string.Empty;
+        public int Anio { get; set; }
+        public int Semestre { get; set; }
+        public decimal PuntajeObtenido { get; set; }
+        public decimal PuntajeMaximo { get; set; }
+        public decimal PorcentajeObtenido { get; set; }
+        public bool CumpleMinimo { get; set; }
+        public DateTime FechaEvaluacion { get; set; }
+        public string TipoEvaluacion { get; set; } = string.Empty;
+        public string? Observaciones { get; set; }
+        public string Estado { get; set; } = string.Empty;
+        public string? Evaluador { get; set; }
+        public string? NombreArchivoRespaldo { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public DateTime? UpdatedAt { get; set; }
+        public bool TienePdf { get; set; }
+    }
+
+    public class CreateEvaluacionDesempenoDto
+    {
+        public string Cedula { get; set; } = string.Empty;
+        public string PeriodoAcademico { get; set; } = string.Empty;
+        public int Anio { get; set; }
+        public int Semestre { get; set; }
+        public decimal PuntajeObtenido { get; set; }
+        public decimal PuntajeMaximo { get; set; } = 100;
+        public DateTime FechaEvaluacion { get; set; }
+        public string TipoEvaluacion { get; set; } = "Integral";
+        public string? Observaciones { get; set; }
+        public string Estado { get; set; } = "Completada";
+        public string? Evaluador { get; set; }
+    }
+
+    public class CreateEvaluacionDesempenoWithPdfDto
+    {
+        public string Cedula { get; set; } = string.Empty;
+        public string PeriodoAcademico { get; set; } = string.Empty;
+        public int Anio { get; set; }
+        public int Semestre { get; set; }
+        public decimal PuntajeObtenido { get; set; }
+        public decimal PuntajeMaximo { get; set; } = 100;
+        public DateTime FechaEvaluacion { get; set; }
+        public string TipoEvaluacion { get; set; } = "Integral";
+        public string? Observaciones { get; set; }
+        public string Estado { get; set; } = "Completada";
+        public string? Evaluador { get; set; }
         public IBrowserFile? ArchivoPdf { get; set; }
-    }public class RegisterRequest
+    }
+
+    public class UpdateEvaluacionDesempenoDto
+    {
+        public int Id { get; set; }
+        public string Cedula { get; set; } = string.Empty;
+        public string PeriodoAcademico { get; set; } = string.Empty;
+        public int Anio { get; set; }
+        public int Semestre { get; set; }
+        public decimal PuntajeObtenido { get; set; }
+        public decimal PuntajeMaximo { get; set; } = 100;
+        public DateTime FechaEvaluacion { get; set; }
+        public string TipoEvaluacion { get; set; } = "Integral";
+        public string? Observaciones { get; set; }
+        public string Estado { get; set; } = "Completada";
+        public string? Evaluador { get; set; }
+    }
+
+    public class UpdateEvaluacionDesempenoWithPdfDto
+    {
+        public int Id { get; set; }
+        public string Cedula { get; set; } = string.Empty;
+        public string PeriodoAcademico { get; set; } = string.Empty;
+        public int Anio { get; set; }
+        public int Semestre { get; set; }
+        public decimal PuntajeObtenido { get; set; }
+        public decimal PuntajeMaximo { get; set; } = 100;
+        public DateTime FechaEvaluacion { get; set; }
+        public string TipoEvaluacion { get; set; } = "Integral";
+        public string? Observaciones { get; set; }
+        public string Estado { get; set; } = "Completada";
+        public string? Evaluador { get; set; }
+        public IBrowserFile? ArchivoPdf { get; set; }
+    }
+
+public class RegisterRequest
     {
         public string Name { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
