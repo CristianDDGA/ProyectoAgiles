@@ -2205,7 +2205,7 @@ private bool isLoadingInvestigaciones = false;
                 return;
             }            if (editingCapacitacion is not null)
             {
-                // Actualizar capacitación existente
+                // Actualizar capacitación existente (datos)
                 var updateDto = new ProyectoAgiles.Application.DTOs.UpdateDiticDto
                 {
                     Id = editingCapacitacion.Id,
@@ -2231,6 +2231,13 @@ private bool isLoadingInvestigaciones = false;
                     FechaFinAutoridad = nuevaCapacitacion.FechaFinAutoridad
                 };
                 var updated = await AuthService.ActualizarCapacitacion(updateDto);
+                
+                // Si se seleccionó un nuevo PDF, actualizar el certificado
+                if (selectedCapacitacionPdf is not null)
+                {
+                    await AuthService.ActualizarCertificadoCapacitacion(editingCapacitacion.Id, selectedCapacitacionPdf);
+                }
+                
                 await MostrarNotificacionExito("Capacitación actualizada", "La capacitación se ha actualizado correctamente.");
                 await CargarCapacitaciones();
                 CloseAgregarCapacitacionModal();

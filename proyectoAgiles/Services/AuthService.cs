@@ -1096,28 +1096,41 @@ namespace proyectoAgiles.Services
             }
         }
 
-        public async Task<bool> ActualizarCertificadoCapacitacion(int id, IBrowserFile archivoCertificado)
-        {
+        public async Task<bool> ActualizarCertificadoCapacitacion(int id, IBrowserFile archivoCertificado)        {
             try
             {
-                using var form = new MultipartFormDataContent();
-                if (archivoCertificado != null)
+                Console.WriteLine($"ActualizarCertificadoCapacitacion - ID: {id}, PDF: {archivoCertificado?.Name}, Size: {archivoCertificado?.Size ?? 0}");
+                
+                using var form = new MultipartFormDataContent();                if (archivoCertificado != null)
                 {
                     var stream = archivoCertificado.OpenReadStream(10 * 1024 * 1024); // 10MB máx
                     var pdfContent = new StreamContent(stream);
                     pdfContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/pdf");
                     form.Add(pdfContent, "archivo", archivoCertificado.Name);
+                    Console.WriteLine($"ActualizarCertificadoCapacitacion - PDF agregado al form: {archivoCertificado.Name}");
                 }
                 else
                 {
                     throw new Exception("No se seleccionó un archivo PDF para actualizar");
                 }
+                
+                Console.WriteLine($"ActualizarCertificadoCapacitacion - Enviando PUT a: {_apiBaseUrl}/api/ditic/{id}/certificado");
                 var response = await _httpClient.PutAsync($"{_apiBaseUrl}/api/ditic/{id}/certificado", form);
+                Console.WriteLine($"ActualizarCertificadoCapacitacion - Response: {response.StatusCode}");
+                
+                if (!response.IsSuccessStatusCode)
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"ActualizarCertificadoCapacitacion - Error content: {errorContent}");
+                    throw new Exception($"Error del servidor: {response.StatusCode} - {errorContent}");
+                }
+                
                 response.EnsureSuccessStatusCode();
                 return true;
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"ActualizarCertificadoCapacitacion - Exception: {ex.Message}");
                 throw new Exception($"Error al actualizar el certificado PDF: {ex.Message}");
             }
         }
