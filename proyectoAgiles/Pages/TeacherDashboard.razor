@@ -3,6 +3,8 @@
 @using System.Text.Json
 @using Microsoft.AspNetCore.Components.Forms
 @using proyectoAgiles.Services
+@using ProyectoAgiles.Application.DTOs
+@using ProyectoAgiles.Domain.Entities
 @layout proyectoAgiles.Layout.MainLayout
 @inject NavigationManager Navigation
 @inject proyectoAgiles.Services.AuthService AuthService
@@ -59,7 +61,7 @@
                                 <p class="mt-3">Verificando requisitos...</p>
                             </div>
                         }
-                        else if (requisitosVerificacion != null)
+                        else if (requisitosVerificacion is not null)
                         {
                             <!-- Resultado de verificación -->
                             <div class="alert @(requisitosVerificacion.CumpleTodosRequisitos ? "alert-success" : "alert-warning") mb-4">                                <h6 class="alert-heading mb-2">
@@ -477,7 +479,7 @@
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title">@(editingInvestigacion != null ? "Editar" : "Agregar") Investigación</h5>
+                        <h5 class="modal-title">@(editingInvestigacion is not null ? "Editar" : "Agregar") Investigación</h5>
                         <button type="button" class="btn-close" @onclick="CloseAgregarModal"></button>
                     </div>
                     <div class="modal-body">                        <form>
@@ -520,7 +522,7 @@
                             {
                                 <span class="spinner-border spinner-border-sm me-2" role="status"></span>
                             }
-                            @(editingInvestigacion != null ? "Actualizar" : "Guardar")
+                            @(editingInvestigacion is not null ? "Actualizar" : "Guardar")
                         </button>
                         <button class="btn btn-secondary" @onclick="CloseAgregarModal">Cancelar</button>
                     </div>
@@ -666,7 +668,7 @@
                                             </h6>
                                         </div>
                                         <div class="card-body">
-                                            @if (verificacionRequisito != null)
+                                            @if (verificacionRequisito is not null)
                                             {
                                                 <div class="row">
                                                     <div class="col-md-6">
@@ -902,7 +904,7 @@
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title">@(editingEvaluacion != null ? "Editar" : "Agregar") Evaluación DAC</h5>
+                        <h5 class="modal-title">@(editingEvaluacion is not null ? "Editar" : "Agregar") Evaluación DAC</h5>
                         <button type="button" class="btn-close" @onclick="CloseAgregarEvaluacionModal"></button>
                     </div>
                     <div class="modal-body">
@@ -986,7 +988,7 @@
                             {
                                 <span class="spinner-border spinner-border-sm me-2" role="status"></span>
                             }
-                            @(editingEvaluacion != null ? "Actualizar" : "Guardar")
+                            @(editingEvaluacion is not null ? "Actualizar" : "Guardar")
                         </button>
                         <button class="btn btn-secondary" @onclick="CloseAgregarEvaluacionModal">Cancelar</button>
                     </div>
@@ -1001,7 +1003,7 @@
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title">@(editingCapacitacion != null ? "Editar" : "Agregar") Capacitación DITIC</h5>
+                        <h5 class="modal-title">@(editingCapacitacion is not null ? "Editar" : "Agregar") Capacitación DITIC</h5>
                         <button type="button" class="btn-close" @onclick="CloseAgregarCapacitacionModal"></button>
                     </div>
                     <div class="modal-body">
@@ -1087,7 +1089,7 @@
                             {
                                 <span class="spinner-border spinner-border-sm me-2" role="status"></span>
                             }
-                            @(editingCapacitacion != null ? "Actualizar" : "Guardar")
+                            @(editingCapacitacion is not null ? "Actualizar" : "Guardar")
                         </button>
                         <button class="btn btn-secondary" @onclick="CloseAgregarCapacitacionModal">Cancelar</button>
                     </div>
@@ -1289,11 +1291,10 @@ private bool isLoadingInvestigaciones = false;
     {
         try
         {
-            Console.WriteLine($"VerPdf - Solicitando PDF para investigación ID: {investigacionId}");
-            var pdfBytes = await AuthService.ObtenerPdfInvestigacion(investigacionId);
+            Console.WriteLine($"VerPdf - Solicitando PDF para investigación ID: {investigacionId}");            var pdfBytes = await AuthService.ObtenerPdfInvestigacion(investigacionId);
             Console.WriteLine($"VerPdf - PDF recibido: {pdfBytes?.Length ?? 0} bytes");
             
-            if (pdfBytes != null && pdfBytes.Length > 0)
+            if (pdfBytes is not null && pdfBytes.Length > 0)
             {
                 var base64 = Convert.ToBase64String(pdfBytes);
                 var pdfDataUrl = $"data:application/pdf;base64,{base64}";
@@ -1490,14 +1491,15 @@ private bool isLoadingInvestigaciones = false;
         try
         {
             var cedula = UserSession.CurrentUser?.Cedula ?? string.Empty;
-            if (string.IsNullOrEmpty(cedula))
-            {
+            if (string.IsNullOrEmpty(cedula))            {
                 await JSRuntime.InvokeVoidAsync("alert", "No se pudo obtener la cédula del usuario.");
                 return;
-            }            if (editingInvestigacion != null)
+            }
+            
+            if (editingInvestigacion is not null)
             {
                 // Verificar si se ha seleccionado un nuevo PDF
-                if (selectedPdf != null)
+                if (selectedPdf is not null)
                 {
                     // Actualizar con PDF
                     var updateWithPdfDto = new proyectoAgiles.Services.UpdateInvestigacionWithPdfDto
@@ -1566,11 +1568,11 @@ private bool isLoadingInvestigaciones = false;
                 };
 
                 var created = await AuthService.CrearInvestigacionConPdf(createDto);
-                investigaciones.Add(MapearDesdeDto(created));
-            }
-              CloseAgregarModal();
-            await MostrarNotificacionExito("✅ Guardado exitoso", 
-                editingInvestigacion != null ? "La investigación ha sido actualizada correctamente." : "La nueva investigación ha sido agregada exitosamente.");
+                investigaciones.Add(MapearDesdeDto(created));            }
+            
+            CloseAgregarModal();
+            await MostrarNotificacionExito("✅ Guardado exitoso",
+                editingInvestigacion is not null ? "La investigación ha sido actualizada correctamente." : "La nueva investigación ha sido agregada exitosamente.");
         }
         catch (Exception ex)
         {
@@ -1637,7 +1639,7 @@ private bool isLoadingInvestigaciones = false;
             var cedula = UserSession.CurrentUser.Cedula;
 
             // Importar evaluaciones desde la API
-            var response = await new HttpClient().GetAsync($"{apiBaseUrl}/api/evaluacionesdesempeno/by-cedula/{cedula}");
+            var response = await new HttpClient().GetAsync($"{apiBaseUrl}/api/EvaluacionesDesempeno/by-cedula/{cedula}");
             
             if (response.IsSuccessStatusCode)
             {
@@ -1645,18 +1647,20 @@ private bool isLoadingInvestigaciones = false;
                 var apiEvaluaciones = System.Text.Json.JsonSerializer.Deserialize<EvaluacionDesempenoDto[]>(jsonContent, 
                     new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
-                if (apiEvaluaciones != null)
+                if (apiEvaluaciones is not null)
                 {
                     evaluaciones = apiEvaluaciones.ToList();
 
                     // Obtener verificación del requisito 75%
-                    var verificacionResponse = await new HttpClient().GetAsync($"{apiBaseUrl}/api/evaluacionesdesempeno/verificar-requisito-75/{cedula}");
+                    var verificacionResponse = await new HttpClient().GetAsync($"{apiBaseUrl}/api/EvaluacionesDesempeno/verificar-requisito-75/{cedula}");
                     if (verificacionResponse.IsSuccessStatusCode)
                     {
                         var verificacionJson = await verificacionResponse.Content.ReadAsStringAsync();
                         verificacionRequisito = System.Text.Json.JsonSerializer.Deserialize<VerificacionRequisito75Dto>(verificacionJson, 
                             new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-                    }                    await MostrarNotificacionExito($"✅ Importación exitosa", 
+                    }
+                    
+                    await MostrarNotificacionExito($"✅ Importación exitosa", 
                         $"Se han cargado {evaluaciones.Count} evaluación{(evaluaciones.Count != 1 ? "es" : "")} desde la base de datos DAC.");
                 }
                 else
@@ -1721,50 +1725,100 @@ private bool isLoadingInvestigaciones = false;
             }
 
             isSavingEvaluacion = true;
-            StateHasChanged();
-
-            var apiBaseUrl = "http://localhost:5200";
+            StateHasChanged();            var apiBaseUrl = "http://localhost:5200";
             using var httpClient = new HttpClient();
-
-            if (editingEvaluacion != null)
-            {
-                // Actualizar evaluación existente
-                var updateDto = new UpdateEvaluacionDesempenoDto
+            
+            if (editingEvaluacion is not null)
+            {                // Actualizar evaluación existente
+                if (selectedEvaluacionPdf is not null)
                 {
-                    Id = editingEvaluacion.Id,
-                    Cedula = nuevaEvaluacion.Cedula,
-                    PeriodoAcademico = nuevaEvaluacion.PeriodoAcademico,
-                    Anio = nuevaEvaluacion.Anio,
-                    Semestre = nuevaEvaluacion.Semestre,
-                    PuntajeObtenido = nuevaEvaluacion.PuntajeObtenido,
-                    PuntajeMaximo = nuevaEvaluacion.PuntajeMaximo,
-                    FechaEvaluacion = nuevaEvaluacion.FechaEvaluacion,
-                    TipoEvaluacion = nuevaEvaluacion.TipoEvaluacion,
-                    Observaciones = nuevaEvaluacion.Observaciones,
-                    Estado = nuevaEvaluacion.Estado,
-                    Evaluador = nuevaEvaluacion.Evaluador
-                };                var updateJson = System.Text.Json.JsonSerializer.Serialize(updateDto);
-                var updateContent = new StringContent(updateJson, System.Text.Encoding.UTF8, "application/json");
-
-                var updateResponse = await httpClient.PutAsync($"{apiBaseUrl}/api/evaluacionesdesempeno/{editingEvaluacion.Id}", updateContent);
-
-                if (updateResponse.IsSuccessStatusCode)
-                {
-                    await MostrarNotificacionExito("Evaluación actualizada", "La evaluación se ha actualizado correctamente.");
+                    // Actualizar con archivo PDF usando multipart/form-data
+                    using var content = new MultipartFormDataContent();
                     
-                    // Recargar evaluaciones
-                    await ImportarEvaluaciones();
-                    CloseAgregarEvaluacionModal();
+                    // Agregar campos del formulario
+                    content.Add(new StringContent(editingEvaluacion.Id.ToString()), "Id");
+                    content.Add(new StringContent(nuevaEvaluacion.Cedula), "Cedula");
+                    content.Add(new StringContent(nuevaEvaluacion.PeriodoAcademico), "PeriodoAcademico");
+                    content.Add(new StringContent(nuevaEvaluacion.Anio.ToString()), "Anio");
+                    content.Add(new StringContent(nuevaEvaluacion.Semestre.ToString()), "Semestre");
+                    content.Add(new StringContent(nuevaEvaluacion.PuntajeObtenido.ToString()), "PuntajeObtenido");
+                    content.Add(new StringContent(nuevaEvaluacion.PuntajeMaximo.ToString()), "PuntajeMaximo");
+                    content.Add(new StringContent(nuevaEvaluacion.FechaEvaluacion.ToString("yyyy-MM-dd")), "FechaEvaluacion");
+                    content.Add(new StringContent(nuevaEvaluacion.TipoEvaluacion), "TipoEvaluacion");
+                    content.Add(new StringContent(nuevaEvaluacion.Estado), "Estado");
+                    
+                    if (!string.IsNullOrEmpty(nuevaEvaluacion.Observaciones))
+                        content.Add(new StringContent(nuevaEvaluacion.Observaciones), "Observaciones");
+                    
+                    if (!string.IsNullOrEmpty(nuevaEvaluacion.Evaluador))
+                        content.Add(new StringContent(nuevaEvaluacion.Evaluador), "Evaluador");
+
+                    // Agregar archivo PDF
+                    var pdfStream = selectedEvaluacionPdf.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024); // 10MB max
+                    var pdfContent = new StreamContent(pdfStream);
+                    pdfContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/pdf");
+                    content.Add(pdfContent, "ArchivoPdf", selectedEvaluacionPdf.Name);
+
+                    // Usar el endpoint correcto para actualización con PDF
+                    var updateResponse = await httpClient.PutAsync($"{apiBaseUrl}/api/EvaluacionesDesempeno/{editingEvaluacion.Id}/actualizar-con-pdf", content);
+
+                    if (updateResponse.IsSuccessStatusCode)
+                    {
+                        await MostrarNotificacionExito("Evaluación actualizada", "La evaluación se ha actualizado correctamente con el nuevo PDF.");
+                        
+                        // Recargar evaluaciones
+                        await ImportarEvaluaciones();
+                        CloseAgregarEvaluacionModal();
+                    }
+                    else
+                    {
+                        var errorContent = await updateResponse.Content.ReadAsStringAsync();
+                        await MostrarNotificacionError("Error al actualizar", $"No se pudo actualizar la evaluación: {errorContent}");
+                    }
                 }
                 else
                 {
-                    await MostrarNotificacionError("Error al actualizar", "No se pudo actualizar la evaluación.");
+                    // Actualizar sin archivo PDF (solo datos)
+                    var updateDto = new UpdateEvaluacionDesempenoDto
+                    {
+                        Id = editingEvaluacion.Id,
+                        Cedula = nuevaEvaluacion.Cedula,
+                        PeriodoAcademico = nuevaEvaluacion.PeriodoAcademico,
+                        Anio = nuevaEvaluacion.Anio,
+                        Semestre = nuevaEvaluacion.Semestre,
+                        PuntajeObtenido = nuevaEvaluacion.PuntajeObtenido,
+                        PuntajeMaximo = nuevaEvaluacion.PuntajeMaximo,
+                        FechaEvaluacion = nuevaEvaluacion.FechaEvaluacion,
+                        TipoEvaluacion = nuevaEvaluacion.TipoEvaluacion,
+                        Observaciones = nuevaEvaluacion.Observaciones,
+                        Estado = nuevaEvaluacion.Estado,
+                        Evaluador = nuevaEvaluacion.Evaluador
+                    };
+
+                    var updateJson = System.Text.Json.JsonSerializer.Serialize(updateDto);
+                    var updateContent = new StringContent(updateJson, System.Text.Encoding.UTF8, "application/json");
+
+                    var updateResponse = await httpClient.PutAsync($"{apiBaseUrl}/api/EvaluacionesDesempeno/{editingEvaluacion.Id}", updateContent);
+
+                    if (updateResponse.IsSuccessStatusCode)
+                    {
+                        await MostrarNotificacionExito("Evaluación actualizada", "La evaluación se ha actualizado correctamente.");
+                        
+                        // Recargar evaluaciones
+                        await ImportarEvaluaciones();
+                        CloseAgregarEvaluacionModal();
+                    }
+                    else
+                    {
+                        var errorContent = await updateResponse.Content.ReadAsStringAsync();
+                        await MostrarNotificacionError("Error al actualizar", $"No se pudo actualizar la evaluación: {errorContent}");
+                    }
                 }
             }
             else
             {
                 // Crear nueva evaluación
-                if (selectedEvaluacionPdf != null)
+                if (selectedEvaluacionPdf is not null)
                 {
                     // Crear con archivo PDF
                     using var content = new MultipartFormDataContent();
@@ -1792,7 +1846,8 @@ private bool isLoadingInvestigaciones = false;
                     pdfContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/pdf");
                     content.Add(pdfContent, "ArchivoPdf", selectedEvaluacionPdf.Name);
 
-                    var response = await httpClient.PostAsync($"{apiBaseUrl}/api/evaluacionesdesempeno/con-pdf", content);
+                    // Usar el endpoint correcto para crear con PDF
+                    var response = await httpClient.PostAsync($"{apiBaseUrl}/api/EvaluacionesDesempeno/crear-con-pdf", content);
 
                     if (response.IsSuccessStatusCode)
                     {
@@ -1829,7 +1884,7 @@ private bool isLoadingInvestigaciones = false;
                     var json = System.Text.Json.JsonSerializer.Serialize(createDto);
                     var stringContent = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
 
-                    var response = await httpClient.PostAsync($"{apiBaseUrl}/api/evaluacionesdesempeno", stringContent);
+                    var response = await httpClient.PostAsync($"{apiBaseUrl}/api/EvaluacionesDesempeno", stringContent);
 
                     if (response.IsSuccessStatusCode)
                     {
@@ -1894,7 +1949,7 @@ private bool isLoadingInvestigaciones = false;
                 var apiBaseUrl = "http://localhost:5200";
                 using var httpClient = new HttpClient();
                 
-                var response = await httpClient.DeleteAsync($"{apiBaseUrl}/api/evaluacionesdesempeno/{id}");
+                var response = await httpClient.DeleteAsync($"{apiBaseUrl}/api/EvaluacionesDesempeno/{id}");
                 
                 if (response.IsSuccessStatusCode)
                 {
@@ -1914,19 +1969,56 @@ private bool isLoadingInvestigaciones = false;
                 await MostrarNotificacionError("Error inesperado", $"Ocurrió un error al eliminar la evaluación: {ex.Message}");
             }
         }
-    }
-
-    private async Task VerPdfEvaluacion(int id)
+    }    private async Task VerPdfEvaluacion(int id)
     {
         try
         {
+            Console.WriteLine($"VerPdfEvaluacion - Solicitando PDF para evaluación ID: {id}");
+            
             var apiBaseUrl = "http://localhost:5200";
-            var url = $"{apiBaseUrl}/api/evaluacionesdesempeno/{id}/pdf";
-            await JSRuntime.InvokeVoidAsync("open", url, "_blank");
+            using var httpClient = new HttpClient();
+            
+            // Obtener el PDF desde la API
+            var response = await httpClient.GetAsync($"{apiBaseUrl}/api/EvaluacionesDesempeno/{id}/pdf");
+            
+            if (response.IsSuccessStatusCode)
+            {
+                var pdfBytes = await response.Content.ReadAsByteArrayAsync();
+                Console.WriteLine($"VerPdfEvaluacion - PDF recibido: {pdfBytes?.Length ?? 0} bytes");
+                
+                if (pdfBytes is not null && pdfBytes.Length > 0)
+                {
+                    var base64 = Convert.ToBase64String(pdfBytes);
+                    var pdfDataUrl = $"data:application/pdf;base64,{base64}";
+                    var fileName = $"evaluacion_{id}.pdf";
+                    
+                    Console.WriteLine($"VerPdfEvaluacion - DataURL generado: {pdfDataUrl.Substring(0, Math.Min(100, pdfDataUrl.Length))}...");
+                    
+                    // Usar la función JavaScript personalizada
+                    var success = await JSRuntime.InvokeAsync<bool>("showPdf", pdfDataUrl, fileName);
+                    
+                    if (!success)
+                    {
+                        await MostrarNotificacionExito("PDF descargado", "El PDF se ha descargado a tu carpeta de descargas.");
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("VerPdfEvaluacion - PDF vacío o nulo");
+                    await MostrarNotificacionError("PDF no disponible", "No se encontró el archivo PDF para esta evaluación.");
+                }
+            }
+            else
+            {
+                Console.WriteLine($"VerPdfEvaluacion - Error HTTP: {response.StatusCode}");
+                await MostrarNotificacionError("Error al obtener PDF", "No se pudo cargar el archivo PDF.");
+            }
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("alert", $"Error al abrir PDF: {ex.Message}");        }
+            Console.WriteLine($"VerPdfEvaluacion - Error: {ex.Message}");
+            await MostrarNotificacionError("Error", $"Error al obtener el PDF: {ex.Message}");
+        }
     }
 
     private void CloseAgregarModal()
@@ -2065,75 +2157,20 @@ private bool isLoadingInvestigaciones = false;
         catch (Exception ex)
         {
             await JSRuntime.InvokeVoidAsync("alert", $"Error: {ex.Message}");
-        }
-    }// Métodos para notificaciones mejoradas
+        }    }    // Métodos para notificaciones mejoradas
     private async Task MostrarNotificacionExito(string titulo, string mensaje)
     {
-        await JSRuntime.InvokeVoidAsync("eval", $@"
-            // Crear y mostrar toast de Bootstrap
-            const toastHtml = `
-                <div class='toast align-items-center text-white bg-success border-0' role='alert' aria-live='assertive' aria-atomic='true' style='position: fixed; top: 20px; right: 20px; z-index: 9999;'>
-                    <div class='d-flex'>
-                        <div class='toast-body'>
-                            <strong>{titulo}</strong><br>{mensaje}
-                        </div>
-                        <button type='button' class='btn-close btn-close-white me-2 m-auto' data-bs-dismiss='toast'></button>
-                    </div>
-                </div>`;
-            
-            document.body.insertAdjacentHTML('beforeend', toastHtml);
-            const toastElement = document.body.lastElementChild;
-            const toast = new bootstrap.Toast(toastElement, {{ delay: 4000 }});
-            toast.show();
-            
-            toastElement.addEventListener('hidden.bs.toast', () => toastElement.remove());
-        ");
+        await JSRuntime.InvokeVoidAsync("alert", $"{titulo}: {mensaje}");
     }
 
     private async Task MostrarNotificacionInfo(string titulo, string mensaje)
     {
-        await JSRuntime.InvokeVoidAsync("eval", $@"
-            // Crear y mostrar toast de Bootstrap
-            const toastHtml = `
-                <div class='toast align-items-center text-white bg-info border-0' role='alert' aria-live='assertive' aria-atomic='true' style='position: fixed; top: 20px; right: 20px; z-index: 9999;'>
-                    <div class='d-flex'>
-                        <div class='toast-body'>
-                            <strong>{titulo}</strong><br>{mensaje}
-                        </div>
-                        <button type='button' class='btn-close btn-close-white me-2 m-auto' data-bs-dismiss='toast'></button>
-                    </div>
-                </div>`;
-            
-            document.body.insertAdjacentHTML('beforeend', toastHtml);
-            const toastElement = document.body.lastElementChild;
-            const toast = new bootstrap.Toast(toastElement, {{ delay: 5000 }});
-            toast.show();
-            
-            toastElement.addEventListener('hidden.bs.toast', () => toastElement.remove());
-        ");
+        await JSRuntime.InvokeVoidAsync("alert", $"{titulo}: {mensaje}");
     }
 
     private async Task MostrarNotificacionError(string titulo, string mensaje)
     {
-        await JSRuntime.InvokeVoidAsync("eval", $@"
-            // Crear y mostrar toast de Bootstrap
-            const toastHtml = `
-                <div class='toast align-items-center text-white bg-danger border-0' role='alert' aria-live='assertive' aria-atomic='true' style='position: fixed; top: 20px; right: 20px; z-index: 9999;'>
-                    <div class='d-flex'>
-                        <div class='toast-body'>
-                            <strong>{titulo}</strong><br>{mensaje}
-                        </div>
-                        <button type='button' class='btn-close btn-close-white me-2 m-auto' data-bs-dismiss='toast'></button>
-                    </div>
-                </div>`;
-            
-            document.body.insertAdjacentHTML('beforeend', toastHtml);
-            const toastElement = document.body.lastElementChild;
-            const toast = new bootstrap.Toast(toastElement, {{ delay: 6000 }});
-            toast.show();
-            
-            toastElement.addEventListener('hidden.bs.toast', () => toastElement.remove());
-        ");
+        await JSRuntime.InvokeVoidAsync("alert", $"{titulo}: {mensaje}");
     }
 
     public class ClassItem
@@ -2319,7 +2356,7 @@ private bool isLoadingInvestigaciones = false;
                 var apiCapacitaciones = System.Text.Json.JsonSerializer.Deserialize<DiticDto[]>(jsonContent, 
                     new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
-                if (apiCapacitaciones != null)
+                if (apiCapacitaciones is not null)
                 {
                     capacitaciones = apiCapacitaciones.ToList();
                     StateHasChanged();
@@ -2411,9 +2448,7 @@ private bool isLoadingInvestigaciones = false;
             StateHasChanged();
 
             var apiBaseUrl = "http://localhost:5200";
-            using var httpClient = new HttpClient();
-
-            if (editingCapacitacion != null)
+            using var httpClient = new HttpClient();            if (editingCapacitacion is not null)
             {
                 // Actualizar capacitación existente
                 var updateJson = System.Text.Json.JsonSerializer.Serialize(nuevaCapacitacion);
@@ -2423,7 +2458,7 @@ private bool isLoadingInvestigaciones = false;
 
                 if (updateResponse.IsSuccessStatusCode)
                 {
-                    await MostrarNotificacionExito("Capacitación actualizada", "La capacitación se ha actualizado correctamente.");
+                    await MostrarNotificacionExito("Capacitación actualizada", "La capacitación se ha actualizada correctamente.");
                     
                     // Recargar capacitaciones
                     await CargarCapacitaciones();
@@ -2437,7 +2472,7 @@ private bool isLoadingInvestigaciones = false;
             else
             {
                 // Crear nueva capacitación
-                if (selectedCapacitacionPdf != null)
+                if (selectedCapacitacionPdf is not null)
                 {
                     // Crear con archivo PDF
                     using var content = new MultipartFormDataContent();
