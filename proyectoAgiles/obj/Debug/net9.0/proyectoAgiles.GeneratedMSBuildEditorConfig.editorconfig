@@ -52,6 +52,14 @@ build_metadata.AdditionalFiles.CssScope = b-kfu1zhtaup
 build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQWRtaW5EYXNoYm9hcmQucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = b-uzb8jgdep7
 
+[C:/Users/nixon/OneDrive/Escritorio/proyectoAgiles/proyectoAgiles/Pages/ComisionAcademicaEscalafon.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQ29taXNpb25BY2FkZW1pY2FFc2NhbGFmb24ucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = b-ko4vfo3weh
+
+[C:/Users/nixon/OneDrive/Escritorio/proyectoAgiles/proyectoAgiles/Pages/DireccionTalentoHumano.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcRGlyZWNjaW9uVGFsZW50b0h1bWFuby5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = b-5fl9109cqg
+
 [C:/Users/nixon/OneDrive/Escritorio/proyectoAgiles/proyectoAgiles/Pages/ForgotPassword.razor]
 build_metadata.AdditionalFiles.TargetPath = UGFnZXNcRm9yZ290UGFzc3dvcmQucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = b-7h3ik7l7mo
@@ -67,6 +75,10 @@ build_metadata.AdditionalFiles.CssScope = b-w25nqwcr4j
 [C:/Users/nixon/OneDrive/Escritorio/proyectoAgiles/proyectoAgiles/Pages/ManageTeachers.razor]
 build_metadata.AdditionalFiles.TargetPath = UGFnZXNcTWFuYWdlVGVhY2hlcnMucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = b-zqpwi1f91o
+
+[C:/Users/nixon/OneDrive/Escritorio/proyectoAgiles/proyectoAgiles/Pages/PresidenteComisionAcademica.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcUHJlc2lkZW50ZUNvbWlzaW9uQWNhZGVtaWNhLnJhem9y
+build_metadata.AdditionalFiles.CssScope = b-00c1doak9f
 
 [C:/Users/nixon/OneDrive/Escritorio/proyectoAgiles/proyectoAgiles/Pages/Register.razor]
 build_metadata.AdditionalFiles.TargetPath = UGFnZXNcUmVnaXN0ZXIucmF6b3I=

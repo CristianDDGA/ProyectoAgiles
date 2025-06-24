@@ -1,0 +1,62 @@
+@page "/admin/comision-academica-escalafon"
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.AspNetCore.Components
+@layout proyectoAgiles.Layout.MainLayout
+@inject NavigationManager Navigation
+@inject proyectoAgiles.Services.UserSessionService UserSession
+
+<PageTitle>Comisión Académica de Escalafón - UTA</PageTitle>
+
+<div class="comision-page">
+    <div class="back-button-container">
+        <button class="btn btn-outline-secondary" @onclick="GoBack">
+            <i class="fas fa-arrow-left"></i> Volver
+        </button>
+    </div>
+
+    <div class="page-container">
+        <div class="page-header">
+            <div class="header-content">
+                <h1 class="page-title">Comisión Académica de Escalafón</h1>
+                <p class="page-subtitle">Promoción del personal académico institucional</p>
+            </div>
+        </div>
+
+        <div class="info-section">
+            <div class="info-card">
+                <div class="info-header">
+                    <i class="fas fa-users-cog"></i>
+                    <h4>Funciones de la Comisión Académica de Escalafón</h4>
+                </div>
+                <div class="info-content">
+                    <p>La Comisión Académica de Escalafón es responsable de la promoción y reconocimiento del personal académico:</p>
+                    <ul>
+                        <li><strong>Evaluación de Méritos:</strong> Análisis de la trayectoria académica y profesional</li>
+                        <li><strong>Promoción Docente:</strong> Gestión de ascensos en el escalafón académico</li>
+                        <li><strong>Reconocimientos:</strong> Otorgamiento de distinciones académicas</li>
+                        <li><strong>Normativa Académica:</strong> Desarrollo y actualización de reglamentos</li>
+                        <li><strong>Seguimiento:</strong> Monitoreo del desarrollo académico institucional</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        await UserSession.InitializeAsync();
+        
+        if (UserSession.CurrentUser == null || UserSession.CurrentUser.UserType != 1)
+        {
+            Navigation.NavigateTo("/login");
+            return;
+        }
+    }
+
+    private void GoBack()
+    {
+        Navigation.NavigateTo("/admin/talento-humano");
+    }
+}

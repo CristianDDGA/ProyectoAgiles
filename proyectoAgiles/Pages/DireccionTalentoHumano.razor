@@ -1,0 +1,62 @@
+@page "/admin/direccion-talento-humano"
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.AspNetCore.Components
+@layout proyectoAgiles.Layout.MainLayout
+@inject NavigationManager Navigation
+@inject proyectoAgiles.Services.UserSessionService UserSession
+
+<PageTitle>Dirección de Talento Humano - UTA</PageTitle>
+
+<div class="direccion-page">
+    <div class="back-button-container">
+        <button class="btn btn-outline-secondary" @onclick="GoBack">
+            <i class="fas fa-arrow-left"></i> Volver
+        </button>
+    </div>
+
+    <div class="page-container">
+        <div class="page-header">
+            <div class="header-content">
+                <h1 class="page-title">Dirección de Talento Humano</h1>
+                <p class="page-subtitle">Gestión administrativa y operativa del personal</p>
+            </div>
+        </div>
+
+        <div class="info-section">
+            <div class="info-card">
+                <div class="info-header">
+                    <i class="fas fa-building"></i>
+                    <h4>Funciones de la Dirección de Talento Humano</h4>
+                </div>
+                <div class="info-content">
+                    <p>La Dirección de Talento Humano se encarga de la gestión integral del personal docente y administrativo, incluyendo:</p>
+                    <ul>
+                        <li><strong>Administración de Personal:</strong> Gestión de contratos, nómina y beneficios</li>
+                        <li><strong>Selección y Reclutamiento:</strong> Procesos de contratación de nuevo personal</li>
+                        <li><strong>Capacitación y Desarrollo:</strong> Programas de formación continua</li>
+                        <li><strong>Evaluación del Desempeño:</strong> Sistemas de evaluación del personal</li>
+                        <li><strong>Bienestar Laboral:</strong> Programas de bienestar y clima organizacional</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        await UserSession.InitializeAsync();
+        
+        if (UserSession.CurrentUser == null || UserSession.CurrentUser.UserType != 1)
+        {
+            Navigation.NavigateTo("/login");
+            return;
+        }
+    }
+
+    private void GoBack()
+    {
+        Navigation.NavigateTo("/admin/talento-humano");
+    }
+}

@@ -1,0 +1,535 @@
+@page "/admin/presidente-comision-academica"
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.AspNetCore.Components
+@layout proyectoAgiles.Layout.MainLayout
+@inject NavigationManager Navigation
+@inject proyectoAgiles.Services.UserSessionService UserSession
+
+<PageTitle>Presidente de la Comisión Académica - UTA</PageTitle>
+
+<div class="presidente-comision-page">
+    <!-- Botón Volver Flotante -->
+    <div class="back-button-container">
+        <button class="btn btn-outline-secondary" @onclick="GoBack">
+            <i class="fas fa-arrow-left"></i> Volver
+        </button>
+    </div>
+
+    <div class="page-container">
+        <!-- Título de la Página -->
+        <div class="page-header">
+            <div class="header-content">
+                <h1 class="page-title">Presidente de la Comisión Académica</h1>
+                <p class="page-subtitle">Gestión de solicitudes de escalafón docente</p>
+            </div>
+        </div>
+
+        <!-- Resumen de Solicitudes -->
+        <div class="summary-cards">
+            <div class="summary-card pending">
+                <div class="summary-icon">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="summary-content">
+                    <h3>@pendingSolicitudes</h3>
+                    <p>Solicitudes Pendientes</p>
+                </div>
+            </div>
+            
+            <div class="summary-card approved">
+                <div class="summary-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="summary-content">
+                    <h3>@approvedSolicitudes</h3>
+                    <p>Solicitudes Aprobadas</p>
+                </div>
+            </div>
+            
+            <div class="summary-card rejected">
+                <div class="summary-icon">
+                    <i class="fas fa-times-circle"></i>
+                </div>
+                <div class="summary-content">
+                    <h3>@rejectedSolicitudes</h3>
+                    <p>Solicitudes Rechazadas</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filtros -->
+        <div class="filters-section">
+            <div class="filters-container">
+                <select class="form-select" @bind="selectedFilter">
+                    <option value="all">Todas las Solicitudes</option>
+                    <option value="pending">Pendientes</option>
+                    <option value="approved">Aprobadas</option>
+                    <option value="rejected">Rechazadas</option>
+                </select>
+                
+                <input type="text" class="form-control" placeholder="Buscar por nombre o cédula..." @bind="searchTerm" @oninput="FilterSolicitudes" />
+                
+                <button class="btn btn-primary" @onclick="RefreshSolicitudes">
+                    <i class="fas fa-refresh"></i> Actualizar
+                </button>
+            </div>
+        </div>
+
+        <!-- Lista de Solicitudes -->
+        <div class="solicitudes-section">
+            @if (filteredSolicitudes?.Any() == true)
+            {
+                @foreach (var solicitud in filteredSolicitudes)
+                {
+                    <div class="solicitud-card @GetStatusClass(solicitud.Status)">
+                        <div class="solicitud-header">
+                            <div class="solicitud-info">
+                                <h4>@solicitud.DocenteNombre</h4>
+                                <p class="solicitud-cedula">
+                                    <i class="fas fa-id-card"></i> @solicitud.DocenteCedula
+                                </p>
+                                <p class="solicitud-fecha">
+                                    <i class="fas fa-calendar"></i> Solicitado: @solicitud.FechaSolicitud.ToString("dd/MM/yyyy HH:mm")
+                                </p>
+                            </div>
+                            <div class="solicitud-status">
+                                <span class="status-badge @GetStatusClass(solicitud.Status)">
+                                    @GetStatusText(solicitud.Status)
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="solicitud-details">
+                            <div class="detail-row">
+                                <span class="detail-label">Nivel Actual:</span>
+                                <span class="detail-value">@solicitud.NivelActual</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Nivel Solicitado:</span>
+                                <span class="detail-value">@solicitud.NivelSolicitado</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Años de Experiencia:</span>
+                                <span class="detail-value">@solicitud.AnosExperiencia años</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Títulos:</span>
+                                <span class="detail-value">@solicitud.Titulos</span>
+                            </div>
+                        </div>
+
+                        <div class="solicitud-actions">
+                            <button class="btn btn-info" @onclick="() => VerDetalles(solicitud.Id)">
+                                <i class="fas fa-eye"></i> Ver Detalles
+                            </button>
+                            
+                            @if (solicitud.Status == "Pendiente")
+                            {
+                                <button class="btn btn-success" @onclick="() => AprobarSolicitud(solicitud.Id)">
+                                    <i class="fas fa-check"></i> Aprobar
+                                </button>
+                                <button class="btn btn-danger" @onclick="() => RechazarSolicitud(solicitud.Id)">
+                                    <i class="fas fa-times"></i> Rechazar
+                                </button>
+                            }
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="no-solicitudes">
+                    <div class="no-solicitudes-icon">
+                        <i class="fas fa-inbox"></i>
+                    </div>
+                    <h3>No hay solicitudes</h3>
+                    <p>No se encontraron solicitudes que coincidan con los filtros seleccionados.</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Detalles -->
+@if (showDetailsModal)
+{
+    <div class="modal fade show" style="display: block;" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Detalles de la Solicitud de Escalafón</h5>
+                    <button type="button" class="btn-close" @onclick="CloseDetailsModal"></button>
+                </div>
+                <div class="modal-body">
+                    @if (selectedSolicitud != null)
+                    {
+                        <!-- Información Personal -->
+                        <div class="details-section">
+                            <h6><i class="fas fa-user"></i> Información Personal</h6>
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <tbody>
+                                        <tr>
+                                            <td><strong>Nombre Completo:</strong></td>
+                                            <td>@selectedSolicitud.DocenteNombre</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Cédula:</strong></td>
+                                            <td>@selectedSolicitud.DocenteCedula</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Email:</strong></td>
+                                            <td>@selectedSolicitud.DocenteEmail</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Teléfono:</strong></td>
+                                            <td>@selectedSolicitud.DocenteTelefono</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Facultad:</strong></td>
+                                            <td>@selectedSolicitud.Facultad</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Carrera:</strong></td>
+                                            <td>@selectedSolicitud.Carrera</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Información Académica -->
+                        <div class="details-section">
+                            <h6><i class="fas fa-graduation-cap"></i> Información Académica</h6>
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <tbody>
+                                        <tr>
+                                            <td><strong>Nivel Actual:</strong></td>
+                                            <td>@selectedSolicitud.NivelActual</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Nivel Solicitado:</strong></td>
+                                            <td>@selectedSolicitud.NivelSolicitado</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Años de Experiencia:</strong></td>
+                                            <td>@selectedSolicitud.AnosExperiencia años</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Títulos Obtenidos:</strong></td>
+                                            <td>@selectedSolicitud.Titulos</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Publicaciones:</strong></td>
+                                            <td>@selectedSolicitud.Publicaciones</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Proyectos de Investigación:</strong></td>
+                                            <td>@selectedSolicitud.ProyectosInvestigacion</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Capacitaciones:</strong></td>
+                                            <td>@selectedSolicitud.Capacitaciones</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Información de la Solicitud -->
+                        <div class="details-section">
+                            <h6><i class="fas fa-file-alt"></i> Información de la Solicitud</h6>
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <tbody>
+                                        <tr>
+                                            <td><strong>Fecha de Solicitud:</strong></td>
+                                            <td>@selectedSolicitud.FechaSolicitud.ToString("dd/MM/yyyy HH:mm")</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Estado:</strong></td>
+                                            <td>
+                                                <span class="status-badge @GetStatusClass(selectedSolicitud.Status)">
+                                                    @GetStatusText(selectedSolicitud.Status)
+                                                </span>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Observaciones:</strong></td>
+                                            <td>@(string.IsNullOrEmpty(selectedSolicitud.Observaciones) ? "Sin observaciones" : selectedSolicitud.Observaciones)</td>
+                                        </tr>
+                                        @if (!string.IsNullOrEmpty(selectedSolicitud.MotivoRechazo))
+                                        {
+                                            <tr>
+                                                <td><strong>Motivo de Rechazo:</strong></td>
+                                                <td>@selectedSolicitud.MotivoRechazo</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    }
+                </div>
+                <div class="modal-footer">
+                    @if (selectedSolicitud?.Status == "Pendiente")
+                    {
+                        <button type="button" class="btn btn-success" @onclick="() => AprobarSolicitud(selectedSolicitud.Id)">
+                            <i class="fas fa-check"></i> Aprobar
+                        </button>
+                        <button type="button" class="btn btn-danger" @onclick="() => RechazarSolicitud(selectedSolicitud.Id)">
+                            <i class="fas fa-times"></i> Rechazar
+                        </button>
+                    }
+                    <button type="button" class="btn btn-secondary" @onclick="CloseDetailsModal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop fade show"></div>
+}
+
+<!-- Modal de Rechazo -->
+@if (showRejectModal)
+{
+    <div class="modal fade show" style="display: block;" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Rechazar Solicitud</h5>
+                    <button type="button" class="btn-close" @onclick="CloseRejectModal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>¿Está seguro que desea rechazar esta solicitud de escalafón?</p>
+                    <div class="mb-3">
+                        <label class="form-label">Motivo del rechazo:</label>
+                        <textarea class="form-control" rows="3" @bind="motivoRechazo" placeholder="Ingrese el motivo del rechazo..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" @onclick="ConfirmReject">
+                        <i class="fas fa-times"></i> Rechazar
+                    </button>
+                    <button type="button" class="btn btn-secondary" @onclick="CloseRejectModal">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop fade show"></div>
+}
+
+@code {
+    private List<SolicitudEscalafon> solicitudes = new();
+    private List<SolicitudEscalafon> filteredSolicitudes = new();
+    private SolicitudEscalafon? selectedSolicitud;
+    
+    private string selectedFilter = "all";
+    private string searchTerm = "";
+    private string motivoRechazo = "";
+    
+    private bool showDetailsModal = false;
+    private bool showRejectModal = false;
+    private int selectedSolicitudId = 0;
+    
+    private int pendingSolicitudes = 0;
+    private int approvedSolicitudes = 0;
+    private int rejectedSolicitudes = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await UserSession.InitializeAsync();
+        
+        if (UserSession.CurrentUser == null || UserSession.CurrentUser.UserType != 1)
+        {
+            Navigation.NavigateTo("/login");
+            return;
+        }
+
+        await LoadSolicitudes();
+    }
+
+    private async Task LoadSolicitudes()
+    {
+        // Simular datos de solicitudes (aquí conectarías con tu base de datos)
+        solicitudes = new List<SolicitudEscalafon>
+        {
+            new SolicitudEscalafon
+            {
+                Id = 1,
+                DocenteNombre = "Dr. Juan Pérez García",
+                DocenteCedula = "1234567890",
+                DocenteEmail = "juan.perez@uta.edu.ec",
+                DocenteTelefono = "0987654321",
+                Facultad = "Facultad de Ingeniería",
+                Carrera = "Ingeniería en Sistemas",
+                NivelActual = "Auxiliar 1",
+                NivelSolicitado = "Auxiliar 2",
+                AnosExperiencia = 5,
+                Titulos = "Licenciado en Sistemas, Magíster en Tecnologías de la Información",
+                Publicaciones = "3 artículos en revistas indexadas",
+                ProyectosInvestigacion = "2 proyectos de investigación completados",
+                Capacitaciones = "Certificación en Cloud Computing, Curso de Metodologías Ágiles",
+                FechaSolicitud = DateTime.Now.AddDays(-2),
+                Status = "Pendiente",
+                Observaciones = "Cumple con todos los requisitos académicos"
+            },
+            new SolicitudEscalafon
+            {
+                Id = 2,
+                DocenteNombre = "Dra. María Elena Rodríguez",
+                DocenteCedula = "0987654321",
+                DocenteEmail = "maria.rodriguez@uta.edu.ec",
+                DocenteTelefono = "0987654322",
+                Facultad = "Facultad de Ciencias Humanas",
+                Carrera = "Psicología",
+                NivelActual = "Agregado 1",
+                NivelSolicitado = "Agregado 2",
+                AnosExperiencia = 8,
+                Titulos = "Licenciada en Psicología, Magíster en Psicología Clínica, PhD en Neuropsicología",
+                Publicaciones = "5 artículos en revistas indexadas, 2 capítulos de libro",
+                ProyectosInvestigacion = "3 proyectos de investigación, 1 proyecto internacional",
+                Capacitaciones = "Certificación en Terapia Cognitivo-Conductual, Diplomado en Neuropsicología",
+                FechaSolicitud = DateTime.Now.AddDays(-5),
+                Status = "Aprobado",
+                Observaciones = "Excelente trayectoria académica y de investigación"
+            }
+        };
+
+        FilterSolicitudes();
+        UpdateSummary();
+    }
+
+    private void FilterSolicitudes()
+    {
+        filteredSolicitudes = solicitudes.Where(s => 
+            (selectedFilter == "all" || 
+             (selectedFilter == "pending" && s.Status == "Pendiente") ||
+             (selectedFilter == "approved" && s.Status == "Aprobado") ||
+             (selectedFilter == "rejected" && s.Status == "Rechazado")) &&
+            (string.IsNullOrEmpty(searchTerm) || 
+             s.DocenteNombre.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+             s.DocenteCedula.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
+        ).ToList();
+    }
+
+    private void UpdateSummary()
+    {
+        pendingSolicitudes = solicitudes.Count(s => s.Status == "Pendiente");
+        approvedSolicitudes = solicitudes.Count(s => s.Status == "Aprobado");
+        rejectedSolicitudes = solicitudes.Count(s => s.Status == "Rechazado");
+    }
+
+    private void VerDetalles(int solicitudId)
+    {
+        selectedSolicitud = solicitudes.FirstOrDefault(s => s.Id == solicitudId);
+        showDetailsModal = true;
+    }
+
+    private void CloseDetailsModal()
+    {
+        showDetailsModal = false;
+        selectedSolicitud = null;
+    }
+
+    private async Task AprobarSolicitud(int solicitudId)
+    {
+        var solicitud = solicitudes.FirstOrDefault(s => s.Id == solicitudId);
+        if (solicitud != null)
+        {
+            solicitud.Status = "Aprobado";
+            solicitud.FechaAprobacion = DateTime.Now;
+            
+            // Aquí agregarías la lógica para actualizar en la base de datos
+            
+            await LoadSolicitudes();
+            CloseDetailsModal();
+        }
+    }
+
+    private void RechazarSolicitud(int solicitudId)
+    {
+        selectedSolicitudId = solicitudId;
+        showRejectModal = true;
+    }
+
+    private async Task ConfirmReject()
+    {
+        var solicitud = solicitudes.FirstOrDefault(s => s.Id == selectedSolicitudId);
+        if (solicitud != null)
+        {
+            solicitud.Status = "Rechazado";
+            solicitud.MotivoRechazo = motivoRechazo;
+            solicitud.FechaRechazo = DateTime.Now;
+            
+            // Aquí agregarías la lógica para actualizar en la base de datos
+            
+            await LoadSolicitudes();
+            CloseRejectModal();
+            CloseDetailsModal();
+        }
+    }
+
+    private void CloseRejectModal()
+    {
+        showRejectModal = false;
+        motivoRechazo = "";
+        selectedSolicitudId = 0;
+    }
+
+    private async Task RefreshSolicitudes()
+    {
+        await LoadSolicitudes();
+    }
+
+    private void GoBack()
+    {
+        Navigation.NavigateTo("/admin/talento-humano");
+    }
+
+    private string GetStatusClass(string status)
+    {
+        return status switch
+        {
+            "Pendiente" => "pending",
+            "Aprobado" => "approved",
+            "Rechazado" => "rejected",
+            _ => ""
+        };
+    }
+
+    private string GetStatusText(string status)
+    {
+        return status switch
+        {
+            "Pendiente" => "Pendiente",
+            "Aprobado" => "Aprobado",
+            "Rechazado" => "Rechazado",
+            _ => status
+        };
+    }
+
+    public class SolicitudEscalafon
+    {
+        public int Id { get; set; }
+        public string DocenteNombre { get; set; } = "";
+        public string DocenteCedula { get; set; } = "";
+        public string DocenteEmail { get; set; } = "";
+        public string DocenteTelefono { get; set; } = "";
+        public string Facultad { get; set; } = "";
+        public string Carrera { get; set; } = "";
+        public string NivelActual { get; set; } = "";
+        public string NivelSolicitado { get; set; } = "";
+        public int AnosExperiencia { get; set; }
+        public string Titulos { get; set; } = "";
+        public string Publicaciones { get; set; } = "";
+        public string ProyectosInvestigacion { get; set; } = "";
+        public string Capacitaciones { get; set; } = "";
+        public DateTime FechaSolicitud { get; set; }
+        public DateTime? FechaAprobacion { get; set; }
+        public DateTime? FechaRechazo { get; set; }
+        public string Status { get; set; } = "";
+        public string Observaciones { get; set; } = "";
+        public string MotivoRechazo { get; set; } = "";
+    }
+}
