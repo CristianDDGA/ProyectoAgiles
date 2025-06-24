@@ -1095,6 +1095,32 @@ namespace proyectoAgiles.Services
                 throw;
             }
         }
+
+        public async Task<bool> ActualizarCertificadoCapacitacion(int id, IBrowserFile archivoCertificado)
+        {
+            try
+            {
+                using var form = new MultipartFormDataContent();
+                if (archivoCertificado != null)
+                {
+                    var stream = archivoCertificado.OpenReadStream(10 * 1024 * 1024); // 10MB máx
+                    var pdfContent = new StreamContent(stream);
+                    pdfContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/pdf");
+                    form.Add(pdfContent, "archivo", archivoCertificado.Name);
+                }
+                else
+                {
+                    throw new Exception("No se seleccionó un archivo PDF para actualizar");
+                }
+                var response = await _httpClient.PutAsync($"{_apiBaseUrl}/api/ditic/{id}/certificado", form);
+                response.EnsureSuccessStatusCode();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error al actualizar el certificado PDF: {ex.Message}");
+            }
+        }
     }
 
     // DTOs para investigaciones
