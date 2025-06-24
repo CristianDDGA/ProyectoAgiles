@@ -731,8 +731,7 @@
                                 </div>
                                 <p class="mt-2">Cargando capacitaciones...</p>
                             </div>
-                        }
-                        else
+                        }                        else
                         {                            <div class="table-responsive">
                                 <table class="table professional-table">
                                     <thead>
@@ -2131,74 +2130,7 @@ private bool isLoadingInvestigaciones = false;
     {
         showCapacitacionesModal = false;
         StateHasChanged();
-    }    private async Task ImportarCapacitaciones()
-    {
-        isLoadingCapacitaciones = true;
-        StateHasChanged();
-        
-        try
-        {
-            var cedula = UserSession.CurrentUser?.Cedula;
-            if (string.IsNullOrEmpty(cedula))
-            {
-                await MostrarNotificacionError("❌ Error de importación", 
-                    "No se pudo obtener la cédula del usuario.");
-                return;
-            }
-
-            var apiBaseUrl = "http://localhost:5200";
-            var url = $"{apiBaseUrl}/api/ditic/importar/{cedula}";
-
-            var httpClient = new HttpClient();
-            var response = await httpClient.PostAsync(url, null);
-
-            if (response.IsSuccessStatusCode)
-            {
-                var content = await response.Content.ReadAsStringAsync();
-                var result = System.Text.Json.JsonSerializer.Deserialize<ImportResult>(content);
-
-                // Recargar capacitaciones después de la importación
-                await CargarCapacitaciones();
-                
-                // Verificar si hay capacitaciones disponibles después de la importación
-                if (capacitaciones.Any())
-                {
-                    if (result?.imported > 0)
-                    {
-                        await MostrarNotificacionExito($"✅ Importación exitosa", 
-                            $"Se han importado {result.imported} nueva{(result.imported > 1 ? "s" : "")} capacitación{(result.imported > 1 ? "es" : "")}. Total disponible: {capacitaciones.Count}.");
-                    }
-                    else
-                    {
-                        await MostrarNotificacionExito($"✅ Capacitaciones cargadas", 
-                            $"Se han cargado {capacitaciones.Count} capacitación{(capacitaciones.Count > 1 ? "es" : "")} desde la base de datos.");
-                    }
-                }
-                else
-                {
-                    await MostrarNotificacionInfo("ℹ️ Sin resultados", 
-                        "No se encontraron capacitaciones asociadas a tu cédula en la base de datos.");
-                }
-            }
-            else
-            {
-                await MostrarNotificacionError("❌ Error de importación", 
-                    "No se pudieron cargar las capacitaciones desde el sistema externo.");
-            }
-        }
-        catch (Exception ex)
-        {
-            await MostrarNotificacionError("❌ Error de importación", 
-                $"No se pudieron cargar las capacitaciones: {ex.Message}");
-        }
-        finally
-        {
-            isLoadingCapacitaciones = false;
-            StateHasChanged();
-        }
-    }
-
-    private async Task CargarCapacitaciones()
+    }    private async Task CargarCapacitaciones()
     {
         try
         {
@@ -2206,23 +2138,11 @@ private bool isLoadingInvestigaciones = false;
             if (string.IsNullOrEmpty(cedula))
                 return;
 
-            var apiBaseUrl = "http://localhost:5200";
-            var url = $"{apiBaseUrl}/api/ditic/docente/{cedula}";
-
-            var httpClient = new HttpClient();
-            var response = await httpClient.GetAsync(url);
-
-            if (response.IsSuccessStatusCode)
+            var apiCapacitaciones = await AuthService.GetCapacitacionesPorCedula(cedula);
+            if (apiCapacitaciones is not null)
             {
-                var jsonContent = await response.Content.ReadAsStringAsync();
-                var apiCapacitaciones = System.Text.Json.JsonSerializer.Deserialize<DiticDto[]>(jsonContent, 
-                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-
-                if (apiCapacitaciones is not null)
-                {
-                    capacitaciones = apiCapacitaciones.ToList();
-                    StateHasChanged();
-                }
+                capacitaciones = apiCapacitaciones.ToList();
+                StateHasChanged();
             }
         }
         catch (Exception ex)
@@ -2231,67 +2151,38 @@ private bool isLoadingInvestigaciones = false;
         }
     }
 
-    private async Task VerificarRequisitoDitic()
+    private async Task ImportarCapacitaciones()
     {
+        isLoadingCapacitaciones = true;
+        StateHasChanged();
         try
         {
             var cedula = UserSession.CurrentUser?.Cedula;
             if (string.IsNullOrEmpty(cedula))
             {
-                await JSRuntime.InvokeVoidAsync("alert", "No se pudo obtener la cédula del usuario");
+                await MostrarNotificacionError("❌ Error de importación", "No se pudo obtener la cédula del usuario.");
                 return;
             }
-
-            var apiBaseUrl = "http://localhost:5200";
-            var url = $"{apiBaseUrl}/api/ditic/verificar-requisito/{cedula}";
-
-            var httpClient = new HttpClient();
-            var response = await httpClient.GetAsync(url);
-
-            if (response.IsSuccessStatusCode)
+            // Simular importación llamando a CargarCapacitaciones
+            await CargarCapacitaciones();
+            if (capacitaciones.Any())
             {
-                var jsonContent = await response.Content.ReadAsStringAsync();
-                verificacionRequisitoDitic = System.Text.Json.JsonSerializer.Deserialize<VerificacionRequisitoDiticDto>(jsonContent, 
-                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-                StateHasChanged();
+                await MostrarNotificacionExito($"✅ Capacitaciones cargadas", $"Se han cargado {capacitaciones.Count} capacitación{(capacitaciones.Count > 1 ? "es" : "")} desde la base de datos.");
             }
             else
             {
-                await JSRuntime.InvokeVoidAsync("alert", "Error al verificar el requisito DITIC");
+                await MostrarNotificacionInfo("ℹ️ Sin resultados", "No se encontraron capacitaciones asociadas a tu cédula en la base de datos.");
             }
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("alert", $"Error al verificar requisito DITIC: {ex.Message}");
+            await MostrarNotificacionError("❌ Error de importación", $"No se pudieron cargar las capacitaciones: {ex.Message}");
         }
-    }    private void ShowAgregarCapacitacion()
-    {
-        nuevaCapacitacion = new DiticDto
+        finally
         {
-            Cedula = UserSession.CurrentUser?.Cedula ?? "",
-            FechaInicio = DateTime.Now,
-            FechaFin = DateTime.Now.AddDays(30),
-            Anio = DateTime.Now.Year,
-            CalificacionMinima = 70,
-            Estado = "Completada",
-            Modalidad = "Presencial",
-            TipoCapacitacion = "Técnica"
-        };
-        editingCapacitacion = null;
-        selectedCapacitacionPdf = null;
-        capacitacionPdfFileName = null;
-        showAgregarCapacitacionModal = true;
-        StateHasChanged();
-    }
-
-    private void CloseAgregarCapacitacionModal()
-    {
-        showAgregarCapacitacionModal = false;
-        editingCapacitacion = null;
-        nuevaCapacitacion = new DiticDto();
-        selectedCapacitacionPdf = null;
-        capacitacionPdfFileName = null;
-        StateHasChanged();
+            isLoadingCapacitaciones = false;
+            StateHasChanged();
+        }
     }
 
     private async Task GuardarCapacitacion()
@@ -2309,101 +2200,109 @@ private bool isLoadingInvestigaciones = false;
             isSavingCapacitacion = true;
             StateHasChanged();
 
-            var apiBaseUrl = "http://localhost:5200";
-            using var httpClient = new HttpClient();            if (editingCapacitacion is not null)
+            var cedula = UserSession.CurrentUser?.Cedula ?? string.Empty;
+            if (string.IsNullOrEmpty(cedula))
+            {
+                await MostrarNotificacionError("Error", "No se pudo obtener la cédula del usuario.");
+                return;
+            }
+
+            if (editingCapacitacion is not null)
             {
                 // Actualizar capacitación existente
-                var updateJson = System.Text.Json.JsonSerializer.Serialize(nuevaCapacitacion);
-                var updateContent = new StringContent(updateJson, System.Text.Encoding.UTF8, "application/json");
-
-                var updateResponse = await httpClient.PutAsync($"{apiBaseUrl}/api/ditic/{editingCapacitacion.Id}", updateContent);
-
-                if (updateResponse.IsSuccessStatusCode)
+                var updateDto = new UpdateDiticDto
                 {
-                    await MostrarNotificacionExito("Capacitación actualizada", "La capacitación se ha actualizada correctamente.");
-                    
-                    // Recargar capacitaciones
+                    Id = editingCapacitacion.Id,
+                    Cedula = cedula,
+                    NombreCapacitacion = nuevaCapacitacion.NombreCapacitacion,
+                    Institucion = nuevaCapacitacion.Institucion,
+                    TipoCapacitacion = nuevaCapacitacion.TipoCapacitacion,
+                    Modalidad = nuevaCapacitacion.Modalidad,
+                    HorasAcademicas = nuevaCapacitacion.HorasAcademicas,
+                    FechaInicio = nuevaCapacitacion.FechaInicio,
+                    FechaFin = nuevaCapacitacion.FechaFin,
+                    Anio = nuevaCapacitacion.Anio,
+                    Estado = nuevaCapacitacion.Estado,
+                    Calificacion = nuevaCapacitacion.Calificacion,
+                    CalificacionMinima = nuevaCapacitacion.CalificacionMinima,
+                    Descripcion = nuevaCapacitacion.Descripcion,
+                    NumeroCertificado = nuevaCapacitacion.NumeroCertificado,
+                    Instructor = nuevaCapacitacion.Instructor,
+                    Observaciones = nuevaCapacitacion.Observaciones,
+                    ExencionPorAutoridad = nuevaCapacitacion.ExencionPorAutoridad,
+                    CargoAutoridad = nuevaCapacitacion.CargoAutoridad,
+                    FechaInicioAutoridad = nuevaCapacitacion.FechaInicioAutoridad,
+                    FechaFinAutoridad = nuevaCapacitacion.FechaFinAutoridad
+                };
+                var updated = await AuthService.ActualizarCapacitacion(updateDto);
+                await MostrarNotificacionExito("Capacitación actualizada", "La capacitación se ha actualizado correctamente.");
+                await CargarCapacitaciones();
+                CloseAgregarCapacitacionModal();
+            }
+            else
+            {
+                if (selectedCapacitacionPdf is not null)
+                {
+                    // Crear con PDF
+                    var createWithPdfDto = new CreateDiticWithPdfDto
+                    {
+                        Cedula = cedula,
+                        NombreCapacitacion = nuevaCapacitacion.NombreCapacitacion,
+                        Institucion = nuevaCapacitacion.Institucion,
+                        TipoCapacitacion = nuevaCapacitacion.TipoCapacitacion,
+                        Modalidad = nuevaCapacitacion.Modalidad,
+                        HorasAcademicas = nuevaCapacitacion.HorasAcademicas,
+                        FechaInicio = nuevaCapacitacion.FechaInicio,
+                        FechaFin = nuevaCapacitacion.FechaFin,
+                        Anio = nuevaCapacitacion.Anio,
+                        Estado = nuevaCapacitacion.Estado,
+                        Calificacion = nuevaCapacitacion.Calificacion,
+                        CalificacionMinima = nuevaCapacitacion.CalificacionMinima,
+                        Descripcion = nuevaCapacitacion.Descripcion,
+                        NumeroCertificado = nuevaCapacitacion.NumeroCertificado,
+                        Instructor = nuevaCapacitacion.Instructor,
+                        Observaciones = nuevaCapacitacion.Observaciones,
+                        ExencionPorAutoridad = nuevaCapacitacion.ExencionPorAutoridad,
+                        CargoAutoridad = nuevaCapacitacion.CargoAutoridad,
+                        FechaInicioAutoridad = nuevaCapacitacion.FechaInicioAutoridad,
+                        FechaFinAutoridad = nuevaCapacitacion.FechaFinAutoridad,
+                        ArchivoCertificado = selectedCapacitacionPdf
+                    };
+                    var created = await AuthService.CrearCapacitacionConPdf(createWithPdfDto);
+                    await MostrarNotificacionExito("Capacitación creada", "La capacitación se ha creado correctamente con su certificado PDF.");
                     await CargarCapacitaciones();
                     CloseAgregarCapacitacionModal();
                 }
                 else
                 {
-                    await MostrarNotificacionError("Error al actualizar", "No se pudo actualizar la capacitación.");
-                }
-            }
-            else
-            {
-                // Crear nueva capacitación
-                if (selectedCapacitacionPdf is not null)
-                {
-                    // Crear con archivo PDF
-                    using var content = new MultipartFormDataContent();
-                    
-                    // Agregar campos del formulario
-                    content.Add(new StringContent(nuevaCapacitacion.Cedula), "Cedula");
-                    content.Add(new StringContent(nuevaCapacitacion.NombreCapacitacion), "NombreCapacitacion");
-                    content.Add(new StringContent(nuevaCapacitacion.Institucion), "Institucion");
-                    content.Add(new StringContent(nuevaCapacitacion.TipoCapacitacion), "TipoCapacitacion");
-                    content.Add(new StringContent(nuevaCapacitacion.Modalidad), "Modalidad");
-                    content.Add(new StringContent(nuevaCapacitacion.HorasAcademicas.ToString()), "HorasAcademicas");
-                    content.Add(new StringContent(nuevaCapacitacion.FechaInicio.ToString("yyyy-MM-dd")), "FechaInicio");
-                    content.Add(new StringContent(nuevaCapacitacion.FechaFin.ToString("yyyy-MM-dd")), "FechaFin");
-                    content.Add(new StringContent(nuevaCapacitacion.Anio.ToString()), "Anio");
-                    content.Add(new StringContent(nuevaCapacitacion.Estado), "Estado");
-                    content.Add(new StringContent(nuevaCapacitacion.CalificacionMinima.ToString()), "CalificacionMinima");
-                    
-                    if (nuevaCapacitacion.Calificacion.HasValue)
-                        content.Add(new StringContent(nuevaCapacitacion.Calificacion.Value.ToString()), "Calificacion");
-                    
-                    if (!string.IsNullOrEmpty(nuevaCapacitacion.Descripcion))
-                        content.Add(new StringContent(nuevaCapacitacion.Descripcion), "Descripcion");
-                    
-                    if (!string.IsNullOrEmpty(nuevaCapacitacion.Instructor))
-                        content.Add(new StringContent(nuevaCapacitacion.Instructor), "Instructor");
-
-                    // Agregar archivo PDF
-                    var pdfStream = selectedCapacitacionPdf.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024); // 10MB max
-                    var pdfContent = new StreamContent(pdfStream);
-                    pdfContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/pdf");
-                    content.Add(pdfContent, "CertificadoPdf", selectedCapacitacionPdf.Name);
-
-                    var response = await httpClient.PostAsync($"{apiBaseUrl}/api/ditic/with-pdf", content);
-
-                    if (response.IsSuccessStatusCode)
+                    // Crear sin PDF
+                    var createDto = new CreateDiticDto
                     {
-                        await MostrarNotificacionExito("Capacitación creada", "La capacitación se ha creado correctamente con su certificado PDF.");
-                        
-                        // Recargar capacitaciones
-                        await CargarCapacitaciones();
-                        CloseAgregarCapacitacionModal();
-                    }
-                    else
-                    {
-                        var errorContent = await response.Content.ReadAsStringAsync();
-                        await MostrarNotificacionError("Error al crear capacitación", $"No se pudo crear la capacitación: {errorContent}");
-                    }
-                }
-                else
-                {
-                    // Crear sin archivo PDF
-                    var json = System.Text.Json.JsonSerializer.Serialize(nuevaCapacitacion);
-                    var stringContent = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
-
-                    var response = await httpClient.PostAsync($"{apiBaseUrl}/api/ditic", stringContent);
-
-                    if (response.IsSuccessStatusCode)
-                    {
-                        await MostrarNotificacionExito("Capacitación creada", "La capacitación se ha creado correctamente.");
-                        
-                        // Recargar capacitaciones
-                        await CargarCapacitaciones();
-                        CloseAgregarCapacitacionModal();
-                    }
-                    else
-                    {
-                        var errorContent = await response.Content.ReadAsStringAsync();
-                        await MostrarNotificacionError("Error al crear capacitación", $"No se pudo crear la capacitación: {errorContent}");
-                    }
+                        Cedula = cedula,
+                        NombreCapacitacion = nuevaCapacitacion.NombreCapacitacion,
+                        Institucion = nuevaCapacitacion.Institucion,
+                        TipoCapacitacion = nuevaCapacitacion.TipoCapacitacion,
+                        Modalidad = nuevaCapacitacion.Modalidad,
+                        HorasAcademicas = nuevaCapacitacion.HorasAcademicas,
+                        FechaInicio = nuevaCapacitacion.FechaInicio,
+                        FechaFin = nuevaCapacitacion.FechaFin,
+                        Anio = nuevaCapacitacion.Anio,
+                        Estado = nuevaCapacitacion.Estado,
+                        Calificacion = nuevaCapacitacion.Calificacion,
+                        CalificacionMinima = nuevaCapacitacion.CalificacionMinima,
+                        Descripcion = nuevaCapacitacion.Descripcion,
+                        NumeroCertificado = nuevaCapacitacion.NumeroCertificado,
+                        Instructor = nuevaCapacitacion.Instructor,
+                        Observaciones = nuevaCapacitacion.Observaciones,
+                        ExencionPorAutoridad = nuevaCapacitacion.ExencionPorAutoridad,
+                        CargoAutoridad = nuevaCapacitacion.CargoAutoridad,
+                        FechaInicioAutoridad = nuevaCapacitacion.FechaInicioAutoridad,
+                        FechaFinAutoridad = nuevaCapacitacion.FechaFinAutoridad
+                    };
+                    var created = await AuthService.CrearCapacitacion(createDto);
+                    await MostrarNotificacionExito("Capacitación creada", "La capacitación se ha creado correctamente.");
+                    await CargarCapacitaciones();
+                    CloseAgregarCapacitacionModal();
                 }
             }
         }
@@ -2416,7 +2315,9 @@ private bool isLoadingInvestigaciones = false;
             isSavingCapacitacion = false;
             StateHasChanged();
         }
-    }    private void EditarCapacitacion(DiticDto capacitacion)
+    }
+
+    private void EditarCapacitacion(DiticDto capacitacion)
     {
         editingCapacitacion = capacitacion;
         nuevaCapacitacion = new DiticDto
@@ -2448,27 +2349,19 @@ private bool isLoadingInvestigaciones = false;
     private async Task EliminarCapacitacion(int id)
     {
         var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", "¿Está seguro de que desea eliminar esta capacitación? Esta acción no se puede deshacer.");
-        
         if (confirmed)
         {
             try
             {
-                var apiBaseUrl = "http://localhost:5200";
-                using var httpClient = new HttpClient();
-                
-                var response = await httpClient.DeleteAsync($"{apiBaseUrl}/api/ditic/{id}");
-                
-                if (response.IsSuccessStatusCode)
+                var success = await AuthService.EliminarCapacitacion(id);
+                if (success)
                 {
                     await MostrarNotificacionExito("Capacitación eliminada", "La capacitación se ha eliminado correctamente.");
-                    
-                    // Recargar capacitaciones
                     await CargarCapacitaciones();
                 }
                 else
                 {
-                    var errorContent = await response.Content.ReadAsStringAsync();
-                    await MostrarNotificacionError("Error al eliminar", $"No se pudo eliminar la capacitación: {errorContent}");
+                    await MostrarNotificacionError("Error al eliminar", "No se pudo eliminar la capacitación.");
                 }
             }
             catch (Exception ex)
@@ -2482,87 +2375,27 @@ private bool isLoadingInvestigaciones = false;
     {
         try
         {
-            var apiBaseUrl = "http://localhost:5200";
-            var url = $"{apiBaseUrl}/api/ditic/{id}/certificado";
-            await JSRuntime.InvokeVoidAsync("open", url, "_blank");
+            var pdfBytes = await AuthService.ObtenerPdfCapacitacion(id);
+            if (pdfBytes is not null && pdfBytes.Length > 0)
+            {
+                var base64 = Convert.ToBase64String(pdfBytes);
+                var pdfDataUrl = $"data:application/pdf;base64,{base64}";
+                var fileName = $"capacitacion_{id}.pdf";
+                var success = await JSRuntime.InvokeAsync<bool>("showPdf", pdfDataUrl, fileName);
+                if (!success)
+                {
+                    await MostrarNotificacionExito("PDF descargado", "El PDF se ha descargado a tu carpeta de descargas.");
+                }
+            }
+            else
+            {
+                await MostrarNotificacionError("PDF no disponible", "No se encontró el archivo PDF para esta capacitación.");
+            }
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("alert", $"Error al abrir certificado: {ex.Message}");        }
+            await MostrarNotificacionError("Error", $"Error al obtener el PDF: {ex.Message}");
+        }
     }
-
-    private class ImportResult
-    {
-        public string message { get; set; } = "";
-        public int imported { get; set; } = 0;
-    }
-
-    // DTOs para DITIC
-    public class DiticDto
-    {
-        public int Id { get; set; }
-        public string Cedula { get; set; } = string.Empty;
-        public string NombreCapacitacion { get; set; } = string.Empty;
-        public string Institucion { get; set; } = string.Empty;
-        public string TipoCapacitacion { get; set; } = string.Empty;
-        public string Modalidad { get; set; } = string.Empty;
-        public int HorasAcademicas { get; set; }
-        public DateTime FechaInicio { get; set; }
-        public DateTime FechaFin { get; set; }
-        public int Anio { get; set; }
-        public string Estado { get; set; } = string.Empty;
-        public decimal? Calificacion { get; set; }
-        public decimal CalificacionMinima { get; set; }
-        public bool Aprobada { get; set; }
-        public bool EsPedagogica { get; set; }
-        public string? Descripcion { get; set; }
-        public string? NumeroCertificado { get; set; }
-        public string? Instructor { get; set; }
-        public string? Observaciones { get; set; }
-        public string? NombreArchivoCertificado { get; set; }
-        public bool ExencionPorAutoridad { get; set; }
-        public string? CargoAutoridad { get; set; }
-        public DateTime? FechaInicioAutoridad { get; set; }
-        public DateTime? FechaFinAutoridad { get; set; }
-        public decimal AñosComoAutoridad { get; set; }
-        public bool CumpleExencionAutoridad { get; set; }
-        public DateTime CreatedAt { get; set; }
-        public DateTime? UpdatedAt { get; set; }
-    }
-
-    public class VerificacionRequisitoDiticDto
-    {
-        public string Cedula { get; set; } = string.Empty;
-        public bool CumpleRequisito { get; set; }
-        public bool CumpleHorasTotales { get; set; }
-        public bool CumpleHorasPedagogicas { get; set; }
-        public bool TieneExencionAutoridad { get; set; }
-        public int HorasRequeridas { get; set; } = 96;
-        public int HorasPedagogicasRequeridas { get; set; } = 24;
-        public int HorasObtenidas { get; set; }
-        public int HorasPedagogicasObtenidas { get; set; }
-        public decimal PorcentajePedagogico { get; set; }
-        public int CapacitacionesAnalizadas { get; set; }
-        public string MensajeDetallado { get; set; } = string.Empty;
-        public string? CargoAutoridad { get; set; }
-        public decimal? AñosComoAutoridad { get; set; }
-        public List<DiticDto> CapacitacionesConsideradas { get; set; } = new();
-    }
-
-    public class ResumenCapacitacionesDto
-    {
-        public string Cedula { get; set; } = string.Empty;
-        public int TotalCapacitaciones { get; set; }
-        public int CapacitacionesAprobadas { get; set; }
-        public int HorasTotales { get; set; }
-        public int HorasPedagogicas { get; set; }
-        public int HorasUltimosTresAnios { get; set; }        public int HorasPedagogicasUltimosTresAnios { get; set; }
-        public bool CumpleRequisitoHoras { get; set; }
-        public bool CumpleRequisitoPedagogico { get; set; }
-        public bool CumpleExencionAutoridad { get; set; }
-        public bool CumpleRequisito { get; set; }
-        public decimal PorcentajePedagogico { get; set; }
-        public string MensajeEstado { get; set; } = string.Empty;        public List<DiticDto> CapacitacionesUltimosTresAnios { get; set; } = new();
-    }
-}
+    // ...existing code...
 }

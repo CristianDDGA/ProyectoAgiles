@@ -920,6 +920,166 @@ namespace proyectoAgiles.Services
                 throw;
             }
         }
+
+        // Métodos para trabajar con capacitaciones DITIC
+        
+        public async Task<List<DiticDto>> GetCapacitacionesPorCedula(string cedula)
+        {
+            try
+            {
+                var response = await _httpClient.GetFromJsonAsync<List<DiticDto>>($"{_apiBaseUrl}/api/ditic/docente/{cedula}");
+                return response ?? new List<DiticDto>();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error al obtener capacitaciones: {ex.Message}");
+            }
+        }
+
+        public async Task<DiticDto> CrearCapacitacion(CreateDiticDto createDto)
+        {
+            try
+            {
+                var response = await _httpClient.PostAsJsonAsync($"{_apiBaseUrl}/api/ditic", createDto);
+                if (response.IsSuccessStatusCode)
+                {
+                    var result = await response.Content.ReadFromJsonAsync<DiticDto>();
+                    return result!;
+                }
+                
+                var errorContent = await response.Content.ReadAsStringAsync();
+                throw new Exception($"Error al crear capacitación: {errorContent}");
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error al crear capacitación: {ex.Message}");
+            }
+        }
+
+        public async Task<DiticDto> CrearCapacitacionConPdf(CreateDiticWithPdfDto createDto)
+        {
+            try
+            {
+                Console.WriteLine($"CrearCapacitacionConPdf - PDF: {createDto.ArchivoCertificado?.Name}, Size: {createDto.ArchivoCertificado?.Length ?? 0}");
+                
+                using var form = new MultipartFormDataContent();
+                form.Add(new StringContent(createDto.Cedula), "Cedula");
+                form.Add(new StringContent(createDto.NombreCapacitacion), "NombreCapacitacion");
+                form.Add(new StringContent(createDto.Institucion), "Institucion");
+                form.Add(new StringContent(createDto.TipoCapacitacion), "TipoCapacitacion");
+                form.Add(new StringContent(createDto.Modalidad), "Modalidad");
+                form.Add(new StringContent(createDto.HorasAcademicas.ToString()), "HorasAcademicas");
+                form.Add(new StringContent(createDto.FechaInicio.ToString("o")), "FechaInicio");
+                form.Add(new StringContent(createDto.FechaFin.ToString("o")), "FechaFin");
+                form.Add(new StringContent(createDto.Anio.ToString()), "Anio");
+                form.Add(new StringContent(createDto.Estado), "Estado");
+                form.Add(new StringContent(createDto.CalificacionMinima.ToString()), "CalificacionMinima");
+                
+                if (createDto.Calificacion.HasValue)
+                    form.Add(new StringContent(createDto.Calificacion.Value.ToString()), "Calificacion");
+                
+                if (!string.IsNullOrEmpty(createDto.Descripcion))
+                    form.Add(new StringContent(createDto.Descripcion), "Descripcion");
+                
+                if (!string.IsNullOrEmpty(createDto.NumeroCertificado))
+                    form.Add(new StringContent(createDto.NumeroCertificado), "NumeroCertificado");
+                
+                if (!string.IsNullOrEmpty(createDto.Instructor))
+                    form.Add(new StringContent(createDto.Instructor), "Instructor");
+                
+                if (!string.IsNullOrEmpty(createDto.Observaciones))
+                    form.Add(new StringContent(createDto.Observaciones), "Observaciones");
+                
+                form.Add(new StringContent(createDto.ExencionPorAutoridad.ToString()), "ExencionPorAutoridad");
+                
+                if (!string.IsNullOrEmpty(createDto.CargoAutoridad))
+                    form.Add(new StringContent(createDto.CargoAutoridad), "CargoAutoridad");
+                
+                if (createDto.FechaInicioAutoridad.HasValue)
+                    form.Add(new StringContent(createDto.FechaInicioAutoridad.Value.ToString("o")), "FechaInicioAutoridad");
+                
+                if (createDto.FechaFinAutoridad.HasValue)
+                    form.Add(new StringContent(createDto.FechaFinAutoridad.Value.ToString("o")), "FechaFinAutoridad");
+                
+                if (createDto.ArchivoCertificado != null)
+                {
+                    var stream = createDto.ArchivoCertificado.OpenReadStream(); // 10MB máx
+                    form.Add(new StreamContent(stream), "CertificadoPdf", createDto.ArchivoCertificado.Name);
+                    Console.WriteLine($"CrearCapacitacionConPdf - PDF agregado al form: {createDto.ArchivoCertificado.Name}");
+                }
+                else
+                {
+                    Console.WriteLine("CrearCapacitacionConPdf - No hay PDF para enviar");
+                }
+                
+                var response = await _httpClient.PostAsync($"{_apiBaseUrl}/api/ditic/with-pdf", form);
+                Console.WriteLine($"CrearCapacitacionConPdf - Response: {response.StatusCode}");
+                response.EnsureSuccessStatusCode();
+                return await response.Content.ReadFromJsonAsync<DiticDto>() ?? new DiticDto();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"CrearCapacitacionConPdf - Error: {ex.Message}");
+                throw;
+            }
+        }
+
+        public async Task<DiticDto> ActualizarCapacitacion(UpdateDiticDto updateDto)
+        {
+            try
+            {
+                var response = await _httpClient.PutAsJsonAsync($"{_apiBaseUrl}/api/ditic/{updateDto.Id}", updateDto);
+                if (response.IsSuccessStatusCode)
+                {
+                    var result = await response.Content.ReadFromJsonAsync<DiticDto>();
+                    return result!;
+                }
+                
+                var errorContent = await response.Content.ReadAsStringAsync();
+                throw new Exception($"Error al actualizar capacitación: {errorContent}");
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error al actualizar capacitación: {ex.Message}");
+            }
+        }
+
+        public async Task<bool> EliminarCapacitacion(int id)
+        {
+            try
+            {
+                var response = await _httpClient.DeleteAsync($"{_apiBaseUrl}/api/ditic/{id}");
+                return response.IsSuccessStatusCode;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error al eliminar capacitación: {ex.Message}");
+            }
+        }
+
+        public async Task<byte[]?> ObtenerPdfCapacitacion(int capacitacionId)
+        {
+            try
+            {
+                Console.WriteLine($"ObtenerPdfCapacitacion - Solicitando PDF ID: {capacitacionId}");
+                var response = await _httpClient.GetAsync($"{_apiBaseUrl}/api/ditic/{capacitacionId}/certificado");
+                Console.WriteLine($"ObtenerPdfCapacitacion - Response Status: {response.StatusCode}");
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    var bytes = await response.Content.ReadAsByteArrayAsync();
+                    Console.WriteLine($"ObtenerPdfCapacitacion - Bytes recibidos: {bytes.Length}");
+                    return bytes;
+                }
+                Console.WriteLine($"ObtenerPdfCapacitacion - Error: {response.StatusCode}");
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"ObtenerPdfCapacitacion - Exception: {ex.Message}");
+                throw;
+            }
+        }
     }
 
     // DTOs para investigaciones
@@ -984,7 +1144,7 @@ namespace proyectoAgiles.Services
         public int Anio { get; set; }
         public int Semestre { get; set; }
         public decimal PuntajeObtenido { get; set; }
-        public decimal PuntajeMaximo { get; set; }
+        public decimal PuntajeMaximo { get; set; } = 100;
         public decimal PorcentajeObtenido { get; set; }
         public bool CumpleMinimo { get; set; }
         public DateTime FechaEvaluacion { get; set; }
