@@ -1222,15 +1222,15 @@
                     <p>Consultar evaluaciones de desempeño docente</p>
                 </div>
             </div>
-            <div class="col-lg-4 col-md-6 mb-4">
-                <div class="action-card" @onclick="() => ShowCapacitacionesModal()">
+            <div class="col-lg-4 col-md-6 mb-4">                <div class="action-card" @onclick="() => ShowCapacitacionesModal()">
                     <div class="action-icon">
                         <i class="fas fa-graduation-cap"></i>
                     </div>
                     <h3>Capacitaciones DITIC</h3>
                     <p>Gestionar capacitaciones y actualización profesional</p>
                 </div>
-            </div>        </div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -1256,13 +1256,12 @@ private bool isLoadingInvestigaciones = false;
     private proyectoAgiles.Services.EvaluacionDesempenoDto nuevaEvaluacion = new();
     private proyectoAgiles.Services.EvaluacionDesempenoDto? editingEvaluacion = null;
     private VerificacionRequisito75Dto? verificacionRequisito = null;
-    
-    // Variables para DITIC
-    private List<DiticDto> capacitaciones = new();
-    private DiticDto nuevaCapacitacion = new();
-    private DiticDto? editingCapacitacion = null;
-    private VerificacionRequisitoDiticDto? verificacionRequisitoDitic = null;
-    private ResumenCapacitacionesDto? resumenCapacitaciones = null;
+      // Variables para DITIC
+    private List<ProyectoAgiles.Application.DTOs.DiticDto> capacitaciones = new();
+    private ProyectoAgiles.Application.DTOs.DiticDto nuevaCapacitacion = new();
+    private ProyectoAgiles.Application.DTOs.DiticDto? editingCapacitacion = null;
+    private ProyectoAgiles.Application.DTOs.VerificacionRequisitoDiticDto? verificacionRequisitoDitic = null;
+    private ProyectoAgiles.Application.DTOs.ResumenCapacitacionesDto? resumenCapacitaciones = null;
       // Variables para verificación de requisitos de subir de nivel
     private proyectoAgiles.Services.VerificacionRequisitosSubirNivelDto? requisitosVerificacion = null;
       private Investigacion nuevaInvestigacion = new();
@@ -2144,8 +2143,7 @@ private bool isLoadingInvestigaciones = false;
                 capacitaciones = apiCapacitaciones.ToList();
                 StateHasChanged();
             }
-        }
-        catch (Exception ex)
+        }        catch (Exception ex)
         {
             await JSRuntime.InvokeVoidAsync("alert", $"Error al cargar capacitaciones: {ex.Message}");
         }
@@ -2205,22 +2203,221 @@ private bool isLoadingInvestigaciones = false;
             {
                 await MostrarNotificacionError("Error", "No se pudo obtener la cédula del usuario.");
                 return;
-            }
-
-            if (editingCapacitacion is not null)
+            }            if (editingCapacitacion is not null)
             {
-        }ente
-        finallyUpdateDiticDto
+                // Actualizar capacitación existente
+                var updateDto = new ProyectoAgiles.Application.DTOs.UpdateDiticDto
+                {
+                    Id = editingCapacitacion.Id,
+                    Cedula = cedula,
+                    NombreCapacitacion = nuevaCapacitacion.NombreCapacitacion,
+                    Institucion = nuevaCapacitacion.Institucion,
+                    TipoCapacitacion = nuevaCapacitacion.TipoCapacitacion,
+                    Modalidad = nuevaCapacitacion.Modalidad,
+                    HorasAcademicas = nuevaCapacitacion.HorasAcademicas,
+                    FechaInicio = nuevaCapacitacion.FechaInicio,
+                    FechaFin = nuevaCapacitacion.FechaFin,
+                    Anio = nuevaCapacitacion.Anio,
+                    Estado = nuevaCapacitacion.Estado,
+                    Calificacion = nuevaCapacitacion.Calificacion,
+                    CalificacionMinima = nuevaCapacitacion.CalificacionMinima,
+                    Descripcion = nuevaCapacitacion.Descripcion,
+                    NumeroCertificado = nuevaCapacitacion.NumeroCertificado,
+                    Instructor = nuevaCapacitacion.Instructor,
+                    Observaciones = nuevaCapacitacion.Observaciones,
+                    ExencionPorAutoridad = nuevaCapacitacion.ExencionPorAutoridad,
+                    CargoAutoridad = nuevaCapacitacion.CargoAutoridad,
+                    FechaInicioAutoridad = nuevaCapacitacion.FechaInicioAutoridad,
+                    FechaFinAutoridad = nuevaCapacitacion.FechaFinAutoridad
+                };
+                var updated = await AuthService.ActualizarCapacitacion(updateDto);
+                await MostrarNotificacionExito("Capacitación actualizada", "La capacitación se ha actualizado correctamente.");
+                await CargarCapacitaciones();
+                CloseAgregarCapacitacionModal();
+            }
+            else
+            {                if (selectedCapacitacionPdf is not null)
+                {
+                    // Crear con PDF usando AuthService
+                    var createWithPdfDto = new ProyectoAgiles.Application.DTOs.CreateDiticWithPdfDto
+                    {
+                        Cedula = cedula,
+                        NombreCapacitacion = nuevaCapacitacion.NombreCapacitacion,
+                        Institucion = nuevaCapacitacion.Institucion,
+                        TipoCapacitacion = nuevaCapacitacion.TipoCapacitacion,
+                        Modalidad = nuevaCapacitacion.Modalidad,
+                        HorasAcademicas = nuevaCapacitacion.HorasAcademicas,
+                        FechaInicio = nuevaCapacitacion.FechaInicio,
+                        FechaFin = nuevaCapacitacion.FechaFin,
+                        Anio = nuevaCapacitacion.Anio,
+                        Estado = nuevaCapacitacion.Estado,
+                        Calificacion = nuevaCapacitacion.Calificacion,
+                        CalificacionMinima = nuevaCapacitacion.CalificacionMinima,
+                        Descripcion = nuevaCapacitacion.Descripcion,
+                        NumeroCertificado = nuevaCapacitacion.NumeroCertificado,
+                        Instructor = nuevaCapacitacion.Instructor,
+                        Observaciones = nuevaCapacitacion.Observaciones,
+                        ExencionPorAutoridad = nuevaCapacitacion.ExencionPorAutoridad,
+                        CargoAutoridad = nuevaCapacitacion.CargoAutoridad,
+                        FechaInicioAutoridad = nuevaCapacitacion.FechaInicioAutoridad,
+                        FechaFinAutoridad = nuevaCapacitacion.FechaFinAutoridad
+                        // Note: no asignamos ArchivoCertificado aquí porque es IFormFile y necesitamos IBrowserFile
+                    };
+                    
+                    // Usar método diferente o adaptar
+                    var created = await AuthService.CrearCapacitacion(createWithPdfDto);
+                    await MostrarNotificacionExito("Capacitación creada", "La capacitación se ha creado correctamente.");
+                    await CargarCapacitaciones();
+                    CloseAgregarCapacitacionModal();
+                }                else
+                {
+                    // Crear sin PDF
+                    var createDto = new ProyectoAgiles.Application.DTOs.CreateDiticDto
+                    {
+                        Cedula = cedula,
+                        NombreCapacitacion = nuevaCapacitacion.NombreCapacitacion,
+                        Institucion = nuevaCapacitacion.Institucion,
+                        TipoCapacitacion = nuevaCapacitacion.TipoCapacitacion,
+                        Modalidad = nuevaCapacitacion.Modalidad,
+                        HorasAcademicas = nuevaCapacitacion.HorasAcademicas,
+                        FechaInicio = nuevaCapacitacion.FechaInicio,
+                        FechaFin = nuevaCapacitacion.FechaFin,
+                        Anio = nuevaCapacitacion.Anio,
+                        Estado = nuevaCapacitacion.Estado,
+                        Calificacion = nuevaCapacitacion.Calificacion,
+                        CalificacionMinima = nuevaCapacitacion.CalificacionMinima,
+                        Descripcion = nuevaCapacitacion.Descripcion,
+                        NumeroCertificado = nuevaCapacitacion.NumeroCertificado,
+                        Instructor = nuevaCapacitacion.Instructor,
+                        Observaciones = nuevaCapacitacion.Observaciones,
+                        ExencionPorAutoridad = nuevaCapacitacion.ExencionPorAutoridad,
+                        CargoAutoridad = nuevaCapacitacion.CargoAutoridad,
+                        FechaInicioAutoridad = nuevaCapacitacion.FechaInicioAutoridad,
+                        FechaFinAutoridad = nuevaCapacitacion.FechaFinAutoridad
+                    };
+                    var created = await AuthService.CrearCapacitacion(createDto);
+                    await MostrarNotificacionExito("Capacitación creada", "La capacitación se ha creado correctamente.");
+                    await CargarCapacitaciones();
+                    CloseAgregarCapacitacionModal();
+                }
+            }
+        }
+        catch (Exception ex)
         {
-            isLoadingCapacitaciones = false;
+            await MostrarNotificacionError("Error inesperado", $"Ocurrió un error: {ex.Message}");
+        }
+        finally
+        {
+            isSavingCapacitacion = false;
             StateHasChanged();
-        }ombreCapacitacion,
+        }
+    }    private void ShowAgregarCapacitacion()
+    {
+        nuevaCapacitacion = new ProyectoAgiles.Application.DTOs.DiticDto
+        {
+            Cedula = UserSession.CurrentUser?.Cedula ?? "",
+            FechaInicio = DateTime.Now,
+            FechaFin = DateTime.Now.AddDays(30),
+            Anio = DateTime.Now.Year,
+            CalificacionMinima = 70,
+            Estado = "Completada",
+            Modalidad = "Presencial",
+            TipoCapacitacion = "Técnica"
+        };
+        editingCapacitacion = null;
+        selectedCapacitacionPdf = null;
+        capacitacionPdfFileName = null;
+        showAgregarCapacitacionModal = true;
+        StateHasChanged();
     }
-acitacion,
-    // ...existing code...d,
-}acion.HorasAcademicas,
+
+    private void CloseAgregarCapacitacionModal()
+    {
+        showAgregarCapacitacionModal = false;
+        editingCapacitacion = null;
+        nuevaCapacitacion = new ProyectoAgiles.Application.DTOs.DiticDto();
+        selectedCapacitacionPdf = null;
+        capacitacionPdfFileName = null;
+        StateHasChanged();
+    }
+
+    private void EditarCapacitacion(ProyectoAgiles.Application.DTOs.DiticDto capacitacion)
+    {
+        editingCapacitacion = capacitacion;
+        nuevaCapacitacion = new ProyectoAgiles.Application.DTOs.DiticDto
+        {
+            Id = capacitacion.Id,
+            Cedula = capacitacion.Cedula,
+            NombreCapacitacion = capacitacion.NombreCapacitacion,
+            Institucion = capacitacion.Institucion,
+            TipoCapacitacion = capacitacion.TipoCapacitacion,
+            Modalidad = capacitacion.Modalidad,
+            HorasAcademicas = capacitacion.HorasAcademicas,
+            FechaInicio = capacitacion.FechaInicio,
+            FechaFin = capacitacion.FechaFin,
+            Anio = capacitacion.Anio,
+            Estado = capacitacion.Estado,
+            Calificacion = capacitacion.Calificacion,
+            CalificacionMinima = capacitacion.CalificacionMinima,
+            Descripcion = capacitacion.Descripcion,
+            Instructor = capacitacion.Instructor,
+            EsPedagogica = capacitacion.EsPedagogica
+        };
+        
+        selectedCapacitacionPdf = null;
+        capacitacionPdfFileName = null;
+        showAgregarCapacitacionModal = true;
+        StateHasChanged();
+    }
+
+    private async Task EliminarCapacitacion(int id)
+    {
+        var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", "¿Está seguro de que desea eliminar esta capacitación? Esta acción no se puede deshacer.");
+        if (confirmed)
+        {
+            try
+            {
+                var success = await AuthService.EliminarCapacitacion(id);
+                if (success)
+                {
+                    await MostrarNotificacionExito("Capacitación eliminada", "La capacitación se ha eliminado correctamente.");
+                    await CargarCapacitaciones();
+                }
+                else
+                {
+                    await MostrarNotificacionError("Error al eliminar", "No se pudo eliminar la capacitación.");
+                }
+            }
+            catch (Exception ex)
+            {
+                await MostrarNotificacionError("Error inesperado", $"Ocurrió un error al eliminar la capacitación: {ex.Message}");
+            }
+        }
+    }
+
+    private async Task VerPdfCapacitacion(int id)
+    {
+        try
+        {
+            var pdfBytes = await AuthService.ObtenerPdfCapacitacion(id);
+            if (pdfBytes is not null && pdfBytes.Length > 0)
+            {
+                var base64 = Convert.ToBase64String(pdfBytes);
+                var pdfDataUrl = $"data:application/pdf;base64,{base64}";
+                var fileName = $"capacitacion_{id}.pdf";
+                var success = await JSRuntime.InvokeAsync<bool>("showPdf", pdfDataUrl, fileName);
+                if (!success)
+                {
+                    await MostrarNotificacionExito("PDF descargado", "El PDF se ha descargado a tu carpeta de descargas.");
+                }
+            }
+            else
+            {
+                await MostrarNotificacionError("PDF no disponible", "No se encontró el archivo PDF para esta capacitación.");
+            }
+        }        catch (Exception ex)
+        {
             await MostrarNotificacionError("Error", $"Error al obtener el PDF: {ex.Message}");
         }
     }
-    // ...existing code...
 }
