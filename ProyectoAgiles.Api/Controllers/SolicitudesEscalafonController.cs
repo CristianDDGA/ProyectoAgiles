@@ -8,7 +8,7 @@ namespace ProyectoAgiles.Api.Controllers;
 /// Controlador para la gestión de solicitudes de escalafón
 /// </summary>
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/solicitudes-escalafon")]
 public class SolicitudesEscalafonController : ControllerBase
 {
     private readonly ISolicitudEscalafonService _solicitudService;
