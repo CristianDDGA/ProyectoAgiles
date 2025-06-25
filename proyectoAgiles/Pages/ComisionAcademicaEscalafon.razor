@@ -953,6 +953,16 @@
             if (selectedSolicitud != null)
             {
                 await CargarDatosDocente(selectedSolicitud.DocenteCedula);
+                
+                // Mostrar información de depuración en la consola
+                var detallesRequisitos = GetDetallesCumplimientoRequisitos(selectedSolicitud);
+                await JSRuntime.InvokeVoidAsync("console.log", "=== EVALUACIÓN DE REQUISITOS ===");
+                await JSRuntime.InvokeVoidAsync("console.log", $"Docente: {selectedSolicitud.DocenteNombre}");
+                await JSRuntime.InvokeVoidAsync("console.log", $"Nivel Actual: {selectedSolicitud.NivelActual}");
+                await JSRuntime.InvokeVoidAsync("console.log", $"Nivel Solicitado: {selectedSolicitud.NivelSolicitado}");
+                await JSRuntime.InvokeVoidAsync("console.log", detallesRequisitos);
+                await JSRuntime.InvokeVoidAsync("console.log", "================================");
+                
                 showDetailsModal = true;
             }
         }
@@ -1086,7 +1096,7 @@
         {
             var nivel when nivel.Contains("titular auxiliar 2") => solicitud.AnosExperiencia >= 4, // Mínimo 4 años como titular auxiliar 1
             var nivel when nivel.Contains("titular auxiliar 3") => solicitud.AnosExperiencia >= 5,
-            var nivel when nivel.Contains("titular agregado 1") => solicitud.AnosExperiencia >= 8,
+            var nivel when nivel.Contains("titular agregado 1") => solicitud.AnosExperiencia >= 4, // CORREGIDO: Requiere 4 años, no 8
             var nivel when nivel.Contains("titular agregado 2") => solicitud.AnosExperiencia >= 10,
             var nivel when nivel.Contains("titular agregado 3") => solicitud.AnosExperiencia >= 12,
             var nivel when nivel.Contains("titular principal") => solicitud.AnosExperiencia >= 15,
@@ -1096,25 +1106,49 @@
 
     private bool CumpleRequisitosPublicaciones(SolicitudEscalafon solicitud)
     {
-        // Extraer números de las publicaciones
+        // Extraer números de las publicaciones con expresiones regulares mejoradas
         var publicacionesText = solicitud.Publicaciones?.ToLower() ?? "";
-        var totalMatch = System.Text.RegularExpressions.Regex.Match(publicacionesText, @"total:\s*(\d+)");
-        var utaMatch = System.Text.RegularExpressions.Regex.Match(publicacionesText, @"con filiación uta:\s*(\d+)");
+        
+        // Expresiones regulares más robustas para capturar diferentes formatos
+        var totalMatch = System.Text.RegularExpressions.Regex.Match(publicacionesText, @"total:\s*(\d+)\s*obra[s]?\s*registrada[s]?");
+        if (!totalMatch.Success)
+        {
+            totalMatch = System.Text.RegularExpressions.Regex.Match(publicacionesText, @"total:\s*(\d+)");
+        }
+        
+        var utaMatch = System.Text.RegularExpressions.Regex.Match(publicacionesText, @"con\s+filiación\s+uta:\s*(\d+)\s*obra[s]?");
+        if (!utaMatch.Success)
+        {
+            utaMatch = System.Text.RegularExpressions.Regex.Match(publicacionesText, @"filiación\s+uta:\s*(\d+)");
+        }
         
         int totalPublicaciones = totalMatch.Success ? int.Parse(totalMatch.Groups[1].Value) : 0;
         int publicacionesUTA = utaMatch.Success ? int.Parse(utaMatch.Groups[1].Value) : 0;
 
-        // Evaluar según el nivel solicitado
-        return solicitud.NivelSolicitado.ToLower() switch
+        // Debug: Log para verificar los valores extraídos (deshabilitado)
+        // _ = JSRuntime.InvokeVoidAsync("console.log", $"[DEBUG] Evaluando publicaciones para {solicitud.NivelSolicitado}:");
+        // _ = JSRuntime.InvokeVoidAsync("console.log", $"[DEBUG] Texto original: '{solicitud.Publicaciones}'");
+        // _ = JSRuntime.InvokeVoidAsync("console.log", $"[DEBUG] Texto procesado: '{publicacionesText}'");
+        // _ = JSRuntime.InvokeVoidAsync("console.log", $"[DEBUG] Total extraído: {totalPublicaciones}");
+        // _ = JSRuntime.InvokeVoidAsync("console.log", $"[DEBUG] UTA extraído: {publicacionesUTA}");
+        // _ = JSRuntime.InvokeVoidAsync("console.log", $"[DEBUG] Regex Total match: {(totalMatch.Success ? totalMatch.Groups[1].Value : "NO MATCH")}");
+        // _ = JSRuntime.InvokeVoidAsync("console.log", $"[DEBUG] Regex UTA match: {(utaMatch.Success ? utaMatch.Groups[1].Value : "NO MATCH")}");
+
+        // Evaluar según el nivel solicitado con lógica corregida
+        bool cumple = solicitud.NivelSolicitado.ToLower() switch
         {
             var nivel when nivel.Contains("titular auxiliar 2") => publicacionesUTA >= 1, // Mínimo 1 obra de relevancia o artículo indexado con filiación UTA
             var nivel when nivel.Contains("titular auxiliar 3") => totalPublicaciones >= 4 && publicacionesUTA >= 2,
-            var nivel when nivel.Contains("titular agregado 1") => totalPublicaciones >= 6 && publicacionesUTA >= 3,
+            var nivel when nivel.Contains("titular agregado 1") => totalPublicaciones >= 6 && publicacionesUTA >= 2, // CORREGIDO: Requiere 2 con UTA, no 3
             var nivel when nivel.Contains("titular agregado 2") => totalPublicaciones >= 8 && publicacionesUTA >= 4,
             var nivel when nivel.Contains("titular agregado 3") => totalPublicaciones >= 10 && publicacionesUTA >= 5,
             var nivel when nivel.Contains("titular principal") => totalPublicaciones >= 15 && publicacionesUTA >= 8,
             _ => totalPublicaciones >= 1 // Requisito mínimo general
         };
+        
+        _ = JSRuntime.InvokeVoidAsync("console.log", $"[DEBUG] Resultado cumplimiento: {cumple}");
+        
+        return cumple;
     }
 
     private bool CumpleRequisitosCapacitaciones(SolicitudEscalafon solicitud)
@@ -1125,22 +1159,37 @@
         if (string.IsNullOrEmpty(capacitaciones))
             return false;
 
-        // Para Titular Auxiliar 2, evaluar requisito específico
-        if (solicitud.NivelSolicitado.ToLower().Contains("titular auxiliar 2"))
+        // Extraer horas usando expresiones regulares mejoradas
+        var totalHorasMatch = System.Text.RegularExpressions.Regex.Match(capacitaciones.ToLower(), @"total:\s*(\d+)\s*horas?\s*de\s*capacitación");
+        if (!totalHorasMatch.Success)
         {
-            // Buscar patrón de horas en el texto de capacitaciones
-            var horasMatch = System.Text.RegularExpressions.Regex.Match(capacitaciones.ToLower(), @"(\d+)\s*horas?");
-            var pedagogicasMatch = System.Text.RegularExpressions.Regex.Match(capacitaciones.ToLower(), @"pedagógic[ao]s?\s*[:\-]?\s*(\d+)\s*horas?");
-            
-            int totalHoras = horasMatch.Success ? int.Parse(horasMatch.Groups[1].Value) : 0;
-            int horasPedagogicas = pedagogicasMatch.Success ? int.Parse(pedagogicasMatch.Groups[1].Value) : 0;
-            
-            // Requisito: 96 horas total, con al menos 24 horas pedagógicas
-            return totalHoras >= 96 && horasPedagogicas >= 24;
+            totalHorasMatch = System.Text.RegularExpressions.Regex.Match(capacitaciones.ToLower(), @"total:\s*(\d+)\s*horas?");
         }
+        
+        var horasPedagogicasMatch = System.Text.RegularExpressions.Regex.Match(capacitaciones.ToLower(), @"horas\s+pedagógicas:\s*(\d+)\s*horas?");
+        if (!horasPedagogicasMatch.Success)
+        {
+            horasPedagogicasMatch = System.Text.RegularExpressions.Regex.Match(capacitaciones.ToLower(), @"pedagógicas:\s*(\d+)");
+        }
+        
+        int totalHoras = totalHorasMatch.Success ? int.Parse(totalHorasMatch.Groups[1].Value) : 0;
+        int horasPedagogicas = horasPedagogicasMatch.Success ? int.Parse(horasPedagogicasMatch.Groups[1].Value) : 0;
+        
+        // Debug: Log para verificar capacitaciones
+        _ = JSRuntime.InvokeVoidAsync("console.log", $"[DEBUG] Capacitaciones - Texto: '{capacitaciones}'");
+        _ = JSRuntime.InvokeVoidAsync("console.log", $"[DEBUG] Capacitaciones - Total horas: {totalHoras}, Pedagógicas: {horasPedagogicas}");
 
-        // Para otros niveles, verificación básica
-        return capacitaciones.Length > 10; // Al menos alguna descripción mínima
+        // Evaluar según el nivel solicitado con lógica mejorada
+        return solicitud.NivelSolicitado.ToLower() switch
+        {
+            var nivel when nivel.Contains("titular auxiliar 2") => totalHoras >= 96 && horasPedagogicas >= 24, // Requisito: 96 horas total, 24 pedagógicas
+            var nivel when nivel.Contains("titular auxiliar 3") => totalHoras >= 40, // Capacitación profesional mínima
+            var nivel when nivel.Contains("titular agregado 1") => totalHoras >= 60, // Mayor capacitación para agregado
+            var nivel when nivel.Contains("titular agregado 2") => totalHoras >= 80,
+            var nivel when nivel.Contains("titular agregado 3") => totalHoras >= 100,
+            var nivel when nivel.Contains("titular principal") => totalHoras >= 120,
+            _ => totalHoras >= 20 // Requisito mínimo general
+        };
     }
 
     private bool CumpleTodosRequisitos(SolicitudEscalafon solicitud)
@@ -1156,7 +1205,7 @@
         {
             var nivel when nivel.Contains("titular auxiliar 2") => "Mínimo 4 años como Titular Auxiliar 1 en UTA",
             var nivel when nivel.Contains("titular auxiliar 3") => "Mínimo 5 años",
-            var nivel when nivel.Contains("titular agregado 1") => "Mínimo 8 años",
+            var nivel when nivel.Contains("titular agregado 1") => "Mínimo 4 años", // CORREGIDO: 4 años, no 8
             var nivel when nivel.Contains("titular agregado 2") => "Mínimo 10 años",
             var nivel when nivel.Contains("titular agregado 3") => "Mínimo 12 años",
             var nivel when nivel.Contains("titular principal") => "Mínimo 15 años",
@@ -1170,7 +1219,7 @@
         {
             var nivel when nivel.Contains("titular auxiliar 2") => "1 obra relevante o artículo indexado con filiación UTA",
             var nivel when nivel.Contains("titular auxiliar 3") => "Mín. 4 total, 2 con UTA",
-            var nivel when nivel.Contains("titular agregado 1") => "Mín. 6 total, 3 con UTA",
+            var nivel when nivel.Contains("titular agregado 1") => "Mín. 6 total, 2 con UTA", // CORREGIDO: 2 con UTA, no 3
             var nivel when nivel.Contains("titular agregado 2") => "Mín. 8 total, 4 con UTA",
             var nivel when nivel.Contains("titular agregado 3") => "Mín. 10 total, 5 con UTA",
             var nivel when nivel.Contains("titular principal") => "Mín. 15 total, 8 con UTA",
@@ -1183,12 +1232,12 @@
         return solicitud.NivelSolicitado.ToLower() switch
         {
             var nivel when nivel.Contains("titular auxiliar 2") => "96 horas totales (24 horas pedagógicas mínimo)",
-            var nivel when nivel.Contains("titular auxiliar 3") => "Capacitación profesional actualizada",
-            var nivel when nivel.Contains("titular agregado 1") => "Capacitación profesional actualizada",
-            var nivel when nivel.Contains("titular agregado 2") => "Capacitación profesional actualizada",
-            var nivel when nivel.Contains("titular agregado 3") => "Capacitación profesional actualizada",
-            var nivel when nivel.Contains("titular principal") => "Capacitación profesional actualizada",
-            _ => "Capacitación profesional"
+            var nivel when nivel.Contains("titular auxiliar 3") => "Mínimo 40 horas de capacitación profesional",
+            var nivel when nivel.Contains("titular agregado 1") => "Mínimo 60 horas de capacitación profesional",
+            var nivel when nivel.Contains("titular agregado 2") => "Mínimo 80 horas de capacitación profesional",
+            var nivel when nivel.Contains("titular agregado 3") => "Mínimo 100 horas de capacitación profesional",
+            var nivel when nivel.Contains("titular principal") => "Mínimo 120 horas de capacitación profesional",
+            _ => "Mínimo 20 horas de capacitación profesional"
         };
     }
 
@@ -1698,5 +1747,40 @@
         public string Status { get; set; } = "";
         public string Observaciones { get; set; } = "";
         public string MotivoRechazo { get; set; } = "";
+    }
+
+    // Método para obtener información detallada sobre el cumplimiento de requisitos
+    private string GetDetallesCumplimientoRequisitos(SolicitudEscalafon solicitud)
+    {
+        var detalles = new StringBuilder();
+        
+        // Evaluar experiencia
+        bool cumpleExperiencia = CumpleRequisitosExperiencia(solicitud);
+        detalles.AppendLine($"EXPERIENCIA: {(cumpleExperiencia ? "✓ CUMPLE" : "✗ NO CUMPLE")}");
+        detalles.AppendLine($"- Tiene: {solicitud.AnosExperiencia} años");
+        detalles.AppendLine($"- Requiere: {GetRequisitoExperiencia(solicitud)}");
+        detalles.AppendLine();
+        
+        // Evaluar publicaciones
+        bool cumplePublicaciones = CumpleRequisitosPublicaciones(solicitud);
+        var publicacionesText = solicitud.Publicaciones?.ToLower() ?? "";
+        var totalMatch = System.Text.RegularExpressions.Regex.Match(publicacionesText, @"total:\s*(\d+)\s*obra");
+        var utaMatch = System.Text.RegularExpressions.Regex.Match(publicacionesText, @"con\s+filiación\s+uta:\s*(\d+)\s*obra");
+        int totalPublicaciones = totalMatch.Success ? int.Parse(totalMatch.Groups[1].Value) : 0;
+        int publicacionesUTA = utaMatch.Success ? int.Parse(utaMatch.Groups[1].Value) : 0;
+        
+        detalles.AppendLine($"PUBLICACIONES: {(cumplePublicaciones ? "✓ CUMPLE" : "✗ NO CUMPLE")}");
+        detalles.AppendLine($"- Total: {totalPublicaciones} obra(s)");
+        detalles.AppendLine($"- Con UTA: {publicacionesUTA} obra(s)");
+        detalles.AppendLine($"- Requiere: {GetRequisitoPublicaciones(solicitud)}");
+        detalles.AppendLine();
+        
+        // Evaluar capacitaciones
+        bool cumpleCapacitaciones = CumpleRequisitosCapacitaciones(solicitud);
+        detalles.AppendLine($"CAPACITACIONES: {(cumpleCapacitaciones ? "✓ CUMPLE" : "✗ NO CUMPLE")}");
+        detalles.AppendLine($"- Registradas: {solicitud.Capacitaciones}");
+        detalles.AppendLine($"- Requiere: {GetRequisitoCapacitaciones(solicitud)}");
+        
+        return detalles.ToString();
     }
 }

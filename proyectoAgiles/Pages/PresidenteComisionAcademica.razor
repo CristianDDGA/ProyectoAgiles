@@ -1019,7 +1019,7 @@
         {
             var nivel when nivel.Contains("titular auxiliar 2") => solicitud.AnosExperiencia >= 4, // Mínimo 4 años como titular auxiliar 1
             var nivel when nivel.Contains("titular auxiliar 3") => solicitud.AnosExperiencia >= 5,
-            var nivel when nivel.Contains("titular agregado 1") => solicitud.AnosExperiencia >= 8,
+            var nivel when nivel.Contains("titular agregado 1") => solicitud.AnosExperiencia >= 4, // CORREGIDO: Requiere 4 años, no 8
             var nivel when nivel.Contains("titular agregado 2") => solicitud.AnosExperiencia >= 10,
             var nivel when nivel.Contains("titular agregado 3") => solicitud.AnosExperiencia >= 12,
             var nivel when nivel.Contains("titular principal") => solicitud.AnosExperiencia >= 15,
@@ -1042,7 +1042,7 @@
         {
             var nivel when nivel.Contains("titular auxiliar 2") => publicacionesUTA >= 1, // Mínimo 1 obra de relevancia o artículo indexado con filiación UTA
             var nivel when nivel.Contains("titular auxiliar 3") => totalPublicaciones >= 4 && publicacionesUTA >= 2,
-            var nivel when nivel.Contains("titular agregado 1") => totalPublicaciones >= 6 && publicacionesUTA >= 3,
+            var nivel when nivel.Contains("titular agregado 1") => totalPublicaciones >= 6 && publicacionesUTA >= 2, // CORREGIDO: Requiere 2 con UTA, no 3
             var nivel when nivel.Contains("titular agregado 2") => totalPublicaciones >= 8 && publicacionesUTA >= 4,
             var nivel when nivel.Contains("titular agregado 3") => totalPublicaciones >= 10 && publicacionesUTA >= 5,
             var nivel when nivel.Contains("titular principal") => totalPublicaciones >= 15 && publicacionesUTA >= 8,
@@ -1089,7 +1089,7 @@
         {
             var nivel when nivel.Contains("titular auxiliar 2") => "Mínimo 4 años como Titular Auxiliar 1 en UTA",
             var nivel when nivel.Contains("titular auxiliar 3") => "Mínimo 5 años",
-            var nivel when nivel.Contains("titular agregado 1") => "Mínimo 8 años",
+            var nivel when nivel.Contains("titular agregado 1") => "Mínimo 4 años", // CORREGIDO: 4 años, no 8
             var nivel when nivel.Contains("titular agregado 2") => "Mínimo 10 años",
             var nivel when nivel.Contains("titular agregado 3") => "Mínimo 12 años",
             var nivel when nivel.Contains("titular principal") => "Mínimo 15 años",
@@ -1103,7 +1103,7 @@
         {
             var nivel when nivel.Contains("titular auxiliar 2") => "1 obra relevante o artículo indexado con filiación UTA",
             var nivel when nivel.Contains("titular auxiliar 3") => "Mín. 4 total, 2 con UTA",
-            var nivel when nivel.Contains("titular agregado 1") => "Mín. 6 total, 3 con UTA",
+            var nivel when nivel.Contains("titular agregado 1") => "Mín. 6 total, 2 con UTA", // CORREGIDO: 2 con UTA, no 3
             var nivel when nivel.Contains("titular agregado 2") => "Mín. 8 total, 4 con UTA",
             var nivel when nivel.Contains("titular agregado 3") => "Mín. 10 total, 5 con UTA",
             var nivel when nivel.Contains("titular principal") => "Mín. 15 total, 8 con UTA",
