@@ -1052,7 +1052,18 @@
                                                     }
                                                     else
                                                     {
-                                                        <text>Te faltan @(horasCapacitacionRequeridas - horasCapacitacionObtenidas) horas más de capacitación.</text>
+                                                        @if (horasCapacitacionObtenidas < horasCapacitacionRequeridas)
+                                                        {
+                                                            <text>Te faltan @(horasCapacitacionRequeridas - horasCapacitacionObtenidas) horas más de capacitación.</text>
+                                                        }
+                                                        else if (horasPedagogicasObtenidas < horasPedagogicasRequeridas)
+                                                        {
+                                                            <text>Tienes suficientes horas totales (@horasCapacitacionObtenidas/@horasCapacitacionRequeridas), pero te faltan @(horasPedagogicasRequeridas - horasPedagogicasObtenidas) horas pedagógicas.</text>
+                                                        }
+                                                        else
+                                                        {
+                                                            <text>No cumples con los requisitos de capacitación. Revisa los detalles específicos.</text>
+                                                        }
                                                     }
                                                 </p>
                                             </div>
