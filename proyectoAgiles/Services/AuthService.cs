@@ -665,7 +665,7 @@ namespace proyectoAgiles.Services
         {
             try
             {
-                var url = $"{_apiBaseUrl}/api/auth/usuario/{cedula}";
+                var url = $"{_apiBaseUrl}/api/users/by-cedula/{cedula}";
                 var response = await _httpClient.GetAsync(url);
                 
                 if (response.IsSuccessStatusCode)
@@ -693,6 +693,13 @@ namespace proyectoAgiles.Services
             try
             {
                 Console.WriteLine($"CrearEstadisticasDesdeVerificacionDinamica: Iniciando");
+                Console.WriteLine($"DEBUG: Verificación recibida:");
+                Console.WriteLine($"  - Experiencia.Cumple: {verificacion.Experiencia.Cumple}");
+                Console.WriteLine($"  - ObrasRelevantes.Cumple: {verificacion.ObrasRelevantes.Cumple}");
+                Console.WriteLine($"  - EvaluacionDesempeno.Cumple: {verificacion.EvaluacionDesempeno.Cumple}");
+                Console.WriteLine($"  - Capacitacion.Cumple: {verificacion.Capacitacion.Cumple}");
+                Console.WriteLine($"  - ProyectosInvestigacion?.Cumple: {verificacion.ProyectosInvestigacion?.Cumple}");
+                Console.WriteLine($"  - CumpleTodosRequisitos: {verificacion.CumpleTodosRequisitos}");
                 
                 // Contar requisitos totales y cumplidos usando las propiedades correctas
                 var totalRequisitos = 0;
@@ -1497,6 +1504,14 @@ namespace proyectoAgiles.Services
                     verificacion.EvaluacionDesempeno.Cumple &&
                     verificacion.Capacitacion.Cumple &&
                     (verificacion.ProyectosInvestigacion?.Cumple ?? true);
+
+                Console.WriteLine($"DEBUG VerificarRequisitosEscalafonDinamico:");
+                Console.WriteLine($"  - Experiencia: {verificacion.Experiencia.Cumple} - {verificacion.Experiencia.Mensaje}");
+                Console.WriteLine($"  - ObrasRelevantes: {verificacion.ObrasRelevantes.Cumple} - {verificacion.ObrasRelevantes.Mensaje}");
+                Console.WriteLine($"  - EvaluacionDesempeno: {verificacion.EvaluacionDesempeno.Cumple} - {verificacion.EvaluacionDesempeno.Mensaje}");
+                Console.WriteLine($"  - Capacitacion: {verificacion.Capacitacion.Cumple} - {verificacion.Capacitacion.Mensaje}");
+                Console.WriteLine($"  - ProyectosInvestigacion: {verificacion.ProyectosInvestigacion?.Cumple} - {verificacion.ProyectosInvestigacion?.Mensaje}");
+                Console.WriteLine($"  - CumpleTodosRequisitos: {verificacion.CumpleTodosRequisitos}");
 
                 // Generar mensaje final
                 if (verificacion.CumpleTodosRequisitos)
