@@ -1194,80 +1194,97 @@ body, html {
     gap: 1rem;
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
-    .modal-dialog.modal-xl {
-        max-width: 98vw !important;
-        width: 98vw !important;
-        min-height: calc(100vh - 1rem);
-    }
-    
-    .modal-content {
-        max-height: calc(100vh - 1rem);
-    }
-    
-    .modal-header,
-    .modal-body,
-    .modal-footer {
-        padding: 1rem;
-    }
-    
-    .modal-title {
-        font-size: 1.25rem;
-    }
-    
-    .modal-body {
-        max-height: calc(100vh - 150px);
-    }
-}
-
-@media (min-width: 1400px) {
-    .modal-dialog.modal-xl {
-        max-width: 90vw !important;
-        width: 90vw !important;
-    }
-}
-
-/* Mejoras adicionales para las tablas en el modal */
-.modal-body .table-responsive {
+/* Scroll horizontal para todas las tablas del modal (incluidas las table-striped) */
+.modal-body .details-section .table-responsive {
+    overflow-x: auto;
+    overflow-y: visible;
+    max-width: 100%;
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e0 #f7fafc;
     border-radius: 8px;
-    overflow: hidden;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
-.modal-body .professional-table {
-    margin-bottom: 0;
-    font-size: 0.9rem;
+.modal-body .details-section .table-responsive::-webkit-scrollbar {
+    height: 6px;
 }
 
-.modal-body .professional-table tbody td {
+.modal-body .details-section .table-responsive::-webkit-scrollbar-track {
+    background: #f7fafc;
+    border-radius: 3px;
+}
+
+.modal-body .details-section .table-responsive::-webkit-scrollbar-thumb {
+    background: #cbd5e0;
+    border-radius: 3px;
+}
+
+.modal-body .details-section .table-responsive::-webkit-scrollbar-thumb:hover {
+    background: #a0aec0;
+}
+
+/* Asegurar que las tablas striped también tengan ancho mínimo si es necesario */
+.modal-body .table-striped {
+    min-width: 500px;
+}
+
+.modal-body .table-striped th,
+.modal-body .table-striped td {
+    white-space: nowrap;
     padding: 12px 16px;
-    vertical-align: middle;
 }
 
-.modal-body .professional-table tbody tr:hover {
-    background-color: #f8fafc;
-    transform: translateY(-1px);
-    transition: all 0.2s ease;
+/* Permitir que el contenido de ciertas celdas se ajuste */
+.modal-body .table-striped td:last-child {
+    white-space: normal;
+    word-wrap: break-word;
+    max-width: 300px;
 }
 
-/* Mejor espaciado para badges en el modal */
+/* Mejorar la visualización de badges en scroll horizontal */
 .modal-body .table-badge {
-    font-size: 0.75rem;
-    padding: 0.25rem 0.5rem;
-    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
     white-space: nowrap;
 }
 
-/* Centrado de contenido en el modal */
-.modal-body .empty-state {
-    text-align: center;
-    padding: 3rem 1rem;
-    color: #6b7280;
+/* Indicador de contenido adicional para scroll horizontal */
+.modal-body .table-responsive {
+    position: relative;
 }
 
-.modal-body .empty-state i {
-    font-size: 3rem;
-    margin-bottom: 1rem;
-    opacity: 0.5;
+.modal-body .table-responsive:not(:hover)::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 20px;
+    background: linear-gradient(to left, rgba(255, 255, 255, 0.8), transparent);
+    pointer-events: none;
+    z-index: 1;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.modal-body .table-responsive:not(:hover):not(.scrolled-to-end)::before {
+    opacity: 1;
+}
+
+/* Sombra suave en los bordes durante el scroll */
+.modal-body .table-responsive.scrolling {
+    box-shadow: 
+        inset 10px 0 10px -10px rgba(0, 0, 0, 0.1),
+        inset -10px 0 10px -10px rgba(0, 0, 0, 0.1),
+        0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* Cursor pointer para indicar que se puede hacer scroll */
+.modal-body .professional-table thead {
+    cursor: grab;
+}
+
+.modal-body .professional-table thead:active {
+    cursor: grabbing;
 }
