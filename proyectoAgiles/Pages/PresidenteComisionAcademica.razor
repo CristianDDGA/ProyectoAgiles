@@ -2,9 +2,11 @@
 @using Microsoft.AspNetCore.Components.Web
 @using Microsoft.AspNetCore.Components
 @using ProyectoAgiles.Application.DTOs
+@using proyectoAgiles.Services
 @layout proyectoAgiles.Layout.MainLayout
 @inject NavigationManager Navigation
 @inject proyectoAgiles.Services.UserSessionService UserSession
+@inject proyectoAgiles.Services.AuthService AuthService
 @inject HttpClient HttpClient
 @inject IJSRuntime JSRuntime
 
@@ -353,6 +355,325 @@
                             </div>
                         </div>
 
+                        <!-- Tabla de Investigación -->
+                        <div class="details-section">
+                            <h6><i class="fas fa-search"></i> Investigación</h6>
+                            <div class="table-responsive">
+                                <table class="table professional-table">
+                                    <thead>
+                                        <tr>
+                                            <th><i class="fas fa-book me-2"></i>Título</th>
+                                            <th><i class="fas fa-flask me-2"></i>Área</th>
+                                            <th><i class="fas fa-tag me-2"></i>Tipo</th>
+                                            <th><i class="fas fa-chart-line me-2"></i>Estado</th>
+                                            <th><i class="fas fa-calendar me-2"></i>Fecha Pub.</th>
+                                            <th><i class="fas fa-university me-2"></i>Filiación</th>
+                                            <th><i class="fas fa-cogs me-2"></i>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @if (GetInvestigacionesDocente(selectedSolicitud).Any())
+                                        {
+                                            @foreach (var investigacion in GetInvestigacionesDocente(selectedSolicitud))
+                                            {
+                                                <tr>
+                                                    <td class="col-title">
+                                                        <div class="fw-medium">@investigacion.Titulo</div>
+                                                        @if (!string.IsNullOrEmpty(investigacion.RevistaOEditorial))
+                                                        {
+                                                            <small class="text-muted d-block mt-1">
+                                                                <i class="fas fa-newspaper me-1"></i>@investigacion.RevistaOEditorial
+                                                            </small>
+                                                        }
+                                                    </td>
+                                                    <td>
+                                                        <span class="table-badge info">
+                                                            <i class="fas fa-atom"></i>
+                                                            @investigacion.CampoConocimiento
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <span class="table-badge secondary">
+                                                            @investigacion.Tipo
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <span class="table-badge success">
+                                                            <i class="fas fa-check-circle"></i>
+                                                            Publicado
+                                                        </span>
+                                                    </td>
+                                                    <td class="col-date">
+                                                        <i class="fas fa-calendar-alt me-1"></i>
+                                                        @investigacion.FechaPublicacion.ToString("dd/MM/yyyy")
+                                                    </td>
+                                                    <td>
+                                                        @if (!string.IsNullOrEmpty(investigacion.Filiacion))
+                                                        {
+                                                            <span class="table-badge @(investigacion.Filiacion.Contains("UTA", StringComparison.OrdinalIgnoreCase) || investigacion.Filiacion.Contains("Universidad Técnica de Ambato", StringComparison.OrdinalIgnoreCase) ? "success" : "secondary")">
+                                                                @if (investigacion.Filiacion.Contains("UTA", StringComparison.OrdinalIgnoreCase) || investigacion.Filiacion.Contains("Universidad Técnica de Ambato", StringComparison.OrdinalIgnoreCase))
+                                                                {
+                                                                    <i class="fas fa-check-circle"></i>
+                                                                }
+                                                                @investigacion.Filiacion
+                                                            </span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span class="text-muted">
+                                                                <i class="fas fa-minus-circle me-1"></i>Sin filiación
+                                                            </span>
+                                                        }
+                                                    </td>
+                                                    <td class="col-actions">
+                                                        <div class="action-btn-group">
+                                                            @if (investigacion.TienePdf)
+                                                            {
+                                                                <button class="action-btn view" @onclick="() => VerPdf(investigacion.Id)" title="Ver PDF">
+                                                                    <i class="fas fa-file-pdf"></i>
+                                                                </button>
+                                                            }
+                                                            else
+                                                            {
+                                                                <span class="text-muted">
+                                                                    <i class="fas fa-file-pdf"></i>
+                                                                </span>
+                                                            }
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <tr>
+                                                <td colspan="7" class="empty-state">
+                                                    <i class="fas fa-search"></i>
+                                                    <h6>No hay investigaciones registradas</h6>
+                                                    <p>No se encontraron investigaciones para este docente</p>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Tabla de Evaluación -->
+                        <div class="details-section">
+                            <h6><i class="fas fa-chart-line"></i> Evaluación de Desempeño</h6>
+                            <div class="table-responsive">
+                                <table class="table professional-table">
+                                    <thead>
+                                        <tr>
+                                            <th><i class="fas fa-calendar-alt me-2"></i>Período</th>
+                                            <th><i class="fas fa-calendar me-2"></i>Año</th>
+                                            <th><i class="fas fa-list-ol me-2"></i>Sem.</th>
+                                            <th><i class="fas fa-chart-bar me-2"></i>Puntaje</th>
+                                            <th><i class="fas fa-percentage me-2"></i>Porcentaje</th>
+                                            <th><i class="fas fa-check-circle me-2"></i>Estado</th>
+                                            <th><i class="fas fa-clock me-2"></i>Fecha Eval.</th>
+                                            <th><i class="fas fa-user-tie me-2"></i>Evaluador</th>
+                                            <th><i class="fas fa-cogs me-2"></i>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @if (GetEvaluacionesDocente(selectedSolicitud).Any())
+                                        {
+                                            @foreach (var evaluacion in GetEvaluacionesDocente(selectedSolicitud))
+                                            {
+                                                <tr>
+                                                    <td class="fw-medium">
+                                                        <i class="fas fa-graduation-cap me-2 text-primary"></i>
+                                                        @evaluacion.PeriodoAcademico
+                                                    </td>
+                                                    <td class="col-date">
+                                                        <span class="table-badge info">@evaluacion.Anio</span>
+                                                    </td>
+                                                    <td class="text-center">
+                                                        <span class="table-badge secondary">@evaluacion.Semestre</span>
+                                                    </td>
+                                                    <td class="col-score">
+                                                        <div class="fw-bold">@evaluacion.PuntajeObtenido</div>
+                                                        <small class="text-muted">/ @evaluacion.PuntajeMaximo</small>
+                                                    </td>
+                                                    <td class="col-score">
+                                                        <span class="table-badge @(evaluacion.PorcentajeObtenido >= 90 ? "success" : evaluacion.PorcentajeObtenido >= 75 ? "warning" : "danger")">
+                                                            <i class="fas @(evaluacion.PorcentajeObtenido >= 90 ? "fa-trophy" : evaluacion.PorcentajeObtenido >= 75 ? "fa-star" : "fa-exclamation-triangle")"></i>
+                                                            @evaluacion.PorcentajeObtenido.ToString("F1")%
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <span class="table-badge @(evaluacion.CumpleMinimo ? "success" : "danger")">
+                                                            <i class="fas @(evaluacion.CumpleMinimo ? "fa-check" : "fa-times")"></i>
+                                                            @evaluacion.Estado
+                                                        </span>
+                                                    </td>
+                                                    <td class="col-date">
+                                                        <i class="fas fa-calendar-check me-1"></i>
+                                                        @evaluacion.FechaEvaluacion.ToString("dd/MM/yyyy")
+                                                    </td>
+                                                    <td>
+                                                        @if (!string.IsNullOrEmpty(evaluacion.Evaluador))
+                                                        {
+                                                            <div class="fw-medium">@evaluacion.Evaluador</div>
+                                                            <small class="text-muted">@evaluacion.TipoEvaluacion</small>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span class="text-muted">
+                                                                <i class="fas fa-user-slash me-1"></i>Sin asignar
+                                                            </span>
+                                                        }
+                                                    </td>
+                                                    <td class="col-actions">
+                                                        <div class="action-btn-group">
+                                                            @if (!string.IsNullOrEmpty(evaluacion.NombreArchivoRespaldo))
+                                                            {
+                                                                <button class="action-btn view" @onclick="() => VerPdfEvaluacion(evaluacion.Id)" title="Ver PDF">
+                                                                    <i class="fas fa-file-pdf"></i>
+                                                                </button>
+                                                            }
+                                                            else
+                                                            {
+                                                                <span class="text-muted">
+                                                                    <i class="fas fa-file-pdf"></i>
+                                                                </span>
+                                                            }
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <tr>
+                                                <td colspan="9" class="empty-state">
+                                                    <i class="fas fa-star"></i>
+                                                    <h6>No hay evaluaciones de desempeño registradas</h6>
+                                                    <p>No se encontraron evaluaciones para este docente</p>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Tabla de Capacitación -->
+                        <div class="details-section">
+                            <h6><i class="fas fa-graduation-cap"></i> Capacitación y Formación</h6>
+                            <div class="table-responsive">
+                                <table class="table professional-table">
+                                    <thead>
+                                        <tr>
+                                            <th><i class="fas fa-graduation-cap me-2"></i>Nombre</th>
+                                            <th><i class="fas fa-university me-2"></i>Institución</th>
+                                            <th><i class="fas fa-tag me-2"></i>Tipo</th>
+                                            <th><i class="fas fa-laptop me-2"></i>Modalidad</th>
+                                            <th><i class="fas fa-clock me-2"></i>Horas</th>
+                                            <th><i class="fas fa-calendar-plus me-2"></i>Fecha Inicio</th>
+                                            <th><i class="fas fa-calendar-check me-2"></i>Fecha Fin</th>
+                                            <th><i class="fas fa-chart-line me-2"></i>Estado</th>
+                                            <th><i class="fas fa-cogs me-2"></i>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @if (GetCapacitacionesDocente(selectedSolicitud).Any())
+                                        {
+                                            @foreach (var capacitacion in GetCapacitacionesDocente(selectedSolicitud))
+                                            {
+                                                <tr>
+                                                    <td class="col-title">
+                                                        <div class="fw-medium">@capacitacion.NombreCapacitacion</div>
+                                                        @if (!string.IsNullOrEmpty(capacitacion.Descripcion))
+                                                        {
+                                                            <small class="text-muted d-block mt-1" title="@capacitacion.Descripcion">
+                                                                <i class="fas fa-info-circle me-1"></i>@capacitacion.Descripcion.Substring(0, Math.Min(50, capacitacion.Descripcion.Length))...
+                                                            </small>
+                                                        }
+                                                    </td>
+                                                    <td>
+                                                        <div class="fw-medium">@capacitacion.Institucion</div>
+                                                        @if (!string.IsNullOrEmpty(capacitacion.Instructor))
+                                                        {
+                                                            <small class="text-muted d-block mt-1">
+                                                                <i class="fas fa-user-tie me-1"></i>@capacitacion.Instructor
+                                                            </small>
+                                                        }
+                                                    </td>
+                                                    <td>
+                                                        <span class="table-badge @(capacitacion.EsPedagogica ? "success" : "info")">
+                                                            <i class="fas @(capacitacion.EsPedagogica ? "fa-chalkboard-teacher" : "fa-cogs")"></i>
+                                                            @capacitacion.TipoCapacitacion
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <span class="table-badge secondary">
+                                                            <i class="fas @(capacitacion.Modalidad.Contains("Virtual", StringComparison.OrdinalIgnoreCase) ? "fa-laptop" : capacitacion.Modalidad.Contains("Presencial", StringComparison.OrdinalIgnoreCase) ? "fa-users" : "fa-sync-alt")"></i>
+                                                            @capacitacion.Modalidad
+                                                        </span>
+                                                    </td>
+                                                    <td class="col-score">
+                                                        <div class="fw-bold text-primary">@capacitacion.HorasAcademicas</div>
+                                                        <small class="text-muted">horas</small>
+                                                    </td>
+                                                    <td class="col-date">
+                                                        <i class="fas fa-calendar-alt me-1"></i>
+                                                        @capacitacion.FechaInicio.ToString("dd/MM/yyyy")
+                                                    </td>
+                                                    <td class="col-date">
+                                                        <i class="fas fa-calendar-check me-1"></i>
+                                                        @capacitacion.FechaFin.ToString("dd/MM/yyyy")
+                                                    </td>
+                                                    <td>
+                                                        <span class="table-badge @(capacitacion.Estado?.ToLower() switch { "aprobada" or "completada" => "success", "en progreso" => "warning", "reprobada" => "danger", _ => "secondary" })">
+                                                            <i class="fas @(capacitacion.Estado?.ToLower() switch { "aprobada" or "completada" => "fa-check-circle", "en progreso" => "fa-clock", "reprobada" => "fa-times-circle", _ => "fa-question-circle" })"></i>
+                                                            @capacitacion.Estado
+                                                        </span>
+                                                        @if (capacitacion.Calificacion.HasValue)
+                                                        {
+                                                            <div class="mt-1">
+                                                                <small class="text-muted">
+                                                                    <i class="fas fa-star me-1"></i>@capacitacion.Calificacion.Value.ToString("F1")
+                                                                </small>
+                                                            </div>
+                                                        }
+                                                    </td>
+                                                    <td class="col-actions">
+                                                        <div class="action-btn-group">
+                                                            @if (!string.IsNullOrEmpty(capacitacion.NombreArchivoCertificado))
+                                                            {
+                                                                <button class="action-btn view" @onclick="() => VerPdfCapacitacion(capacitacion.Id)" title="Ver Certificado">
+                                                                    <i class="fas fa-file-pdf"></i>
+                                                                </button>
+                                                            }
+                                                            else
+                                                            {
+                                                                <span class="text-muted">
+                                                                    <i class="fas fa-file-pdf"></i>
+                                                                </span>
+                                                            }
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <tr>
+                                                <td colspan="9" class="empty-state">
+                                                    <i class="fas fa-search"></i>
+                                                    <h6>No hay capacitaciones registradas</h6>
+                                                    <p>No se encontraron capacitaciones para este docente</p>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
                         <!-- Información de la Solicitud -->
                         <div class="details-section">
                             <h6><i class="fas fa-file-alt"></i> Información de la Solicitud</h6>
@@ -451,6 +772,11 @@
     private int pendingSolicitudes = 0;
     private int approvedSolicitudes = 0;
     private int rejectedSolicitudes = 0;
+    
+    // Datos reales de la API
+    private List<proyectoAgiles.Services.InvestigacionDto> investigaciones = new();
+    private List<proyectoAgiles.Services.EvaluacionDesempenoDto> evaluaciones = new();
+    private List<ProyectoAgiles.Application.DTOs.DiticDto> capacitaciones = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -546,9 +872,14 @@
         rejectedSolicitudes = solicitudes.Count(s => s.Status == "Rechazado");
     }
 
-    private void VerDetalles(int solicitudId)
+    private async Task VerDetalles(int solicitudId)
     {
         selectedSolicitud = solicitudes.FirstOrDefault(s => s.Id == solicitudId);
+        if (selectedSolicitud != null)
+        {
+            // Cargar datos del docente desde la API
+            await CargarDatosDocente(selectedSolicitud.DocenteCedula);
+        }
         showDetailsModal = true;
     }
 
@@ -846,6 +1177,254 @@
         return !observaciones.Contains("bajo rendimiento") && 
                !observaciones.Contains("evaluación insuficiente") &&
                !observaciones.Contains("no cumple");
+    }
+
+    // Método para cargar datos del docente desde la API
+    private async Task CargarDatosDocente(string cedula)
+    {
+        try
+        {
+            // Limpiar datos anteriores
+            investigaciones.Clear();
+            evaluaciones.Clear();
+            capacitaciones.Clear();
+
+            // Cargar investigaciones
+            await CargarInvestigaciones(cedula);
+            
+            // Cargar evaluaciones
+            await CargarEvaluaciones(cedula);
+            
+            // Cargar capacitaciones
+            await CargarCapacitaciones(cedula);
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("console.error", $"Error cargando datos del docente: {ex.Message}");
+        }
+    }
+
+    private async Task CargarInvestigaciones(string cedula)
+    {
+        try
+        {
+            var response = await AuthService.GetInvestigacionesPorCedula(cedula);
+            if (response != null)
+            {
+                investigaciones = response.ToList();
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("console.error", $"Error cargando investigaciones: {ex.Message}");
+        }
+    }
+
+    private async Task CargarEvaluaciones(string cedula)
+    {
+        try
+        {
+            var response = await AuthService.GetEvaluacionesPorCedula(cedula);
+            if (response != null)
+            {
+                evaluaciones = response.ToList();
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("console.error", $"Error cargando evaluaciones: {ex.Message}");
+        }
+    }
+
+    private async Task CargarCapacitaciones(string cedula)
+    {
+        try
+        {
+            var response = await AuthService.GetCapacitacionesPorCedula(cedula);
+            if (response != null)
+            {
+                capacitaciones = response.ToList();
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("console.error", $"Error cargando capacitaciones: {ex.Message}");
+        }
+    }
+
+    // Métodos para obtener datos de las tablas
+    private List<proyectoAgiles.Services.InvestigacionDto> GetInvestigacionesDocente(SolicitudEscalafon solicitud)
+    {
+        return investigaciones;
+    }
+
+    private List<proyectoAgiles.Services.EvaluacionDesempenoDto> GetEvaluacionesDocente(SolicitudEscalafon solicitud)
+    {
+        return evaluaciones;
+    }
+
+    private List<ProyectoAgiles.Application.DTOs.DiticDto> GetCapacitacionesDocente(SolicitudEscalafon solicitud)
+    {
+        return capacitaciones;
+    }
+    
+    // Métodos para ver PDFs
+    private async Task VerPdf(int investigacionId)
+    {
+        try
+        {
+            var pdfBytes = await AuthService.ObtenerPdfInvestigacion(investigacionId);
+            
+            if (pdfBytes is not null && pdfBytes.Length > 0)
+            {
+                var base64 = Convert.ToBase64String(pdfBytes);
+                var pdfDataUrl = $"data:application/pdf;base64,{base64}";
+                var fileName = $"investigacion_{investigacionId}.pdf";
+                
+                // Usar la función JavaScript personalizada
+                var success = await JSRuntime.InvokeAsync<bool>("showPdf", pdfDataUrl, fileName);
+                
+                if (!success)
+                {
+                    await JSRuntime.InvokeVoidAsync("toastNotifications.success", 
+                        "PDF descargado", 
+                        "El PDF se ha descargado a tu carpeta de descargas.");
+                }
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("toastNotifications.error", 
+                    "PDF no disponible", 
+                    "No se encontró el archivo PDF para esta investigación.");
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("toastNotifications.error", 
+                "Error", 
+                $"Error al obtener el PDF: {ex.Message}");
+        }
+    }
+
+    private async Task VerPdfEvaluacion(int evaluacionId)
+    {
+        try
+        {
+            var pdfBytes = await AuthService.ObtenerPdfEvaluacion(evaluacionId);
+            
+            if (pdfBytes is not null && pdfBytes.Length > 0)
+            {
+                var base64 = Convert.ToBase64String(pdfBytes);
+                var pdfDataUrl = $"data:application/pdf;base64,{base64}";
+                var fileName = $"evaluacion_{evaluacionId}.pdf";
+                
+                var success = await JSRuntime.InvokeAsync<bool>("showPdf", pdfDataUrl, fileName);
+                
+                if (!success)
+                {
+                    await JSRuntime.InvokeVoidAsync("toastNotifications.success", 
+                        "PDF descargado", 
+                        "El PDF se ha descargado a tu carpeta de descargas.");
+                }
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("toastNotifications.error", 
+                    "PDF no disponible", 
+                    "No se encontró el archivo PDF para esta evaluación.");
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("toastNotifications.error", 
+                "Error", 
+                $"Error al obtener el PDF: {ex.Message}");
+        }
+    }
+
+    private async Task VerPdfCapacitacion(int capacitacionId)
+    {
+        try
+        {
+            var pdfBytes = await AuthService.ObtenerPdfCapacitacion(capacitacionId);
+            
+            if (pdfBytes is not null && pdfBytes.Length > 0)
+            {
+                var base64 = Convert.ToBase64String(pdfBytes);
+                var pdfDataUrl = $"data:application/pdf;base64,{base64}";
+                var fileName = $"capacitacion_{capacitacionId}.pdf";
+                
+                var success = await JSRuntime.InvokeAsync<bool>("showPdf", pdfDataUrl, fileName);
+                
+                if (!success)
+                {
+                    await JSRuntime.InvokeVoidAsync("toastNotifications.success", 
+                        "PDF descargado", 
+                        "El PDF se ha descargado a tu carpeta de descargas.");
+                }
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("toastNotifications.error", 
+                    "PDF no disponible", 
+                    "No se encontró el archivo PDF para esta capacitación.");
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("toastNotifications.error", 
+                "Error", 
+                $"Error al obtener el PDF: {ex.Message}");
+        }
+    }
+
+    // Clases para los datos de las tablas
+    public class InvestigacionDocente
+    {
+        public int Id { get; set; }
+        public string Titulo { get; set; } = "";
+        public string Area { get; set; } = "";
+        public string Tipo { get; set; } = "";
+        public string Estado { get; set; } = "";
+        public DateTime FechaInicio { get; set; }
+        public string Filiacion { get; set; } = "";
+        public string RevistaOEditorial { get; set; } = "";
+        public bool TienePdf { get; set; }
+    }
+    
+    public class EvaluacionDocente
+    {
+        public int Id { get; set; }
+        public string PeriodoAcademico { get; set; } = "";
+        public int Anio { get; set; }
+        public string Semestre { get; set; } = "";
+        public int PuntajeObtenido { get; set; }
+        public int PuntajeMaximo { get; set; }
+        public double PorcentajeObtenido { get; set; }
+        public bool CumpleMinimo { get; set; }
+        public string Estado { get; set; } = "";
+        public DateTime FechaEvaluacion { get; set; }
+        public string Evaluador { get; set; } = "";
+        public string TipoEvaluacion { get; set; } = "";
+        public string NombreArchivoRespaldo { get; set; } = "";
+    }
+    
+    public class CapacitacionDocente
+    {
+        public int Id { get; set; }
+        public string NombreCapacitacion { get; set; } = "";
+        public string Institucion { get; set; } = "";
+        public string TipoCapacitacion { get; set; } = "";
+        public string Modalidad { get; set; } = "";
+        public int HorasAcademicas { get; set; }
+        public DateTime FechaInicio { get; set; }
+        public DateTime FechaFin { get; set; }
+        public string Estado { get; set; } = "";
+        public string Instructor { get; set; } = "";
+        public string Descripcion { get; set; } = "";
+        public bool EsPedagogica { get; set; }
+        public double? Calificacion { get; set; }
+        public string NombreArchivoCertificado { get; set; } = "";
     }
 
     public class SolicitudEscalafon
