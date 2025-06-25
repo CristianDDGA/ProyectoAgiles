@@ -695,9 +695,13 @@ namespace proyectoAgiles.Services
                 Console.WriteLine($"CrearEstadisticasDesdeVerificacionDinamica: Iniciando");
                 Console.WriteLine($"DEBUG: Verificación recibida:");
                 Console.WriteLine($"  - Experiencia.Cumple: {verificacion.Experiencia.Cumple}");
+                Console.WriteLine($"  - Experiencia.ValorObtenido: '{verificacion.Experiencia.ValorObtenido}'");
                 Console.WriteLine($"  - ObrasRelevantes.Cumple: {verificacion.ObrasRelevantes.Cumple}");
+                Console.WriteLine($"  - ObrasRelevantes.ValorObtenido: '{verificacion.ObrasRelevantes.ValorObtenido}'");
                 Console.WriteLine($"  - EvaluacionDesempeno.Cumple: {verificacion.EvaluacionDesempeno.Cumple}");
+                Console.WriteLine($"  - EvaluacionDesempeno.ValorObtenido: '{verificacion.EvaluacionDesempeno.ValorObtenido}'");
                 Console.WriteLine($"  - Capacitacion.Cumple: {verificacion.Capacitacion.Cumple}");
+                Console.WriteLine($"  - Capacitacion.ValorObtenido: '{verificacion.Capacitacion.ValorObtenido}'");
                 Console.WriteLine($"  - ProyectosInvestigacion?.Cumple: {verificacion.ProyectosInvestigacion?.Cumple}");
                 Console.WriteLine($"  - CumpleTodosRequisitos: {verificacion.CumpleTodosRequisitos}");
                 
@@ -738,6 +742,20 @@ namespace proyectoAgiles.Services
                 var evaluaciones = await GetEvaluacionesPorCedula(cedula);
                 var capacitaciones = await GetCapacitacionesPorCedula(cedula);
 
+                // Parsear valores con logs detallados
+                var añosExperiencia = ParsearAños(verificacion.Experiencia.ValorObtenido);
+                var porcentajeEvaluaciones = ParsearPorcentaje(verificacion.EvaluacionDesempeno.ValorObtenido);
+                var horasCapacitacion = ParsearHoras(verificacion.Capacitacion.ValorObtenido);
+                var horasPedagogicas = ParsearHorasPedagogicas(verificacion.Capacitacion.ValorObtenido);
+                var obrasConUTA = ParsearObrasUTA(verificacion.ObrasRelevantes.ValorObtenido);
+
+                Console.WriteLine($"DEBUG: Valores parseados:");
+                Console.WriteLine($"  - añosExperiencia: {añosExperiencia} (de '{verificacion.Experiencia.ValorObtenido}')");
+                Console.WriteLine($"  - porcentajeEvaluaciones: {porcentajeEvaluaciones} (de '{verificacion.EvaluacionDesempeno.ValorObtenido}')");
+                Console.WriteLine($"  - horasCapacitacion: {horasCapacitacion} (de '{verificacion.Capacitacion.ValorObtenido}')");
+                Console.WriteLine($"  - horasPedagogicas: {horasPedagogicas} (de '{verificacion.Capacitacion.ValorObtenido}')");
+                Console.WriteLine($"  - obrasConUTA: {obrasConUTA} (de '{verificacion.ObrasRelevantes.ValorObtenido}')");
+
                 return new EstadisticasDocenteResponse
                 {
                     Cedula = cedula,
@@ -753,10 +771,11 @@ namespace proyectoAgiles.Services
                         Experiencia = new SeccionEstadistica
                         {
                             Titulo = "Experiencia Docente",
+                            Icono = "fas fa-clock",
                             Datos = new DatosSeccion
                             {
                                 AñosRequeridos = configuracion.AnosExperienciaRequeridos,
-                                AñosObtenidos = (double)ParsearAños(verificacion.Experiencia.ValorObtenido),
+                                AñosObtenidos = (double)añosExperiencia,
                                 Cumple = verificacion.Experiencia.Cumple,
                                 Detalles = verificacion.Experiencia.Mensaje
                             }
@@ -764,10 +783,11 @@ namespace proyectoAgiles.Services
                         Obras = new SeccionEstadistica
                         {
                             Titulo = "Obras Relevantes",
+                            Icono = "fas fa-book",
                             Datos = new DatosSeccion
                             {
                                 TotalObras = investigaciones?.Count ?? 0,
-                                ObrasConUTA = investigaciones?.Count(i => i.Filiacion?.Contains("UTA") == true) ?? 0,
+                                ObrasConUTA = obrasConUTA,
                                 Cumple = verificacion.ObrasRelevantes.Cumple,
                                 Detalles = verificacion.ObrasRelevantes.Mensaje
                             }
@@ -775,10 +795,11 @@ namespace proyectoAgiles.Services
                         Evaluaciones = new SeccionEstadistica
                         {
                             Titulo = "Evaluaciones de Desempeño",
+                            Icono = "fas fa-star",
                             Datos = new DatosSeccion
                             {
                                 EvaluacionesAnalizadas = evaluaciones?.Count ?? 0,
-                                PromedioObtenido = ParsearPorcentaje(verificacion.EvaluacionDesempeno.ValorObtenido),
+                                PromedioObtenido = porcentajeEvaluaciones,
                                 Requiere75 = configuracion.PorcentajeEvaluacionMinimo,
                                 Cumple = verificacion.EvaluacionDesempeno.Cumple,
                                 Detalles = verificacion.EvaluacionDesempeno.Mensaje
@@ -787,12 +808,13 @@ namespace proyectoAgiles.Services
                         Capacitaciones = new SeccionEstadistica
                         {
                             Titulo = "Capacitaciones DITIC",
+                            Icono = "fas fa-graduation-cap",
                             Datos = new DatosSeccion
                             {
                                 HorasRequeridas = configuracion.HorasCapacitacionRequeridas,
                                 HorasPedagogicasRequeridas = configuracion.HorasCapacitacionPedagogicas,
-                                HorasObtenidas = ParsearHoras(verificacion.Capacitacion.ValorObtenido),
-                                HorasPedagogicasObtenidas = ParsearHorasPedagogicas(verificacion.Capacitacion.ValorObtenido),
+                                HorasObtenidas = horasCapacitacion,
+                                HorasPedagogicasObtenidas = horasPedagogicas,
                                 Cumple = verificacion.Capacitacion.Cumple,
                                 Detalles = verificacion.Capacitacion.Mensaje
                             }
@@ -811,15 +833,31 @@ namespace proyectoAgiles.Services
         {
             try
             {
-                var match = System.Text.RegularExpressions.Regex.Match(valorObtenido, @"(\d+(?:\.\d+)?)\s*años?");
-                if (match.Success && decimal.TryParse(match.Groups[1].Value, out var años))
+                Console.WriteLine($"ParsearAños: entrada = '{valorObtenido}'");
+                
+                // Buscar patrón de años (ej: "4.5 años", "4,5 años de experiencia")
+                var match = System.Text.RegularExpressions.Regex.Match(
+                    valorObtenido, 
+                    @"(\d+(?:[\.,]\d+)?)\s*años?", 
+                    System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                    
+                if (match.Success)
                 {
-                    return años;
+                    var valorStr = match.Groups[1].Value.Replace(',', '.');
+                    if (decimal.TryParse(valorStr, System.Globalization.NumberStyles.Float, 
+                        System.Globalization.CultureInfo.InvariantCulture, out var años))
+                    {
+                        Console.WriteLine($"ParsearAños: resultado = {años}");
+                        return años;
+                    }
                 }
+                
+                Console.WriteLine($"ParsearAños: no se pudo parsear, devuelve 0");
                 return 0;
             }
-            catch
+            catch (Exception ex)
             {
+                Console.WriteLine($"ParsearAños: error = {ex.Message}");
                 return 0;
             }
         }
@@ -828,15 +866,31 @@ namespace proyectoAgiles.Services
         {
             try
             {
-                var match = System.Text.RegularExpressions.Regex.Match(valorObtenido, @"(\d+(?:\.\d+)?)\s*%");
-                if (match.Success && decimal.TryParse(match.Groups[1].Value, out var porcentaje))
+                Console.WriteLine($"ParsearPorcentaje: entrada = '{valorObtenido}'");
+                
+                // Buscar patrón de porcentaje (ej: "85.0%", "85%", "85.0% promedio")
+                var match = System.Text.RegularExpressions.Regex.Match(
+                    valorObtenido, 
+                    @"(\d+(?:[\.,]\d+)?)\s*%", 
+                    System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                    
+                if (match.Success)
                 {
-                    return porcentaje;
+                    var valorStr = match.Groups[1].Value.Replace(',', '.');
+                    if (decimal.TryParse(valorStr, System.Globalization.NumberStyles.Float, 
+                        System.Globalization.CultureInfo.InvariantCulture, out var porcentaje))
+                    {
+                        Console.WriteLine($"ParsearPorcentaje: resultado = {porcentaje}");
+                        return porcentaje;
+                    }
                 }
+                
+                Console.WriteLine($"ParsearPorcentaje: no se pudo parsear, devuelve 0");
                 return 0;
             }
-            catch
+            catch (Exception ex)
             {
+                Console.WriteLine($"ParsearPorcentaje: error = {ex.Message}");
                 return 0;
             }
         }
@@ -845,15 +899,26 @@ namespace proyectoAgiles.Services
         {
             try
             {
-                var match = System.Text.RegularExpressions.Regex.Match(valorObtenido, @"(\d+)\s*h");
+                Console.WriteLine($"ParsearHoras: entrada = '{valorObtenido}'");
+                
+                // Buscar patrón de horas totales (ej: "40h totales", "40h")
+                var match = System.Text.RegularExpressions.Regex.Match(
+                    valorObtenido, 
+                    @"(\d+)\s*h(?:\s+totales)?", 
+                    System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                    
                 if (match.Success && int.TryParse(match.Groups[1].Value, out var horas))
                 {
+                    Console.WriteLine($"ParsearHoras: resultado = {horas}");
                     return horas;
                 }
+                
+                Console.WriteLine($"ParsearHoras: no se pudo parsear, devuelve 0");
                 return 0;
             }
-            catch
+            catch (Exception ex)
             {
+                Console.WriteLine($"ParsearHoras: error = {ex.Message}");
                 return 0;
             }
         }
@@ -862,15 +927,62 @@ namespace proyectoAgiles.Services
         {
             try
             {
-                var match = System.Text.RegularExpressions.Regex.Match(valorObtenido, @"\((\d+)h\s+pedagógicas\)");
+                Console.WriteLine($"ParsearHorasPedagogicas: entrada = '{valorObtenido}'");
+                
+                // Buscar patrón de horas pedagógicas (ej: "(20h pedagógicas)", "20h pedagógicas")
+                var match = System.Text.RegularExpressions.Regex.Match(
+                    valorObtenido, 
+                    @"\(?(\d+)\s*h\s+pedagógicas?\)?", 
+                    System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                    
                 if (match.Success && int.TryParse(match.Groups[1].Value, out var horasPedagogicas))
                 {
+                    Console.WriteLine($"ParsearHorasPedagogicas: resultado = {horasPedagogicas}");
                     return horasPedagogicas;
                 }
+                
+                Console.WriteLine($"ParsearHorasPedagogicas: no se pudo parsear, devuelve 0");
                 return 0;
             }
-            catch
+            catch (Exception ex)
             {
+                Console.WriteLine($"ParsearHorasPedagogicas: error = {ex.Message}");
+                return 0;
+            }
+        }
+
+        private int ParsearObrasUTA(string valorObtenido)
+        {
+            try
+            {
+                Console.WriteLine($"ParsearObrasUTA: entrada = '{valorObtenido}'");
+                
+                // Buscar patrón de obras con UTA (ej: "2 obras con filiación UTA", "2/3 obras relevantes")
+                var match = System.Text.RegularExpressions.Regex.Match(
+                    valorObtenido, 
+                    @"(\d+)(?:\s+obras?\s+(?:con\s+filiación\s+UTA|relevantes)|/\d+\s+obras?)", 
+                    System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                    
+                if (match.Success && int.TryParse(match.Groups[1].Value, out var obras))
+                {
+                    Console.WriteLine($"ParsearObrasUTA: resultado = {obras}");
+                    return obras;
+                }
+                
+                // Si no encuentra el patrón específico, buscar solo números al inicio
+                var matchNumber = System.Text.RegularExpressions.Regex.Match(valorObtenido, @"^(\d+)");
+                if (matchNumber.Success && int.TryParse(matchNumber.Groups[1].Value, out var obrasSimple))
+                {
+                    Console.WriteLine($"ParsearObrasUTA: resultado simple = {obrasSimple}");
+                    return obrasSimple;
+                }
+                
+                Console.WriteLine($"ParsearObrasUTA: no se pudo parsear, devuelve 0");
+                return 0;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"ParsearObrasUTA: error = {ex.Message}");
                 return 0;
             }
         }
@@ -1542,55 +1654,105 @@ namespace proyectoAgiles.Services
         {
             try
             {
-                // Obtener información de TTHH para verificar fecha de ingreso
-                var response = await _httpClient.GetAsync($"{_apiBaseUrl}/api/tthh/by-cedula/{cedula}");
-                if (response.IsSuccessStatusCode)
+                // Para verificar experiencia mínima, necesitamos la fecha de cuando obtuvo el nivel actual
+                // Por ejemplo, si está en "Titular Auxiliar 2" y quiere subir a "Titular Agregado 1",
+                // necesitamos verificar que hayan pasado 4 años desde que ascendió a "Titular Auxiliar 2"
+
+                DateTime? fechaInicioNivelActual = null;
+                string fuente = "";
+
+                // 1. Primero intentar obtener la fecha de ascenso desde TTHH (si tiene información del nivel actual)
+                var tthhResponse = await _httpClient.GetAsync($"{_apiBaseUrl}/api/tthh/by-cedula/{cedula}");
+                if (tthhResponse.IsSuccessStatusCode)
                 {
-                    var tthhInfo = await response.Content.ReadFromJsonAsync<TTHHDto>();
+                    var tthhInfo = await tthhResponse.Content.ReadFromJsonAsync<TTHHDto>();
                     if (tthhInfo != null)
                     {
-                        var añosExperiencia = (DateTime.Now - tthhInfo.FechaInicio).TotalDays / 365.25;
-                        var cumple = añosExperiencia >= config.AnosExperienciaRequeridos;
-                        
-                        return new RequisitoCumplimientoDto
-                        {
-                            Cumple = cumple,
-                            Mensaje = $"Experiencia: {añosExperiencia:F1} años desde {tthhInfo.FechaInicio:dd/MM/yyyy} " +
-                                     (cumple ? $"(✅ Cumple - mínimo {config.AnosExperienciaRequeridos} años)" : $"(❌ No cumple - requiere mínimo {config.AnosExperienciaRequeridos} años)"),
-                            ValorObtenido = $"{añosExperiencia:F1} años desde {tthhInfo.FechaInicio:dd/MM/yyyy}",
-                            ValorRequerido = $"{config.AnosExperienciaRequeridos} años mínimo como {config.NivelActual}"
-                        };
+                        // Usar la fecha de inicio registrada en TTHH
+                        fechaInicioNivelActual = tthhInfo.FechaInicio;
+                        fuente = "TTHH (fecha de inicio registrada)";
                     }
                 }
-                
-                // Fallback: usar fecha de creación del usuario
-                var userResponse = await _httpClient.GetAsync($"{_apiBaseUrl}/api/users/by-cedula/{cedula}");
-                if (userResponse.IsSuccessStatusCode)
+
+                // 2. Si no hay información de TTHH o no es confiable, buscar en historial de solicitudes de escalafón
+                if (!fechaInicioNivelActual.HasValue)
                 {
-                    var userInfo = await userResponse.Content.ReadFromJsonAsync<UserDto>();
-                    if (userInfo != null)
+                    try
                     {
-                        var añosExperiencia = (DateTime.Now - userInfo.CreatedAt).TotalDays / 365.25;
-                        var cumple = añosExperiencia >= config.AnosExperienciaRequeridos;
-                        
-                        return new RequisitoCumplimientoDto
+                        var solicitudesResponse = await _httpClient.GetAsync($"{_apiBaseUrl}/api/solicitudes-escalafon/docente/{cedula}");
+                        if (solicitudesResponse.IsSuccessStatusCode)
                         {
-                            Cumple = cumple,
-                            Mensaje = $"Experiencia (estimada): {añosExperiencia:F1} años desde registro {userInfo.CreatedAt:dd/MM/yyyy} " +
-                                     (cumple ? $"(✅ Cumple - mínimo {config.AnosExperienciaRequeridos} años)" : $"(❌ No cumple - requiere mínimo {config.AnosExperienciaRequeridos} años)") +
-                                     " (Datos TTHH no disponibles)",
-                            ValorObtenido = $"{añosExperiencia:F1} años (estimado)",
-                            ValorRequerido = $"{config.AnosExperienciaRequeridos} años mínimo como {config.NivelActual}"
-                        };
+                            var solicitudes = await solicitudesResponse.Content.ReadFromJsonAsync<List<ProyectoAgiles.Application.DTOs.SolicitudEscalafonDto>>();
+                            if (solicitudes != null && solicitudes.Count > 0)
+                            {
+                                // Buscar la solicitud aprobada más reciente que haya resultado en el nivel actual
+                                var solicitudNivelActual = solicitudes
+                                    .Where(s => s.Status.Equals("Aprobada", StringComparison.OrdinalIgnoreCase) && 
+                                               s.NivelSolicitado.Equals(config.NivelActual, StringComparison.OrdinalIgnoreCase))
+                                    .OrderByDescending(s => s.FechaAprobacion ?? s.FechaSolicitud)
+                                    .FirstOrDefault();
+
+                                if (solicitudNivelActual != null)
+                                {
+                                    fechaInicioNivelActual = solicitudNivelActual.FechaAprobacion ?? solicitudNivelActual.FechaSolicitud;
+                                    fuente = "Historial de solicitudes de escalafón (fecha de aprobación)";
+                                }
+                            }
+                        }
                     }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error al consultar historial de solicitudes: {ex.Message}");
+                    }
+                }
+
+                // 3. Fallback: usar fecha de registro del usuario como estimación (menos preciso)
+                if (!fechaInicioNivelActual.HasValue)
+                {
+                    var userResponse = await _httpClient.GetAsync($"{_apiBaseUrl}/api/users/by-cedula/{cedula}");
+                    if (userResponse.IsSuccessStatusCode)
+                    {
+                        var userInfo = await userResponse.Content.ReadFromJsonAsync<UserDto>();
+                        if (userInfo != null)
+                        {
+                            fechaInicioNivelActual = userInfo.CreatedAt;
+                            fuente = "Fecha de registro de usuario (estimación menos precisa)";
+                        }
+                    }
+                }
+
+                // Calcular años de experiencia en el nivel actual
+                if (fechaInicioNivelActual.HasValue)
+                {
+                    var añosEnNivelActual = (DateTime.Now - fechaInicioNivelActual.Value).TotalDays / 365.25;
+                    var cumple = añosEnNivelActual >= config.AnosExperienciaRequeridos;
+                    
+                    string mensaje;
+                    if (cumple)
+                    {
+                        mensaje = $"✅ Cumple experiencia: {añosEnNivelActual:F1} años como {config.NivelActual} desde {fechaInicioNivelActual.Value:dd/MM/yyyy}";
+                    }
+                    else
+                    {
+                        mensaje = $"❌ No cumple experiencia: {añosEnNivelActual:F1} años como {config.NivelActual} desde {fechaInicioNivelActual.Value:dd/MM/yyyy} " +
+                                 $"(requiere mínimo {config.AnosExperienciaRequeridos} años)";
+                    }
+
+                    return new RequisitoCumplimientoDto
+                    {
+                        Cumple = cumple,
+                        Mensaje = mensaje,
+                        ValorObtenido = $"{añosEnNivelActual:F1} años como {config.NivelActual} (desde {fechaInicioNivelActual.Value:dd/MM/yyyy})",
+                        ValorRequerido = $"{config.AnosExperienciaRequeridos} años mínimo como {config.NivelActual}. Fuente: {fuente}"
+                    };
                 }
                 
                 return new RequisitoCumplimientoDto
                 {
                     Cumple = false,
-                    Mensaje = "❌ No se pudo verificar la experiencia mínima - Sin datos disponibles",
-                    ValorObtenido = "No disponible",
-                    ValorRequerido = $"{config.AnosExperienciaRequeridos} años mínimo como {config.NivelActual}"
+                    Mensaje = $"❌ No se pudo verificar la experiencia mínima como {config.NivelActual} - Sin datos de fecha de ascenso disponibles",
+                    ValorObtenido = "No disponible - Falta fecha de ascenso al nivel actual",
+                    ValorRequerido = $"{config.AnosExperienciaRequeridos} años mínimo como {config.NivelActual}. Se requiere registrar la fecha de ascenso al nivel actual en TTHH o tener historial de solicitudes"
                 };
             }
             catch (Exception ex)
