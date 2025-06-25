@@ -1139,3 +1139,332 @@
         max-width: 180px;
     }
 }
+
+/* =============================================================================
+   ESTILOS PROFESIONALES PARA FORMULARIOS
+   ============================================================================= */
+
+/* Modal mejorado */
+.modal-content {
+    border-radius: 20px;
+    border: none;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+    overflow: hidden;
+}
+
+.modal-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-bottom: none;
+    padding: 24px 32px;
+    position: relative;
+}
+
+.modal-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, rgba(255,255,255,0.3), rgba(255,255,255,0.1), rgba(255,255,255,0.3));
+}
+
+.modal-title {
+    font-weight: 700;
+    font-size: 1.5rem;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.modal-title i {
+    font-size: 1.3rem;
+    opacity: 0.9;
+}
+
+.btn-close {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.btn-close:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.1);
+}
+
+.modal-body {
+    padding: 32px;
+    background: #fafbfc;
+}
+
+/* Formularios profesionales */
+.professional-form {
+    background: white;
+    border-radius: 16px;
+    padding: 28px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.form-section {
+    margin-bottom: 32px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.form-section:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.section-title {
+    color: #2d3748;
+    font-weight: 700;
+    font-size: 1.1rem;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.section-title i {
+    color: #667eea;
+    font-size: 1rem;
+}
+
+/* Labels mejorados */
+.form-label {
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 8px;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.form-label i {
+    color: #667eea;
+    font-size: 0.85rem;
+}
+
+.form-label.required::after {
+    content: '*';
+    color: #e53e3e;
+    margin-left: 4px;
+    font-weight: bold;
+}
+
+/* Inputs mejorados */
+.form-control,
+.form-select {
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 12px 16px;
+    font-size: 0.95rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background: #ffffff;
+    color: #2d3748;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    background: #ffffff;
+    outline: none;
+}
+
+.form-control:hover:not(:focus),
+.form-select:hover:not(:focus) {
+    border-color: #cbd5e0;
+}
+
+/* Textarea específico */
+textarea.form-control {
+    resize: vertical;
+    min-height: 100px;
+}
+
+/* Input groups */
+.input-group-professional {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.input-icon {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    padding: 12px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    height: 44px;
+}
+
+/* File upload mejorado */
+.file-upload-container {
+    border: 2px dashed #cbd5e0;
+    border-radius: 12px;
+    padding: 24px;
+    text-align: center;
+    background: #f7fafc;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.file-upload-container:hover {
+    border-color: #667eea;
+    background: #edf2f7;
+}
+
+.file-upload-container.has-file {
+    border-color: #38a169;
+    background: #f0fff4;
+}
+
+.file-upload-icon {
+    font-size: 2.5rem;
+    color: #a0aec0;
+    margin-bottom: 12px;
+}
+
+.file-upload-text {
+    color: #4a5568;
+    font-weight: 500;
+    margin-bottom: 8px;
+}
+
+.file-upload-hint {
+    color: #718096;
+    font-size: 0.85rem;
+}
+
+.file-selected {
+    background: #38a169;
+    color: white;
+    padding: 12px 16px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+    margin-top: 12px;
+}
+
+/* Grid de formulario mejorado */
+.form-grid {
+    display: grid;
+    gap: 20px;
+}
+
+.form-grid.two-cols {
+    grid-template-columns: 1fr 1fr;
+}
+
+.form-grid.three-cols {
+    grid-template-columns: 1fr 1fr 1fr;
+}
+
+.form-grid.four-cols {
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+}
+
+.form-field-full {
+    grid-column: 1 / -1;
+}
+
+/* Botones mejorados en footer */
+.modal-footer {
+    background: #f7fafc;
+    border-top: 1px solid #e2e8f0;
+    padding: 24px 32px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+.btn-professional {
+    padding: 12px 24px;
+    font-weight: 600;
+    border-radius: 12px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: none;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-professional.primary {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.btn-professional.primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.btn-professional.secondary {
+    background: #e2e8f0;
+    color: #4a5568;
+}
+
+.btn-professional.secondary:hover {
+    background: #cbd5e0;
+    transform: translateY(-1px);
+}
+
+.btn-professional:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .modal-dialog {
+        margin: 10px;
+    }
+    
+    .modal-body {
+        padding: 20px;
+    }
+    
+    .professional-form {
+        padding: 20px;
+    }
+    
+    .form-grid.two-cols,
+    .form-grid.three-cols,
+    .form-grid.four-cols {
+        grid-template-columns: 1fr;
+    }
+    
+    .modal-footer {
+        padding: 20px;
+        flex-direction: column-reverse;
+    }
+    
+    .btn-professional {
+        width: 100%;
+        justify-content: center;
+    }
+}

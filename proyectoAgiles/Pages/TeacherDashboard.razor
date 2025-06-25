@@ -483,49 +483,126 @@
                         <h5 class="modal-title">@(editingInvestigacion is not null ? "Editar" : "Agregar") Investigación</h5>
                         <button type="button" class="btn-close" @onclick="CloseAgregarModal"></button>
                     </div>
-                    <div class="modal-body">                        <form>
-                            <div class="row">
-                                <div class="col-md-12 mb-3">
-                                    <label class="form-label">Título *</label>
-                                    <input type="text" class="form-control" @bind="nuevaInvestigacion.Titulo" required />
-                                </div>
-                                <div class="col-md-12 mb-3">
-                                    <label class="form-label">Área de Conocimiento *</label>
-                                    <input type="text" class="form-control" @bind="nuevaInvestigacion.Area" required />
-                                </div>                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Fecha de Publicación *</label>
-                                    <input type="date" class="form-control" @bind="nuevaInvestigacion.FechaInicio" required />
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Filiación</label>
-                                    <input type="text" class="form-control" @bind="nuevaInvestigacion.Filiacion" placeholder="Ej: Universidad Técnica de Ambato (UTA)" />
-                                </div>
-                                <div class="col-md-12 mb-3">
-                                    <label class="form-label">Observaciones</label>
-                                    <textarea class="form-control" rows="3" @bind="nuevaInvestigacion.Descripcion" placeholder="Descripción o comentarios adicionales sobre la investigación"></textarea>
-                                </div>
-                                <div class="col-md-12 mb-3">
-                                    <label class="form-label">Archivo PDF</label>
-                                    <InputFile OnChange="HandlePdfSelected" accept=".pdf" />
-                                    @if (!string.IsNullOrEmpty(pdfFileName))
-                                    {
-                                        <div class="mt-2 text-success">
-                                            <i class="fas fa-file-pdf"></i> @pdfFileName
+                    <div class="modal-body">
+                        <form class="professional-form">
+                            <div class="form-grid">
+                                <div class="form-section">
+                                    <h6 class="section-title">
+                                        <i class="fas fa-book section-icon"></i>
+                                        Información Básica
+                                    </h6>
+                                    <div class="form-row">
+                                        <div class="form-group full-width">
+                                            <label class="form-label">
+                                                <i class="fas fa-heading label-icon"></i>
+                                                Título *
+                                            </label>
+                                            <input type="text" class="form-input" @bind="nuevaInvestigacion.Titulo" 
+                                                   placeholder="Ingrese el título de la investigación" required />
                                         </div>
-                                    }
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="form-group full-width">
+                                            <label class="form-label">
+                                                <i class="fas fa-microscope label-icon"></i>
+                                                Área de Conocimiento *
+                                            </label>
+                                            <input type="text" class="form-input" @bind="nuevaInvestigacion.Area" 
+                                                   placeholder="Ej: Ingeniería de Software, Matemáticas, etc." required />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-section">
+                                    <h6 class="section-title">
+                                        <i class="fas fa-calendar section-icon"></i>
+                                        Detalles de Publicación
+                                    </h6>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label class="form-label">
+                                                <i class="fas fa-calendar-alt label-icon"></i>
+                                                Fecha de Publicación *
+                                            </label>
+                                            <input type="date" class="form-input" @bind="nuevaInvestigacion.FechaInicio" required />
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">
+                                                <i class="fas fa-university label-icon"></i>
+                                                Filiación
+                                            </label>
+                                            <input type="text" class="form-input" @bind="nuevaInvestigacion.Filiacion" 
+                                                   placeholder="Ej: Universidad Técnica de Ambato (UTA)" />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-section">
+                                    <h6 class="section-title">
+                                        <i class="fas fa-comment-alt section-icon"></i>
+                                        Información Adicional
+                                    </h6>
+                                    <div class="form-row">
+                                        <div class="form-group full-width">
+                                            <label class="form-label">
+                                                <i class="fas fa-sticky-note label-icon"></i>
+                                                Observaciones
+                                            </label>
+                                            <textarea class="form-textarea" rows="3" @bind="nuevaInvestigacion.Descripcion" 
+                                                      placeholder="Descripción o comentarios adicionales sobre la investigación"></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-section">
+                                    <h6 class="section-title">
+                                        <i class="fas fa-paperclip section-icon"></i>
+                                        Archivo Adjunto
+                                    </h6>
+                                    <div class="form-row">
+                                        <div class="form-group full-width">
+                                            <label class="form-label">
+                                                <i class="fas fa-file-pdf label-icon"></i>
+                                                Archivo PDF
+                                            </label>
+                                            <div class="file-upload-container">
+                                                <InputFile OnChange="HandlePdfSelected" accept=".pdf" class="file-input" />
+                                                <div class="file-upload-area">
+                                                    <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                                                    <span class="upload-text">Seleccionar archivo PDF</span>
+                                                </div>
+                                            </div>
+                                            @if (!string.IsNullOrEmpty(pdfFileName))
+                                            {
+                                                <div class="file-selected">
+                                                    <i class="fas fa-file-pdf file-icon"></i>
+                                                    <span class="file-name">@pdfFileName</span>
+                                                    <i class="fas fa-check file-check"></i>
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </form>
                     </div>
                     <div class="modal-footer">
-                        <button class="btn btn-success" @onclick="GuardarInvestigacion" disabled="@isSaving">
+                        <button class="btn-professional btn-primary" @onclick="GuardarInvestigacion" disabled="@isSaving">
                             @if (isSaving)
                             {
                                 <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                <span>Guardando...</span>
                             }
-                            @(editingInvestigacion is not null ? "Actualizar" : "Guardar")
+                            else
+                            {
+                                <i class="fas fa-save me-2"></i>
+                                <span>@(editingInvestigacion is not null ? "Actualizar" : "Guardar")</span>
+                            }
                         </button>
-                        <button class="btn btn-secondary" @onclick="CloseAgregarModal">Cancelar</button>
+                        <button class="btn-professional btn-secondary" @onclick="CloseAgregarModal">
+                            <i class="fas fa-times me-2"></i>
+                            <span>Cancelar</span>
+                        </button>
                     </div>
                 </div>
             </div>        </div>
@@ -1240,89 +1317,185 @@
                         <button type="button" class="btn-close" @onclick="CloseAgregarEvaluacionModal"></button>
                     </div>
                     <div class="modal-body">
-                        <form>
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Período Académico *</label>
-                                    <input type="text" class="form-control" @bind="nuevaEvaluacion.PeriodoAcademico" 
-                                           placeholder="Ej: 2024-1" required />
-                                </div>
-                                <div class="col-md-3 mb-3">
-                                    <label class="form-label">Año *</label>
-                                    <input type="number" class="form-control" @bind="nuevaEvaluacion.Anio" 
-                                           min="2020" max="2030" required />
-                                </div>
-                                <div class="col-md-3 mb-3">
-                                    <label class="form-label">Semestre *</label>
-                                    <select class="form-select" @bind="nuevaEvaluacion.Semestre" required>
-                                        <option value="1">1</option>
-                                        <option value="2">2</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Puntaje Obtenido *</label>
-                                    <input type="number" class="form-control" @bind="nuevaEvaluacion.PuntajeObtenido" 
-                                           min="0" max="100" step="0.01" required />
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Puntaje Máximo</label>
-                                    <input type="number" class="form-control" @bind="nuevaEvaluacion.PuntajeMaximo" 
-                                           min="0" max="100" step="0.01" />
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Fecha de Evaluación *</label>
-                                    <input type="date" class="form-control" @bind="nuevaEvaluacion.FechaEvaluacion" required />
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Tipo de Evaluación</label>
-                                    <select class="form-select" @bind="nuevaEvaluacion.TipoEvaluacion">
-                                        <option value="Integral">Integral</option>
-                                        <option value="Docencia">Docencia</option>
-                                        <option value="Investigación">Investigación</option>
-                                        <option value="Vinculación">Vinculación</option>
-                                        <option value="Gestión">Gestión</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Evaluador</label>
-                                    <input type="text" class="form-control" @bind="nuevaEvaluacion.Evaluador" 
-                                           placeholder="Nombre del evaluador" />
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Estado</label>
-                                    <select class="form-select" @bind="nuevaEvaluacion.Estado">
-                                        <option value="Completada">Completada</option>
-                                        <option value="En Proceso">En Proceso</option>
-                                        <option value="Pendiente">Pendiente</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-12 mb-3">
-                                    <label class="form-label">Observaciones</label>
-                                    <textarea class="form-control" rows="3" @bind="nuevaEvaluacion.Observaciones" 
-                                              placeholder="Observaciones adicionales sobre la evaluación"></textarea>
-                                </div>
-                                <div class="col-md-12 mb-3">
-                                    <label class="form-label">Archivo PDF</label>
-                                    <InputFile OnChange="HandleEvaluacionPdfSelected" accept=".pdf" />
-                                    @if (!string.IsNullOrEmpty(evaluacionPdfFileName))
-                                    {
-                                        <div class="mt-2 text-success">
-                                            <i class="fas fa-file-pdf"></i> @evaluacionPdfFileName
+                        <form class="professional-form">
+                            <div class="form-grid">
+                                <div class="form-section">
+                                    <h6 class="section-title">
+                                        <i class="fas fa-calendar-check section-icon"></i>
+                                        Información del Período
+                                    </h6>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label class="form-label">
+                                                <i class="fas fa-graduation-cap label-icon"></i>
+                                                Período Académico *
+                                            </label>
+                                            <input type="text" class="form-input" @bind="nuevaEvaluacion.PeriodoAcademico" 
+                                                   placeholder="Ej: 2024-1" required />
                                         </div>
-                                    }
+                                        <div class="form-group">
+                                            <label class="form-label">
+                                                <i class="fas fa-calendar label-icon"></i>
+                                                Año *
+                                            </label>
+                                            <input type="number" class="form-input" @bind="nuevaEvaluacion.Anio" 
+                                                   min="2020" max="2030" required />
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">
+                                                <i class="fas fa-list-ol label-icon"></i>
+                                                Semestre *
+                                            </label>
+                                            <select class="form-select" @bind="nuevaEvaluacion.Semestre" required>
+                                                <option value="">Seleccione...</option>
+                                                <option value="1">1</option>
+                                                <option value="2">2</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-section">
+                                    <h6 class="section-title">
+                                        <i class="fas fa-chart-line section-icon"></i>
+                                        Puntuación y Resultados
+                                    </h6>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label class="form-label">
+                                                <i class="fas fa-star label-icon"></i>
+                                                Puntaje Obtenido *
+                                            </label>
+                                            <input type="number" class="form-input" @bind="nuevaEvaluacion.PuntajeObtenido" 
+                                                   min="0" max="100" step="0.01" placeholder="0.00" required />
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">
+                                                <i class="fas fa-trophy label-icon"></i>
+                                                Puntaje Máximo
+                                            </label>
+                                            <input type="number" class="form-input" @bind="nuevaEvaluacion.PuntajeMaximo" 
+                                                   min="0" max="100" step="0.01" placeholder="100.00" />
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">
+                                                <i class="fas fa-calendar-day label-icon"></i>
+                                                Fecha de Evaluación *
+                                            </label>
+                                            <input type="date" class="form-input" @bind="nuevaEvaluacion.FechaEvaluacion" required />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-section">
+                                    <h6 class="section-title">
+                                        <i class="fas fa-cogs section-icon"></i>
+                                        Detalles de la Evaluación
+                                    </h6>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label class="form-label">
+                                                <i class="fas fa-tag label-icon"></i>
+                                                Tipo de Evaluación
+                                            </label>
+                                            <select class="form-select" @bind="nuevaEvaluacion.TipoEvaluacion">
+                                                <option value="">Seleccione...</option>
+                                                <option value="Integral">Integral</option>
+                                                <option value="Docencia">Docencia</option>
+                                                <option value="Investigación">Investigación</option>
+                                                <option value="Vinculación">Vinculación</option>
+                                                <option value="Gestión">Gestión</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">
+                                                <i class="fas fa-user-tie label-icon"></i>
+                                                Evaluador
+                                            </label>
+                                            <input type="text" class="form-input" @bind="nuevaEvaluacion.Evaluador" 
+                                                   placeholder="Nombre del evaluador" />
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">
+                                                <i class="fas fa-info-circle label-icon"></i>
+                                                Estado
+                                            </label>
+                                            <select class="form-select" @bind="nuevaEvaluacion.Estado">
+                                                <option value="">Seleccione...</option>
+                                                <option value="Completada">Completada</option>
+                                                <option value="En Proceso">En Proceso</option>
+                                                <option value="Pendiente">Pendiente</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-section">
+                                    <h6 class="section-title">
+                                        <i class="fas fa-comment-alt section-icon"></i>
+                                        Información Adicional
+                                    </h6>
+                                    <div class="form-row">
+                                        <div class="form-group full-width">
+                                            <label class="form-label">
+                                                <i class="fas fa-sticky-note label-icon"></i>
+                                                Observaciones
+                                            </label>
+                                            <textarea class="form-textarea" rows="3" @bind="nuevaEvaluacion.Observaciones" 
+                                                      placeholder="Observaciones adicionales sobre la evaluación"></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-section">
+                                    <h6 class="section-title">
+                                        <i class="fas fa-paperclip section-icon"></i>
+                                        Archivo Adjunto
+                                    </h6>
+                                    <div class="form-row">
+                                        <div class="form-group full-width">
+                                            <label class="form-label">
+                                                <i class="fas fa-file-pdf label-icon"></i>
+                                                Archivo PDF
+                                            </label>
+                                            <div class="file-upload-container">
+                                                <InputFile OnChange="HandleEvaluacionPdfSelected" accept=".pdf" class="file-input" />
+                                                <div class="file-upload-area">
+                                                    <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                                                    <span class="upload-text">Seleccionar archivo PDF</span>
+                                                </div>
+                                            </div>
+                                            @if (!string.IsNullOrEmpty(evaluacionPdfFileName))
+                                            {
+                                                <div class="file-selected">
+                                                    <i class="fas fa-file-pdf file-icon"></i>
+                                                    <span class="file-name">@evaluacionPdfFileName</span>
+                                                    <i class="fas fa-check file-check"></i>
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </form>
                     </div>
                     <div class="modal-footer">
-                        <button class="btn btn-success" @onclick="GuardarEvaluacion" disabled="@isSavingEvaluacion">
+                        <button class="btn-professional btn-primary" @onclick="GuardarEvaluacion" disabled="@isSavingEvaluacion">
                             @if (isSavingEvaluacion)
                             {
                                 <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                <span>Guardando...</span>
                             }
-                            @(editingEvaluacion is not null ? "Actualizar" : "Guardar")
+                            else
+                            {
+                                <i class="fas fa-save me-2"></i>
+                                <span>@(editingEvaluacion is not null ? "Actualizar" : "Guardar")</span>
+                            }
                         </button>
-                        <button class="btn btn-secondary" @onclick="CloseAgregarEvaluacionModal">Cancelar</button>
+                        <button class="btn-professional btn-secondary" @onclick="CloseAgregarEvaluacionModal">
+                            <i class="fas fa-times me-2"></i>
+                            <span>Cancelar</span>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -1339,91 +1512,205 @@
                         <button type="button" class="btn-close" @onclick="CloseAgregarCapacitacionModal"></button>
                     </div>
                     <div class="modal-body">
-                        <form>
-                            <div class="row">
-                                <div class="col-md-12 mb-3">
-                                    <label class="form-label">Nombre de la Capacitación *</label>
-                                    <input type="text" class="form-control" @bind="nuevaCapacitacion.NombreCapacitacion" required />
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Institución *</label>
-                                    <input type="text" class="form-control" @bind="nuevaCapacitacion.Institucion" required />
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Instructor</label>
-                                    <input type="text" class="form-control" @bind="nuevaCapacitacion.Instructor" />
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Tipo de Capacitación</label>
-                                    <select class="form-select" @bind="nuevaCapacitacion.TipoCapacitacion">
-                                        <option value="Técnica">Técnica</option>
-                                        <option value="Pedagógica">Pedagógica</option>
-                                        <option value="Investigación">Investigación</option>
-                                        <option value="Gestión">Gestión</option>
-                                        <option value="Otra">Otra</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Modalidad</label>
-                                    <select class="form-select" @bind="nuevaCapacitacion.Modalidad">
-                                        <option value="Presencial">Presencial</option>
-                                        <option value="Virtual">Virtual</option>
-                                        <option value="Semipresencial">Semipresencial</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-4 mb-3">
-                                    <label class="form-label">Horas Académicas *</label>
-                                    <input type="number" class="form-control" @bind="nuevaCapacitacion.HorasAcademicas" min="1" required />
-                                </div>
-                                <div class="col-md-4 mb-3">
-                                    <label class="form-label">Fecha Inicio *</label>
-                                    <input type="date" class="form-control" @bind="nuevaCapacitacion.FechaInicio" required />
-                                </div>
-                                <div class="col-md-4 mb-3">
-                                    <label class="form-label">Fecha Fin *</label>
-                                    <input type="date" class="form-control" @bind="nuevaCapacitacion.FechaFin" required />
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Estado</label>
-                                    <select class="form-select" @bind="nuevaCapacitacion.Estado">
-                                        <option value="Completada">Completada</option>
-                                        <option value="En Progreso">En Progreso</option>
-                                        <option value="Aprobada">Aprobada</option>
-                                        <option value="Reprobada">Reprobada</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Calificación</label>
-                                    <input type="number" class="form-control" @bind="nuevaCapacitacion.Calificacion" 
-                                           min="0" max="100" step="0.01" />
-                                </div>
-                                <div class="col-md-12 mb-3">
-                                    <label class="form-label">Descripción</label>
-                                    <textarea class="form-control" rows="3" @bind="nuevaCapacitacion.Descripcion" 
-                                              placeholder="Descripción de la capacitación"></textarea>
-                                </div>
-                                <div class="col-md-12 mb-3">
-                                    <label class="form-label">Certificado PDF</label>
-                                    <InputFile OnChange="HandleCapacitacionPdfSelected" accept=".pdf" />
-                                    @if (!string.IsNullOrEmpty(capacitacionPdfFileName))
-                                    {
-                                        <div class="mt-2 text-success">
-                                            <i class="fas fa-file-pdf"></i> @capacitacionPdfFileName
+                        <form class="professional-form">
+                            <div class="form-grid">
+                                <div class="form-section">
+                                    <h6 class="section-title">
+                                        <i class="fas fa-certificate section-icon"></i>
+                                        Información Básica
+                                    </h6>
+                                    <div class="form-row">
+                                        <div class="form-group full-width">
+                                            <label class="form-label">
+                                                <i class="fas fa-graduation-cap label-icon"></i>
+                                                Nombre de la Capacitación *
+                                            </label>
+                                            <input type="text" class="form-input" @bind="nuevaCapacitacion.NombreCapacitacion" 
+                                                   placeholder="Ingrese el nombre de la capacitación" required />
                                         </div>
-                                    }
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label class="form-label">
+                                                <i class="fas fa-university label-icon"></i>
+                                                Institución *
+                                            </label>
+                                            <input type="text" class="form-input" @bind="nuevaCapacitacion.Institucion" 
+                                                   placeholder="Nombre de la institución" required />
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">
+                                                <i class="fas fa-user-tie label-icon"></i>
+                                                Instructor
+                                            </label>
+                                            <input type="text" class="form-input" @bind="nuevaCapacitacion.Instructor" 
+                                                   placeholder="Nombre del instructor" />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-section">
+                                    <h6 class="section-title">
+                                        <i class="fas fa-cogs section-icon"></i>
+                                        Características de la Capacitación
+                                    </h6>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label class="form-label">
+                                                <i class="fas fa-tag label-icon"></i>
+                                                Tipo de Capacitación
+                                            </label>
+                                            <select class="form-select" @bind="nuevaCapacitacion.TipoCapacitacion">
+                                                <option value="">Seleccione...</option>
+                                                <option value="Técnica">Técnica</option>
+                                                <option value="Pedagógica">Pedagógica</option>
+                                                <option value="Investigación">Investigación</option>
+                                                <option value="Gestión">Gestión</option>
+                                                <option value="Otra">Otra</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">
+                                                <i class="fas fa-laptop label-icon"></i>
+                                                Modalidad
+                                            </label>
+                                            <select class="form-select" @bind="nuevaCapacitacion.Modalidad">
+                                                <option value="">Seleccione...</option>
+                                                <option value="Presencial">Presencial</option>
+                                                <option value="Virtual">Virtual</option>
+                                                <option value="Semipresencial">Semipresencial</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">
+                                                <i class="fas fa-clock label-icon"></i>
+                                                Horas Académicas *
+                                            </label>
+                                            <input type="number" class="form-input" @bind="nuevaCapacitacion.HorasAcademicas" 
+                                                   min="1" placeholder="Número de horas" required />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-section">
+                                    <h6 class="section-title">
+                                        <i class="fas fa-calendar-alt section-icon"></i>
+                                        Fechas y Duración
+                                    </h6>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label class="form-label">
+                                                <i class="fas fa-play label-icon"></i>
+                                                Fecha Inicio *
+                                            </label>
+                                            <input type="date" class="form-input" @bind="nuevaCapacitacion.FechaInicio" required />
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">
+                                                <i class="fas fa-stop label-icon"></i>
+                                                Fecha Fin *
+                                            </label>
+                                            <input type="date" class="form-input" @bind="nuevaCapacitacion.FechaFin" required />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-section">
+                                    <h6 class="section-title">
+                                        <i class="fas fa-chart-line section-icon"></i>
+                                        Estado y Evaluación
+                                    </h6>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label class="form-label">
+                                                <i class="fas fa-info-circle label-icon"></i>
+                                                Estado
+                                            </label>
+                                            <select class="form-select" @bind="nuevaCapacitacion.Estado">
+                                                <option value="">Seleccione...</option>
+                                                <option value="Completada">Completada</option>
+                                                <option value="En Progreso">En Progreso</option>
+                                                <option value="Aprobada">Aprobada</option>
+                                                <option value="Reprobada">Reprobada</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">
+                                                <i class="fas fa-star label-icon"></i>
+                                                Calificación
+                                            </label>
+                                            <input type="number" class="form-input" @bind="nuevaCapacitacion.Calificacion" 
+                                                   min="0" max="100" step="0.01" placeholder="0.00 - 100.00" />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-section">
+                                    <h6 class="section-title">
+                                        <i class="fas fa-comment-alt section-icon"></i>
+                                        Descripción
+                                    </h6>
+                                    <div class="form-row">
+                                        <div class="form-group full-width">
+                                            <label class="form-label">
+                                                <i class="fas fa-sticky-note label-icon"></i>
+                                                Descripción
+                                            </label>
+                                            <textarea class="form-textarea" rows="3" @bind="nuevaCapacitacion.Descripcion" 
+                                                      placeholder="Descripción de la capacitación"></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-section">
+                                    <h6 class="section-title">
+                                        <i class="fas fa-paperclip section-icon"></i>
+                                        Certificado
+                                    </h6>
+                                    <div class="form-row">
+                                        <div class="form-group full-width">
+                                            <label class="form-label">
+                                                <i class="fas fa-file-pdf label-icon"></i>
+                                                Certificado PDF
+                                            </label>
+                                            <div class="file-upload-container">
+                                                <InputFile OnChange="HandleCapacitacionPdfSelected" accept=".pdf" class="file-input" />
+                                                <div class="file-upload-area">
+                                                    <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                                                    <span class="upload-text">Seleccionar certificado PDF</span>
+                                                </div>
+                                            </div>
+                                            @if (!string.IsNullOrEmpty(capacitacionPdfFileName))
+                                            {
+                                                <div class="file-selected">
+                                                    <i class="fas fa-file-pdf file-icon"></i>
+                                                    <span class="file-name">@capacitacionPdfFileName</span>
+                                                    <i class="fas fa-check file-check"></i>
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </form>
                     </div>
                     <div class="modal-footer">
-                        <button class="btn btn-success" @onclick="GuardarCapacitacion" disabled="@isSavingCapacitacion">
+                        <button class="btn-professional btn-primary" @onclick="GuardarCapacitacion" disabled="@isSavingCapacitacion">
                             @if (isSavingCapacitacion)
                             {
                                 <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                <span>Guardando...</span>
                             }
-                            @(editingCapacitacion is not null ? "Actualizar" : "Guardar")
+                            else
+                            {
+                                <i class="fas fa-save me-2"></i>
+                                <span>@(editingCapacitacion is not null ? "Actualizar" : "Guardar")</span>
+                            }
                         </button>
-                        <button class="btn btn-secondary" @onclick="CloseAgregarCapacitacionModal">Cancelar</button>
+                        <button class="btn-professional btn-secondary" @onclick="CloseAgregarCapacitacionModal">
+                            <i class="fas fa-times me-2"></i>
+                            <span>Cancelar</span>
+                        </button>
                     </div>
                 </div>
             </div>
