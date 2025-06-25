@@ -1257,21 +1257,58 @@
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
+/* Estilos específicos para select */
+.form-select,
+select.form-select {
+    background: #ffffff !important;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23718096' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 12px center !important;
+    background-size: 16px 12px !important;
+    padding-right: 40px !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    appearance: none !important;
+}
+
+/* Remover estilos nativos de select en todos los navegadores */
+.professional-form select,
+.professional-form .form-select {
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    appearance: none !important;
+    background: #ffffff !important;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23718096' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 12px center !important;
+    background-size: 16px 12px !important;
+    padding-right: 40px !important;
+    border: 2px solid #e2e8f0 !important;
+    border-radius: 12px !important;
+    padding: 12px 16px !important;
+    font-size: 0.95rem !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    color: #2d3748 !important;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+}
+
 .form-input:focus,
 .form-textarea:focus,
-.form-select:focus {
-    border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-    background: #ffffff;
-    outline: none;
-    transform: translateY(-1px);
+.form-select:focus,
+.professional-form select:focus {
+    border-color: #667eea !important;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
+    background: #ffffff !important;
+    outline: none !important;
+    transform: translateY(-1px) !important;
 }
 
 .form-input:hover:not(:focus),
 .form-textarea:hover:not(:focus),
-.form-select:hover:not(:focus) {
-    border-color: #cbd5e0;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+.form-select:hover:not(:focus),
+.professional-form select:hover:not(:focus) {
+    border-color: #cbd5e0 !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05) !important;
 }
 
 .form-input::placeholder,
@@ -1548,43 +1585,53 @@
     flex-shrink: 0;
 }
 
-/* Indicador de arrastre para drag & drop */
-.file-upload-area.dragover {
-    border-color: #667eea;
-    background: linear-gradient(135deg, #e6fffa 0%, #b2f5ea 100%);
-    transform: scale(1.02);
-    box-shadow: 0 8px 30px rgba(102, 126, 234, 0.25);
+/* Ocultar completamente el input nativo de archivos */
+.file-input,
+input[type="file"] {
+    position: absolute !important;
+    width: 100% !important;
+    height: 100% !important;
+    opacity: 0 !important;
+    cursor: pointer !important;
+    z-index: 3 !important;
+    top: 0 !important;
+    left: 0 !important;
 }
 
-.file-upload-area.dragover .upload-icon {
-    color: #667eea;
-    transform: scale(1.2);
+/* Estilos específicos para ocultar el input de archivos */
+.file-input-hidden {
+    position: absolute !important;
+    width: 0.1px !important;
+    height: 0.1px !important;
+    opacity: 0 !important;
+    overflow: hidden !important;
+    z-index: -1 !important;
+    visibility: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    border: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
 }
 
-.file-upload-area.dragover .upload-text {
-    color: #667eea;
+/* Ocultar completamente cualquier input de archivo */
+.professional-form input[type="file"],
+.file-upload-container input[type="file"],
+input[type="file"].file-input-hidden {
+    position: absolute !important;
+    width: 0.1px !important;
+    height: 0.1px !important;
+    opacity: 0 !important;
+    overflow: hidden !important;
+    z-index: -1 !important;
+    visibility: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
 }
 
-/* Animación de carga */
-.file-uploading {
+/* Asegurar que el contenedor tenga posición relativa */
+.file-upload-container {
     position: relative;
-    overflow: hidden;
-}
-
-.file-uploading::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
+    margin-bottom: 16px;
     width: 100%;
-    height: 2px;
-    background: linear-gradient(90deg, transparent, #667eea, transparent);
-    animation: uploadProgress 1.5s infinite;
-}
-
-@keyframes uploadProgress {
-    0% { left: -100%; }
-    100% { left: 100%; }
 }
 
 /* Responsive */
@@ -1707,9 +1754,6 @@
 .professional-form select:focus {
     border-color: #667eea !important;
     box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
-    background: #ffffff !important;
-    outline: none !important;
-    transform: translateY(-1px) !important;
 }
 
 .professional-form input:hover:not(:focus),
@@ -1747,133 +1791,43 @@
     box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
 }
 
-/* Responsive para file upload */
-@media (max-width: 768px) {
-    .file-upload-area {
-        padding: 24px 16px;
-        min-height: 120px;
-        border-radius: 12px;
-    }
-    
-    .upload-icon {
-        font-size: 2.5rem;
-        margin-bottom: 6px;
-    }
-    
-    .upload-text {
-        font-size: 1rem;
-        margin-bottom: 2px;
-    }
-    
-    .upload-subtext {
-        font-size: 0.8rem;
-        line-height: 1.3;
-    }
-    
-    .file-selected {
-        padding: 12px 16px;
-        gap: 12px;
-        border-radius: 10px;
-    }
-    
-    .file-icon {
-        font-size: 1.3rem;
-        width: 36px;
-        height: 36px;
-        padding: 6px;
-    }
-    
-    .file-name {
-        font-size: 0.9rem;
-    }
-    
-    .file-check {
-        width: 28px;
-        height: 28px;
-        font-size: 1.1rem;
-    }
+/* Fixes adicionales para selects y inputs */
+.professional-form select::-ms-expand {
+    display: none !important;
 }
 
-@media (max-width: 480px) {
-    .file-upload-area {
-        padding: 20px 12px;
-        min-height: 100px;
-        gap: 8px;
-    }
-    
-    .upload-icon {
-        font-size: 2rem;
-    }
-    
-    .upload-text {
-        font-size: 0.95rem;
-    }
-    
-    .upload-subtext {
-        font-size: 0.75rem;
-    }
-    
-    .file-selected {
-        padding: 10px 12px;
-        flex-direction: column;
-        text-align: center;
-        gap: 8px;
-    }
-    
-    .file-icon {
-        align-self: center;
-    }
-    
-    .file-name {
-        text-align: center;
-        font-size: 0.85rem;
-    }
-    
-    .file-check {
-        align-self: center;
-    }
+.professional-form select:focus::-ms-value {
+    color: #2d3748 !important;
+    background: transparent !important;
 }
 
-/* Estados de validación para file upload */
-.file-upload-container.error .file-upload-area {
-    border-color: #e53e3e;
-    background: linear-gradient(135deg, #fed7d7 0%, #feb2b2 100%);
+/* Para navegadores Webkit (Chrome, Safari) */
+.professional-form select::-webkit-appearance,
+.form-select::-webkit-appearance {
+    -webkit-appearance: none !important;
 }
 
-.file-upload-container.error .upload-icon {
-    color: #e53e3e;
+/* Para Firefox */
+.professional-form select::-moz-appearance,
+.form-select::-moz-appearance {
+    -moz-appearance: none !important;
 }
 
-.file-upload-container.error .upload-text {
-    color: #e53e3e;
+/* Asegurar que el fondo personalizado se mantenga */
+.professional-form select:focus,
+.form-select:focus {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23667eea' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
 }
 
-.file-upload-container.success .file-upload-area {
-    border-color: #38a169;
-    background: linear-gradient(135deg, #f0fff4 0%, #c6f6d5 100%);
+/* Estilos adicionales para el file upload area clickeable */
+.file-upload-area {
+    cursor: pointer !important;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
 }
 
-.file-upload-container.success .upload-icon {
-    color: #38a169;
-}
-
-.file-upload-container.success .upload-text {
-    color: #38a169;
-}
-
-/* Animación de pulso para indicar zona activa */
-.file-upload-area:focus-within {
-    animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-    0% {
-        box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.4);
-    }
-    70% {
-        box-shadow: 0 0 0 10px rgba(102, 126, 234, 0);
-    }
-    100% {
-        box-shadow: 0 0 0 0 rgba(102, 126, 234, 0);
-    }
+.file-upload-area:active {
+    transform: scale(0.98);
 }

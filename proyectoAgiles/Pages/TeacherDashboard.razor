@@ -566,8 +566,8 @@
                                                 Archivo PDF
                                             </label>
                                             <div class="file-upload-container">
-                                                <InputFile OnChange="HandlePdfSelected" accept=".pdf" class="file-input" />
-                                                <div class="file-upload-area">
+                                                <InputFile OnChange="HandlePdfSelected" accept=".pdf" class="file-input-hidden" id="investigacion-file-input" />
+                                                <div class="file-upload-area" onclick="document.getElementById('investigacion-file-input').click();">
                                                     <i class="fas fa-cloud-upload-alt upload-icon"></i>
                                                     <span class="upload-text">Seleccionar archivo PDF</span>
                                                     <span class="upload-subtext">Arrastra y suelta tu archivo aquí o haz clic para seleccionar<br/>Formatos soportados: PDF • Tamaño máximo: 10MB</span>
@@ -1460,8 +1460,8 @@
                                                 Archivo PDF
                                             </label>
                                             <div class="file-upload-container">
-                                                <InputFile OnChange="HandleEvaluacionPdfSelected" accept=".pdf" class="file-input" />
-                                                <div class="file-upload-area">
+                                                <InputFile OnChange="HandleEvaluacionPdfSelected" accept=".pdf" class="file-input-hidden" id="evaluacion-file-input" />
+                                                <div class="file-upload-area" onclick="document.getElementById('evaluacion-file-input').click();">
                                                     <i class="fas fa-cloud-upload-alt upload-icon"></i>
                                                     <span class="upload-text">Seleccionar archivo PDF</span>
                                                     <span class="upload-subtext">Arrastra y suelta tu archivo aquí o haz clic para seleccionar<br/>Formatos soportados: PDF • Tamaño máximo: 10MB</span>
@@ -1676,8 +1676,8 @@
                                                 Certificado PDF
                                             </label>
                                             <div class="file-upload-container">
-                                                <InputFile OnChange="HandleCapacitacionPdfSelected" accept=".pdf" class="file-input" />
-                                                <div class="file-upload-area">
+                                                <InputFile OnChange="HandleCapacitacionPdfSelected" accept=".pdf" class="file-input-hidden" id="capacitacion-file-input" />
+                                                <div class="file-upload-area" onclick="document.getElementById('capacitacion-file-input').click();">
                                                     <i class="fas fa-cloud-upload-alt upload-icon"></i>
                                                     <span class="upload-text">Seleccionar certificado PDF</span>
                                                     <span class="upload-subtext">Arrastra y suelta tu certificado aquí o haz clic para seleccionar<br/>Formatos soportados: PDF • Tamaño máximo: 10MB</span>
