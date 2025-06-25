@@ -2118,7 +2118,8 @@ private bool isLoadingInvestigaciones = false;
             Area = investigacion.Area,
             FechaInicio = investigacion.FechaInicio,
             RevistaOEditorial = investigacion.RevistaOEditorial,
-            Descripcion = investigacion.Descripcion
+            Descripcion = investigacion.Descripcion,
+            Filiacion = investigacion.Filiacion
         };
         showAgregarModal = true;
     }private async Task GuardarInvestigacion()
@@ -2156,7 +2157,7 @@ private bool isLoadingInvestigaciones = false;
                         RevistaOEditorial = !string.IsNullOrWhiteSpace(nuevaInvestigacion.RevistaOEditorial) ? nuevaInvestigacion.RevistaOEditorial : "N/A",
                         FechaPublicacion = nuevaInvestigacion.FechaInicio,
                         CampoConocimiento = nuevaInvestigacion.Area,
-                        Filiacion = "Universidad Técnica de Ambato",
+                        Filiacion = nuevaInvestigacion.Filiacion ?? "Universidad Técnica de Ambato",
                         Observacion = nuevaInvestigacion.Descripcion ?? "",
                         ArchivoPdf = selectedPdf
                     };
@@ -2182,7 +2183,7 @@ private bool isLoadingInvestigaciones = false;
                         RevistaOEditorial = !string.IsNullOrWhiteSpace(nuevaInvestigacion.RevistaOEditorial) ? nuevaInvestigacion.RevistaOEditorial : "N/A",
                         FechaPublicacion = nuevaInvestigacion.FechaInicio,
                         CampoConocimiento = nuevaInvestigacion.Area,
-                        Filiacion = "Universidad Técnica de Ambato",
+                        Filiacion = nuevaInvestigacion.Filiacion ?? "Universidad Técnica de Ambato",
                         Observacion = nuevaInvestigacion.Descripcion ?? ""
                     };
 
@@ -2207,7 +2208,7 @@ private bool isLoadingInvestigaciones = false;
                     RevistaOEditorial = !string.IsNullOrWhiteSpace(nuevaInvestigacion.RevistaOEditorial) ? nuevaInvestigacion.RevistaOEditorial : "N/A",
                     FechaPublicacion = nuevaInvestigacion.FechaInicio,
                     CampoConocimiento = nuevaInvestigacion.Area,
-                    Filiacion = "Universidad Técnica de Ambato",
+                    Filiacion = nuevaInvestigacion.Filiacion ?? "Universidad Técnica de Ambato",
                     Observacion = nuevaInvestigacion.Descripcion ?? "",
                     ArchivoPdf = selectedPdf
                 };
