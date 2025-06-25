@@ -1665,13 +1665,13 @@ namespace proyectoAgiles.Services
         {
             try
             {
-                var response = await _httpClient.GetAsync($"{_apiBaseUrl}/api/evaluacion-desempeno/verificar-requisito/{cedula}");
+                var response = await _httpClient.GetAsync($"{_apiBaseUrl}/api/EvaluacionesDesempeno/verificar-requisito-75/{cedula}");
                 if (response.IsSuccessStatusCode)
                 {
-                    var verificacion = await response.Content.ReadFromJsonAsync<VerificacionRequisitoEvaluacionResponse>();
+                    var verificacion = await response.Content.ReadFromJsonAsync<VerificacionRequisito75Dto>();
                     if (verificacion != null)
                     {
-                        var cumple = verificacion.CumpleRequisito75Porciento && 
+                        var cumple = verificacion.CumpleRequisito && 
                                    verificacion.EvaluacionesAnalizadas >= config.PeriodosEvaluacionRequeridos;
                         
                         return new RequisitoCumplimientoDto
