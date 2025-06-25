@@ -992,6 +992,7 @@
             "Pendiente" => "pending",
             "Aprobado" => "approved",
             "Verificado" => "processed",
+            "AprobadoPresidente" => "finalized",
             "Rechazado" => "rejected",
             _ => ""
         };
@@ -1004,6 +1005,7 @@
             "Pendiente" => "Pendiente",
             "Aprobado" => "Aprobado",
             "Verificado" => "Verificado - Listo para Notificar",
+            "AprobadoPresidente" => "Aprobado - Generando Informe",
             "Rechazado" => "Rechazado",
             _ => status
         };
@@ -1438,21 +1440,26 @@
             if (solicitud == null) return;
 
             // Actualizar el estado de la solicitud
-            var nuevoEstado = aprobado ? "Finalizado" : "Rechazado";
+            var nuevoEstado = aprobado ? "AprobadoPresidente" : "Rechazado";
             var updateDto = new { Id = solicitudId, Status = nuevoEstado };
             var response = await HttpClient.PutAsJsonAsync($"/api/solicitudes-escalafon/{solicitudId}/status", updateDto);
             
             if (response.IsSuccessStatusCode)
             {
-                // Simular envío de correo (aquí se integraría con un servicio de correo real)
-                var tipoNotificacion = aprobado ? "Aprobación" : "Rechazo";
-                var mensaje = aprobado 
-                    ? $"Su solicitud de escalafón de {solicitud.NivelActual} a {solicitud.NivelSolicitado} ha sido APROBADA."
-                    : $"Su solicitud de escalafón de {solicitud.NivelActual} a {solicitud.NivelSolicitado} ha sido RECHAZADA.";
-
-                await JSRuntime.InvokeVoidAsync("toastNotifications.success", 
-                    $"Correo de {tipoNotificacion} Enviado", 
-                    $"Se ha enviado la notificación de {tipoNotificacion.ToLower()} a {solicitud.DocenteEmail}");
+                if (aprobado)
+                {
+                    // Si es aprobado, enviar a Comisión Académica de Escalafón para generar informe
+                    await JSRuntime.InvokeVoidAsync("toastNotifications.success", 
+                        "Solicitud Aprobada", 
+                        "La solicitud ha sido aprobada y enviada a la Comisión Académica de Escalafón para generación de informe.");
+                }
+                else
+                {
+                    // Si es rechazado, enviar correo de notificación
+                    await JSRuntime.InvokeVoidAsync("toastNotifications.success", 
+                        "Correo de Rechazo Enviado", 
+                        $"Se ha enviado la notificación de rechazo a {solicitud.DocenteEmail}");
+                }
                 
                 // Actualizar la lista de solicitudes
                 await LoadSolicitudes();

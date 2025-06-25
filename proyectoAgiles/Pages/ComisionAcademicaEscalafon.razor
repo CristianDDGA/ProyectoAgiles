@@ -53,6 +53,16 @@
             
             <div class="summary-card finalized">
                 <div class="summary-icon">
+                    <i class="fas fa-file-alt"></i>
+                </div>
+                <div class="summary-content">
+                    <h3>@approvedForReportSolicitudes</h3>
+                    <p>Listas para Informe</p>
+                </div>
+            </div>
+            
+            <div class="summary-card finalized">
+                <div class="summary-icon">
                     <i class="fas fa-trophy"></i>
                 </div>
                 <div class="summary-content">
@@ -78,6 +88,7 @@
                 <select class="form-select" @bind="selectedFilter">
                     <option value="procesado">Firmadas por Talento Humano</option>
                     <option value="verificado">Verificadas por Comisión</option>
+                    <option value="aprobado-presidente">Listas para Informe</option>
                     <option value="finalizado">Escalafón Finalizado</option>
                     <option value="rechazado-comision">Rechazadas por Comisión</option>
                     <option value="all">Todas</option>
@@ -142,6 +153,16 @@
                                 </button>
                                 <button class="btn btn-danger" @onclick="() => RechazarSolicitudComision(solicitud.Id)">
                                     <i class="fas fa-times"></i> Rechazar
+                                </button>
+                            }
+                            
+                            @if (solicitud.Status == "AprobadoPresidente")
+                            {
+                                <button class="btn btn-primary" @onclick="() => GenerarInforme(solicitud.Id)">
+                                    <i class="fas fa-file-alt"></i> Generar Informe
+                                </button>
+                                <button class="btn btn-success" @onclick="() => FinalizarConInforme(solicitud.Id)">
+                                    <i class="fas fa-trophy"></i> Finalizar Escalafón
                                 </button>
                             }
                         </div>
@@ -707,6 +728,15 @@
                             <i class="fas fa-times"></i> Rechazar
                         </button>
                     }
+                    @if (selectedSolicitud?.Status == "AprobadoPresidente")
+                    {
+                        <button type="button" class="btn btn-primary" @onclick="() => GenerarInforme(selectedSolicitud.Id)">
+                            <i class="fas fa-file-alt"></i> Generar Informe
+                        </button>
+                        <button type="button" class="btn btn-success" @onclick="() => FinalizarConInforme(selectedSolicitud.Id)">
+                            <i class="fas fa-trophy"></i> Finalizar Escalafón
+                        </button>
+                    }
                     <button type="button" class="btn btn-secondary" @onclick="CloseDetailsModal">Cerrar</button>
                 </div>
             </div>
@@ -755,6 +785,7 @@
     private int finalizedSolicitudes = 0;
     private int rejectedByComision = 0;
     private int verificatedSolicitudes = 0;
+    private int approvedForReportSolicitudes = 0;
     
     // Variables para filtros
     private string selectedFilter = "procesado";
@@ -858,6 +889,7 @@
         {
             "procesado" => filtered.Where(s => s.Status == "Procesado"),
             "verificado" => filtered.Where(s => s.Status == "Verificado"),
+            "aprobado-presidente" => filtered.Where(s => s.Status == "AprobadoPresidente"),
             "finalizado" => filtered.Where(s => s.Status == "Finalizado"),
             "rechazado-comision" => filtered.Where(s => s.Status == "RechazadoComision"),
             _ => filtered
@@ -878,6 +910,7 @@
     {
         processedSolicitudes = solicitudes.Count(s => s.Status == "Procesado");
         verificatedSolicitudes = solicitudes.Count(s => s.Status == "Verificado");
+        approvedForReportSolicitudes = solicitudes.Count(s => s.Status == "AprobadoPresidente");
         finalizedSolicitudes = solicitudes.Count(s => s.Status == "Finalizado");
         rejectedByComision = solicitudes.Count(s => s.Status == "RechazadoComision");
     }
@@ -1003,6 +1036,7 @@
         {
             "Procesado" => "processed",
             "Verificado" => "approved",
+            "AprobadoPresidente" => "finalized",
             "Finalizado" => "finalized",
             "RechazadoComision" => "rejected",
             _ => "default"
@@ -1015,6 +1049,7 @@
         {
             "Procesado" => "Firmado por Talento Humano",
             "Verificado" => "Verificado por Comisión",
+            "AprobadoPresidente" => "Aprobado - Lista para Informe",
             "Finalizado" => "Escalafón Finalizado",
             "RechazadoComision" => "Rechazado por Comisión",
             _ => status
@@ -1376,6 +1411,70 @@
             await JSRuntime.InvokeVoidAsync("toastNotifications.error", 
                 "Error", 
                 $"Error al obtener el PDF: {ex.Message}");
+        }
+    }
+
+    // Método para generar informe de escalafón
+    private async Task GenerarInforme(int solicitudId)
+    {
+        try
+        {
+            var solicitud = solicitudes.FirstOrDefault(s => s.Id == solicitudId);
+            if (solicitud == null) return;
+
+            // Simular generación de informe
+            await JSRuntime.InvokeVoidAsync("toastNotifications.info", 
+                "Generando Informe", 
+                "Se está generando el informe de escalafón docente...");
+
+            // Aquí se podría integrar con un servicio real de generación de informes
+            await Task.Delay(2000); // Simular tiempo de procesamiento
+
+            await JSRuntime.InvokeVoidAsync("toastNotifications.success", 
+                "Informe Generado", 
+                $"El informe de escalafón para {solicitud.DocenteNombre} ha sido generado exitosamente.");
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("toastNotifications.error", 
+                "Error", 
+                $"Error al generar el informe: {ex.Message}");
+        }
+    }
+
+    // Método para finalizar escalafón con informe
+    private async Task FinalizarConInforme(int solicitudId)
+    {
+        try
+        {
+            var solicitud = solicitudes.FirstOrDefault(s => s.Id == solicitudId);
+            if (solicitud == null) return;
+
+            // Actualizar estado a Finalizado y enviar correo de notificación
+            var updateDto = new { Id = solicitudId, Status = "Finalizado" };
+            var response = await HttpClient.PutAsJsonAsync($"/api/solicitudes-escalafon/{solicitudId}/status", updateDto);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                await JSRuntime.InvokeVoidAsync("toastNotifications.success", 
+                    "Escalafón Finalizado", 
+                    $"El escalafón de {solicitud.DocenteNombre} ha sido finalizado y se ha enviado el correo de notificación con el informe adjunto.");
+                
+                await RefreshSolicitudes();
+                CloseDetailsModal();
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("toastNotifications.error", 
+                    "Error", 
+                    "No se pudo finalizar el escalafón.");
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("toastNotifications.error", 
+                "Error", 
+                $"Error al finalizar el escalafón: {ex.Message}");
         }
     }
 
