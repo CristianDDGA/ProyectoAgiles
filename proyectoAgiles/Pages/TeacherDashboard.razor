@@ -2778,7 +2778,7 @@ private bool isLoadingInvestigaciones = false;
                 NivelSolicitado = "Titular Auxiliar 2", // Por ahora fijo, se puede hacer dinámico
                 AnosExperiencia = ObtenerAnosExperiencia(estadisticas),
                 Publicaciones = GenerarResumenPublicaciones(estadisticas),
-                ProyectosInvestigacion = GenerarResumenProyectos(estadisticas),
+
                 Capacitaciones = GenerarResumenCapacitaciones(estadisticas),
                 Observaciones = "Solicitud generada automáticamente desde el panel del docente"
             };
@@ -2930,20 +2930,6 @@ private bool isLoadingInvestigaciones = false;
             return "Sin publicaciones registradas";
 
         return $"Total: {totalObras} obra(s) registrada(s). Con filiación UTA: {obrasConUTA} obra(s).";
-    }
-
-    private string GenerarResumenProyectos(EstadisticasDocenteResponse? estadisticas)
-    {
-        if (estadisticas?.Secciones?.Obras?.Datos == null)
-            return "Sin proyectos de investigación registrados";
-
-        var datos = estadisticas.Secciones.Obras.Datos;
-        var obrasConUTA = datos.ObrasConUTA;
-
-        if (obrasConUTA == 0)
-            return "Sin proyectos de investigación con filiación UTA registrados";
-
-        return $"Proyectos con filiación UTA: {obrasConUTA} proyecto(s) registrado(s).";
     }
 
     private string GenerarResumenCapacitaciones(EstadisticasDocenteResponse? estadisticas)

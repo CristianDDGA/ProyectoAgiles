@@ -195,19 +195,6 @@
                                     </span>
                                 </div>
                                 <div class="requirement-summary-item">
-                                    <span class="requirement-name">Proyectos de Investigación</span>
-                                    <span class="requirement-status @(CumpleRequisitosProyectos(selectedSolicitud) ? "cumple" : "no-cumple")">
-                                        @if (CumpleRequisitosProyectos(selectedSolicitud))
-                                        {
-                                            <i class="fas fa-check"></i>
-                                        }
-                                        else
-                                        {
-                                            <i class="fas fa-times"></i>
-                                        }
-                                    </span>
-                                </div>
-                                <div class="requirement-summary-item">
                                     <span class="requirement-name">Capacitaciones</span>
                                     <span class="requirement-status @(CumpleRequisitosCapacitaciones(selectedSolicitud) ? "cumple" : "no-cumple")">
                                         @if (CumpleRequisitosCapacitaciones(selectedSolicitud))
@@ -310,25 +297,6 @@
                                     </span>
                                 </div>
                                 <small class="text-muted">Requerido: @GetRequisitoPublicaciones(selectedSolicitud)</small>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td><strong>Proyectos de Investigación:</strong></td>
-                            <td>
-                                <div class="requirement-item">
-                                    <span>@selectedSolicitud.ProyectosInvestigacion</span>
-                                    <span class="requirement-status @(CumpleRequisitosProyectos(selectedSolicitud) ? "cumple" : "no-cumple")">
-                                        @if (CumpleRequisitosProyectos(selectedSolicitud))
-                                        {
-                                            <i class="fas fa-check"></i>
-                                        }
-                                        else
-                                        {
-                                            <i class="fas fa-times"></i>
-                                        }
-                                    </span>
-                                </div>
-                                <small class="text-muted">Requerido: @GetRequisitoProyectos(selectedSolicitud)</small>
                             </td>
                         </tr>
                                         <tr>
@@ -819,7 +787,6 @@
                         AnosExperiencia = dto.AnosExperiencia,
                         Titulos = dto.Titulos ?? "",
                         Publicaciones = dto.Publicaciones ?? "",
-                        ProyectosInvestigacion = dto.ProyectosInvestigacion ?? "",
                         Capacitaciones = dto.Capacitaciones ?? "",
                         FechaSolicitud = dto.FechaSolicitud,
                         FechaAprobacion = dto.FechaAprobacion,
@@ -1055,27 +1022,6 @@
         };
     }
 
-    private bool CumpleRequisitosProyectos(SolicitudEscalafon solicitud)
-    {
-        // Extraer número de proyectos con filiación UTA
-        var proyectosText = solicitud.ProyectosInvestigacion?.ToLower() ?? "";
-        var utaMatch = System.Text.RegularExpressions.Regex.Match(proyectosText, @"proyectos con filiación uta:\s*(\d+)");
-        
-        int proyectosUTA = utaMatch.Success ? int.Parse(utaMatch.Groups[1].Value) : 0;
-
-        // Evaluar según el nivel solicitado
-        return solicitud.NivelSolicitado.ToLower() switch
-        {
-            var nivel when nivel.Contains("titular auxiliar 2") => proyectosUTA >= 1,
-            var nivel when nivel.Contains("titular auxiliar 3") => proyectosUTA >= 2,
-            var nivel when nivel.Contains("titular agregado 1") => proyectosUTA >= 2,
-            var nivel when nivel.Contains("titular agregado 2") => proyectosUTA >= 3,
-            var nivel when nivel.Contains("titular agregado 3") => proyectosUTA >= 3,
-            var nivel when nivel.Contains("titular principal") => proyectosUTA >= 4,
-            _ => proyectosUTA >= 1 // Requisito mínimo general
-        };
-    }
-
     private bool CumpleRequisitosCapacitaciones(SolicitudEscalafon solicitud)
     {
         // Evaluar si tiene capacitaciones registradas
@@ -1106,7 +1052,6 @@
     {
         return CumpleRequisitosExperiencia(solicitud) &&
                CumpleRequisitosPublicaciones(solicitud) &&
-               CumpleRequisitosProyectos(solicitud) &&
                CumpleRequisitosCapacitaciones(solicitud);
     }
 
@@ -1135,20 +1080,6 @@
             var nivel when nivel.Contains("titular agregado 3") => "Mín. 10 total, 5 con UTA",
             var nivel when nivel.Contains("titular principal") => "Mín. 15 total, 8 con UTA",
             _ => "Mínimo 1 publicación"
-        };
-    }
-
-    private string GetRequisitoProyectos(SolicitudEscalafon solicitud)
-    {
-        return solicitud.NivelSolicitado.ToLower() switch
-        {
-            var nivel when nivel.Contains("titular auxiliar 2") => "Mín. 1 proyecto UTA",
-            var nivel when nivel.Contains("titular auxiliar 3") => "Mín. 2 proyectos UTA",
-            var nivel when nivel.Contains("titular agregado 1") => "Mín. 2 proyectos UTA",
-            var nivel when nivel.Contains("titular agregado 2") => "Mín. 3 proyectos UTA",
-            var nivel when nivel.Contains("titular agregado 3") => "Mín. 3 proyectos UTA",
-            var nivel when nivel.Contains("titular principal") => "Mín. 4 proyectos UTA",
-            _ => "Mínimo 1 proyecto"
         };
     }
 
@@ -1230,7 +1161,6 @@
                 {
                     var datos = estadisticas.Secciones.Obras.Datos;
                     selectedSolicitud.Publicaciones = $"Total: {datos.TotalObras} obra(s) registrada(s). Con filiación UTA: {datos.ObrasConUTA} obra(s).";
-                    selectedSolicitud.ProyectosInvestigacion = $"Proyectos con filiación UTA: {datos.ObrasConUTA} proyecto(s) registrado(s).";
                 }
                 
                 // Actualizar capacitaciones
@@ -1487,7 +1417,6 @@
         public int AnosExperiencia { get; set; }
         public string Titulos { get; set; } = "";
         public string Publicaciones { get; set; } = "";
-        public string ProyectosInvestigacion { get; set; } = "";
         public string Capacitaciones { get; set; } = "";
         public DateTime FechaSolicitud { get; set; }
         public DateTime? FechaAprobacion { get; set; }
