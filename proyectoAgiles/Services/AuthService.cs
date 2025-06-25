@@ -568,21 +568,319 @@ namespace proyectoAgiles.Services
         {
             try
             {
-                var response = await _httpClient.GetFromJsonAsync<EstadisticasDocenteResponse>($"{_apiBaseUrl}/api/EvaluacionesDesempeno/estadisticas-docente/{cedula}");
-                return response ?? new EstadisticasDocenteResponse
+                Console.WriteLine($"ObtenerEstadisticasDocente: Solicitando estadísticas para cédula {cedula}");
+                
+                // Usar la nueva lógica dinámica en lugar de la API antigua
+                var estadisticasDinamicas = await ObtenerEstadisticasDocenteDinamicas(cedula);
+                if (estadisticasDinamicas != null)
                 {
-                    Cedula = cedula,
-                    Resumen = new ResumenEstadisticas { TotalRequisitos = 4, RequisitosCumplidos = 0, PorcentajeCompletitud = 0, PuedeSubirNivel = false }
-                };
+                    Console.WriteLine($"ObtenerEstadisticasDocente: Usando estadísticas dinámicas");
+                    return estadisticasDinamicas;
+                }
+                
+                // Fallback a la API antigua si falla la lógica dinámica
+                var url = $"{_apiBaseUrl}/api/EvaluacionesDesempeno/estadisticas-docente/{cedula}";
+                Console.WriteLine($"ObtenerEstadisticasDocente: Fallback a URL = {url}");
+                
+                var response = await _httpClient.GetAsync(url);
+                Console.WriteLine($"ObtenerEstadisticasDocente: Status = {response.StatusCode}");
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    var json = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"ObtenerEstadisticasDocente: JSON Response = {json}");
+                    
+                    var estadisticas = JsonSerializer.Deserialize<EstadisticasDocenteResponse>(json, new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    });
+                    
+                    Console.WriteLine($"ObtenerEstadisticasDocente: Estadísticas deserializadas exitosamente");
+                    return estadisticas ?? CreateDefaultEstadisticas(cedula);
+                }
+                else
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"ObtenerEstadisticasDocente: Error {response.StatusCode} - {errorContent}");
+                    return CreateDefaultEstadisticas(cedula);
+                }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                Console.WriteLine($"ObtenerEstadisticasDocente: Exception - {ex.Message}");
+                return CreateDefaultEstadisticas(cedula);
+            }
+        }
+
+        private async Task<EstadisticasDocenteResponse?> ObtenerEstadisticasDocenteDinamicas(string cedula)
+        {
+            try
+            {
+                Console.WriteLine($"ObtenerEstadisticasDocenteDinamicas: Iniciando para cédula {cedula}");
+                
+                // Obtener información del usuario para saber su nivel actual
+                var usuario = await ObtenerDatosUsuarioSession(cedula);
+                if (usuario == null || string.IsNullOrEmpty(usuario.Nivel))
+                {
+                    Console.WriteLine($"ObtenerEstadisticasDocenteDinamicas: No se pudo obtener el nivel del usuario");
+                    return null;
+                }
+
+                var nivelActual = usuario.Nivel;
+                Console.WriteLine($"ObtenerEstadisticasDocenteDinamicas: Nivel actual = {nivelActual}");
+                
+                // Obtener configuración de requisitos
+                var requisitosService = new ProyectoAgiles.Application.Services.RequisitosEscalafonService();
+                var configuracion = requisitosService.GetRequisitosParaNivel(nivelActual);
+                
+                if (configuracion == null)
+                {
+                    Console.WriteLine($"ObtenerEstadisticasDocenteDinamicas: No se encontró configuración para nivel {nivelActual}");
+                    return CreateDefaultEstadisticas(cedula);
+                }
+
+                // Verificar requisitos usando la lógica dinámica
+                var verificacion = await VerificarRequisitosEscalafonDinamico(cedula, nivelActual);
+                
+                if (verificacion == null)
+                {
+                    Console.WriteLine($"ObtenerEstadisticasDocenteDinamicas: No se pudo verificar requisitos");
+                    return CreateDefaultEstadisticas(cedula);
+                }
+
+                // Crear estadísticas basadas en la verificación dinámica
+                var estadisticas = await CrearEstadisticasDesdeVerificacionDinamica(cedula, verificacion, configuracion);
+                
+                Console.WriteLine($"ObtenerEstadisticasDocenteDinamicas: Estadísticas creadas exitosamente");
+                return estadisticas;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"ObtenerEstadisticasDocenteDinamicas: Error - {ex.Message}");
+                return null;
+            }
+        }
+
+        private async Task<UserDto?> ObtenerDatosUsuarioSession(string cedula)
+        {
+            try
+            {
+                var url = $"{_apiBaseUrl}/api/auth/usuario/{cedula}";
+                var response = await _httpClient.GetAsync(url);
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    var json = await response.Content.ReadAsStringAsync();
+                    var usuario = JsonSerializer.Deserialize<UserDto>(json, new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    });
+                    return usuario;
+                }
+                return null;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private async Task<EstadisticasDocenteResponse> CrearEstadisticasDesdeVerificacionDinamica(
+            string cedula, 
+            VerificacionRequisitosEscalafonDto verificacion, 
+            ProyectoAgiles.Application.DTOs.RequisitoEscalafonConfigDto configuracion)
+        {
+            try
+            {
+                Console.WriteLine($"CrearEstadisticasDesdeVerificacionDinamica: Iniciando");
+                
+                // Contar requisitos totales y cumplidos usando las propiedades correctas
+                var totalRequisitos = 0;
+                var requisitosCumplidos = 0;
+
+                // Verificar experiencia
+                totalRequisitos++;
+                if (verificacion.Experiencia.Cumple) requisitosCumplidos++;
+
+                // Verificar obras relevantes
+                totalRequisitos++;
+                if (verificacion.ObrasRelevantes.Cumple) requisitosCumplidos++;
+
+                // Verificar evaluaciones
+                totalRequisitos++;
+                if (verificacion.EvaluacionDesempeno.Cumple) requisitosCumplidos++;
+
+                // Verificar capacitación
+                totalRequisitos++;
+                if (verificacion.Capacitacion.Cumple) requisitosCumplidos++;
+
+                // Verificar proyectos de investigación si es requerido
+                if (configuracion.RequiereProyectosInvestigacion)
+                {
+                    totalRequisitos++;
+                    if (verificacion.ProyectosInvestigacion?.Cumple == true) requisitosCumplidos++;
+                }
+
+                var porcentaje = totalRequisitos > 0 ? (double)((decimal)requisitosCumplidos / totalRequisitos * 100) : 0;
+                var puedeSubirNivel = verificacion.CumpleTodosRequisitos;
+
+                Console.WriteLine($"CrearEstadisticasDesdeVerificacionDinamica: {requisitosCumplidos}/{totalRequisitos} requisitos ({porcentaje:F1}%)");
+
+                // Obtener datos reales para las secciones
+                var investigaciones = await GetInvestigacionesPorCedula(cedula);
+                var evaluaciones = await GetEvaluacionesPorCedula(cedula);
+                var capacitaciones = await GetCapacitacionesPorCedula(cedula);
+
                 return new EstadisticasDocenteResponse
                 {
                     Cedula = cedula,
-                    Resumen = new ResumenEstadisticas { TotalRequisitos = 4, RequisitosCumplidos = 0, PorcentajeCompletitud = 0, PuedeSubirNivel = false }
+                    Resumen = new ResumenEstadisticas
+                    {
+                        TotalRequisitos = totalRequisitos,
+                        RequisitosCumplidos = requisitosCumplidos,
+                        PorcentajeCompletitud = porcentaje,
+                        PuedeSubirNivel = puedeSubirNivel
+                    },
+                    Secciones = new SeccionesEstadisticas
+                    {
+                        Experiencia = new SeccionEstadistica
+                        {
+                            Titulo = "Experiencia Docente",
+                            Datos = new DatosSeccion
+                            {
+                                AñosRequeridos = configuracion.AnosExperienciaRequeridos,
+                                AñosObtenidos = (double)ParsearAños(verificacion.Experiencia.ValorObtenido),
+                                Cumple = verificacion.Experiencia.Cumple,
+                                Detalles = verificacion.Experiencia.Mensaje
+                            }
+                        },
+                        Obras = new SeccionEstadistica
+                        {
+                            Titulo = "Obras Relevantes",
+                            Datos = new DatosSeccion
+                            {
+                                TotalObras = investigaciones?.Count ?? 0,
+                                ObrasConUTA = investigaciones?.Count(i => i.Filiacion?.Contains("UTA") == true) ?? 0,
+                                Cumple = verificacion.ObrasRelevantes.Cumple,
+                                Detalles = verificacion.ObrasRelevantes.Mensaje
+                            }
+                        },
+                        Evaluaciones = new SeccionEstadistica
+                        {
+                            Titulo = "Evaluaciones de Desempeño",
+                            Datos = new DatosSeccion
+                            {
+                                EvaluacionesAnalizadas = evaluaciones?.Count ?? 0,
+                                PromedioObtenido = ParsearPorcentaje(verificacion.EvaluacionDesempeno.ValorObtenido),
+                                Requiere75 = configuracion.PorcentajeEvaluacionMinimo,
+                                Cumple = verificacion.EvaluacionDesempeno.Cumple,
+                                Detalles = verificacion.EvaluacionDesempeno.Mensaje
+                            }
+                        },
+                        Capacitaciones = new SeccionEstadistica
+                        {
+                            Titulo = "Capacitaciones DITIC",
+                            Datos = new DatosSeccion
+                            {
+                                HorasRequeridas = configuracion.HorasCapacitacionRequeridas,
+                                HorasPedagogicasRequeridas = configuracion.HorasCapacitacionPedagogicas,
+                                HorasObtenidas = ParsearHoras(verificacion.Capacitacion.ValorObtenido),
+                                HorasPedagogicasObtenidas = ParsearHorasPedagogicas(verificacion.Capacitacion.ValorObtenido),
+                                Cumple = verificacion.Capacitacion.Cumple,
+                                Detalles = verificacion.Capacitacion.Mensaje
+                            }
+                        }
+                    }
                 };
             }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"CrearEstadisticasDesdeVerificacionDinamica: Error - {ex.Message}");
+                return CreateDefaultEstadisticas(cedula);
+            }
+        }
+
+        private decimal ParsearAños(string valorObtenido)
+        {
+            try
+            {
+                var match = System.Text.RegularExpressions.Regex.Match(valorObtenido, @"(\d+(?:\.\d+)?)\s*años?");
+                if (match.Success && decimal.TryParse(match.Groups[1].Value, out var años))
+                {
+                    return años;
+                }
+                return 0;
+            }
+            catch
+            {
+                return 0;
+            }
+        }
+
+        private decimal ParsearPorcentaje(string valorObtenido)
+        {
+            try
+            {
+                var match = System.Text.RegularExpressions.Regex.Match(valorObtenido, @"(\d+(?:\.\d+)?)\s*%");
+                if (match.Success && decimal.TryParse(match.Groups[1].Value, out var porcentaje))
+                {
+                    return porcentaje;
+                }
+                return 0;
+            }
+            catch
+            {
+                return 0;
+            }
+        }
+
+        private int ParsearHoras(string valorObtenido)
+        {
+            try
+            {
+                var match = System.Text.RegularExpressions.Regex.Match(valorObtenido, @"(\d+)\s*h");
+                if (match.Success && int.TryParse(match.Groups[1].Value, out var horas))
+                {
+                    return horas;
+                }
+                return 0;
+            }
+            catch
+            {
+                return 0;
+            }
+        }
+
+        private int ParsearHorasPedagogicas(string valorObtenido)
+        {
+            try
+            {
+                var match = System.Text.RegularExpressions.Regex.Match(valorObtenido, @"\((\d+)h\s+pedagógicas\)");
+                if (match.Success && int.TryParse(match.Groups[1].Value, out var horasPedagogicas))
+                {
+                    return horasPedagogicas;
+                }
+                return 0;
+            }
+            catch
+            {
+                return 0;
+            }
+        }
+
+        private EstadisticasDocenteResponse CreateDefaultEstadisticas(string cedula)
+        {
+            return new EstadisticasDocenteResponse
+            {
+                Cedula = cedula,
+                Resumen = new ResumenEstadisticas 
+                { 
+                    TotalRequisitos = 4, 
+                    RequisitosCumplidos = 0, 
+                    PorcentajeCompletitud = 0, 
+                    PuedeSubirNivel = false 
+                }
+            };
         }
 
         public async Task<InvestigacionDto> CrearInvestigacion(CreateInvestigacionDto createDto)

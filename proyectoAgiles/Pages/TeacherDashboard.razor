@@ -2348,6 +2348,7 @@ private bool isLoadingInvestigaciones = false;
             
             // Actualizar estadísticas automáticamente con mejor logging
             Console.WriteLine("GuardarInvestigacion: Iniciando actualización de estadísticas...");
+            await Task.Delay(500); // Esperar medio segundo para que el backend procese
             await CargarEstadisticas();
             Console.WriteLine("GuardarInvestigacion: Estadísticas actualizadas.");
         }
@@ -2663,6 +2664,7 @@ private bool isLoadingInvestigaciones = false;
             
             // Actualizar estadísticas automáticamente con mejor logging
             Console.WriteLine("GuardarEvaluacion: Iniciando actualización de estadísticas...");
+            await Task.Delay(500); // Esperar medio segundo para que el backend procese
             await CargarEstadisticas();
             Console.WriteLine("GuardarEvaluacion: Estadísticas actualizadas.");
             
@@ -2716,6 +2718,7 @@ private bool isLoadingInvestigaciones = false;
                     await MostrarNotificacionExito("🗑️ Evaluación Eliminada", "La evaluación de desempeño ha sido eliminada permanentemente del sistema.");
                     
                     // Actualizar estadísticas automáticamente
+                    await Task.Delay(500); // Esperar medio segundo para que el backend procese
                     await CargarEstadisticas();
                     
                     // Actualizar verificación del requisito 75%
@@ -2883,16 +2886,33 @@ private bool isLoadingInvestigaciones = false;
             estadisticasDocente = null;
             StateHasChanged();
 
+            // Agregar un pequeño delay para asegurar que la UI se actualice
+            await Task.Delay(100);
+
             estadisticasDocente = await AuthService.ObtenerEstadisticasDocente(cedula);
-            Console.WriteLine($"CargarEstadisticas: Estadísticas cargadas exitosamente");
             
-            // Forzar actualización de la UI
+            if (estadisticasDocente != null)
+            {
+                Console.WriteLine($"CargarEstadisticas: Estadísticas cargadas exitosamente");
+                Console.WriteLine($"CargarEstadisticas: Total requisitos = {estadisticasDocente.Resumen?.TotalRequisitos}");
+                Console.WriteLine($"CargarEstadisticas: Requisitos cumplidos = {estadisticasDocente.Resumen?.RequisitosCumplidos}");
+                Console.WriteLine($"CargarEstadisticas: Porcentaje = {estadisticasDocente.Resumen?.PorcentajeCompletitud}%");
+            }
+            else
+            {
+                Console.WriteLine("CargarEstadisticas: Las estadísticas son null");
+            }
+            
+            // Forzar actualización de la UI múltiples veces para asegurar que se vea
+            StateHasChanged();
+            await Task.Delay(50);
             StateHasChanged();
         }
         catch (Exception ex)
         {
             Console.WriteLine($"CargarEstadisticas: Error - {ex.Message}");
-            await MostrarNotificacionError("Error al cargar estadísticas", ex.Message);
+            Console.WriteLine($"CargarEstadisticas: StackTrace - {ex.StackTrace}");
+            await MostrarNotificacionError("Error al cargar estadísticas", $"No se pudieron cargar las estadísticas: {ex.Message}");
         }
         finally
         {
@@ -2906,6 +2926,10 @@ private bool isLoadingInvestigaciones = false;
         try
         {
             await MostrarNotificacionInfo("🔄 Actualizando", "Recargando estadísticas desde el servidor...");
+            
+            // Esperar un poco para que los cambios se procesen en el backend
+            await Task.Delay(1000);
+            
             await CargarEstadisticas();
             await MostrarNotificacionExito("✅ Actualizado", "Las estadísticas se han actualizado correctamente");
         }
@@ -3287,6 +3311,7 @@ private bool isLoadingInvestigaciones = false;
                 await CargarCapacitaciones();
                 
                 // Actualizar estadísticas automáticamente
+                await Task.Delay(500); // Esperar medio segundo para que el backend procese
                 await CargarEstadisticas();
                 CloseAgregarCapacitacionModal();
             }
@@ -3320,6 +3345,7 @@ private bool isLoadingInvestigaciones = false;
                     
                     // Actualizar estadísticas automáticamente con mejor logging
                     Console.WriteLine("GuardarCapacitacion: Iniciando actualización de estadísticas (con PDF)...");
+                    await Task.Delay(500); // Esperar medio segundo para que el backend procese
                     await CargarEstadisticas();
                     Console.WriteLine("GuardarCapacitacion: Estadísticas actualizadas (con PDF).");
                     CloseAgregarCapacitacionModal();
@@ -3354,6 +3380,7 @@ private bool isLoadingInvestigaciones = false;
                     
                     // Actualizar estadísticas automáticamente con mejor logging
                     Console.WriteLine("GuardarCapacitacion: Iniciando actualización de estadísticas...");
+                    await Task.Delay(500); // Esperar medio segundo para que el backend procese
                     await CargarEstadisticas();
                     Console.WriteLine("GuardarCapacitacion: Estadísticas actualizadas.");
                     CloseAgregarCapacitacionModal();
@@ -3462,6 +3489,7 @@ private bool isLoadingInvestigaciones = false;
                     await CargarCapacitaciones();
                     
                     // Actualizar estadísticas automáticamente
+                    await Task.Delay(500); // Esperar medio segundo para que el backend procese
                     await CargarEstadisticas();
                     StateHasChanged();
                 }                else
