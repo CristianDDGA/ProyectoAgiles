@@ -1,8 +1,10 @@
 @page "/docente"
 @using Microsoft.AspNetCore.Components.Web
 @using System.Text.Json
+@using System.Net.Http.Json
 @using Microsoft.AspNetCore.Components.Forms
 @using proyectoAgiles.Services
+@using static proyectoAgiles.Services.AuthService
 @using ProyectoAgiles.Application.DTOs
 @using ProyectoAgiles.Domain.Entities
 @layout proyectoAgiles.Layout.MainLayout
@@ -36,7 +38,14 @@
                 <div class="nivel-actions">
                     <button class="btn btn-success nivel-btn" @onclick="ShowRequisitosModal">
                         <i class="fas fa-arrow-up me-2"></i>
-                        Subir de Nivel
+                        @if (configuracionRequisitos != null)
+                        {
+                            <text>Ascender a @configuracionRequisitos.NivelObjetivo</text>
+                        }
+                        else
+                        {
+                            <text>Subir de Nivel</text>
+                        }
                     </button>
                 </div>
             </div>
@@ -352,7 +361,14 @@
                         {
                             <button class="btn btn-success me-2" @onclick="SubirNivel">
                                 <i class="fas fa-arrow-up me-1"></i>
-                                Subir de nivel
+                                @if (configuracionRequisitos != null)
+                                {
+                                    <text>Ascender a @configuracionRequisitos.NivelObjetivo</text>
+                                }
+                                else
+                                {
+                                    <text>Subir de nivel</text>
+                                }
                             </button>
                             <button class="btn btn-outline-primary" @onclick="VerificarRequisitos">
                                 <i class="fas fa-refresh me-1"></i>
@@ -1822,7 +1838,7 @@
             </button>
         </div>
         
-        @if (estadisticasDocente == null)
+        @if (estadisticasDocente is null)
         {
             <div class="text-center py-4">
                 <div class="spinner-border text-primary" role="status">
@@ -1972,6 +1988,7 @@
     </div>
 </div>
 
+
 @code {    private int totalCourses = 0;
     private int totalStudents = 0;
     private int pendingTasks = 0;
@@ -1987,7 +2004,6 @@
     private bool showAgregarModal = false;
     private bool showAgregarEvaluacionModal = false;
     private bool showAgregarCapacitacionModal = false;
-
 private bool isLoadingInvestigaciones = false;
     private bool isLoadingEvaluaciones = false;
     private bool isLoadingCapacitaciones = false;
@@ -2927,7 +2943,7 @@ private bool isLoadingInvestigaciones = false;
 
             estadisticasDocente = await AuthService.ObtenerEstadisticasDocente(cedula);
             
-            if (estadisticasDocente != null)
+            if (estadisticasDocente is not null)
             {
                 Console.WriteLine($"CargarEstadisticas: Estadísticas cargadas exitosamente");
                 Console.WriteLine($"CargarEstadisticas: Total requisitos = {estadisticasDocente.Resumen?.TotalRequisitos}");
@@ -2992,14 +3008,25 @@ private bool isLoadingInvestigaciones = false;
     {
         // Crear solicitud de escalafón en lugar de cambiar nivel directamente
         var cedula = UserSession.CurrentUser?.Cedula;
-        if (string.IsNullOrEmpty(cedula))
+        var nivelActual = UserSession.CurrentUser?.Nivel;
+        
+        if (string.IsNullOrEmpty(cedula) || string.IsNullOrEmpty(nivelActual))
         {
-            await MostrarNotificacionError("Error", "No se pudo obtener la cédula del usuario actual.");
+            await MostrarNotificacionError("Error", "No se pudo obtener la información del usuario actual.");
             return;
         }
 
         try
         {
+            // Calcular el siguiente nivel en la jerarquía
+            var nivelSolicitado = CalcularSiguienteNivel(nivelActual);
+            
+            if (string.IsNullOrEmpty(nivelSolicitado))
+            {
+                await MostrarNotificacionError("Error", "No se pudo determinar el siguiente nivel de escalafón.");
+                return;
+            }
+            
             // Obtener estadísticas del docente para completar la solicitud
             var estadisticas = await AuthService.ObtenerEstadisticasDocente(cedula);
             
@@ -3012,11 +3039,10 @@ private bool isLoadingInvestigaciones = false;
                 DocenteTelefono = "", // No disponible en UserSession actual
                 Facultad = "", // No disponible en UserSession actual  
                 Carrera = "", // No disponible en UserSession actual
-                NivelActual = UserSession.CurrentUser?.Nivel ?? "Titular Auxiliar 1",
-                NivelSolicitado = "Titular Auxiliar 2", // Por ahora fijo, se puede hacer dinámico
+                NivelActual = nivelActual,
+                NivelSolicitado = nivelSolicitado,
                 AnosExperiencia = ObtenerAnosExperiencia(estadisticas),
                 Publicaciones = GenerarResumenPublicaciones(estadisticas),
-
                 Capacitaciones = GenerarResumenCapacitaciones(estadisticas),
                 Observaciones = "Solicitud generada automáticamente desde el panel del docente"
             };
@@ -3031,7 +3057,7 @@ private bool isLoadingInvestigaciones = false;
                 // Mostrar notificación de éxito
                 await MostrarNotificacionExito(
                     "Solicitud Enviada", 
-                    "Tu solicitud de escalafón ha sido enviada exitosamente y está siendo revisada por la Comisión Académica."
+                    $"Tu solicitud de escalafón de {nivelActual} a {nivelSolicitado} ha sido enviada exitosamente y está siendo revisada por la Comisión Académica."
                 );
 
                 // Limpiar la verificación de requisitos para forzar una nueva verificación
@@ -3047,6 +3073,37 @@ private bool isLoadingInvestigaciones = false;
         {
             await MostrarNotificacionError("Error", $"Error al crear la solicitud: {ex.Message}");
         }
+    }
+
+    private string CalcularSiguienteNivel(string nivelActual)
+    {
+        // Jerarquía de escalafón académico según reglamento UTA
+        var jerarquia = new Dictionary<string, string>
+        {
+            { "Titular Auxiliar 1", "Titular Auxiliar 2" },
+            { "Titular Auxiliar 2", "Titular Agregado 1" },
+            { "Titular Agregado 1", "Titular Agregado 2" },
+            { "Titular Agregado 2", "Titular Principal 1" },
+            { "Titular Principal 1", "Titular Principal 2" },
+            { "Titular Principal 2", "Titular Principal 3" },
+            { "Titular Principal 3", "Titular Principal 4" },
+            { "Titular Principal 4", "" } // Nivel máximo
+        };
+
+        if (jerarquia.TryGetValue(nivelActual, out var siguienteNivel))
+        {
+            if (string.IsNullOrEmpty(siguienteNivel))
+            {
+                Console.WriteLine($"CalcularSiguienteNivel: {nivelActual} es el nivel máximo");
+                return "";
+            }
+            
+            Console.WriteLine($"CalcularSiguienteNivel: {nivelActual} -> {siguienteNivel}");
+            return siguienteNivel;
+        }
+        
+        Console.WriteLine($"CalcularSiguienteNivel: Nivel no reconocido: {nivelActual}");
+        return "";
     }    // Métodos para notificaciones profesionales con toast
     private async Task MostrarNotificacionExito(string titulo, string mensaje, int duracion = 5000)
     {
