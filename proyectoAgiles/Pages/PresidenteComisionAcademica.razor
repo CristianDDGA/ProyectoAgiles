@@ -51,6 +51,16 @@
                 </div>
             </div>
             
+            <div class="summary-card processed">
+                <div class="summary-icon">
+                    <i class="fas fa-certificate"></i>
+                </div>
+                <div class="summary-content">
+                    <h3>@verificatedSolicitudes</h3>
+                    <p>Verificadas - Listas para Notificar</p>
+                </div>
+            </div>
+            
             <div class="summary-card rejected">
                 <div class="summary-icon">
                     <i class="fas fa-times-circle"></i>
@@ -69,6 +79,7 @@
                     <option value="all">Todas las Solicitudes</option>
                     <option value="pending">Pendientes</option>
                     <option value="approved">Aprobadas</option>
+                    <option value="verificado">Verificadas - Listas para Notificar</option>
                     <option value="rejected">Rechazadas</option>
                 </select>
                 
@@ -131,6 +142,16 @@
                                 </button>
                                 <button class="btn btn-danger" @onclick="() => RechazarSolicitud(solicitud.Id)">
                                     <i class="fas fa-times"></i> Rechazar
+                                </button>
+                            }
+                            
+                            @if (solicitud.Status == "Verificado")
+                            {
+                                <button class="btn btn-primary" @onclick="() => EnviarCorreoResultado(solicitud.Id, true)">
+                                    <i class="fas fa-check-circle"></i> Notificar Aprobación
+                                </button>
+                                <button class="btn btn-warning" @onclick="() => EnviarCorreoResultado(solicitud.Id, false)">
+                                    <i class="fas fa-times-circle"></i> Notificar Rechazo
                                 </button>
                             }
                         </div>
@@ -740,6 +761,7 @@
     private int pendingSolicitudes = 0;
     private int approvedSolicitudes = 0;
     private int rejectedSolicitudes = 0;
+    private int verificatedSolicitudes = 0;
     
     // Datos reales de la API
     private List<proyectoAgiles.Services.InvestigacionDto> investigaciones = new();
@@ -825,6 +847,7 @@
             (selectedFilter == "all" || 
              (selectedFilter == "pending" && s.Status == "Pendiente") ||
              (selectedFilter == "approved" && s.Status == "Aprobado") ||
+             (selectedFilter == "verificado" && s.Status == "Verificado") ||
              (selectedFilter == "rejected" && s.Status == "Rechazado")) &&
             (string.IsNullOrEmpty(searchTerm) || 
              s.DocenteNombre.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
@@ -837,6 +860,7 @@
         pendingSolicitudes = solicitudes.Count(s => s.Status == "Pendiente");
         approvedSolicitudes = solicitudes.Count(s => s.Status == "Aprobado");
         rejectedSolicitudes = solicitudes.Count(s => s.Status == "Rechazado");
+        verificatedSolicitudes = solicitudes.Count(s => s.Status == "Verificado");
     }
 
     private async Task VerDetalles(int solicitudId)
@@ -967,6 +991,7 @@
         {
             "Pendiente" => "pending",
             "Aprobado" => "approved",
+            "Verificado" => "processed",
             "Rechazado" => "rejected",
             _ => ""
         };
@@ -978,6 +1003,7 @@
         {
             "Pendiente" => "Pendiente",
             "Aprobado" => "Aprobado",
+            "Verificado" => "Verificado - Listo para Notificar",
             "Rechazado" => "Rechazado",
             _ => status
         };
@@ -1401,6 +1427,51 @@
         public bool EsPedagogica { get; set; }
         public double? Calificacion { get; set; }
         public string NombreArchivoCertificado { get; set; } = "";
+    }
+
+    // Método para enviar correo de resultado
+    private async Task EnviarCorreoResultado(int solicitudId, bool aprobado)
+    {
+        try
+        {
+            var solicitud = solicitudes.FirstOrDefault(s => s.Id == solicitudId);
+            if (solicitud == null) return;
+
+            // Actualizar el estado de la solicitud
+            var nuevoEstado = aprobado ? "Finalizado" : "Rechazado";
+            var updateDto = new { Id = solicitudId, Status = nuevoEstado };
+            var response = await HttpClient.PutAsJsonAsync($"/api/solicitudes-escalafon/{solicitudId}/status", updateDto);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                // Simular envío de correo (aquí se integraría con un servicio de correo real)
+                var tipoNotificacion = aprobado ? "Aprobación" : "Rechazo";
+                var mensaje = aprobado 
+                    ? $"Su solicitud de escalafón de {solicitud.NivelActual} a {solicitud.NivelSolicitado} ha sido APROBADA."
+                    : $"Su solicitud de escalafón de {solicitud.NivelActual} a {solicitud.NivelSolicitado} ha sido RECHAZADA.";
+
+                await JSRuntime.InvokeVoidAsync("toastNotifications.success", 
+                    $"Correo de {tipoNotificacion} Enviado", 
+                    $"Se ha enviado la notificación de {tipoNotificacion.ToLower()} a {solicitud.DocenteEmail}");
+                
+                // Actualizar la lista de solicitudes
+                await LoadSolicitudes();
+                FilterSolicitudes();
+                UpdateSummary();
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("toastNotifications.error", 
+                    "Error", 
+                    "No se pudo actualizar el estado de la solicitud.");
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("toastNotifications.error", 
+                "Error", 
+                $"Error al enviar notificación: {ex.Message}");
+        }
     }
 
     public class SolicitudEscalafon

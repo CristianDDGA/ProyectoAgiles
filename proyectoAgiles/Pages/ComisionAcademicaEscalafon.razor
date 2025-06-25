@@ -41,6 +41,16 @@
                 </div>
             </div>
             
+            <div class="summary-card approved">
+                <div class="summary-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="summary-content">
+                    <h3>@verificatedSolicitudes</h3>
+                    <p>Verificadas por Comisión</p>
+                </div>
+            </div>
+            
             <div class="summary-card finalized">
                 <div class="summary-icon">
                     <i class="fas fa-trophy"></i>
@@ -67,6 +77,7 @@
             <div class="filters-container">
                 <select class="form-select" @bind="selectedFilter">
                     <option value="procesado">Firmadas por Talento Humano</option>
+                    <option value="verificado">Verificadas por Comisión</option>
                     <option value="finalizado">Escalafón Finalizado</option>
                     <option value="rechazado-comision">Rechazadas por Comisión</option>
                     <option value="all">Todas</option>
@@ -743,6 +754,7 @@
     private int processedSolicitudes = 0;
     private int finalizedSolicitudes = 0;
     private int rejectedByComision = 0;
+    private int verificatedSolicitudes = 0;
     
     // Variables para filtros
     private string selectedFilter = "procesado";
@@ -845,6 +857,7 @@
         filtered = selectedFilter switch
         {
             "procesado" => filtered.Where(s => s.Status == "Procesado"),
+            "verificado" => filtered.Where(s => s.Status == "Verificado"),
             "finalizado" => filtered.Where(s => s.Status == "Finalizado"),
             "rechazado-comision" => filtered.Where(s => s.Status == "RechazadoComision"),
             _ => filtered
@@ -864,6 +877,7 @@
     private void UpdateCounters()
     {
         processedSolicitudes = solicitudes.Count(s => s.Status == "Procesado");
+        verificatedSolicitudes = solicitudes.Count(s => s.Status == "Verificado");
         finalizedSolicitudes = solicitudes.Count(s => s.Status == "Finalizado");
         rejectedByComision = solicitudes.Count(s => s.Status == "RechazadoComision");
     }
@@ -903,14 +917,15 @@
     {
         try
         {
-            var updateDto = new { Id = solicitudId, Status = "Finalizado" };
+            // Cambiar el estado a "Verificado" para que regrese al Presidente de la Comisión Académica
+            var updateDto = new { Id = solicitudId, Status = "Verificado" };
             var response = await HttpClient.PutAsJsonAsync($"/api/solicitudes-escalafon/{solicitudId}/status", updateDto);
             
             if (response.IsSuccessStatusCode)
             {
                 await JSRuntime.InvokeVoidAsync("toastNotifications.success", 
-                    "Escalafón Finalizado", 
-                    "El escalafón docente ha sido finalizado exitosamente.");
+                    "Solicitud Verificada", 
+                    "La solicitud ha sido verificada y enviada al Presidente de la Comisión Académica para envío de notificación.");
                 await RefreshSolicitudes();
                 CloseDetailsModal();
             }
@@ -918,14 +933,14 @@
             {
                 await JSRuntime.InvokeVoidAsync("toastNotifications.error", 
                     "Error", 
-                    "No se pudo finalizar el escalafón.");
+                    "No se pudo verificar la solicitud.");
             }
         }
         catch (Exception ex)
         {
             await JSRuntime.InvokeVoidAsync("toastNotifications.error", 
                 "Error", 
-                $"Error al finalizar el escalafón: {ex.Message}");
+                $"Error al verificar la solicitud: {ex.Message}");
         }
     }
 
@@ -987,6 +1002,7 @@
         return status switch
         {
             "Procesado" => "processed",
+            "Verificado" => "approved",
             "Finalizado" => "finalized",
             "RechazadoComision" => "rejected",
             _ => "default"
@@ -998,6 +1014,7 @@
         return status switch
         {
             "Procesado" => "Firmado por Talento Humano",
+            "Verificado" => "Verificado por Comisión",
             "Finalizado" => "Escalafón Finalizado",
             "RechazadoComision" => "Rechazado por Comisión",
             _ => status
