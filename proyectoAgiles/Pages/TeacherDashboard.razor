@@ -27,6 +27,9 @@
                   <div class="nivel-current-info">
                     <div class="nivel-badge-container">
                         <span class="badge bg-info text-dark nivel-badge">@UserSession.GetUserNivel()</span>
+                        <button class="btn btn-sm btn-outline-secondary ms-2" @onclick="RefreshUserData" title="Actualizar datos">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
                     </div>
                 </div>
                 
@@ -1978,6 +1981,9 @@ private bool isLoadingInvestigaciones = false;
         // Refrescar datos del usuario para obtener información actualizada
         await UserSession.RefreshUserDataAsync(HttpClient);
         
+        // Forzar actualización de la interfaz después de refrescar datos
+        StateHasChanged();
+        
         // Verificar que el usuario esté autenticado y sea docente
         if (UserSession.CurrentUser == null || UserSession.CurrentUser.UserType != 2)
         {
@@ -3347,6 +3353,24 @@ private bool isLoadingInvestigaciones = false;
         catch (Exception ex)
         {
             Console.WriteLine($"Error al actualizar verificación requisito 75%: {ex.Message}");
+        }
+    }
+
+    private async Task RefreshUserData()
+    {
+        try
+        {
+            await UserSession.RefreshUserDataAsync(HttpClient);
+            StateHasChanged();
+            await JSRuntime.InvokeVoidAsync("toastNotifications.success", 
+                "Datos actualizados", 
+                "Los datos del usuario han sido actualizados correctamente.");
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("toastNotifications.error", 
+                "Error", 
+                $"Error al actualizar datos: {ex.Message}");
         }
     }
 }
