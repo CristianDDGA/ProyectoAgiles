@@ -1197,10 +1197,56 @@
             
             // Cargar capacitaciones
             await CargarCapacitaciones(cedula);
+            
+            // Obtener estadísticas actualizadas del docente
+            await ActualizarEstadisticasSolicitud(cedula);
         }
         catch (Exception ex)
         {
             await JSRuntime.InvokeVoidAsync("console.error", $"Error cargando datos del docente: {ex.Message}");
+        }
+    }
+    
+    // Método para actualizar las estadísticas de la solicitud con datos reales
+    private async Task ActualizarEstadisticasSolicitud(string cedula)
+    {
+        try
+        {
+            if (selectedSolicitud == null) return;
+            
+            // Obtener estadísticas actualizadas del docente
+            var estadisticas = await AuthService.ObtenerEstadisticasDocente(cedula);
+            
+            if (estadisticas?.Secciones != null)
+            {
+                // Actualizar años de experiencia
+                if (estadisticas.Secciones.Experiencia?.Datos != null)
+                {
+                    selectedSolicitud.AnosExperiencia = (int)Math.Round(estadisticas.Secciones.Experiencia.Datos.AñosObtenidos);
+                }
+                
+                // Actualizar publicaciones
+                if (estadisticas.Secciones.Obras?.Datos != null)
+                {
+                    var datos = estadisticas.Secciones.Obras.Datos;
+                    selectedSolicitud.Publicaciones = $"Total: {datos.TotalObras} obra(s) registrada(s). Con filiación UTA: {datos.ObrasConUTA} obra(s).";
+                    selectedSolicitud.ProyectosInvestigacion = $"Proyectos con filiación UTA: {datos.ObrasConUTA} proyecto(s) registrado(s).";
+                }
+                
+                // Actualizar capacitaciones
+                if (estadisticas.Secciones.Capacitaciones?.Datos != null)
+                {
+                    var datos = estadisticas.Secciones.Capacitaciones.Datos;
+                    selectedSolicitud.Capacitaciones = $"Total: {datos.HorasObtenidas} horas de capacitación. Horas pedagógicas: {datos.HorasPedagogicasObtenidas} horas.";
+                }
+                
+                // Forzar actualización de la UI
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("console.error", $"Error actualizando estadísticas: {ex.Message}");
         }
     }
 
