@@ -127,7 +127,7 @@
                             @if (solicitud.Status == "Procesado")
                             {
                                 <button class="btn btn-success" @onclick="() => FinalizarEscalafon(solicitud.Id)">
-                                    <i class="fas fa-trophy"></i> Finalizar Escalafón
+                                    <i class="fas fa-check-circle"></i> Verificar
                                 </button>
                                 <button class="btn btn-danger" @onclick="() => RechazarSolicitudComision(solicitud.Id)">
                                     <i class="fas fa-times"></i> Rechazar
@@ -690,7 +690,7 @@
                     @if (selectedSolicitud?.Status == "Procesado")
                     {
                         <button type="button" class="btn btn-success" @onclick="() => FinalizarEscalafon(selectedSolicitud.Id)">
-                            <i class="fas fa-trophy"></i> Finalizar Escalafón
+                            <i class="fas fa-check-circle"></i> Verificar
                         </button>
                         <button type="button" class="btn btn-danger" @onclick="() => RechazarSolicitudComision(selectedSolicitud.Id)">
                             <i class="fas fa-times"></i> Rechazar
