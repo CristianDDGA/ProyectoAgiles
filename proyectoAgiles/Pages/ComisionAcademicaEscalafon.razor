@@ -3,6 +3,7 @@
 @using Microsoft.AspNetCore.Components
 @using ProyectoAgiles.Application.DTOs
 @using proyectoAgiles.Services
+@using System.Text
 @layout proyectoAgiles.Layout.MainLayout
 @inject NavigationManager Navigation
 @inject proyectoAgiles.Services.UserSessionService UserSession
@@ -158,9 +159,18 @@
                             
                             @if (solicitud.Status == "AprobadoPresidente")
                             {
-                                <button class="btn btn-primary" @onclick="() => GenerarInforme(solicitud.Id)">
-                                    <i class="fas fa-file-alt"></i> Generar Informe
-                                </button>
+                                @if (!solicitudesConInforme.Contains(solicitud.Id))
+                                {
+                                    <button class="btn btn-primary" @onclick="() => GenerarInforme(solicitud.Id)">
+                                        <i class="fas fa-file-alt"></i> Generar Informe
+                                    </button>
+                                }
+                                else
+                                {
+                                    <button class="btn btn-info" @onclick="() => VerInformePDF(solicitud.Id)" title="Ver Informe PDF">
+                                        <i class="fas fa-file-pdf"></i> Ver Informe
+                                    </button>
+                                }
                                 <button class="btn btn-success" @onclick="() => FinalizarConInforme(solicitud.Id)">
                                     <i class="fas fa-trophy"></i> Finalizar Escalafón
                                 </button>
@@ -730,9 +740,18 @@
                     }
                     @if (selectedSolicitud?.Status == "AprobadoPresidente")
                     {
-                        <button type="button" class="btn btn-primary" @onclick="() => GenerarInforme(selectedSolicitud.Id)">
-                            <i class="fas fa-file-alt"></i> Generar Informe
-                        </button>
+                        @if (!solicitudesConInforme.Contains(selectedSolicitud.Id))
+                        {
+                            <button type="button" class="btn btn-primary" @onclick="() => GenerarInforme(selectedSolicitud.Id)">
+                                <i class="fas fa-file-alt"></i> Generar Informe
+                            </button>
+                        }
+                        else
+                        {
+                            <button type="button" class="btn btn-info" @onclick="() => VerInformePDF(selectedSolicitud.Id)" title="Ver Informe PDF">
+                                <i class="fas fa-file-pdf"></i> Ver Informe
+                            </button>
+                        }
                         <button type="button" class="btn btn-success" @onclick="() => FinalizarConInforme(selectedSolicitud.Id)">
                             <i class="fas fa-trophy"></i> Finalizar Escalafón
                         </button>
@@ -786,6 +805,9 @@
     private int rejectedByComision = 0;
     private int verificatedSolicitudes = 0;
     private int approvedForReportSolicitudes = 0;
+    
+    // Variables para controlar informes generados
+    private HashSet<int> solicitudesConInforme = new HashSet<int>();
     
     // Variables para filtros
     private string selectedFilter = "procesado";
@@ -1422,17 +1444,22 @@
             var solicitud = solicitudes.FirstOrDefault(s => s.Id == solicitudId);
             if (solicitud == null) return;
 
-            // Simular generación de informe
             await JSRuntime.InvokeVoidAsync("toastNotifications.info", 
                 "Generando Informe", 
                 "Se está generando el informe de escalafón docente...");
 
-            // Aquí se podría integrar con un servicio real de generación de informes
-            await Task.Delay(2000); // Simular tiempo de procesamiento
+            // Simular tiempo de procesamiento
+            await Task.Delay(2000);
+
+            // Marcar que esta solicitud ya tiene informe generado
+            solicitudesConInforme.Add(solicitudId);
 
             await JSRuntime.InvokeVoidAsync("toastNotifications.success", 
                 "Informe Generado", 
-                $"El informe de escalafón para {solicitud.DocenteNombre} ha sido generado exitosamente.");
+                $"El informe de escalafón para {solicitud.DocenteNombre} ha sido generado exitosamente. Ahora puede verlo haciendo clic en el botón 'Ver Informe'.");
+            
+            // Actualizar la UI
+            StateHasChanged();
         }
         catch (Exception ex)
         {
@@ -1440,6 +1467,176 @@
                 "Error", 
                 $"Error al generar el informe: {ex.Message}");
         }
+    }
+
+    // Método para ver el informe PDF en nueva pestaña
+    private async Task VerInformePDF(int solicitudId)
+    {
+        try
+        {
+            var solicitud = solicitudes.FirstOrDefault(s => s.Id == solicitudId);
+            if (solicitud == null) return;
+
+            // Cargar datos del docente si no están cargados
+            if (selectedSolicitud?.Id != solicitudId)
+            {
+                await CargarDatosDocente(solicitud.DocenteCedula);
+            }
+
+            // Generar el contenido HTML del informe
+            var htmlContent = GenerarHtmlInforme(solicitud);
+
+            // Abrir el PDF en una nueva pestaña
+            await JSRuntime.InvokeVoidAsync("openPDFInNewTab", htmlContent, $"Informe de Escalafón - {solicitud.DocenteNombre}");
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("toastNotifications.error", 
+                "Error", 
+                $"Error al mostrar el informe: {ex.Message}");
+        }
+    }
+
+    // Método para generar el contenido HTML del informe
+    private string GenerarHtmlInforme(SolicitudEscalafon solicitud)
+    {
+        var html = new StringBuilder();
+        html.Append(@"
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset='utf-8'>
+            <title>Informe de Escalafón Docente</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
+                .header { text-align: center; margin-bottom: 30px; }
+                .logo { width: 100px; height: auto; }
+                .title { color: #2c3e50; font-size: 24px; font-weight: bold; margin: 10px 0; }
+                .subtitle { color: #7f8c8d; font-size: 14px; }
+                .section { margin: 20px 0; }
+                .section-title { color: #34495e; font-size: 18px; font-weight: bold; margin-bottom: 10px; border-bottom: 2px solid #3498db; padding-bottom: 5px; }
+                .info-table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+                .info-table th, .info-table td { border: 1px solid #bdc3c7; padding: 8px; text-align: left; }
+                .info-table th { background-color: #ecf0f1; font-weight: bold; }
+                .status { padding: 5px 10px; border-radius: 15px; font-weight: bold; color: white; }
+                .status.aprobado { background-color: #27ae60; }
+                .footer { margin-top: 40px; text-align: center; font-size: 12px; color: #7f8c8d; }
+                .signature-section { margin-top: 50px; }
+                .signature-box { border-top: 1px solid #000; width: 200px; margin: 20px auto; text-align: center; padding-top: 5px; }
+            </style>
+        </head>
+        <body>
+            <div class='header'>
+                <h1 class='title'>UNIVERSIDAD TÉCNICA DE AMBATO</h1>
+                <h2 class='subtitle'>FACULTAD DE INGENIERÍA EN SISTEMAS, ELECTRÓNICA E INDUSTRIAL</h2>
+                <h3 class='subtitle'>COMISIÓN ACADÉMICA DE ESCALAFÓN DOCENTE</h3>
+                <h2 class='title'>INFORME DE ESCALAFÓN DOCENTE</h2>
+            </div>
+
+            <div class='section'>
+                <h3 class='section-title'>INFORMACIÓN GENERAL</h3>
+                <table class='info-table'>
+                    <tr>
+                        <th>Número de Solicitud:</th>
+                        <td>" + solicitud.Id + @"</td>
+                    </tr>
+                    <tr>
+                        <th>Fecha de Solicitud:</th>
+                        <td>" + solicitud.FechaSolicitud.ToString("dd/MM/yyyy") + @"</td>
+                    </tr>
+                    <tr>
+                        <th>Estado:</th>
+                        <td><span class='status aprobado'>" + solicitud.Status + @"</span></td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class='section'>
+                <h3 class='section-title'>DATOS DEL DOCENTE</h3>
+                <table class='info-table'>
+                    <tr>
+                        <th>Nombre Completo:</th>
+                        <td>" + solicitud.DocenteNombre + @"</td>
+                    </tr>
+                    <tr>
+                        <th>Cédula:</th>
+                        <td>" + solicitud.DocenteCedula + @"</td>
+                    </tr>
+                    <tr>
+                        <th>Email:</th>
+                        <td>" + solicitud.DocenteEmail + @"</td>
+                    </tr>
+                    <tr>
+                        <th>Teléfono:</th>
+                        <td>" + solicitud.DocenteTelefono + @"</td>
+                    </tr>
+                    <tr>
+                        <th>Facultad:</th>
+                        <td>" + solicitud.Facultad + @"</td>
+                    </tr>
+                    <tr>
+                        <th>Departamento:</th>
+                        <td>" + solicitud.Carrera + @"</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class='section'>
+                <h3 class='section-title'>DETALLES DEL ESCALAFÓN</h3>
+                <table class='info-table'>
+                    <tr>
+                        <th>Categoría Actual:</th>
+                        <td>" + solicitud.NivelActual + @"</td>
+                    </tr>
+                    <tr>
+                        <th>Categoría Solicitada:</th>
+                        <td>" + solicitud.NivelSolicitado + @"</td>
+                    </tr>
+                    <tr>
+                        <th>Años de Experiencia:</th>
+                        <td>" + solicitud.AnosExperiencia + @" años</td>
+                    </tr>
+                    <tr>
+                        <th>Título Académico:</th>
+                        <td>" + solicitud.Titulos + @"</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class='section'>
+                <h3 class='section-title'>EVALUACIÓN Y APROBACIÓN</h3>
+                <p>Esta solicitud ha sido evaluada y procesada por:</p>
+                <ul>
+                    <li><strong>Dirección de Talento Humano:</strong> Firmado y verificado</li>
+                    <li><strong>Comisión Académica de Escalafón:</strong> Verificado y procesado</li>
+                    <li><strong>Presidente de Comisión Académica:</strong> Aprobado</li>
+                </ul>
+                <p><strong>Fecha de Aprobación:</strong> " + DateTime.Now.ToString("dd/MM/yyyy") + @"</p>
+            </div>
+
+            <div class='section'>
+                <h3 class='section-title'>OBSERVACIONES</h3>
+                <p>El docente ha cumplido con todos los requisitos establecidos para el escalafón solicitado. 
+                Se recomienda la aprobación de la solicitud de escalafón de acuerdo a los reglamentos vigentes.</p>
+            </div>
+
+            <div class='signature-section'>
+                <div class='signature-box'>
+                    <p>Presidente de Comisión Académica</p>
+                </div>
+                <div class='signature-box'>
+                    <p>Secretario de Comisión</p>
+                </div>
+            </div>
+
+            <div class='footer'>
+                <p>Documento generado automáticamente por el Sistema de Gestión de Escalafón Docente</p>
+                <p>Universidad Técnica de Ambato - " + DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss") + @"</p>
+            </div>
+        </body>
+        </html>");
+
+        return html.ToString();
     }
 
     // Método para finalizar escalafón con informe
