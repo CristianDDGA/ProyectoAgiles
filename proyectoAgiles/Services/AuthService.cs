@@ -789,7 +789,7 @@ namespace proyectoAgiles.Services
                                 TotalObras = investigaciones?.Count ?? 0,
                                 ObrasConUTA = obrasConUTA,
                                 Cumple = verificacion.ObrasRelevantes.Cumple,
-                                Detalles = verificacion.ObrasRelevantes.Mensaje
+                                Detalles = GenerarDetallesObrasUTA(investigaciones?.Count ?? 0, obrasConUTA, configuracion, verificacion.ObrasRelevantes.Cumple)
                             }
                         },
                         Evaluaciones = new SeccionEstadistica
@@ -957,27 +957,43 @@ namespace proyectoAgiles.Services
             {
                 Console.WriteLine($"ParsearObrasUTA: entrada = '{valorObtenido}'");
                 
-                // Buscar patrón de obras con UTA (ej: "2 obras con filiación UTA", "2/3 obras relevantes")
-                var match = System.Text.RegularExpressions.Regex.Match(
+                // Patrón 1: "X obra(s) total, Y con filiación UTA" (extraer Y)
+                var matchPattern1 = System.Text.RegularExpressions.Regex.Match(
                     valorObtenido, 
-                    @"(\d+)(?:\s+obras?\s+(?:con\s+filiación\s+UTA|relevantes)|/\d+\s+obras?)", 
+                    @"(\d+)\s+obra\(s\)\s+total,\s+(\d+)\s+con\s+filiación\s+UTA", 
                     System.Text.RegularExpressions.RegexOptions.IgnoreCase);
                     
-                if (match.Success && int.TryParse(match.Groups[1].Value, out var obras))
+                if (matchPattern1.Success && int.TryParse(matchPattern1.Groups[2].Value, out var obrasUTA1))
                 {
-                    Console.WriteLine($"ParsearObrasUTA: resultado = {obras}");
-                    return obras;
+                    Console.WriteLine($"ParsearObrasUTA: Pattern 1 - resultado = {obrasUTA1}");
+                    return obrasUTA1;
                 }
                 
-                // Si no encuentra el patrón específico, buscar solo números al inicio
-                var matchNumber = System.Text.RegularExpressions.Regex.Match(valorObtenido, @"^(\d+)");
-                if (matchNumber.Success && int.TryParse(matchNumber.Groups[1].Value, out var obrasSimple))
+                // Patrón 2: "Insuficientes obras con UTA: X/Y" (extraer X)
+                var matchPattern2 = System.Text.RegularExpressions.Regex.Match(
+                    valorObtenido, 
+                    @"obras\s+con\s+UTA:\s+(\d+)/(\d+)", 
+                    System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                    
+                if (matchPattern2.Success && int.TryParse(matchPattern2.Groups[1].Value, out var obrasUTA2))
                 {
-                    Console.WriteLine($"ParsearObrasUTA: resultado simple = {obrasSimple}");
-                    return obrasSimple;
+                    Console.WriteLine($"ParsearObrasUTA: Pattern 2 - resultado = {obrasUTA2}");
+                    return obrasUTA2;
                 }
                 
-                Console.WriteLine($"ParsearObrasUTA: no se pudo parsear, devuelve 0");
+                // Patrón 3: "X con filiación UTA" (extraer X)
+                var matchPattern3 = System.Text.RegularExpressions.Regex.Match(
+                    valorObtenido, 
+                    @"(\d+)\s+con\s+filiación\s+UTA", 
+                    System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                    
+                if (matchPattern3.Success && int.TryParse(matchPattern3.Groups[1].Value, out var obrasUTA3))
+                {
+                    Console.WriteLine($"ParsearObrasUTA: Pattern 3 - resultado = {obrasUTA3}");
+                    return obrasUTA3;
+                }
+                
+                Console.WriteLine($"ParsearObrasUTA: no se pudo parsear con ningún patrón, devuelve 0");
                 return 0;
             }
             catch (Exception ex)
@@ -1000,6 +1016,40 @@ namespace proyectoAgiles.Services
                     PuedeSubirNivel = false 
                 }
             };
+        }
+
+        private string GenerarDetallesObrasUTA(int totalObras, int obrasConUTA, RequisitoEscalafonConfigDto configuracion, bool cumple)
+        {
+            var obrasUTARequeridas = configuracion.ObrasRelevantesConUTA;
+            var totalObrasRequeridas = configuracion.ObrasRelevantesMinimoTotal;
+            
+            Console.WriteLine($"GenerarDetallesObrasUTA: totalObras={totalObras}, obrasConUTA={obrasConUTA}, requeridas UTA={obrasUTARequeridas}, total requeridas={totalObrasRequeridas}, cumple={cumple}");
+            
+            if (cumple)
+            {
+                return $"✅ Cumple: {obrasConUTA}/{obrasUTARequeridas} obras con UTA, {totalObras}/{totalObrasRequeridas} total";
+            }
+            else
+            {
+                var faltanUTA = Math.Max(0, obrasUTARequeridas - obrasConUTA);
+                var faltanTotal = Math.Max(0, totalObrasRequeridas - totalObras);
+                
+                List<string> faltantes = new List<string>();
+                
+                if (faltanUTA > 0)
+                {
+                    faltantes.Add($"{faltanUTA} obra(s) más con filiación UTA");
+                }
+                
+                if (faltanTotal > 0)
+                {
+                    faltantes.Add($"{faltanTotal} obra(s) más en total");
+                }
+                
+                string mensaje = $"❌ Te faltan: {string.Join(" y ", faltantes)}";
+                
+                return mensaje;
+            }
         }
 
         public async Task<InvestigacionDto> CrearInvestigacion(CreateInvestigacionDto createDto)
@@ -1961,8 +2011,6 @@ namespace proyectoAgiles.Services
                 };
             }
         }
-
-        // ...existing code...
     }
 
     // DTOs para investigaciones
