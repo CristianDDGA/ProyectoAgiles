@@ -516,29 +516,30 @@
                                         </h6>
                                     </div>
                                     <div class="card-body">
-                                        @{
-                                            var investigacionesConUTA = investigaciones.Where(i => 
-                                                !string.IsNullOrWhiteSpace(i.Filiacion) && (
-                                                    i.Filiacion.Contains("UTA", StringComparison.OrdinalIgnoreCase) ||
-                                                    i.Filiacion.Contains("Universidad Técnica de Ambato", StringComparison.OrdinalIgnoreCase)
-                                                )).ToList();
-                                            var cumpleRequisito = investigacionesConUTA.Any();
-                                            var porcentajeUTA = investigaciones.Count > 0 ? Math.Round((double)investigacionesConUTA.Count / investigaciones.Count * 100, 1) : 0;
-                                        }
                                         <div class="row">
                                             <div class="col-md-6">
                                                 <div class="d-flex align-items-center">
-                                                    <span class="badge @(cumpleRequisito ? "bg-success" : "bg-danger") me-2">
-                                                        <i class="fas @(cumpleRequisito ? "fa-check" : "fa-times")"></i>
+                                                    <span class="badge @(cumpleObrasUTA ? "bg-success" : "bg-danger") me-2">
+                                                        <i class="fas @(cumpleObrasUTA ? "fa-check" : "fa-times")"></i>
                                                     </span>
-                                                    <strong>@(cumpleRequisito ? "CUMPLE" : "NO CUMPLE")</strong>
+                                                    <strong>@(cumpleObrasUTA ? "CUMPLE" : "NO CUMPLE")</strong>
                                                 </div>
-                                                <p class="mb-1 mt-2">@(cumpleRequisito ? $"El docente tiene {investigacionesConUTA.Count} obra(s) relevante(s) con filiación UTA." : "El docente no tiene obras relevantes con filiación UTA.")</p>
+                                                <p class="mb-1 mt-2">
+                                                    @if (cumpleObrasUTA)
+                                                    {
+                                                        <text>El docente cumple con el requisito de obras relevantes con filiación UTA.</text>
+                                                    }
+                                                    else
+                                                    {
+                                                        <text>Te faltan @(obrasConUTARequeridas - obrasConUTAObtenidas) obra(s) más con filiación UTA.</text>
+                                                    }
+                                                </p>
                                             </div>
                                             <div class="col-md-6">
-                                                <p class="mb-1"><strong>Investigaciones analizadas:</strong> @investigaciones.Count</p>
-                                                <p class="mb-1"><strong>Con filiación UTA:</strong> @investigacionesConUTA.Count</p>
-                                                <p class="mb-0"><strong>Porcentaje UTA:</strong> @porcentajeUTA%</p>
+                                                <p class="mb-1"><strong>Investigaciones analizadas:</strong> @totalObrasObtenidas</p>
+                                                <p class="mb-1"><strong>Con filiación UTA:</strong> @obrasConUTAObtenidas / @obrasConUTARequeridas</p>
+                                                <p class="mb-1"><strong>Total requeridas:</strong> @totalObrasObtenidas / @totalObrasRequeridas</p>
+                                                <p class="mb-0"><strong>Porcentaje UTA:</strong> @(totalObrasObtenidas > 0 ? Math.Round((double)obrasConUTAObtenidas / totalObrasObtenidas * 100, 1) : 0)%</p>
                                             </div>
                                         </div>
                                     </div>
@@ -818,36 +819,42 @@
                                 </table>
                             </div>
                             
-                            @* Mostrar resumen de cumplimiento del 75% *@
+                            @* Mostrar resumen de cumplimiento del requisito de evaluaciones *@
                             @if (evaluaciones.Any())
                             {
                                 <div class="mt-4">
                                     <div class="card">
                                         <div class="card-header">
                                             <h6 class="card-title mb-0">
-                                                <i class="fas fa-chart-line"></i> Verificación Requisito 75%
+                                                <i class="fas fa-chart-line"></i> Verificación Requisito @porcentajeEvaluacionRequerido%
                                             </h6>
                                         </div>
                                         <div class="card-body">
-                                            @if (verificacionRequisito is not null)
-                                            {
-                                                <div class="row">
-                                                    <div class="col-md-6">
-                                                        <div class="d-flex align-items-center">
-                                                            <span class="badge @(verificacionRequisito.CumpleRequisito ? "bg-success" : "bg-danger") me-2">
-                                                                <i class="fas @(verificacionRequisito.CumpleRequisito ? "fa-check" : "fa-times")"></i>
-                                                            </span>
-                                                            <strong>@(verificacionRequisito.CumpleRequisito ? "CUMPLE" : "NO CUMPLE")</strong>
-                                                        </div>
-                                                        <p class="mb-1 mt-2">@verificacionRequisito.Mensaje</p>
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <div class="d-flex align-items-center">
+                                                        <span class="badge @(cumpleEvaluaciones ? "bg-success" : "bg-danger") me-2">
+                                                            <i class="fas @(cumpleEvaluaciones ? "fa-check" : "fa-times")"></i>
+                                                        </span>
+                                                        <strong>@(cumpleEvaluaciones ? "CUMPLE" : "NO CUMPLE")</strong>
                                                     </div>
-                                                    <div class="col-md-6">
-                                                        <p class="mb-1"><strong>Evaluaciones analizadas:</strong> @verificacionRequisito.EvaluacionesAnalizadas</p>
-                                                        <p class="mb-1"><strong>Que alcanzan 75%:</strong> @verificacionRequisito.EvaluacionesQueAlcanzan75</p>
-                                                        <p class="mb-0"><strong>Promedio últimas 4:</strong> @verificacionRequisito.PorcentajePromedioUltimasCuatro%</p>
-                                                    </div>
+                                                    <p class="mb-1 mt-2">
+                                                        @if (cumpleEvaluaciones)
+                                                        {
+                                                            <text>El docente cumple con el requisito de @porcentajeEvaluacionRequerido% en evaluaciones de desempeño.</text>
+                                                        }
+                                                        else
+                                                        {
+                                                            <text>El promedio actual (@porcentajeEvaluacionObtenido%) no alcanza el @porcentajeEvaluacionRequerido% requerido.</text>
+                                                        }
+                                                    </p>
                                                 </div>
-                                            }
+                                                <div class="col-md-6">
+                                                    <p class="mb-1"><strong>Evaluaciones analizadas:</strong> @periodosEvaluacionAnalizados / @periodosEvaluacionRequeridos</p>
+                                                    <p class="mb-1"><strong>Promedio obtenido:</strong> @porcentajeEvaluacionObtenido%</p>
+                                                    <p class="mb-0"><strong>Requerido:</strong> @porcentajeEvaluacionRequerido%</p>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -1010,38 +1017,33 @@
                                 <div class="card">
                                     <div class="card-header">
                                         <h6 class="card-title mb-0">
-                                            <i class="fas fa-chart-line"></i> Verificación Requisito 96 Horas
+                                            <i class="fas fa-chart-line"></i> Verificación Requisito @horasCapacitacionRequeridas Horas (@horasPedagogicasRequeridas h pedagógicas)
                                         </h6>
                                     </div>
                                     <div class="card-body">
-                                        @{
-                                            var fechaLimite = DateTime.Now.AddYears(-3);
-                                            var capacitacionesValidas = capacitaciones.Where(c => c.FechaFin >= fechaLimite).ToList();
-                                            var totalHoras = capacitacionesValidas.Sum(c => c.HorasAcademicas);
-                                            var horasPedagogicas = capacitacionesValidas.Where(c => 
-                                                c.TipoCapacitacion.Contains("pedagógica", StringComparison.OrdinalIgnoreCase) ||
-                                                c.TipoCapacitacion.Contains("pedagogica", StringComparison.OrdinalIgnoreCase) ||
-                                                c.NombreCapacitacion.Contains("pedagógica", StringComparison.OrdinalIgnoreCase) ||
-                                                c.NombreCapacitacion.Contains("pedagogica", StringComparison.OrdinalIgnoreCase)
-                                            ).Sum(c => c.HorasAcademicas);
-                                            var cumpleHorasTotales = totalHoras >= 96;
-                                            var cumpleHorasPedagogicas = horasPedagogicas >= 24;
-                                            var cumpleRequisito = cumpleHorasTotales && cumpleHorasPedagogicas;
-                                        }
                                         <div class="row">
                                             <div class="col-md-6">
                                                 <div class="d-flex align-items-center">
-                                                    <span class="badge @(cumpleRequisito ? "bg-success" : "bg-danger") me-2">
-                                                        <i class="fas @(cumpleRequisito ? "fa-check" : "fa-times")"></i>
+                                                    <span class="badge @(cumpleCapacitaciones ? "bg-success" : "bg-danger") me-2">
+                                                        <i class="fas @(cumpleCapacitaciones ? "fa-check" : "fa-times")"></i>
                                                     </span>
-                                                    <strong>@(cumpleRequisito ? "CUMPLE" : "NO CUMPLE")</strong>
+                                                    <strong>@(cumpleCapacitaciones ? "CUMPLE" : "NO CUMPLE")</strong>
                                                 </div>
-                                                <p class="mb-1 mt-2">@(cumpleRequisito ? "El docente cumple con el requisito de 96 horas de capacitación." : "El docente no cumple con el requisito de 96 horas de capacitación.")</p>
+                                                <p class="mb-1 mt-2">
+                                                    @if (cumpleCapacitaciones)
+                                                    {
+                                                        <text>El docente cumple con el requisito de @horasCapacitacionRequeridas horas de capacitación.</text>
+                                                    }
+                                                    else
+                                                    {
+                                                        <text>Te faltan @(horasCapacitacionRequeridas - horasCapacitacionObtenidas) horas más de capacitación.</text>
+                                                    }
+                                                </p>
                                             </div>
                                             <div class="col-md-6">
-                                                <p class="mb-1"><strong>Capacitaciones válidas:</strong> @capacitacionesValidas.Count (últimos 3 años)</p>
-                                                <p class="mb-1"><strong>Horas totales:</strong> @totalHoras / 96</p>
-                                                <p class="mb-0"><strong>Horas pedagógicas:</strong> @horasPedagogicas / 24</p>
+                                                <p class="mb-1"><strong>Capacitaciones válidas:</strong> @capacitaciones.Count (últimos 3 años)</p>
+                                                <p class="mb-1"><strong>Horas totales:</strong> @horasCapacitacionObtenidas / @horasCapacitacionRequeridas</p>
+                                                <p class="mb-0"><strong>Horas pedagógicas:</strong> @horasPedagogicasObtenidas / @horasPedagogicasRequeridas</p>
                                             </div>
                                         </div>
                                     </div>
@@ -2013,6 +2015,25 @@ private bool isLoadingInvestigaciones = false;
     // Variables para verificación de requisitos dinámicos
     private proyectoAgiles.Services.VerificacionRequisitosEscalafonDto? requisitosEscalafonDinamicos = null;
     private ProyectoAgiles.Application.DTOs.RequisitoEscalafonConfigDto? configuracionRequisitos = null;
+    
+    // Variables para resúmenes dinámicos (se actualizan con la verificación)
+    private bool cumpleObrasUTA = false;
+    private int obrasConUTARequeridas = 0;
+    private int obrasConUTAObtenidas = 0;
+    private int totalObrasRequeridas = 0;
+    private int totalObrasObtenidas = 0;
+    
+    private bool cumpleEvaluaciones = false;
+    private decimal porcentajeEvaluacionRequerido = 0;
+    private decimal porcentajeEvaluacionObtenido = 0;
+    private int periodosEvaluacionRequeridos = 0;
+    private int periodosEvaluacionAnalizados = 0;
+    
+    private bool cumpleCapacitaciones = false;
+    private int horasCapacitacionRequeridas = 0;
+    private int horasCapacitacionObtenidas = 0;
+    private int horasPedagogicasRequeridas = 0;
+    private int horasPedagogicasObtenidas = 0;
       private Investigacion nuevaInvestigacion = new();
     private Investigacion? editingInvestigacion = null;    private IBrowserFile? selectedPdf;
     private string? pdfFileName;
@@ -2102,7 +2123,12 @@ private bool isLoadingInvestigaciones = false;
             {
                 var requisitosService = new ProyectoAgiles.Application.Services.RequisitosEscalafonService();
                 configuracionRequisitos = requisitosService.GetRequisitosParaNivel(nivelActual);
+                Console.WriteLine($"CargarConfiguracionRequisitos: Configuración cargada para nivel {nivelActual}");
                 StateHasChanged();
+            }
+            else
+            {
+                Console.WriteLine("CargarConfiguracionRequisitos: Nivel de usuario no disponible");
             }
         }
         catch (Exception ex)
@@ -2181,6 +2207,9 @@ private bool isLoadingInvestigaciones = false;
             }).ToList();
 
             Console.WriteLine($"Investigaciones mapeadas: {investigaciones.Count}");
+            
+            // Actualizar resúmenes dinámicos para sincronizar con los datos cargados
+            await ActualizarResumenesDinamicos();
         }
         catch (Exception ex)
         {
@@ -2431,13 +2460,17 @@ private bool isLoadingInvestigaciones = false;
 
                 // Actualizar verificación del requisito 75%
                 await ActualizarVerificacionRequisito75();
+                
+                // Actualizar resúmenes dinámicos para sincronizar con los datos cargados
+                await ActualizarResumenesDinamicos();
                   
                 await MostrarNotificacionExito($"📊 Evaluaciones Importadas", 
                     $"Se han cargado {evaluaciones.Count} evaluación{(evaluaciones.Count != 1 ? "es" : "")} desde la base de datos DAC.");
             }
             else
             {
-                evaluaciones = new List<proyectoAgiles.Services.EvaluacionDesempenoDto>();                await MostrarNotificacionInfo("ℹ️ Sin Datos Disponibles", "No se encontraron evaluaciones de desempeño asociadas a tu cédula en la base de datos DAC.");
+                evaluaciones = new List<proyectoAgiles.Services.EvaluacionDesempenoDto>();
+                await MostrarNotificacionInfo("ℹ️ Sin Datos Disponibles", "No se encontraron evaluaciones de desempeño asociadas a tu cédula en la base de datos DAC.");
             }
         }
         catch (Exception ex)
@@ -2910,6 +2943,9 @@ private bool isLoadingInvestigaciones = false;
             StateHasChanged();
             await Task.Delay(50);
             StateHasChanged();
+            
+            // Actualizar resúmenes dinámicos para que sean consistentes con las estadísticas
+            await ActualizarResumenesDinamicos();
         }
         catch (Exception ex)
         {
@@ -3238,7 +3274,12 @@ private bool isLoadingInvestigaciones = false;
                 return;
             }
             // Simular importación llamando a CargarCapacitaciones
-            await CargarCapacitaciones();            if (capacitaciones.Any())
+            await CargarCapacitaciones();
+            
+            // Actualizar resúmenes dinámicos para sincronizar con los datos cargados
+            await ActualizarResumenesDinamicos();
+            
+            if (capacitaciones.Any())
             {
                 await MostrarNotificacionExito($"📚 Capacitaciones Importadas", $"Se han cargado exitosamente {capacitaciones.Count} capacitación{(capacitaciones.Count > 1 ? "es" : "")} desde la base de datos institucional.");
             }
@@ -3530,6 +3571,174 @@ private bool isLoadingInvestigaciones = false;
         }        catch (Exception ex)
         {
             await MostrarNotificacionError("Error", $"Error al obtener el PDF: {ex.Message}");
+        }
+    }
+
+    private async Task ActualizarResumenesDinamicos()
+    {
+        try
+        {
+            var cedula = UserSession.CurrentUser?.Cedula;
+            var nivelActual = UserSession.CurrentUser?.Nivel;
+            
+            if (string.IsNullOrEmpty(cedula) || string.IsNullOrEmpty(nivelActual))
+                return;
+
+            // Asegurar que tenemos la configuración de requisitos cargada
+            if (configuracionRequisitos == null)
+            {
+                Console.WriteLine("ActualizarResumenesDinamicos: Configuración no disponible, cargando...");
+                CargarConfiguracionRequisitos();
+            }
+
+            // Obtener verificación de requisitos dinámicos
+            var verificacion = await AuthService.VerificarRequisitosEscalafonDinamico(cedula, nivelActual);
+            if (verificacion != null)
+            {
+                requisitosEscalafonDinamicos = verificacion;
+                
+                // Actualizar variables para obras con UTA
+                cumpleObrasUTA = verificacion.ObrasRelevantes.Cumple;
+                if (configuracionRequisitos != null)
+                {
+                    obrasConUTARequeridas = configuracionRequisitos.ObrasRelevantesConUTA;
+                    totalObrasRequeridas = configuracionRequisitos.ObrasRelevantesMinimoTotal;
+                }
+                else
+                {
+                    // Valores por defecto si no hay configuración disponible
+                    obrasConUTARequeridas = 2;
+                    totalObrasRequeridas = 2;
+                }
+                
+                // Extraer valores obtenidos del mensaje de verificación
+                ExtractObrasValues(verificacion.ObrasRelevantes.ValorObtenido);
+                
+                // Actualizar variables para evaluaciones
+                cumpleEvaluaciones = verificacion.EvaluacionDesempeno.Cumple;
+                if (configuracionRequisitos != null)
+                {
+                    porcentajeEvaluacionRequerido = configuracionRequisitos.PorcentajeEvaluacionMinimo;
+                    periodosEvaluacionRequeridos = configuracionRequisitos.PeriodosEvaluacionRequeridos;
+                }
+                else
+                {
+                    // Valores por defecto si no hay configuración disponible
+                    porcentajeEvaluacionRequerido = 75;
+                    periodosEvaluacionRequeridos = 4;
+                }
+                ExtractEvaluacionValues(verificacion.EvaluacionDesempeno.ValorObtenido);
+                
+                // Actualizar variables para capacitaciones
+                cumpleCapacitaciones = verificacion.Capacitacion.Cumple;
+                if (configuracionRequisitos != null)
+                {
+                    horasCapacitacionRequeridas = configuracionRequisitos.HorasCapacitacionRequeridas;
+                    horasPedagogicasRequeridas = configuracionRequisitos.HorasCapacitacionPedagogicas;
+                }
+                else
+                {
+                    // Valores por defecto si no hay configuración disponible
+                    horasCapacitacionRequeridas = 96;
+                    horasPedagogicasRequeridas = 24;
+                }
+                ExtractCapacitacionValues(verificacion.Capacitacion.ValorObtenido);
+                
+                Console.WriteLine($"ActualizarResumenesDinamicos: Variables actualizadas");
+                Console.WriteLine($"  - Nivel: {nivelActual}");
+                Console.WriteLine($"  - Obras: {obrasConUTAObtenidas}/{obrasConUTARequeridas} UTA, {totalObrasObtenidas}/{totalObrasRequeridas} total");
+                Console.WriteLine($"  - Evaluaciones: {porcentajeEvaluacionObtenido}%/{porcentajeEvaluacionRequerido}%");
+                Console.WriteLine($"  - Capacitaciones: {horasCapacitacionObtenidas}h/{horasCapacitacionRequeridas}h, {horasPedagogicasObtenidas}h/{horasPedagogicasRequeridas}h ped");
+                
+                // Forzar actualización de la UI
+                StateHasChanged();
+            }
+            else
+            {
+                Console.WriteLine("ActualizarResumenesDinamicos: No se pudo obtener verificación de requisitos");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error actualizando resúmenes dinámicos: {ex.Message}");
+        }
+    }
+
+    private void ExtractObrasValues(string valorObtenido)
+    {
+        try
+        {
+            // Formato esperado: "6 obra(s) total, 1 con filiación UTA"
+            var match = System.Text.RegularExpressions.Regex.Match(
+                valorObtenido, 
+                @"(\d+)\s+obra\(s\)\s+total,\s+(\d+)\s+con\s+filiación\s+UTA", 
+                System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                
+            if (match.Success)
+            {
+                totalObrasObtenidas = int.Parse(match.Groups[1].Value);
+                obrasConUTAObtenidas = int.Parse(match.Groups[2].Value);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error extrayendo valores de obras: {ex.Message}");
+        }
+    }
+
+    private void ExtractEvaluacionValues(string valorObtenido)
+    {
+        try
+        {
+            // Formato esperado: "80.8% promedio"
+            var match = System.Text.RegularExpressions.Regex.Match(
+                valorObtenido, 
+                @"(\d+(?:\.\d+)?)\s*%", 
+                System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                
+            if (match.Success)
+            {
+                porcentajeEvaluacionObtenido = decimal.Parse(match.Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture);
+            }
+            
+            // También extraer número de evaluaciones si está disponible
+            // Esto se actualizará con los datos reales de evaluaciones cargadas
+            periodosEvaluacionAnalizados = evaluaciones.Count;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error extrayendo valores de evaluaciones: {ex.Message}");
+        }
+    }
+
+    private void ExtractCapacitacionValues(string valorObtenido)
+    {
+        try
+        {
+            // Formato esperado: "108h (40h pedagógicas)"
+            var matchHoras = System.Text.RegularExpressions.Regex.Match(
+                valorObtenido, 
+                @"(\d+)\s*h", 
+                System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                
+            if (matchHoras.Success)
+            {
+                horasCapacitacionObtenidas = int.Parse(matchHoras.Groups[1].Value);
+            }
+            
+            var matchPedagogicas = System.Text.RegularExpressions.Regex.Match(
+                valorObtenido, 
+                @"\((\d+)\s*h\s+pedagógicas?\)", 
+                System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                
+            if (matchPedagogicas.Success)
+            {
+                horasPedagogicasObtenidas = int.Parse(matchPedagogicas.Groups[1].Value);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error extrayendo valores de capacitaciones: {ex.Message}");
         }
     }
 
