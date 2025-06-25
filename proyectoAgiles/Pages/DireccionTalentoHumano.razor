@@ -37,7 +37,7 @@
                 </div>
                 <div class="summary-content">
                     <h3>@approvedSolicitudes</h3>
-                    <p>Solicitudes Aprobadas por Comisión</p>
+                    <p>Aprobadas por Presidente de la Comisión</p>
                 </div>
             </div>
             
@@ -47,7 +47,7 @@
                 </div>
                 <div class="summary-content">
                     <h3>@processedSolicitudes</h3>
-                    <p>Solicitudes Procesadas</p>
+                    <p>Solicitudes Firmadas</p>
                 </div>
             </div>
             
@@ -66,8 +66,8 @@
         <div class="filters-section">
             <div class="filters-container">
                 <select class="form-select" @bind="selectedFilter">
-                    <option value="aprobado">Aprobadas por Comisión</option>
-                    <option value="procesado">Procesadas</option>
+                    <option value="aprobado">Aprobadas por Presidente de la Comisión</option>
+                    <option value="procesado">Firmadas</option>
                     <option value="rechazado-th">Rechazadas por T.H.</option>
                     <option value="all">Todas</option>
                 </select>
@@ -127,7 +127,7 @@
                             @if (solicitud.Status == "Aprobado")
                             {
                                 <button class="btn btn-success" @onclick="() => ProcesarSolicitud(solicitud.Id)">
-                                    <i class="fas fa-clipboard-check"></i> Procesar
+                                    <i class="fas fa-pen-fancy"></i> Firmar
                                 </button>
                                 <button class="btn btn-danger" @onclick="() => RechazarSolicitudTH(solicitud.Id)">
                                     <i class="fas fa-times"></i> Rechazar
@@ -686,7 +686,7 @@
                     @if (selectedSolicitud?.Status == "Aprobado")
                     {
                         <button type="button" class="btn btn-success" @onclick="() => ProcesarSolicitud(selectedSolicitud.Id)">
-                            <i class="fas fa-clipboard-check"></i> Procesar
+                            <i class="fas fa-pen-fancy"></i> Firmar
                         </button>
                         <button type="button" class="btn btn-danger" @onclick="() => RechazarSolicitudTH(selectedSolicitud.Id)">
                             <i class="fas fa-times"></i> Rechazar
@@ -904,8 +904,8 @@
             if (response.IsSuccessStatusCode)
             {
                 await JSRuntime.InvokeVoidAsync("toastNotifications.success", 
-                    "Solicitud Procesada", 
-                    "La solicitud ha sido procesada exitosamente.");
+                    "Solicitud Firmada", 
+                    "La solicitud ha sido firmada exitosamente.");
                 await RefreshSolicitudes();
                 CloseDetailsModal();
             }
@@ -913,14 +913,14 @@
             {
                 await JSRuntime.InvokeVoidAsync("toastNotifications.error", 
                     "Error", 
-                    "No se pudo procesar la solicitud.");
+                    "No se pudo firmar la solicitud.");
             }
         }
         catch (Exception ex)
         {
             await JSRuntime.InvokeVoidAsync("toastNotifications.error", 
                 "Error", 
-                $"Error al procesar la solicitud: {ex.Message}");
+                $"Error al firmar la solicitud: {ex.Message}");
         }
     }
 
@@ -992,8 +992,8 @@
     {
         return status switch
         {
-            "Aprobado" => "Aprobado por Comisión",
-            "Procesado" => "Procesado",
+            "Aprobado" => "Aprobado por Presidente de la Comisión",
+            "Procesado" => "Firmado",
             "RechazadoTH" => "Rechazado por T.H.",
             _ => status
         };
