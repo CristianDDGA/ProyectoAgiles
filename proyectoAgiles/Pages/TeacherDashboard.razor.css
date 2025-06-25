@@ -1271,9 +1271,11 @@ select.form-select {
     appearance: none !important;
 }
 
-/* Remover estilos nativos de select en todos los navegadores */
+/* Eliminación completa de flechas nativas en selects */
 .professional-form select,
-.professional-form .form-select {
+.professional-form .form-select,
+.form-select,
+select {
     -webkit-appearance: none !important;
     -moz-appearance: none !important;
     appearance: none !important;
@@ -1285,11 +1287,59 @@ select.form-select {
     padding-right: 40px !important;
     border: 2px solid #e2e8f0 !important;
     border-radius: 12px !important;
-    padding: 12px 16px !important;
+    padding: 12px 40px 12px 16px !important;
     font-size: 0.95rem !important;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
     color: #2d3748 !important;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+}
+
+/* Remover flechas específicas para cada navegador */
+.professional-form select::-ms-expand,
+.form-select::-ms-expand,
+select::-ms-expand {
+    display: none !important;
+}
+
+.professional-form select::-webkit-appearance,
+.form-select::-webkit-appearance,
+select::-webkit-appearance {
+    -webkit-appearance: none !important;
+}
+
+.professional-form select::-moz-appearance,
+.form-select::-moz-appearance,
+select::-moz-appearance {
+    -moz-appearance: none !important;
+}
+
+/* Estados focus y hover para selects */
+.professional-form select:focus,
+.form-select:focus,
+select:focus {
+    border-color: #667eea !important;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23667eea' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
+    outline: none !important;
+    transform: translateY(-1px) !important;
+}
+
+.professional-form select:hover:not(:focus),
+.form-select:hover:not(:focus),
+select:hover:not(:focus) {
+    border-color: #cbd5e0 !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05) !important;
+}
+
+/* Para Firefox específicamente */
+@-moz-document url-prefix() {
+    .professional-form select,
+    .form-select,
+    select {
+        text-indent: 0.01px !important;
+        text-overflow: '' !important;
+        color: #2d3748 !important;
+    }
 }
 
 .form-input:focus,
@@ -1600,31 +1650,41 @@ input[type="file"] {
 
 /* Estilos específicos para ocultar el input de archivos */
 .file-input-hidden {
-    position: absolute !important;
-    width: 0.1px !important;
-    height: 0.1px !important;
+    position: fixed !important;
+    width: 1px !important;
+    height: 1px !important;
     opacity: 0 !important;
     overflow: hidden !important;
-    z-index: -1 !important;
+    z-index: -9999 !important;
     visibility: hidden !important;
     clip: rect(0, 0, 0, 0) !important;
     border: 0 !important;
-    margin: 0 !important;
+    margin: -1px !important;
     padding: 0 !important;
+    left: -10000px !important;
+    top: -10000px !important;
+    display: none !important;
 }
 
 /* Ocultar completamente cualquier input de archivo */
 .professional-form input[type="file"],
 .file-upload-container input[type="file"],
-input[type="file"].file-input-hidden {
-    position: absolute !important;
-    width: 0.1px !important;
-    height: 0.1px !important;
+input[type="file"].file-input-hidden,
+.blazor-inputfile {
+    position: fixed !important;
+    width: 1px !important;
+    height: 1px !important;
     opacity: 0 !important;
     overflow: hidden !important;
-    z-index: -1 !important;
+    z-index: -9999 !important;
     visibility: hidden !important;
     clip: rect(0, 0, 0, 0) !important;
+    border: 0 !important;
+    margin: -1px !important;
+    padding: 0 !important;
+    left: -10000px !important;
+    top: -10000px !important;
+    display: none !important;
 }
 
 /* Asegurar que el contenedor tenga posición relativa */
