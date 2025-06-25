@@ -81,6 +81,21 @@ window.toastNotifications = {
         return this.show('info', title, message, duration);
     },    warning: function(title, message, duration = 6000) {
         return this.show('warning', title, message, duration);
+    },
+
+    // Función de prueba para verificar el contraste
+    test: function() {
+        console.log('Probando notificaciones con mejor contraste...');
+        this.success('¡Éxito!', 'Esta es una notificación de éxito con mejor contraste y legibilidad.');
+        setTimeout(() => {
+            this.error('Error', 'Esta es una notificación de error con texto más legible.');
+        }, 1000);
+        setTimeout(() => {
+            this.info('Información', 'Esta es una notificación informativa con fondo mejorado.');
+        }, 2000);
+        setTimeout(() => {
+            this.warning('Advertencia', 'Esta es una notificación de advertencia con mejor visibilidad.');
+        }, 3000);
     }
 };
 

@@ -8,9 +8,14 @@
 }
 
 .toast-notification {
-    background: white;
+    position: relative;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    -moz-backdrop-filter: blur(10px);
     border-radius: 12px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
     margin-bottom: 12px;
     padding: 16px 20px;
     border-left: 4px solid;
@@ -19,28 +24,60 @@
     align-items: center;
     gap: 12px;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    min-width: 320px;
+}
+
+.toast-notification::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.8);
+    pointer-events: none;
+    z-index: -1;
 }
 
 .toast-success {
     border-left-color: #10b981;
-    background: linear-gradient(135deg, rgba(16, 185, 129, 0.05), rgba(16, 185, 129, 0.02));
+    background: rgba(240, 253, 244, 0.9);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.toast-success::before {
+    background: rgba(240, 253, 244, 0.8);
 }
 
 .toast-error {
     border-left-color: #ef4444;
-    background: linear-gradient(135deg, rgba(239, 68, 68, 0.05), rgba(239, 68, 68, 0.02));
+    background: rgba(254, 242, 242, 0.9);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.toast-error::before {
+    background: rgba(254, 242, 242, 0.8);
 }
 
 .toast-info {
     border-left-color: #3b82f6;
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(59, 130, 246, 0.02));
+    background: rgba(239, 246, 255, 0.9);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.toast-info::before {
+    background: rgba(239, 246, 255, 0.8);
 }
 
 .toast-warning {
     border-left-color: #f59e0b;
-    background: linear-gradient(135deg, rgba(245, 158, 11, 0.05), rgba(245, 158, 11, 0.02));
+    background: rgba(255, 251, 235, 0.9);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.toast-warning::before {
+    background: rgba(255, 251, 235, 0.8);
 }
 
 .toast-icon {
@@ -66,37 +103,59 @@
 
 .toast-content {
     flex: 1;
+    position: relative;
+    z-index: 2;
 }
 
 .toast-title {
-    font-weight: 600;
-    font-size: 15px;
+    font-weight: 700;
+    font-size: 16px;
     margin: 0 0 4px 0;
     line-height: 1.2;
+    color: #000000;
+    text-shadow: 0 0 1px rgba(255, 255, 255, 0.5);
+    position: relative;
+    z-index: 2;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
 .toast-message {
     font-size: 14px;
-    color: #6b7280;
+    color: #000000;
     margin: 0;
-    line-height: 1.3;
+    line-height: 1.4;
+    font-weight: 500;
+    text-shadow: 0 0 1px rgba(255, 255, 255, 0.5);
+    position: relative;
+    z-index: 2;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
 .toast-close {
     background: none;
     border: none;
-    color: #9ca3af;
+    color: #000000;
     cursor: pointer;
-    padding: 4px;
-    border-radius: 4px;
+    padding: 6px;
+    border-radius: 6px;
     font-size: 16px;
     flex-shrink: 0;
     transition: all 0.2s;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
 }
 
 .toast-close:hover {
-    color: #6b7280;
-    background: rgba(0, 0, 0, 0.05);
+    color: #000000;
+    background: rgba(0, 0, 0, 0.15);
 }
 
 @keyframes slideIn {
@@ -136,5 +195,114 @@
     .toast-notification {
         margin-bottom: 8px;
         padding: 12px 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        border-width: 2px;
+        background: rgba(255, 255, 255, 0.92);
+        backdrop-filter: blur(15px);
     }
+    
+    .toast-title {
+        font-size: 16px;
+        color: #000000;
+        font-weight: 800;
+        text-shadow: none;
+    }
+    
+    .toast-message {
+        font-size: 14px;
+        color: #000000;
+        font-weight: 600;
+        text-shadow: none;
+    }
+}
+
+/* Modo oscuro - por si se implementa en el futuro */
+@media (prefers-color-scheme: dark) {
+    .toast-notification {
+        background: rgba(31, 41, 55, 0.95);
+        backdrop-filter: blur(15px);
+        border-color: rgba(255, 255, 255, 0.2);
+    }
+    
+    .toast-title {
+        color: #f9fafb !important;
+    }
+    
+    .toast-message {
+        color: #e5e7eb !important;
+    }
+    
+    .toast-close {
+        color: #9ca3af;
+    }
+    
+    .toast-close:hover {
+        color: #f3f4f6;
+        background: rgba(255, 255, 255, 0.1);
+    }
+    
+    .toast-success {
+        background: rgba(16, 185, 129, 0.15);
+    }
+    
+    .toast-error {
+        background: rgba(239, 68, 68, 0.15);
+    }
+    
+    .toast-info {
+        background: rgba(59, 130, 246, 0.15);
+    }
+    
+    .toast-warning {
+        background: rgba(245, 158, 11, 0.15);
+    }
+}
+
+/* Asegurar máxima legibilidad del texto */
+.toast-title,
+.toast-message {
+    position: relative;
+    z-index: 2;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Forzar el color negro en todos los casos */
+.toast-notification .toast-title,
+.toast-notification .toast-message {
+    color: #000000 !important;
+}
+
+/* Asegurar que el contenido esté por encima del fondo */
+.toast-content {
+    flex: 1;
+    position: relative;
+    z-index: 2;
+}
+
+/* Mejoras adicionales para el efecto semitransparente */
+.toast-notification:hover {
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+}
+
+/* Ajustes específicos para cada tipo con efecto glass */
+.toast-success:hover {
+    background: rgba(240, 253, 244, 0.95);
+}
+
+.toast-error:hover {
+    background: rgba(254, 242, 242, 0.95);
+}
+
+.toast-info:hover {
+    background: rgba(239, 246, 255, 0.95);
+}
+
+.toast-warning:hover {
+    background: rgba(255, 251, 235, 0.95);
 }
