@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "KZ2XKToNvfE=",
+  "dgSpecHash": "CX0I5zqtvvA=",
   "success": true,
-  "projectFilePath": "C:\\Users\\nixon\\OneDrive\\Escritorio\\proyectoAgiles\\proyectoAgiles.Api\\ProyectoAgiles.Api.csproj",
+  "projectFilePath": "C:\\Users\\nixon\\OneDrive\\Escritorio\\proyectoAgiles\\ProyectoAgiles.Api\\ProyectoAgiles.Api.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\nixon\\.nuget\\packages\\automapper\\12.0.1\\automapper.12.0.1.nupkg.sha512",
     "C:\\Users\\nixon\\.nuget\\packages\\automapper.extensions.microsoft.dependencyinjection\\12.0.1\\automapper.extensions.microsoft.dependencyinjection.12.0.1.nupkg.sha512",

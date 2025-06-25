@@ -1149,6 +1149,345 @@ namespace proyectoAgiles.Services
                 throw new Exception($"Error al actualizar el certificado PDF: {ex.Message}");
             }
         }
+
+        /// <summary>
+        /// Verifica los requisitos de escalafón dinámicamente según el nivel actual del docente
+        /// </summary>
+        /// <param name="cedula">Cédula del docente</param>
+        /// <param name="nivelActual">Nivel académico actual del docente</param>
+        /// <returns>Verificación completa de requisitos para el siguiente nivel</returns>
+        public async Task<VerificacionRequisitosEscalafonDto> VerificarRequisitosEscalafonDinamico(string cedula, string nivelActual)
+        {
+            try
+            {
+                // Obtener configuración de requisitos para el nivel actual
+                var requisitosService = new ProyectoAgiles.Application.Services.RequisitosEscalafonService();
+                var config = requisitosService.GetRequisitosParaNivel(nivelActual);
+
+                var verificacion = new VerificacionRequisitosEscalafonDto
+                {
+                    Cedula = cedula,
+                    NivelActual = config.NivelActual,
+                    NivelObjetivo = config.NivelObjetivo,
+                    ConfiguracionRequisitos = config,
+                    CumpleTodosRequisitos = false,
+                    Mensaje = $"Verificando requisitos para ascender de {config.NivelActual} a {config.NivelObjetivo}..."
+                };
+
+                // 1. Verificar experiencia mínima
+                verificacion.Experiencia = await VerificarExperienciaMinimaDinamica(cedula, config);
+
+                // 2. Verificar obras relevantes
+                verificacion.ObrasRelevantes = await VerificarObrasRelevantesDinamica(cedula, config);
+
+                // 3. Verificar evaluación de desempeño
+                verificacion.EvaluacionDesempeno = await VerificarEvaluacionDesempenoDinamica(cedula, config);
+
+                // 4. Verificar capacitación
+                verificacion.Capacitacion = await VerificarCapacitacionDinamica(cedula, config);
+
+                // 5. Verificar proyectos de investigación (si aplica)
+                if (config.RequiereProyectosInvestigacion)
+                {
+                    verificacion.ProyectosInvestigacion = await VerificarProyectosInvestigacionDinamica(cedula, config);
+                }
+
+                // Determinar si cumple todos los requisitos
+                verificacion.CumpleTodosRequisitos = 
+                    verificacion.Experiencia.Cumple &&
+                    verificacion.ObrasRelevantes.Cumple &&
+                    verificacion.EvaluacionDesempeno.Cumple &&
+                    verificacion.Capacitacion.Cumple &&
+                    (verificacion.ProyectosInvestigacion?.Cumple ?? true);
+
+                // Generar mensaje final
+                if (verificacion.CumpleTodosRequisitos)
+                {
+                    verificacion.Mensaje = $"✅ CUMPLE con todos los requisitos para ascender de {config.NivelActual} a {config.NivelObjetivo}";
+                }
+                else
+                {
+                    verificacion.Mensaje = $"❌ NO CUMPLE con los siguientes requisitos: {string.Join(", ", verificacion.RequisitosIncumplidos)}";
+                }
+
+                return verificacion;
+            }
+            catch (Exception ex)
+            {
+                return new VerificacionRequisitosEscalafonDto
+                {
+                    Cedula = cedula,
+                    NivelActual = nivelActual,
+                    NivelObjetivo = "Error",
+                    CumpleTodosRequisitos = false,
+                    Mensaje = $"Error al verificar requisitos: {ex.Message}"
+                };
+            }
+        }
+
+        private async Task<RequisitoCumplimientoDto> VerificarExperienciaMinimaDinamica(string cedula, RequisitoEscalafonConfigDto config)
+        {
+            try
+            {
+                // Obtener información de TTHH para verificar fecha de ingreso
+                var response = await _httpClient.GetAsync($"{_apiBaseUrl}/api/tthh/by-cedula/{cedula}");
+                if (response.IsSuccessStatusCode)
+                {
+                    var tthhInfo = await response.Content.ReadFromJsonAsync<TTHHDto>();
+                    if (tthhInfo != null)
+                    {
+                        var añosExperiencia = (DateTime.Now - tthhInfo.FechaInicio).TotalDays / 365.25;
+                        var cumple = añosExperiencia >= config.AnosExperienciaRequeridos;
+                        
+                        return new RequisitoCumplimientoDto
+                        {
+                            Cumple = cumple,
+                            Mensaje = $"Experiencia: {añosExperiencia:F1} años desde {tthhInfo.FechaInicio:dd/MM/yyyy} " +
+                                     (cumple ? $"(✅ Cumple - mínimo {config.AnosExperienciaRequeridos} años)" : $"(❌ No cumple - requiere mínimo {config.AnosExperienciaRequeridos} años)"),
+                            ValorObtenido = $"{añosExperiencia:F1} años desde {tthhInfo.FechaInicio:dd/MM/yyyy}",
+                            ValorRequerido = $"{config.AnosExperienciaRequeridos} años mínimo como {config.NivelActual}"
+                        };
+                    }
+                }
+                
+                // Fallback: usar fecha de creación del usuario
+                var userResponse = await _httpClient.GetAsync($"{_apiBaseUrl}/api/users/by-cedula/{cedula}");
+                if (userResponse.IsSuccessStatusCode)
+                {
+                    var userInfo = await userResponse.Content.ReadFromJsonAsync<UserDto>();
+                    if (userInfo != null)
+                    {
+                        var añosExperiencia = (DateTime.Now - userInfo.CreatedAt).TotalDays / 365.25;
+                        var cumple = añosExperiencia >= config.AnosExperienciaRequeridos;
+                        
+                        return new RequisitoCumplimientoDto
+                        {
+                            Cumple = cumple,
+                            Mensaje = $"Experiencia (estimada): {añosExperiencia:F1} años desde registro {userInfo.CreatedAt:dd/MM/yyyy} " +
+                                     (cumple ? $"(✅ Cumple - mínimo {config.AnosExperienciaRequeridos} años)" : $"(❌ No cumple - requiere mínimo {config.AnosExperienciaRequeridos} años)") +
+                                     " (Datos TTHH no disponibles)",
+                            ValorObtenido = $"{añosExperiencia:F1} años (estimado)",
+                            ValorRequerido = $"{config.AnosExperienciaRequeridos} años mínimo como {config.NivelActual}"
+                        };
+                    }
+                }
+                
+                return new RequisitoCumplimientoDto
+                {
+                    Cumple = false,
+                    Mensaje = "❌ No se pudo verificar la experiencia mínima - Sin datos disponibles",
+                    ValorObtenido = "No disponible",
+                    ValorRequerido = $"{config.AnosExperienciaRequeridos} años mínimo como {config.NivelActual}"
+                };
+            }
+            catch (Exception ex)
+            {
+                return new RequisitoCumplimientoDto
+                {
+                    Cumple = false,
+                    Mensaje = $"❌ Error al verificar experiencia: {ex.Message}",
+                    ValorObtenido = "Error",
+                    ValorRequerido = $"{config.AnosExperienciaRequeridos} años mínimo como {config.NivelActual}"
+                };
+            }
+        }
+
+        private async Task<RequisitoCumplimientoDto> VerificarObrasRelevantesDinamica(string cedula, RequisitoEscalafonConfigDto config)
+        {
+            try
+            {
+                var investigaciones = await GetInvestigacionesPorCedula(cedula);
+                
+                // Contar obras con filiación UTA
+                var investigacionesUTA = investigaciones.Where(i => 
+                    i.Filiacion.Contains("UTA", StringComparison.OrdinalIgnoreCase) ||
+                    i.Filiacion.Contains("Universidad Técnica de Ambato", StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+
+                var totalObras = investigaciones.Count;
+                var obrasUTA = investigacionesUTA.Count;
+                var cumpleTotal = totalObras >= config.ObrasRelevantesMinimoTotal;
+                var cumpleUTA = obrasUTA >= config.ObrasRelevantesConUTA;
+                var cumple = cumpleTotal && cumpleUTA;
+
+                string mensaje;
+                if (cumple)
+                {
+                    mensaje = $"✅ Cumple obras relevantes: {totalObras} total ({obrasUTA} con filiación UTA)";
+                }
+                else if (!cumpleTotal && !cumpleUTA)
+                {
+                    mensaje = $"❌ No cumple obras relevantes: {totalObras}/{config.ObrasRelevantesMinimoTotal} total, {obrasUTA}/{config.ObrasRelevantesConUTA} con UTA";
+                }
+                else if (!cumpleTotal)
+                {
+                    mensaje = $"❌ Insuficientes obras totales: {totalObras}/{config.ObrasRelevantesMinimoTotal}";
+                }
+                else
+                {
+                    mensaje = $"❌ Insuficientes obras con UTA: {obrasUTA}/{config.ObrasRelevantesConUTA}";
+                }
+
+                return new RequisitoCumplimientoDto
+                {
+                    Cumple = cumple,
+                    Mensaje = mensaje,
+                    ValorObtenido = $"{totalObras} obra(s) total, {obrasUTA} con filiación UTA",
+                    ValorRequerido = $"Mínimo {config.ObrasRelevantesMinimoTotal} obra(s) total, {config.ObrasRelevantesConUTA} con filiación UTA"
+                };
+            }
+            catch (Exception ex)
+            {
+                return new RequisitoCumplimientoDto
+                {
+                    Cumple = false,
+                    Mensaje = $"❌ Error al verificar obras relevantes: {ex.Message}",
+                    ValorObtenido = "Error",
+                    ValorRequerido = $"Mínimo {config.ObrasRelevantesMinimoTotal} obra(s) total, {config.ObrasRelevantesConUTA} con filiación UTA"
+                };
+            }
+        }
+
+        private async Task<RequisitoCumplimientoDto> VerificarEvaluacionDesempenoDinamica(string cedula, RequisitoEscalafonConfigDto config)
+        {
+            try
+            {
+                var response = await _httpClient.GetAsync($"{_apiBaseUrl}/api/evaluacion-desempeno/verificar-requisito/{cedula}");
+                if (response.IsSuccessStatusCode)
+                {
+                    var verificacion = await response.Content.ReadFromJsonAsync<VerificacionRequisitoEvaluacionResponse>();
+                    if (verificacion != null)
+                    {
+                        var cumple = verificacion.CumpleRequisito75Porciento && 
+                                   verificacion.EvaluacionesAnalizadas >= config.PeriodosEvaluacionRequeridos;
+                        
+                        return new RequisitoCumplimientoDto
+                        {
+                            Cumple = cumple,
+                            Mensaje = cumple 
+                                ? $"✅ Cumple evaluación: {verificacion.PorcentajePromedioUltimasCuatro:F1}% promedio en {verificacion.EvaluacionesAnalizadas} períodos"
+                                : $"❌ No cumple evaluación: {verificacion.PorcentajePromedioUltimasCuatro:F1}% promedio en {verificacion.EvaluacionesAnalizadas} períodos",
+                            ValorObtenido = $"{verificacion.PorcentajePromedioUltimasCuatro:F1}% promedio",
+                            ValorRequerido = $"{config.PorcentajeEvaluacionMinimo}% mínimo en últimos {config.PeriodosEvaluacionRequeridos} períodos"
+                        };
+                    }
+                }
+                
+                return new RequisitoCumplimientoDto
+                {
+                    Cumple = false,
+                    Mensaje = "❌ No se pudo verificar las evaluaciones de desempeño",
+                    ValorObtenido = "No disponible",
+                    ValorRequerido = $"{config.PorcentajeEvaluacionMinimo}% mínimo en últimos {config.PeriodosEvaluacionRequeridos} períodos"
+                };
+            }
+            catch (Exception ex)
+            {
+                return new RequisitoCumplimientoDto
+                {
+                    Cumple = false,
+                    Mensaje = $"❌ Error al verificar evaluación: {ex.Message}",
+                    ValorObtenido = "Error",
+                    ValorRequerido = $"{config.PorcentajeEvaluacionMinimo}% mínimo en últimos {config.PeriodosEvaluacionRequeridos} períodos"
+                };
+            }
+        }
+
+        private async Task<RequisitoCumplimientoDto> VerificarCapacitacionDinamica(string cedula, RequisitoEscalafonConfigDto config)
+        {
+            try
+            {
+                var response = await _httpClient.GetAsync($"{_apiBaseUrl}/api/ditic/verificar-requisito/{cedula}");
+                if (response.IsSuccessStatusCode)
+                {
+                    var verificacion = await response.Content.ReadFromJsonAsync<VerificacionRequisitoDiticResponse>();
+                    if (verificacion != null)
+                    {
+                        var cumpleHoras = verificacion.HorasObtenidas >= config.HorasCapacitacionRequeridas;
+                        var cumplePedagogico = verificacion.HorasPedagogicasObtenidas >= config.HorasCapacitacionPedagogicas;
+                        var cumpleRequisito = (cumpleHoras && cumplePedagogico) || verificacion.TieneExencionAutoridad;
+
+                        string mensaje;
+                        if (verificacion.TieneExencionAutoridad)
+                        {
+                            mensaje = $"✅ Exento por autoridad: {verificacion.CargoAutoridad} ({verificacion.AñosComoAutoridad:F1} años)";
+                        }
+                        else if (cumpleRequisito)
+                        {
+                            mensaje = $"✅ Cumple capacitación: {verificacion.HorasObtenidas}h totales ({verificacion.HorasPedagogicasObtenidas}h pedagógicas)";
+                        }
+                        else
+                        {
+                            mensaje = $"❌ No cumple capacitación: {verificacion.HorasObtenidas}h totales ({verificacion.HorasPedagogicasObtenidas}h pedagógicas)";
+                        }
+
+                        return new RequisitoCumplimientoDto
+                        {
+                            Cumple = cumpleRequisito,
+                            Mensaje = mensaje,
+                            ValorObtenido = verificacion.TieneExencionAutoridad 
+                                ? $"Exento - {verificacion.CargoAutoridad}"
+                                : $"{verificacion.HorasObtenidas}h ({verificacion.HorasPedagogicasObtenidas}h pedagógicas)",
+                            ValorRequerido = $"{config.HorasCapacitacionRequeridas}h totales ({config.HorasCapacitacionPedagogicas}h pedagógicas mín.) en últimos 3 años"
+                        };
+                    }
+                }
+                
+                return new RequisitoCumplimientoDto
+                {
+                    Cumple = false,
+                    Mensaje = "❌ No se pudo verificar las capacitaciones",
+                    ValorObtenido = "No disponible",
+                    ValorRequerido = $"{config.HorasCapacitacionRequeridas}h totales ({config.HorasCapacitacionPedagogicas}h pedagógicas mín.) en últimos 3 años"
+                };
+            }
+            catch (Exception ex)
+            {
+                return new RequisitoCumplimientoDto
+                {
+                    Cumple = false,
+                    Mensaje = $"❌ Error al verificar capacitación: {ex.Message}",
+                    ValorObtenido = "Error",
+                    ValorRequerido = $"{config.HorasCapacitacionRequeridas}h totales ({config.HorasCapacitacionPedagogicas}h pedagógicas mín.) en últimos 3 años"
+                };
+            }
+        }
+
+        private async Task<RequisitoCumplimientoDto> VerificarProyectosInvestigacionDinamica(string cedula, RequisitoEscalafonConfigDto config)
+        {
+            try
+            {
+                // Por ahora, implementaremos una verificación básica
+                // En una implementación completa, aquí se verificarían los proyectos de investigación reales
+                var investigaciones = await GetInvestigacionesPorCedula(cedula);
+                
+                // Simulación: asumimos que las investigaciones representan participación en proyectos
+                var mesesParticipacion = investigaciones.Count * 6; // Asumimos 6 meses por investigación
+                var cumple = mesesParticipacion >= config.MesesProyectosInvestigacion;
+
+                return new RequisitoCumplimientoDto
+                {
+                    Cumple = cumple,
+                    Mensaje = cumple 
+                        ? $"✅ Cumple proyectos de investigación: {mesesParticipacion} meses estimados"
+                        : $"❌ No cumple proyectos de investigación: {mesesParticipacion} meses estimados",
+                    ValorObtenido = $"{mesesParticipacion} meses estimados de participación",
+                    ValorRequerido = $"{config.MesesProyectosInvestigacion} meses mínimos en proyectos de investigación/vinculación"
+                };
+            }
+            catch (Exception ex)
+            {
+                return new RequisitoCumplimientoDto
+                {
+                    Cumple = false,
+                    Mensaje = $"❌ Error al verificar proyectos de investigación: {ex.Message}",
+                    ValorObtenido = "Error",
+                    ValorRequerido = $"{config.MesesProyectosInvestigacion} meses mínimos en proyectos de investigación/vinculación"
+                };
+            }
+        }
+
+        // ...existing code...
     }
 
     // DTOs para investigaciones
@@ -1577,5 +1916,27 @@ public class RegisterRequest
         public string? ProyectosInvestigacion { get; set; }
         public string? Capacitaciones { get; set; }
         public string? Observaciones { get; set; }
+    }
+
+    // DTO para respuesta de verificación de evaluación de desempeño
+    public class VerificacionRequisitoEvaluacionResponse
+    {
+        public string Cedula { get; set; } = string.Empty;
+        public bool CumpleRequisito75Porciento { get; set; }
+        public decimal PorcentajePromedioUltimasCuatro { get; set; }
+        public int EvaluacionesAnalizadas { get; set; }
+        public string MensajeDetallado { get; set; } = string.Empty;
+        public List<EvaluacionDesempenoSimpleDto> EvaluacionesConsideradas { get; set; } = new();
+    }
+
+    public class EvaluacionDesempenoSimpleDto
+    {
+        public string PeriodoAcademico { get; set; } = string.Empty;
+        public int Anio { get; set; }
+        public string Semestre { get; set; } = string.Empty;
+        public decimal PuntajeObtenido { get; set; }
+        public decimal PuntajeMaximo { get; set; }
+        public decimal PorcentajeObtenido { get; set; }
+        public DateTime FechaEvaluacion { get; set; }
     }
 }
