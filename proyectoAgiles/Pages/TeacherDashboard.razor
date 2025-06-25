@@ -1808,6 +1808,18 @@
 
     <!-- Tarjetas de Estadísticas de Promoción -->
     <div class="stats-section">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4 class="mb-0">Estadísticas de Promoción</h4>
+            <button class="btn btn-outline-primary btn-sm" @onclick="ActualizarEstadisticas" disabled="@isLoadingEstadisticas">
+                @if (isLoadingEstadisticas)
+                {
+                    <span class="spinner-border spinner-border-sm me-2"></span>
+                }
+                <i class="fas fa-sync-alt me-1"></i>
+                Actualizar
+            </button>
+        </div>
+        
         @if (estadisticasDocente == null)
         {
             <div class="text-center py-4">
@@ -2099,12 +2111,15 @@ private bool isLoadingInvestigaciones = false;
         try
         {
             // Cargar estadísticas de promoción
+            Console.WriteLine("LoadDashboardData: Iniciando carga inicial de estadísticas...");
             await CargarEstadisticas();
+            Console.WriteLine("LoadDashboardData: Estadísticas cargadas al inicializar.");
         }
         catch (Exception ex)
         {
             // En caso de error, mostrar mensaje en consola
             Console.WriteLine($"Error cargando estadísticas: {ex.Message}");
+            await MostrarNotificacionError("Error al cargar datos", "Hubo un problema al cargar las estadísticas del dashboard.");
         }
     }private void NavigateToInvestigaciones()
     {
@@ -2331,8 +2346,10 @@ private bool isLoadingInvestigaciones = false;
                 "La investigación ha sido actualizada exitosamente en el sistema." : 
                 "La nueva investigación ha sido registrada correctamente y está disponible en tu perfil académico.");
             
-            // Actualizar estadísticas automáticamente
+            // Actualizar estadísticas automáticamente con mejor logging
+            Console.WriteLine("GuardarInvestigacion: Iniciando actualización de estadísticas...");
             await CargarEstadisticas();
+            Console.WriteLine("GuardarInvestigacion: Estadísticas actualizadas.");
         }
         catch (Exception ex)
         {
@@ -2359,8 +2376,10 @@ private bool isLoadingInvestigaciones = false;
                     investigaciones.RemoveAll(i => i.Id == id);
                     await MostrarNotificacionExito("🗑️ Eliminación Exitosa", "La investigación ha sido eliminada permanentemente del sistema.");
                     
-                    // Actualizar estadísticas automáticamente
+                    // Actualizar estadísticas automáticamente con mejor logging
+                    Console.WriteLine("EliminarInvestigacion: Iniciando actualización de estadísticas...");
                     await CargarEstadisticas();
+                    Console.WriteLine("EliminarInvestigacion: Estadísticas actualizadas.");
                     StateHasChanged();
                 }                else
                 {
@@ -2642,8 +2661,10 @@ private bool isLoadingInvestigaciones = false;
                 "La evaluación de desempeño ha sido actualizada correctamente en el sistema académico." : 
                 "La nueva evaluación DAC ha sido registrada exitosamente y contribuye a tu perfil de promoción.");
             
-            // Actualizar estadísticas automáticamente
+            // Actualizar estadísticas automáticamente con mejor logging
+            Console.WriteLine("GuardarEvaluacion: Iniciando actualización de estadísticas...");
             await CargarEstadisticas();
+            Console.WriteLine("GuardarEvaluacion: Estadísticas actualizadas.");
             
             // Actualizar verificación del requisito 75%
             await ActualizarVerificacionRequisito75();
@@ -2848,25 +2869,49 @@ private bool isLoadingInvestigaciones = false;
         var cedula = UserSession.CurrentUser?.Cedula;
         if (string.IsNullOrEmpty(cedula))
         {
-            await JSRuntime.InvokeVoidAsync("alert", "No se pudo obtener la cédula del usuario actual.");
+            Console.WriteLine("CargarEstadisticas: No se pudo obtener la cédula del usuario actual.");
             return;
         }
 
         try
         {
+            Console.WriteLine($"CargarEstadisticas: Iniciando carga para cédula {cedula}");
             isLoadingEstadisticas = true;
             StateHasChanged();
 
+            // Limpiar estadísticas anteriores para forzar recarga
+            estadisticasDocente = null;
+            StateHasChanged();
+
             estadisticasDocente = await AuthService.ObtenerEstadisticasDocente(cedula);
+            Console.WriteLine($"CargarEstadisticas: Estadísticas cargadas exitosamente");
+            
+            // Forzar actualización de la UI
+            StateHasChanged();
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("alert", $"Error al cargar estadísticas: {ex.Message}");
+            Console.WriteLine($"CargarEstadisticas: Error - {ex.Message}");
+            await MostrarNotificacionError("Error al cargar estadísticas", ex.Message);
         }
         finally
         {
             isLoadingEstadisticas = false;
             StateHasChanged();
+        }
+    }
+
+    private async Task ActualizarEstadisticas()
+    {
+        try
+        {
+            await MostrarNotificacionInfo("🔄 Actualizando", "Recargando estadísticas desde el servidor...");
+            await CargarEstadisticas();
+            await MostrarNotificacionExito("✅ Actualizado", "Las estadísticas se han actualizado correctamente");
+        }
+        catch (Exception ex)
+        {
+            await MostrarNotificacionError("❌ Error", $"Error al actualizar estadísticas: {ex.Message}");
         }
     }
 
@@ -3273,8 +3318,10 @@ private bool isLoadingInvestigaciones = false;
                     );                    await MostrarNotificacionExito("🎓 Capacitación Registrada", "La capacitación DITIC ha sido creada exitosamente con su certificado PDF adjunto.");
                     await CargarCapacitaciones();
                     
-                    // Actualizar estadísticas automáticamente
+                    // Actualizar estadísticas automáticamente con mejor logging
+                    Console.WriteLine("GuardarCapacitacion: Iniciando actualización de estadísticas (con PDF)...");
                     await CargarEstadisticas();
+                    Console.WriteLine("GuardarCapacitacion: Estadísticas actualizadas (con PDF).");
                     CloseAgregarCapacitacionModal();
                 }else
                 {
@@ -3305,8 +3352,10 @@ private bool isLoadingInvestigaciones = false;
                     var created = await AuthService.CrearCapacitacion(createDto);                    await MostrarNotificacionExito("🎓 Capacitación Registrada", "La capacitación DITIC ha sido creada correctamente en el sistema académico.");
                     await CargarCapacitaciones();
                     
-                    // Actualizar estadísticas automáticamente
+                    // Actualizar estadísticas automáticamente con mejor logging
+                    Console.WriteLine("GuardarCapacitacion: Iniciando actualización de estadísticas...");
                     await CargarEstadisticas();
+                    Console.WriteLine("GuardarCapacitacion: Estadísticas actualizadas.");
                     CloseAgregarCapacitacionModal();
                 }
             }
