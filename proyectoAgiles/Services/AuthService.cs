@@ -1657,6 +1657,11 @@ namespace proyectoAgiles.Services
                 if (config.RequiereProyectosInvestigacion)
                 {
                     verificacion.ProyectosInvestigacion = await VerificarProyectosInvestigacionDinamica(cedula, config);
+                    Console.WriteLine($"DEBUG: ProyectosInvestigacion requerido - {verificacion.ProyectosInvestigacion.Mensaje}");
+                }
+                else
+                {
+                    Console.WriteLine($"DEBUG: ProyectosInvestigacion NO requerido para este nivel");
                 }
 
                 // Determinar si cumple todos los requisitos
@@ -1982,26 +1987,75 @@ namespace proyectoAgiles.Services
         {
             try
             {
-                // Por ahora, implementaremos una verificación básica
-                // En una implementación completa, aquí se verificarían los proyectos de investigación reales
+                // NOTA: Esta implementación calcula los meses de participación desde la investigación 
+                // con filiación UTA más antigua, asumiendo participación continua en proyectos
+                
                 var investigaciones = await GetInvestigacionesPorCedula(cedula);
                 
-                // Simulación: asumimos que las investigaciones representan participación en proyectos
-                var mesesParticipacion = investigaciones.Count * 6; // Asumimos 6 meses por investigación
-                var cumple = mesesParticipacion >= config.MesesProyectosInvestigacion;
+                Console.WriteLine($"DEBUG VerificarProyectosInvestigacionDinamica:");
+                Console.WriteLine($"  - Total investigaciones: {investigaciones.Count}");
+                Console.WriteLine($"  - Meses requeridos: {config.MesesProyectosInvestigacion}");
+                
+                // Filtrar investigaciones con filiación UTA
+                var investigacionesUTA = investigaciones.Where(i => 
+                    i.Filiacion.Contains("UTA", StringComparison.OrdinalIgnoreCase) ||
+                    i.Filiacion.Contains("Universidad Técnica de Ambato", StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+                
+                Console.WriteLine($"  - Investigaciones con filiación UTA: {investigacionesUTA.Count}");
+                
+                int mesesEstimados = 0;
+                DateTime? fechaInicioParticipacion = null;
+                
+                if (investigacionesUTA.Count > 0)
+                {
+                    // Buscar la investigación con filiación UTA más antigua
+                    var investigacionMasAntigua = investigacionesUTA
+                        .OrderBy(i => i.FechaPublicacion)
+                        .First();
+                    
+                    fechaInicioParticipacion = investigacionMasAntigua.FechaPublicacion;
+                    
+                    // Calcular meses desde la investigación más antigua hasta ahora
+                    var tiempoParticipacion = DateTime.Now - fechaInicioParticipacion.Value;
+                    mesesEstimados = (int)(tiempoParticipacion.TotalDays / 30.44); // Promedio de días por mes
+                    
+                    Console.WriteLine($"  - Investigación UTA más antigua: '{investigacionMasAntigua.Titulo}' ({fechaInicioParticipacion.Value:dd/MM/yyyy})");
+                    Console.WriteLine($"  - Meses desde investigación más antigua: {mesesEstimados}");
+                    Console.WriteLine($"  - Años equivalentes: {mesesEstimados / 12.0:F1}");
+                }
+                else
+                {
+                    Console.WriteLine($"  - No hay investigaciones con filiación UTA registradas");
+                }
+                
+                var cumple = mesesEstimados >= config.MesesProyectosInvestigacion;
+
+                string mensaje;
+                if (investigacionesUTA.Count > 0 && fechaInicioParticipacion.HasValue)
+                {
+                    mensaje = cumple 
+                        ? $"✅ Cumple proyectos de investigación: {mesesEstimados} meses desde {fechaInicioParticipacion.Value:dd/MM/yyyy}"
+                        : $"❌ No cumple proyectos de investigación: {mesesEstimados}/{config.MesesProyectosInvestigacion} meses desde {fechaInicioParticipacion.Value:dd/MM/yyyy}";
+                }
+                else
+                {
+                    mensaje = $"❌ No cumple proyectos de investigación: Sin investigaciones con filiación UTA registradas";
+                }
 
                 return new RequisitoCumplimientoDto
                 {
                     Cumple = cumple,
-                    Mensaje = cumple 
-                        ? $"✅ Cumple proyectos de investigación: {mesesParticipacion} meses estimados"
-                        : $"❌ No cumple proyectos de investigación: {mesesParticipacion} meses estimados",
-                    ValorObtenido = $"{mesesParticipacion} meses estimados de participación",
+                    Mensaje = mensaje,
+                    ValorObtenido = investigacionesUTA.Count > 0 && fechaInicioParticipacion.HasValue
+                        ? $"{mesesEstimados} meses estimados desde la investigación UTA más antigua ({fechaInicioParticipacion.Value:dd/MM/yyyy})"
+                        : "0 meses - sin investigaciones con filiación UTA",
                     ValorRequerido = $"{config.MesesProyectosInvestigacion} meses mínimos en proyectos de investigación/vinculación"
                 };
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"ERROR VerificarProyectosInvestigacionDinamica: {ex.Message}");
                 return new RequisitoCumplimientoDto
                 {
                     Cumple = false,
