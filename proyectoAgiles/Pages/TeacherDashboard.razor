@@ -1975,6 +1975,9 @@ private bool isLoadingInvestigaciones = false;
         // Asegurar que la sesión esté inicializada
         await UserSession.InitializeAsync();
         
+        // Refrescar datos del usuario para obtener información actualizada
+        await UserSession.RefreshUserDataAsync(HttpClient);
+        
         // Verificar que el usuario esté autenticado y sea docente
         if (UserSession.CurrentUser == null || UserSession.CurrentUser.UserType != 2)
         {

@@ -1,4 +1,5 @@
 using Microsoft.JSInterop;
+using System.Net.Http.Json;
 using System.Text.Json;
 using static proyectoAgiles.Services.AuthService;
 
@@ -92,6 +93,29 @@ namespace proyectoAgiles.Services
             var nivel = _currentUser?.Nivel ?? string.Empty;
             Console.WriteLine($"GetUserNivel devuelve: '{nivel}'"); // Debug temporal
             return nivel;
+        }
+
+        public async Task RefreshUserDataAsync(HttpClient httpClient)
+        {
+            if (_currentUser?.Id == null) return;
+
+            try
+            {
+                var response = await httpClient.GetAsync($"/api/users/{_currentUser.Id}");
+                if (response.IsSuccessStatusCode)
+                {
+                    var updatedUser = await response.Content.ReadFromJsonAsync<UserDto>();
+                    if (updatedUser != null)
+                    {
+                        await SetUserAsync(updatedUser);
+                        Console.WriteLine($"Datos de usuario actualizados. Nuevo nivel: {updatedUser.Nivel}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error al refrescar datos del usuario: {ex.Message}");
+            }
         }
     }
 }
