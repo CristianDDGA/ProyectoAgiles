@@ -485,65 +485,268 @@ body, html {
     color: #1a365d;
 }
 
-/* Responsive Design */
+/* Estilos para indicadores de requisitos */
+.requirement-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.requirement-item small.text-muted {
+    display: block;
+    margin-top: 0.25rem;
+    font-style: italic;
+    color: #6b7280;
+}
+
+.requirement-item {
+    margin-bottom: 0.5rem;
+}
+
+/* Mejora de espaciado para table cells con requirements */
+.table td {
+    vertical-align: top;
+    padding: 0.75rem;
+}
+
+.table td .requirement-item {
+    margin-bottom: 0.25rem;
+}
+
+.requirement-status {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    font-size: 0.875rem;
+    font-weight: bold;
+    flex-shrink: 0;
+}
+
+.requirement-status.cumple {
+    background-color: #10b981;
+    color: white;
+    border: 2px solid #059669;
+}
+
+.requirement-status.no-cumple {
+    background-color: #ef4444;
+    color: white;
+    border: 2px solid #dc2626;
+}
+
+.requirement-status i {
+    font-size: 0.75rem;
+}
+
+/* Animación sutil para los indicadores */
+.requirement-status {
+    transition: all 0.2s ease-in-out;
+}
+
+.requirement-status:hover {
+    transform: scale(1.1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Tooltip para información adicional */
+.requirement-item:hover .requirement-status.cumple::after {
+    content: "Cumple requisitos";
+    position: absolute;
+    background: #1f2937;
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    top: -2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+}
+
+.requirement-item:hover .requirement-status.no-cumple::after {
+    content: "No cumple requisitos";
+    position: absolute;
+    background: #1f2937;
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    top: -2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+}
+
+.requirement-item:hover .requirement-status::after {
+    opacity: 1;
+}
+
+/* Estilos para el resumen de cumplimiento */
+.requirements-summary {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.requirement-summary-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.requirement-summary-item:last-of-type {
+    border-bottom: none;
+    margin-bottom: 1rem;
+}
+
+.requirement-name {
+    font-weight: 600;
+    color: #374151;
+}
+
+.overall-compliance {
+    padding: 1rem;
+    background: #ffffff;
+    border: 2px solid #e2e8f0;
+    border-radius: 0.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.overall-label {
+    font-weight: 700;
+    color: #1f2937;
+    font-size: 1.1rem;
+}
+
+.overall-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.overall-status.cumple-todos {
+    color: #10b981;
+}
+
+.overall-status.no-cumple-todos {
+    color: #ef4444;
+}
+
+.overall-status i {
+    font-size: 1.25rem;
+}
+
+/* Estilos para checklist de requisitos específicos */
+.requirements-checklist {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+}
+
+.requirement-checklist-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1rem 0;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.requirement-checklist-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.requirement-status-icon {
+    font-size: 1.25rem;
+    margin-top: 0.125rem;
+    flex-shrink: 0;
+}
+
+.requirement-checklist-item.cumple .requirement-status-icon {
+    color: #10b981;
+}
+
+.requirement-checklist-item.no-cumple .requirement-status-icon {
+    color: #ef4444;
+}
+
+.requirement-text {
+    flex: 1;
+    line-height: 1.6;
+}
+
+.requirement-text strong {
+    color: #374151;
+    display: inline-block;
+    margin-bottom: 0.25rem;
+}
+
+/* Animación para los iconos de checklist */
+.requirement-status-icon i {
+    transition: all 0.2s ease-in-out;
+}
+
+.requirement-checklist-item:hover .requirement-status-icon i {
+    transform: scale(1.1);
+}
+
+/* Responsive para checklist */
 @media (max-width: 768px) {
-    .summary-cards {
-        grid-template-columns: 1fr;
-        gap: 1rem;
-        padding: 0 0.5rem;
-    }
-    
-    .page-container {
-        padding: 1rem 0 0.5rem 0;
-    }
-    
-    .back-button-container {
-        top: 6rem;
-        left: 0.5rem;
-        padding: 0.25rem;
-    }
-    
-    .btn-outline-secondary {
-        padding: 0.5rem 1rem;
-        font-size: 0.8rem;
-    }
-    
-    .filters-container {
+    .requirement-checklist-item {
         flex-direction: column;
-        align-items: stretch;
-        gap: 0.75rem;
+        gap: 0.5rem;
     }
     
-    .solicitud-header {
-        flex-direction: column;
-        gap: 1rem;
-        align-items: flex-start;
-    }
-    
-    .solicitud-details {
-        grid-template-columns: 1fr;
-    }
-    
-    .solicitud-actions {
-        flex-direction: column;
-    }
-    
-    .solicitudes-section, .filters-section {
-        padding: 0 0.5rem;
-    }
-    
-    .modal-dialog {
-        margin: 1rem;
-    }
-    
-    .modal-body {
-        max-height: 60vh;
+    .requirement-status-icon {
+        align-self: flex-start;
     }
 }
 
-@media (max-width: 1024px) and (min-width: 769px) {
-    .summary-cards {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 1.25rem;
+/* Responsive para indicadores */
+@media (max-width: 768px) {
+    .requirement-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .requirement-status {
+        align-self: flex-end;
+    }
+}
+
+/* Responsive para resumen de cumplimiento */
+@media (max-width: 768px) {
+    .overall-compliance {
+        flex-direction: column;
+        gap: 0.5rem;
+        text-align: center;
+    }
+    
+    .requirement-summary-item {
+        flex-direction: column;
+        gap: 0.5rem;
+        text-align: center;
     }
 }
