@@ -1115,3 +1115,26 @@ body, html {
     margin-bottom: 16px;
     line-height: 1.6;
 }
+
+/* Estilos específicos para encabezados de tablas en el modal de detalles */
+.modal-body .professional-table thead {
+    background: #000000 !important;
+    color: #ffffff !important;
+}
+
+.modal-body .professional-table thead th {
+    color: #ffffff !important;
+    background: #000000 !important;
+}
+
+.modal-body .details-section .table thead th {
+    color: #ffffff !important;
+    background: #000000 !important;
+}
+
+/* Asegurar que el texto y iconos en los encabezados del modal sean blancos */
+.modal-body .professional-table thead th i,
+.modal-body .details-section .table thead th i {
+    color: #ffffff !important;
+    opacity: 1;
+}
