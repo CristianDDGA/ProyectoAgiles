@@ -1448,17 +1448,36 @@
             {
                 if (aprobado)
                 {
-                    // Si es aprobado, enviar a Comisión Académica de Escalafón para generar informe
-                    await JSRuntime.InvokeVoidAsync("toastNotifications.success", 
-                        "Solicitud Aprobada", 
-                        "La solicitud ha sido aprobada y enviada a la Comisión Académica de Escalafón para generación de informe.");
+                    // Si es aprobado, enviar notificación por correo
+                    try
+                    {
+                        var emailResponse = await HttpClient.PostAsync($"/api/solicitudes-escalafon/{solicitudId}/notificar-aprobacion", null);
+                        if (emailResponse.IsSuccessStatusCode)
+                        {
+                            await JSRuntime.InvokeVoidAsync("toastNotifications.success", 
+                                "Solicitud Aprobada y Notificada", 
+                                $"La solicitud ha sido aprobada y se ha enviado la notificación por correo a {solicitud.DocenteEmail}");
+                        }
+                        else
+                        {
+                            await JSRuntime.InvokeVoidAsync("toastNotifications.warning", 
+                                "Solicitud Aprobada", 
+                                "La solicitud ha sido aprobada, pero no se pudo enviar el correo de notificación.");
+                        }
+                    }
+                    catch (Exception emailEx)
+                    {
+                        await JSRuntime.InvokeVoidAsync("toastNotifications.warning", 
+                            "Solicitud Aprobada", 
+                            $"La solicitud ha sido aprobada, pero hubo un error enviando el correo: {emailEx.Message}");
+                    }
                 }
                 else
                 {
-                    // Si es rechazado, enviar correo de notificación
+                    // Si es rechazado, mostrar notificación (podrías implementar un endpoint similar para rechazos)
                     await JSRuntime.InvokeVoidAsync("toastNotifications.success", 
-                        "Correo de Rechazo Enviado", 
-                        $"Se ha enviado la notificación de rechazo a {solicitud.DocenteEmail}");
+                        "Solicitud Rechazada", 
+                        $"La solicitud ha sido rechazada. Se debería notificar a {solicitud.DocenteEmail}");
                 }
                 
                 // Actualizar la lista de solicitudes
@@ -1477,7 +1496,7 @@
         {
             await JSRuntime.InvokeVoidAsync("toastNotifications.error", 
                 "Error", 
-                $"Error al enviar notificación: {ex.Message}");
+                $"Error al procesar solicitud: {ex.Message}");
         }
     }
 

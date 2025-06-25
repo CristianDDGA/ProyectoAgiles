@@ -19,9 +19,12 @@ public class SolicitudEscalafonDto
     public DateTime FechaSolicitud { get; set; }
     public DateTime? FechaAprobacion { get; set; }
     public DateTime? FechaRechazo { get; set; }
+    public DateTime? FechaEnvioConsejo { get; set; }
     public string Status { get; set; } = string.Empty;
     public string? Observaciones { get; set; }
+    public string? ObservacionesConsejo { get; set; }
     public string? MotivoRechazo { get; set; }
+    public string? MotivoRechazoConsejo { get; set; }
     public string? ProcesadoPor { get; set; }
 }
 

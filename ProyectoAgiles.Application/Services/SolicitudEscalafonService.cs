@@ -10,11 +10,13 @@ public class SolicitudEscalafonService : ISolicitudEscalafonService
 {
     private readonly ISolicitudEscalafonRepository _repository;
     private readonly IMapper _mapper;
+    private readonly IEmailService _emailService;
 
-    public SolicitudEscalafonService(ISolicitudEscalafonRepository repository, IMapper mapper)
+    public SolicitudEscalafonService(ISolicitudEscalafonRepository repository, IMapper mapper, IEmailService emailService)
     {
         _repository = repository;
         _mapper = mapper;
+        _emailService = emailService;
     }
 
     public async Task<IEnumerable<SolicitudEscalafonDto>> GetAllSolicitudesAsync()
@@ -97,5 +99,43 @@ public class SolicitudEscalafonService : ISolicitudEscalafonService
     public async Task<bool> ExisteSolicitudPendienteAsync(string cedula)
     {
         return await _repository.ExistePendienteByCedulaAsync(cedula);
+    }
+
+    public async Task<bool> NotificarAprobacionAsync(int solicitudId)
+    {
+        var solicitud = await _repository.GetByIdAsync(solicitudId);
+        if (solicitud == null)
+        {
+            return false;
+        }
+
+        var subject = "Notificación de Aprobación - Solicitud de Escalafón";
+        var body = $@"
+            <html>
+            <body>
+                <h2>Estimado/a {solicitud.DocenteNombre},</h2>
+                <p>Nos complace informarle que su solicitud de escalafón ha sido <strong>APROBADA</strong> por la Comisión Académica.</p>
+                
+                <h3>Detalles de la solicitud:</h3>
+                <ul>
+                    <li><strong>Nivel actual:</strong> {solicitud.NivelActual}</li>
+                    <li><strong>Nivel solicitado:</strong> {solicitud.NivelSolicitado}</li>
+                    <li><strong>Fecha de solicitud:</strong> {solicitud.FechaSolicitud:dd/MM/yyyy}</li>
+                    <li><strong>Fecha de aprobación:</strong> {solicitud.FechaAprobacion:dd/MM/yyyy}</li>
+                </ul>
+                
+                {(string.IsNullOrEmpty(solicitud.Observaciones) ? "" : $"<p><strong>Observaciones:</strong> {solicitud.Observaciones}</p>")}
+                
+                <p>Felicitaciones por este logro académico. Su nueva categoría entrará en vigencia según los procedimientos establecidos por la institución.</p>
+                
+                <p>Si tiene alguna consulta, no dude en contactarnos.</p>
+                
+                <p>Atentamente,<br>
+                Comisión Académica<br>
+                Universidad</p>
+            </body>
+            </html>";
+
+        return await _emailService.SendEmailAsync(solicitud.DocenteEmail, subject, body, true);
     }
 }

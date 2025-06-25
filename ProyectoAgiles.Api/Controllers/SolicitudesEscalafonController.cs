@@ -242,4 +242,26 @@ public class SolicitudesEscalafonController : ControllerBase
             return StatusCode(500, "Error interno del servidor");
         }
     }
+
+    /// <summary>
+    /// Notifica por correo electrónico la aprobación de una solicitud
+    /// </summary>
+    [HttpPost("{id}/notificar-aprobacion")]
+    public async Task<ActionResult> NotificarAprobacion(int id)
+    {
+        try
+        {
+            var resultado = await _solicitudService.NotificarAprobacionAsync(id);
+            if (!resultado)
+            {
+                return BadRequest("No se pudo enviar la notificación. Verifique que la solicitud exista y tenga un email válido.");
+            }
+            return Ok(new { mensaje = "Notificación enviada exitosamente" });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al notificar aprobación para solicitud {Id}", id);
+            return StatusCode(500, "Error interno del servidor");
+        }
+    }
 }

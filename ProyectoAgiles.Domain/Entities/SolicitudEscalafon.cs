@@ -106,6 +106,11 @@ public class SolicitudEscalafon : BaseEntity
     public DateTime? FechaRechazo { get; set; }
 
     /// <summary>
+    /// Fecha de envío al consejo (si aplica)
+    /// </summary>
+    public DateTime? FechaEnvioConsejo { get; set; }
+
+    /// <summary>
     /// Estado de la solicitud
     /// </summary>
     [Required]
@@ -119,10 +124,22 @@ public class SolicitudEscalafon : BaseEntity
     public string? Observaciones { get; set; }
 
     /// <summary>
+    /// Observaciones del consejo
+    /// </summary>
+    [StringLength(1000)]
+    public string? ObservacionesConsejo { get; set; }
+
+    /// <summary>
     /// Motivo del rechazo (si aplica)
     /// </summary>
     [StringLength(1000)]
     public string? MotivoRechazo { get; set; }
+
+    /// <summary>
+    /// Motivo del rechazo por parte del consejo
+    /// </summary>
+    [StringLength(1000)]
+    public string? MotivoRechazoConsejo { get; set; }
 
     /// <summary>
     /// Usuario que procesó la solicitud
