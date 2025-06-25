@@ -1647,24 +1647,24 @@
             var solicitud = solicitudes.FirstOrDefault(s => s.Id == solicitudId);
             if (solicitud == null) return;
 
-            // Actualizar estado a Finalizado y enviar correo de notificación
-            var updateDto = new { Id = solicitudId, Status = "Finalizado" };
-            var response = await HttpClient.PutAsJsonAsync($"/api/solicitudes-escalafon/{solicitudId}/status", updateDto);
+            // Llamar al nuevo endpoint que finaliza el escalafón y actualiza el nivel del docente
+            var response = await HttpClient.PostAsync($"/api/solicitudes-escalafon/{solicitudId}/finalizar-escalafon", null);
             
             if (response.IsSuccessStatusCode)
             {
                 await JSRuntime.InvokeVoidAsync("toastNotifications.success", 
-                    "Escalafón Finalizado", 
-                    $"El escalafón de {solicitud.DocenteNombre} ha sido finalizado y se ha enviado el correo de notificación con el informe adjunto.");
+                    "¡Escalafón Finalizado Exitosamente!", 
+                    $"El escalafón de {solicitud.DocenteNombre} ha sido finalizado. Se ha actualizado su nivel académico a '{solicitud.NivelSolicitado}' y se ha enviado la notificación por correo electrónico.");
                 
                 await RefreshSolicitudes();
                 CloseDetailsModal();
             }
             else
             {
+                var errorContent = await response.Content.ReadAsStringAsync();
                 await JSRuntime.InvokeVoidAsync("toastNotifications.error", 
-                    "Error", 
-                    "No se pudo finalizar el escalafón.");
+                    "Error al Finalizar Escalafón", 
+                    "No se pudo finalizar el escalafón. Verifique que la solicitud y el docente existan en el sistema.");
             }
         }
         catch (Exception ex)

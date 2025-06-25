@@ -14,4 +14,5 @@ public interface ISolicitudEscalafonService
     Task<bool> DeleteSolicitudAsync(int id);
     Task<bool> ExisteSolicitudPendienteAsync(string cedula);
     Task<bool> NotificarAprobacionAsync(int solicitudId);
+    Task<bool> FinalizarEscalafonAsync(int solicitudId);
 }

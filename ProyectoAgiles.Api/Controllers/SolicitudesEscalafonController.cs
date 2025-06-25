@@ -264,4 +264,26 @@ public class SolicitudesEscalafonController : ControllerBase
             return StatusCode(500, "Error interno del servidor");
         }
     }
+
+    /// <summary>
+    /// Finaliza el proceso de escalafón, actualizando el nivel del docente
+    /// </summary>
+    [HttpPost("{id}/finalizar-escalafon")]
+    public async Task<ActionResult> FinalizarEscalafon(int id)
+    {
+        try
+        {
+            var resultado = await _solicitudService.FinalizarEscalafonAsync(id);
+            if (!resultado)
+            {
+                return BadRequest("No se pudo finalizar el escalafón. Verifique que la solicitud y el docente existan.");
+            }
+            return Ok(new { mensaje = "Escalafón finalizado exitosamente. Se ha actualizado el nivel del docente y se ha enviado la notificación." });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al finalizar escalafón para solicitud {Id}", id);
+            return StatusCode(500, "Error interno del servidor");
+        }
+    }
 }
