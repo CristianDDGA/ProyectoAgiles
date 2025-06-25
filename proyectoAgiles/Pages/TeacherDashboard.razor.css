@@ -1271,46 +1271,319 @@ select.form-select {
     appearance: none !important;
 }
 
-/* Eliminación completa de flechas nativas en selects */
+/* Eliminación COMPLETA y AGRESIVA de flechas nativas en selects */
 .professional-form select,
 .professional-form .form-select,
 .form-select,
-select {
+select,
+.form-control,
+.form-select,
+.custom-select,
+input[type="select"],
+*[role="listbox"],
+*[role="combobox"] {
+    /* Resetear todas las apariencias posibles */
     -webkit-appearance: none !important;
     -moz-appearance: none !important;
+    -ms-appearance: none !important;
+    -o-appearance: none !important;
     appearance: none !important;
+    
+    /* Fondo personalizado con flecha SVG */
     background: #ffffff !important;
     background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23718096' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
     background-repeat: no-repeat !important;
     background-position: right 12px center !important;
     background-size: 16px 12px !important;
+    background-attachment: scroll !important;
+    
+    /* Padding y dimensiones */
+    padding: 12px 40px 12px 16px !important;
     padding-right: 40px !important;
+    
+    /* Estilos básicos */
     border: 2px solid #e2e8f0 !important;
     border-radius: 12px !important;
-    padding: 12px 40px 12px 16px !important;
     font-size: 0.95rem !important;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
     color: #2d3748 !important;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+    
+    /* Prevenir zoom en mobile */
+    font-size: 16px !important;
+    
+    /* Forzar eliminación de elementos nativos */
+    text-indent: 0 !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
 }
 
-/* Remover flechas específicas para cada navegador */
+/* Remover TODOS los pseudo-elementos de flechas nativas para TODOS los navegadores */
 .professional-form select::-ms-expand,
 .form-select::-ms-expand,
-select::-ms-expand {
+select::-ms-expand,
+*::-ms-expand {
     display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    width: 0 !important;
+    height: 0 !important;
+    background: transparent !important;
 }
 
 .professional-form select::-webkit-appearance,
 .form-select::-webkit-appearance,
-select::-webkit-appearance {
+select::-webkit-appearance,
+*::-webkit-appearance {
     -webkit-appearance: none !important;
+    appearance: none !important;
 }
 
 .professional-form select::-moz-appearance,
 .form-select::-moz-appearance,
-select::-moz-appearance {
+select::-moz-appearance,
+*::-moz-appearance {
     -moz-appearance: none !important;
+    appearance: none !important;
+}
+
+/* Específico para Chrome y Safari - eliminación de controles nativos */
+select::-webkit-scrollbar {
+    display: none !important;
+}
+
+select::-webkit-scrollbar-track {
+    display: none !important;
+}
+
+select::-webkit-scrollbar-thumb {
+    display: none !important;
+}
+
+/* Específico para Edge Legacy */
+select::-ms-value {
+    background: transparent !important;
+    color: #2d3748 !important;
+}
+
+select::-ms-arrow {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+}
+
+/* Firefox específico - eliminación completa */
+@-moz-document url-prefix() {
+    .professional-form select,
+    .form-select,
+    select {
+        -moz-appearance: none !important;
+        appearance: none !important;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23718096' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
+        text-indent: 0.01px !important;
+        text-overflow: '' !important;
+        color: #2d3748 !important;
+        background-color: #ffffff !important;
+    }
+}
+
+/* Internet Explorer y Edge Legacy */
+select::-ms-expand {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    width: 0 !important;
+    height: 0 !important;
+    background: none !important;
+    border: none !important;
+}
+
+/* =============================================================================
+   ELIMINACIÓN ULTRA AGRESIVA DE FLECHAS NATIVAS - TODOS LOS NAVEGADORES
+   ============================================================================= */
+
+/* Reemplazo completo del elemento select con CSS personalizado */
+select[class*="form"],
+select.form-control,
+select.form-select,
+.professional-form select,
+.form-section select,
+.modal-body select {
+    /* Reset total de apariencia */
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    -ms-appearance: none !important;
+    -o-appearance: none !important;
+    appearance: none !important;
+    
+    /* Eliminar todos los backgrounds nativos */
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23718096' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
+    background-repeat: no-repeat !important;
+    background-position: calc(100% - 12px) 50% !important;
+    background-size: 16px 16px !important;
+    background-attachment: scroll !important;
+    
+    /* Dimensiones y espaciado */
+    padding: 12px 44px 12px 16px !important;
+    min-height: 48px !important;
+    height: auto !important;
+    
+    /* Bordes y formas */
+    border: 2px solid #e2e8f0 !important;
+    border-radius: 12px !important;
+    outline: none !important;
+    box-shadow: none !important;
+    
+    /* Tipografía */
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+    font-size: 16px !important; /* Prevenir zoom en mobile */
+    font-weight: 400 !important;
+    color: #2d3748 !important;
+    line-height: 1.5 !important;
+    
+    /* Transiciones */
+    transition: border-color 0.3s ease, box-shadow 0.3s ease !important;
+    
+    /* Cursor */
+    cursor: pointer !important;
+}
+
+/* Estados específicos */
+select[class*="form"]:focus,
+select.form-control:focus,
+select.form-select:focus,
+.professional-form select:focus,
+.form-section select:focus,
+.modal-body select:focus {
+    border-color: #667eea !important;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
+    outline: none !important;
+}
+
+select[class*="form"]:hover,
+select.form-control:hover,
+select.form-select:hover,
+.professional-form select:hover,
+.form-section select:hover,
+.modal-body select:hover {
+    border-color: #cbd5e0 !important;
+}
+
+select[class*="form"]:disabled,
+select.form-control:disabled,
+select.form-select:disabled,
+.professional-form select:disabled,
+.form-section select:disabled,
+.modal-body select:disabled {
+    background-color: #f7fafc !important;
+    color: #a0aec0 !important;
+    cursor: not-allowed !important;
+    opacity: 0.6 !important;
+}
+
+/* Pseudo-elementos específicos para cada navegador */
+select::-ms-expand,
+*::-ms-expand {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    width: 0 !important;
+    height: 0 !important;
+    position: absolute !important;
+    left: -9999px !important;
+    top: -9999px !important;
+    background: transparent !important;
+    border: none !important;
+    content: '' !important;
+}
+
+select::-webkit-inner-spin-button,
+select::-webkit-outer-spin-button,
+select::-webkit-calendar-picker-indicator,
+select::-webkit-clear-button,
+select::-webkit-search-cancel-button,
+select::-webkit-search-decoration {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    -webkit-appearance: none !important;
+    appearance: none !important;
+}
+
+/* Firefox - eliminación específica */
+@-moz-document url-prefix() {
+    select[class*="form"],
+    select.form-control,
+    select.form-select,
+    .professional-form select,
+    .form-section select,
+    .modal-body select {
+        -moz-appearance: none !important;
+        appearance: none !important;
+        text-indent: 0.01px !important;
+        text-overflow: '' !important;
+        color: #2d3748 !important;
+        background-color: #ffffff !important;
+    }
+}
+
+/* Chrome y Safari - eliminación específica */
+@media screen and (-webkit-min-device-pixel-ratio: 0) {
+    select[class*="form"],
+    select.form-control,
+    select.form-select,
+    .professional-form select,
+    .form-section select,
+    .modal-body select {
+        -webkit-appearance: none !important;
+        appearance: none !important;
+        background-position: calc(100% - 12px) 50% !important;
+    }
+}
+
+/* Edge y WebKit - eliminación específica */
+@supports (-ms-ime-align: auto) {
+    select[class*="form"],
+    select.form-control,
+    select.form-select,
+    .professional-form select,
+    .form-section select,
+    .modal-body select {
+        background-position: calc(100% - 12px) 50% !important;
+    }
+}
+
+/* Opera - eliminación específica */
+@supports (-o-appearance: none) {
+    select[class*="form"],
+    select.form-control,
+    select.form-select,
+    .professional-form select,
+    .form-section select,
+    .modal-body select {
+        -o-appearance: none !important;
+        appearance: none !important;
+        background-position: calc(100% - 12px) 50% !important;
+    }
+}
+
+/* Para cualquier elemento que actúe como select */
+[role="listbox"]:after,
+[role="combobox"]:after,
+.select-arrow,
+.dropdown-arrow {
+    display: none !important;
+}
+
+/* Estilo agresivo para todos los elementos select posibles */
+*[class*="select"] {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23718096' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    appearance: none !important;
 }
 
 /* Estados focus y hover para selects */
@@ -1684,7 +1957,6 @@ input[type="file"].file-input-hidden,
     padding: 0 !important;
     left: -10000px !important;
     top: -10000px !important;
-    display: none !important;
 }
 
 /* Asegurar que el contenedor tenga posición relativa */
@@ -1694,200 +1966,92 @@ input[type="file"].file-input-hidden,
     width: 100%;
 }
 
-/* Responsive */
-@media (max-width: 768px) {
-    .modal-dialog {
-        margin: 10px;
-    }
-    
-    .modal-body {
-        padding: 20px;
-    }
-    
-    .professional-form {
-        padding: 20px;
-        margin: 0 -16px;
-        border-radius: 0;
-        box-shadow: none;
-        border: none;
-        border-top: 1px solid #e2e8f0;
-        border-bottom: 1px solid #e2e8f0;
-    }
-    
-    .form-grid.two-cols,
-    .form-grid.three-cols,
-    .form-grid.four-cols {
-        grid-template-columns: 1fr;
-    }
-    
-    .modal-footer {
-        padding: 20px;
-        flex-direction: column-reverse;
-    }
-    
-    .btn-professional {
-        padding: 14px 20px;
-        font-size: 1rem;
-        width: 100%;
-        margin-bottom: 8px;
-    }
-    
-    .file-upload-area {
-        padding: 20px 16px;
-    }
-    
-    .upload-icon {
-        font-size: 1.5rem;
-    }
-    
-    .section-title {
-        font-size: 1rem;
-        margin-bottom: 16px;
-    }
-    
-    .form-input,
-    .form-textarea,
-    .form-select {
-        padding: 14px 16px;
-        font-size: 16px; /* Evita zoom en iOS */
-        border-radius: 8px;
-    }
-    
-    .form-label {
-        font-size: 0.9rem;
-        margin-bottom: 6px;
-    }
+/* =============================
+   WRAPPER PARA SELECTS PERSONALIZADOS
+   ============================= */
+.custom-select-wrapper {
+    position: relative;
+    display: inline-block;
+    width: 100%;
 }
 
-@media (max-width: 480px) {
-    .form-input,
-    .form-textarea,
-    .form-select {
-        font-size: 16px;
-        padding: 12px 14px;
-    }
-    
-    .section-title {
-        font-size: 0.95rem;
-        gap: 8px;
-    }
-    
-    .section-icon {
-        font-size: 1rem;
-    }
-    
-    .label-icon {
-        font-size: 0.8rem;
-    }
-}
-
-/* Mejoras adicionales para compatibilidad */
-.professional-form * {
-    box-sizing: border-box;
-}
-
-/* Asegurar que los inputs tengan el estilo correcto */
-.professional-form input[type="text"],
-.professional-form input[type="email"],
-.professional-form input[type="password"],
-.professional-form input[type="number"],
-.professional-form input[type="date"],
-.professional-form input[type="datetime-local"],
-.professional-form input[type="time"],
-.professional-form input[type="url"],
-.professional-form input[type="tel"],
-.professional-form textarea,
-.professional-form select {
-    border: 2px solid #e2e8f0 !important;
-    border-radius: 12px !important;
-    padding: 12px 16px !important;
-    font-size: 0.95rem !important;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-    background: #ffffff !important;
-    color: #2d3748 !important;
-    width: 100% !important;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-}
-
-.professional-form input:focus,
-.professional-form textarea:focus,
-.professional-form select:focus {
-    border-color: #667eea !important;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
-}
-
-.professional-form input:hover:not(:focus),
-.professional-form textarea:hover:not(:focus),
-.professional-form select:hover:not(:focus) {
-    border-color: #cbd5e0 !important;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05) !important;
-}
-
-/* Override Bootstrap si es necesario */
-.professional-form .form-control {
-    border: 2px solid #e2e8f0 !important;
-    border-radius: 12px !important;
-    padding: 12px 16px !important;
-    font-size: 0.95rem !important;
-    background: #ffffff !important;
-    color: #2d3748 !important;
-}
-
-.professional-form .form-control:focus {
-    border-color: #667eea !important;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
-}
-
-.professional-form .form-select {
-    border: 2px solid #e2e8f0 !important;
-    border-radius: 12px !important;
-    padding: 12px 16px !important;
-    background: #ffffff !important;
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23667eea' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
-}
-
-.professional-form .form-select:focus {
-    border-color: #667eea !important;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
-}
-
-/* Fixes adicionales para selects y inputs */
-.professional-form select::-ms-expand {
-    display: none !important;
-}
-
-.professional-form select:focus::-ms-value {
-    color: #2d3748 !important;
+.custom-select-wrapper select,
+.custom-select-wrapper .form-select {
     background: transparent !important;
+    background-image: none !important;
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    -ms-appearance: none !important;
+    border: 2px solid #e2e8f0 !important;
+    border-radius: 12px !important;
+    padding: 12px 44px 12px 16px !important;
+    min-height: 48px !important;
+    font-size: 16px !important;
+    color: #2d3748 !important;
+    width: 100%;
+    box-sizing: border-box;
+    z-index: 2;
+    position: relative;
 }
 
-/* Para navegadores Webkit (Chrome, Safari) */
-.professional-form select::-webkit-appearance,
-.form-select::-webkit-appearance {
+.custom-select-wrapper::after {
+    content: '';
+    position: absolute;
+    pointer-events: none;
+    top: 50%;
+    right: 18px;
+    width: 18px;
+    height: 18px;
+    transform: translateY(-50%);
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23718096' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-size: 16px 12px;
+    background-position: center;
+    z-index: 3;
+}
+
+/* Eliminar pseudo-elementos nativos de flecha */
+.custom-select-wrapper select::-ms-expand { display: none !important; }
+.custom-select-wrapper select::-webkit-inner-spin-button,
+.custom-select-wrapper select::-webkit-outer-spin-button,
+.custom-select-wrapper select::-webkit-calendar-picker-indicator {
+    display: none !important;
     -webkit-appearance: none !important;
 }
 
-/* Para Firefox */
-.professional-form select::-moz-appearance,
-.form-select::-moz-appearance {
+/* Firefox específico */
+@-moz-document url-prefix() {
+    .custom-select-wrapper select {
+        -moz-appearance: none !important;
+        appearance: none !important;
+    }
+}
+
+/* Aumentar especificidad para selects dentro de formularios profesionales */
+.professional-form .custom-select-wrapper select,
+.professional-form .custom-select-wrapper .form-select {
+    background: transparent !important;
+    background-image: none !important;
+    appearance: none !important;
+    -webkit-appearance: none !important;
     -moz-appearance: none !important;
+    -ms-appearance: none !important;
 }
 
-/* Asegurar que el fondo personalizado se mantenga */
-.professional-form select:focus,
-.form-select:focus {
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23667eea' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
+/* Si el select está deshabilitado */
+.custom-select-wrapper select:disabled {
+    background-color: #f7fafc !important;
+    color: #a0aec0 !important;
+    cursor: not-allowed !important;
+    opacity: 0.6 !important;
 }
 
-/* Estilos adicionales para el file upload area clickeable */
-.file-upload-area {
-    cursor: pointer !important;
-    user-select: none;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-}
-
-.file-upload-area:active {
-    transform: scale(0.98);
-}
+/* Instrucción para el HTML */
+/*
+En tu HTML, envuelve cada <select> así:
+<div class="custom-select-wrapper">
+  <select class="form-select">...</select>
+</div>
+Esto asegura máxima compatibilidad y elimina la flecha nativa en todos los navegadores.
+*/
