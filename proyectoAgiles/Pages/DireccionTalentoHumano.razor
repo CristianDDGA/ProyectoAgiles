@@ -207,6 +207,32 @@
                                         }
                                     </span>
                                 </div>
+                                <div class="requirement-summary-item">
+                                    <span class="requirement-name">Proyectos de Investigación/Vinculación</span>
+                                    <span class="requirement-status @(CumpleRequisitosProyectos(selectedSolicitud) ? "cumple" : "no-cumple")">
+                                        @if (CumpleRequisitosProyectos(selectedSolicitud))
+                                        {
+                                            <i class="fas fa-check"></i>
+                                        }
+                                        else
+                                        {
+                                            <i class="fas fa-times"></i>
+                                        }
+                                    </span>
+                                </div>
+                                <div class="requirement-summary-item">
+                                    <span class="requirement-name">Evaluación de Desempeño</span>
+                                    <span class="requirement-status @(CumpleEvaluacionDesempeno(selectedSolicitud) ? "cumple" : "no-cumple")">
+                                        @if (CumpleEvaluacionDesempeno(selectedSolicitud))
+                                        {
+                                            <i class="fas fa-check"></i>
+                                        }
+                                        else
+                                        {
+                                            <i class="fas fa-times"></i>
+                                        }
+                                    </span>
+                                </div>
                                 <div class="overall-compliance">
                                     <span class="overall-label">Estado General:</span>
                                     <span class="overall-status @(CumpleTodosRequisitos(selectedSolicitud) ? "cumple-todos" : "no-cumple-todos")">
@@ -1128,14 +1154,13 @@
     // Métodos para evaluar cumplimiento de requisitos
     private bool CumpleRequisitosExperiencia(SolicitudEscalafon solicitud)
     {
-        // Evaluar requisitos según el nivel solicitado
+        // Evaluar requisitos según el nivel solicitado - REQUISITOS OFICIALES ACTUALIZADOS
         return solicitud.NivelSolicitado.ToLower() switch
         {
-            var nivel when nivel.Contains("titular auxiliar 2") => solicitud.AnosExperiencia >= 4, // Mínimo 4 años como titular auxiliar 1
-            var nivel when nivel.Contains("titular auxiliar 3") => solicitud.AnosExperiencia >= 5,
-            var nivel when nivel.Contains("titular agregado 1") => solicitud.AnosExperiencia >= 8,
-            var nivel when nivel.Contains("titular agregado 2") => solicitud.AnosExperiencia >= 10,
-            var nivel when nivel.Contains("titular agregado 3") => solicitud.AnosExperiencia >= 12,
+            var nivel when nivel.Contains("titular auxiliar 2") => solicitud.AnosExperiencia >= 4, // 4 años como titular auxiliar 1 en UTA
+            var nivel when nivel.Contains("titular agregado 1") => solicitud.AnosExperiencia >= 4, // 4 años como titular auxiliar 2 en UTA
+            var nivel when nivel.Contains("titular agregado 2") => solicitud.AnosExperiencia >= 4, // 4 años como titular agregado 1 en UTA
+            var nivel when nivel.Contains("titular agregado 3") => solicitud.AnosExperiencia >= 4, // 4 años como titular agregado 2 en UTA
             var nivel when nivel.Contains("titular principal") => solicitud.AnosExperiencia >= 15,
             _ => solicitud.AnosExperiencia >= 2 // Requisito mínimo general
         };
@@ -1151,14 +1176,13 @@
         int totalPublicaciones = totalMatch.Success ? int.Parse(totalMatch.Groups[1].Value) : 0;
         int publicacionesUTA = utaMatch.Success ? int.Parse(utaMatch.Groups[1].Value) : 0;
 
-        // Evaluar según el nivel solicitado
+        // Evaluar según los requisitos oficiales actualizados
         return solicitud.NivelSolicitado.ToLower() switch
         {
-            var nivel when nivel.Contains("titular auxiliar 2") => publicacionesUTA >= 1, // Mínimo 1 obra de relevancia o artículo indexado con filiación UTA
-            var nivel when nivel.Contains("titular auxiliar 3") => totalPublicaciones >= 4 && publicacionesUTA >= 2,
-            var nivel when nivel.Contains("titular agregado 1") => totalPublicaciones >= 6 && publicacionesUTA >= 3,
-            var nivel when nivel.Contains("titular agregado 2") => totalPublicaciones >= 8 && publicacionesUTA >= 4,
-            var nivel when nivel.Contains("titular agregado 3") => totalPublicaciones >= 10 && publicacionesUTA >= 5,
+            var nivel when nivel.Contains("titular auxiliar 2") => publicacionesUTA >= 1, // 1 obra relevante o artículo indexado con filiación UTA
+            var nivel when nivel.Contains("titular agregado 1") => publicacionesUTA >= 2,  // 2 obras relevantes o artículos indexados con filiación UTA
+            var nivel when nivel.Contains("titular agregado 2") => publicacionesUTA >= 3,  // 3 obras relevantes o artículos indexados con filiación UTA
+            var nivel when nivel.Contains("titular agregado 3") => publicacionesUTA >= 5,  // 5 obras relevantes o artículos indexados con filiación UTA
             var nivel when nivel.Contains("titular principal") => totalPublicaciones >= 15 && publicacionesUTA >= 8,
             _ => totalPublicaciones >= 1 // Requisito mínimo general
         };
@@ -1172,29 +1196,93 @@
         if (string.IsNullOrEmpty(capacitaciones))
             return false;
 
-        // Para Titular Auxiliar 2, evaluar requisito específico
-        if (solicitud.NivelSolicitado.ToLower().Contains("titular auxiliar 2"))
-        {
-            // Buscar patrón de horas en el texto de capacitaciones
-            var horasMatch = System.Text.RegularExpressions.Regex.Match(capacitaciones.ToLower(), @"(\d+)\s*horas?");
-            var pedagogicasMatch = System.Text.RegularExpressions.Regex.Match(capacitaciones.ToLower(), @"pedagógic[ao]s?\s*[:\-]?\s*(\d+)\s*horas?");
-            
-            int totalHoras = horasMatch.Success ? int.Parse(horasMatch.Groups[1].Value) : 0;
-            int horasPedagogicas = pedagogicasMatch.Success ? int.Parse(pedagogicasMatch.Groups[1].Value) : 0;
-            
-            // Requisito: 96 horas total, con al menos 24 horas pedagógicas
-            return totalHoras >= 96 && horasPedagogicas >= 24;
-        }
+        // Buscar patrones de horas en el texto de capacitaciones
+        var horasMatch = System.Text.RegularExpressions.Regex.Match(capacitaciones.ToLower(), @"total:\s*(\d+)\s*horas?");
+        var pedagogicasMatch = System.Text.RegularExpressions.Regex.Match(capacitaciones.ToLower(), @"pedagógic[ao]s?\s*[:\-]?\s*(\d+)\s*horas?");
+        
+        int totalHoras = horasMatch.Success ? int.Parse(horasMatch.Groups[1].Value) : 0;
+        int horasPedagogicas = pedagogicasMatch.Success ? int.Parse(pedagogicasMatch.Groups[1].Value) : 0;
 
-        // Para otros niveles, verificación básica
-        return capacitaciones.Length > 10; // Al menos alguna descripción mínima
+        // Evaluar según los requisitos oficiales para cada nivel
+        return solicitud.NivelSolicitado.ToLower() switch
+        {
+            var nivel when nivel.Contains("titular auxiliar 2") => totalHoras >= 96 && horasPedagogicas >= 24,   // 96 horas (24 pedagógicas mínimo)
+            var nivel when nivel.Contains("titular agregado 1") => totalHoras >= 96 && horasPedagogicas >= 24,  // 96 horas (24 pedagógicas mínimo)
+            var nivel when nivel.Contains("titular agregado 2") => totalHoras >= 128 && horasPedagogicas >= 32, // 128 horas (32 pedagógicas mínimo)
+            var nivel when nivel.Contains("titular agregado 3") => totalHoras >= 160 && horasPedagogicas >= 40, // 160 horas (40 pedagógicas mínimo)
+            _ => capacitaciones.Length > 10 // Requisito mínimo general
+        };
     }
 
     private bool CumpleTodosRequisitos(SolicitudEscalafon solicitud)
     {
         return CumpleRequisitosExperiencia(solicitud) &&
                CumpleRequisitosPublicaciones(solicitud) &&
-               CumpleRequisitosCapacitaciones(solicitud);
+               CumpleRequisitosCapacitaciones(solicitud) &&
+               CumpleRequisitosProyectos(solicitud) &&
+               CumpleEvaluacionDesempeno(solicitud);
+    }
+
+    // Función para evaluar proyectos de investigación/vinculación
+    private bool CumpleRequisitosProyectos(SolicitudEscalafon solicitud)
+    {
+        // Evaluar según los requisitos oficiales para cada nivel
+        return solicitud.NivelSolicitado.ToLower() switch
+        {
+            var nivel when nivel.Contains("titular auxiliar 2") => true, // No requiere proyectos
+            var nivel when nivel.Contains("titular agregado 1") => true, // 12 meses - por ahora asumimos que cumple
+            var nivel when nivel.Contains("titular agregado 2") => true, // 24 meses - por ahora asumimos que cumple
+            var nivel when nivel.Contains("titular agregado 3") => true, // 24 meses - por ahora asumimos que cumple
+            _ => true // Sin requisitos específicos
+        };
+    }
+
+    // Función para evaluar desempeño docente (75% en últimos 4 periodos)
+    private bool CumpleEvaluacionDesempeno(SolicitudEscalafon solicitud)
+    {
+        // Todos los niveles requieren 75% en evaluación de desempeño en los últimos 4 periodos
+        var requiereLevelsDesemp = new[] { "titular auxiliar 2", "titular agregado 1", "titular agregado 2", "titular agregado 3" };
+        
+        if (requiereLevelsDesemp.Any(nivel => solicitud.NivelSolicitado.ToLower().Contains(nivel)))
+        {
+            // En una implementación real, esto se evaluaría con datos de la base de datos
+            // Por ahora, asumimos que cumple si tiene observaciones positivas o está aprobado
+            if (solicitud.Status == "Aprobado" || solicitud.Status == "Procesado") return true;
+            
+            // Simulación: si no hay observaciones negativas, asumimos que cumple el 75%
+            var observaciones = solicitud.Observaciones?.ToLower() ?? "";
+            return !observaciones.Contains("bajo rendimiento") && 
+                   !observaciones.Contains("evaluación insuficiente") &&
+                   !observaciones.Contains("no cumple");
+        }
+        
+        return true; // Para otros niveles no es requerimiento crítico
+    }
+
+    // Función para obtener el texto del requisito de proyectos
+    private string GetRequisitoProyectos(SolicitudEscalafon solicitud)
+    {
+        return solicitud.NivelSolicitado.ToLower() switch
+        {
+            var nivel when nivel.Contains("titular auxiliar 2") => "No requiere proyectos de investigación/vinculación",
+            var nivel when nivel.Contains("titular agregado 1") => "12 meses en proyectos de investigación/vinculación con UTA",
+            var nivel when nivel.Contains("titular agregado 2") => "24 meses en proyectos de investigación/vinculación con UTA",
+            var nivel when nivel.Contains("titular agregado 3") => "24 meses en proyectos de investigación/vinculación con UTA",
+            _ => "Sin requisitos específicos"
+        };
+    }
+
+    // Función para obtener el texto del requisito de evaluación de desempeño
+    private string GetRequisitoEvaluacionDesempeno(SolicitudEscalafon solicitud)
+    {
+        var requiereLevelsDesemp = new[] { "titular auxiliar 2", "titular agregado 1", "titular agregado 2", "titular agregado 3" };
+        
+        if (requiereLevelsDesemp.Any(nivel => solicitud.NivelSolicitado.ToLower().Contains(nivel)))
+        {
+            return "75% en evaluación de desempeño en los últimos 4 periodos";
+        }
+        
+        return "Sin requisitos específicos";
     }
 
     private string GetRequisitoExperiencia(SolicitudEscalafon solicitud)
@@ -1202,10 +1290,9 @@
         return solicitud.NivelSolicitado.ToLower() switch
         {
             var nivel when nivel.Contains("titular auxiliar 2") => "Mínimo 4 años como Titular Auxiliar 1 en UTA",
-            var nivel when nivel.Contains("titular auxiliar 3") => "Mínimo 5 años",
-            var nivel when nivel.Contains("titular agregado 1") => "Mínimo 8 años",
-            var nivel when nivel.Contains("titular agregado 2") => "Mínimo 10 años",
-            var nivel when nivel.Contains("titular agregado 3") => "Mínimo 12 años",
+            var nivel when nivel.Contains("titular agregado 1") => "Mínimo 4 años como Titular Auxiliar 2 en UTA",
+            var nivel when nivel.Contains("titular agregado 2") => "Mínimo 4 años como Titular Agregado 1 en UTA",
+            var nivel when nivel.Contains("titular agregado 3") => "Mínimo 4 años como Titular Agregado 2 en UTA",
             var nivel when nivel.Contains("titular principal") => "Mínimo 15 años",
             _ => "Mínimo 2 años"
         };
@@ -1216,10 +1303,9 @@
         return solicitud.NivelSolicitado.ToLower() switch
         {
             var nivel when nivel.Contains("titular auxiliar 2") => "1 obra relevante o artículo indexado con filiación UTA",
-            var nivel when nivel.Contains("titular auxiliar 3") => "Mín. 4 total, 2 con UTA",
-            var nivel when nivel.Contains("titular agregado 1") => "Mín. 6 total, 3 con UTA",
-            var nivel when nivel.Contains("titular agregado 2") => "Mín. 8 total, 4 con UTA",
-            var nivel when nivel.Contains("titular agregado 3") => "Mín. 10 total, 5 con UTA",
+            var nivel when nivel.Contains("titular agregado 1") => "2 obras relevantes o artículos indexados con filiación UTA",
+            var nivel when nivel.Contains("titular agregado 2") => "3 obras relevantes o artículos indexados con filiación UTA",
+            var nivel when nivel.Contains("titular agregado 3") => "5 obras relevantes o artículos indexados con filiación UTA",
             var nivel when nivel.Contains("titular principal") => "Mín. 15 total, 8 con UTA",
             _ => "Mínimo 1 publicación"
         };
@@ -1230,10 +1316,9 @@
         return solicitud.NivelSolicitado.ToLower() switch
         {
             var nivel when nivel.Contains("titular auxiliar 2") => "96 horas totales (24 horas pedagógicas mínimo)",
-            var nivel when nivel.Contains("titular auxiliar 3") => "Capacitación profesional actualizada",
-            var nivel when nivel.Contains("titular agregado 1") => "Capacitación profesional actualizada",
-            var nivel when nivel.Contains("titular agregado 2") => "Capacitación profesional actualizada",
-            var nivel when nivel.Contains("titular agregado 3") => "Capacitación profesional actualizada",
+            var nivel when nivel.Contains("titular agregado 1") => "96 horas totales (24 horas pedagógicas mínimo)",
+            var nivel when nivel.Contains("titular agregado 2") => "128 horas totales (32 horas pedagógicas mínimo)",
+            var nivel when nivel.Contains("titular agregado 3") => "160 horas totales (40 horas pedagógicas mínimo)",
             var nivel when nivel.Contains("titular principal") => "Capacitación profesional actualizada",
             _ => "Capacitación profesional"
         };

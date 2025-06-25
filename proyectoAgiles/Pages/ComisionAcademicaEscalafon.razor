@@ -262,6 +262,19 @@
                                         }
                                     </span>
                                 </div>
+                                <div class="requirement-summary-item">
+                                    <span class="requirement-name">Evaluación Desempeño</span>
+                                    <span class="requirement-status @(CumpleEvaluacionDesempeno(selectedSolicitud) ? "cumple" : "no-cumple")">
+                                        @if (CumpleEvaluacionDesempeno(selectedSolicitud))
+                                        {
+                                            <i class="fas fa-check"></i>
+                                        }
+                                        else
+                                        {
+                                            <i class="fas fa-times"></i>
+                                        }
+                                    </span>
+                                </div>
                                 <div class="overall-compliance">
                                     <span class="overall-label">Estado General:</span>
                                     <span class="overall-status @(CumpleTodosRequisitos(selectedSolicitud) ? "cumple-todos" : "no-cumple-todos")">
@@ -1104,14 +1117,13 @@
     // Métodos para evaluar cumplimiento de requisitos
     private bool CumpleRequisitosExperiencia(SolicitudEscalafon solicitud)
     {
-        // Evaluar requisitos según el nivel solicitado
+        // Evaluar requisitos según el nivel solicitado - REQUISITOS OFICIALES ACTUALIZADOS
         return solicitud.NivelSolicitado.ToLower() switch
         {
-            var nivel when nivel.Contains("titular auxiliar 2") => solicitud.AnosExperiencia >= 4, // Mínimo 4 años como titular auxiliar 1
-            var nivel when nivel.Contains("titular auxiliar 3") => solicitud.AnosExperiencia >= 5,
-            var nivel when nivel.Contains("titular agregado 1") => solicitud.AnosExperiencia >= 4, // CORREGIDO: Requiere 4 años, no 8
-            var nivel when nivel.Contains("titular agregado 2") => solicitud.AnosExperiencia >= 10,
-            var nivel when nivel.Contains("titular agregado 3") => solicitud.AnosExperiencia >= 12,
+            var nivel when nivel.Contains("titular auxiliar 2") => solicitud.AnosExperiencia >= 4, // 4 años como titular auxiliar 1 en UTA
+            var nivel when nivel.Contains("titular agregado 1") => solicitud.AnosExperiencia >= 4, // 4 años como titular auxiliar 2 en UTA
+            var nivel when nivel.Contains("titular agregado 2") => solicitud.AnosExperiencia >= 4, // 4 años como titular agregado 1 en UTA
+            var nivel when nivel.Contains("titular agregado 3") => solicitud.AnosExperiencia >= 4, // 4 años como titular agregado 2 en UTA
             var nivel when nivel.Contains("titular principal") => solicitud.AnosExperiencia >= 15,
             _ => solicitud.AnosExperiencia >= 2 // Requisito mínimo general
         };
@@ -1249,11 +1261,10 @@
     {
         return solicitud.NivelSolicitado.ToLower() switch
         {
-            var nivel when nivel.Contains("titular auxiliar 2") => "Mínimo 4 años como titular auxiliar 1",
-            var nivel when nivel.Contains("titular auxiliar 3") => "Mínimo 5 años como titular auxiliar 2",
-            var nivel when nivel.Contains("titular agregado 1") => "Mínimo 4 años como titular auxiliar 3",
-            var nivel when nivel.Contains("titular agregado 2") => "Mínimo 10 años de experiencia",
-            var nivel when nivel.Contains("titular agregado 3") => "Mínimo 12 años de experiencia",
+            var nivel when nivel.Contains("titular auxiliar 2") => "4 años como Titular Auxiliar 1 en UTA",
+            var nivel when nivel.Contains("titular agregado 1") => "4 años como Titular Auxiliar 2 en UTA",
+            var nivel when nivel.Contains("titular agregado 2") => "4 años como Titular Agregado 1 en UTA",
+            var nivel when nivel.Contains("titular agregado 3") => "4 años como Titular Agregado 2 en UTA",
             var nivel when nivel.Contains("titular principal") => "Mínimo 15 años de experiencia",
             _ => "Requisito mínimo: 2 años de experiencia"
         };
