@@ -1052,13 +1052,13 @@
                                                     }
                                                     else
                                                     {
-                                                        @if (totalHorasCapacitacionesDitic < horasCapacitacionRequeridas)
+                                                        @if (horasCapacitacionObtenidas < horasCapacitacionRequeridas)
                                                         {
-                                                            <text>Te faltan @(horasCapacitacionRequeridas - totalHorasCapacitacionesDitic) horas más de capacitación.</text>
+                                                            <text>Te faltan @(horasCapacitacionRequeridas - horasCapacitacionObtenidas) horas más de capacitación.</text>
                                                         }
-                                                        else if (horasPedagogicasDitic < horasPedagogicasRequeridas)
+                                                        else if (horasPedagogicasObtenidas < horasPedagogicasRequeridas)
                                                         {
-                                                            <text>Tienes suficientes horas totales (@totalHorasCapacitacionesDitic/@horasCapacitacionRequeridas), pero te faltan @(horasPedagogicasRequeridas - horasPedagogicasDitic) horas pedagógicas.</text>
+                                                            <text>Tienes suficientes horas totales (@horasCapacitacionObtenidas/@horasCapacitacionRequeridas), pero te faltan @(horasPedagogicasRequeridas - horasPedagogicasObtenidas) horas pedagógicas.</text>
                                                         }
                                                         else
                                                         {
@@ -1069,8 +1069,8 @@
                                             </div>
                                             <div class="col-md-6">
                                                 <p class="mb-1"><strong>Capacitaciones válidas:</strong> @capacitaciones.Where(c => c.FechaFin >= DateTime.Now.AddYears(-3)).Count() (últimos 3 años)</p>
-                                                <p class="mb-1"><strong>Horas totales:</strong> @totalHorasCapacitacionesDitic / @horasCapacitacionRequeridas</p>
-                                                <p class="mb-0"><strong>Horas pedagógicas:</strong> @horasPedagogicasDitic / @horasPedagogicasRequeridas</p>
+                                                <p class="mb-1"><strong>Horas totales:</strong> @horasCapacitacionObtenidas / @horasCapacitacionRequeridas</p>
+                                                <p class="mb-0"><strong>Horas pedagógicas:</strong> @horasPedagogicasObtenidas / @horasPedagogicasRequeridas</p>
                                             </div>
                                         </div>
                                     </div>
@@ -2033,8 +2033,9 @@ private bool isLoadingInvestigaciones = false;
     private ProyectoAgiles.Application.DTOs.DiticDto? editingCapacitacion = null;
     
     // Variables específicas para cálculos DITIC
-    private int totalHorasCapacitacionesDitic = 0;
-    private int horasPedagogicasDitic = 0;
+    // Variables que ya no se usan - los valores vienen de la API
+    // private int totalHorasCapacitacionesDitic = 0;
+    // private int horasPedagogicasDitic = 0;
     private bool cumpleCapacitacionesDitic = false;
     
     // Variables para Solicitudes
@@ -3457,6 +3458,8 @@ private bool isLoadingInvestigaciones = false;
         }
     }
 
+    // MÉTODO COMENTADO: Ahora todos los cálculos vienen de la API
+    /*
     private void CalcularHorasCapacitaciones()
     {
         if (capacitaciones == null || !capacitaciones.Any())
@@ -3522,6 +3525,7 @@ private bool isLoadingInvestigaciones = false;
             cumpleCapacitaciones = false;
         }
     }
+    */
 
     private async Task RecargarCapacitacionesYActualizarResumen()
     {
@@ -3918,16 +3922,23 @@ private bool isLoadingInvestigaciones = false;
                 // Usar SIEMPRE los valores que vienen de la API - NO hacer cálculos locales
                 Console.WriteLine("ActualizarResumenesDinamicos: Usando valores de API para capacitaciones");
                 cumpleCapacitaciones = verificacion.Capacitacion.Cumple;
-                ExtractCapacitacionValues(verificacion.Capacitacion.ValorObtenido);
                 
-                // También actualizar el objeto estadisticasDocente si existe para sincronizar con las estadísticas
+                // OBTENER LOS VALORES DIRECTAMENTE DESDE LA API EN LUGAR DE PARSEAR TEXTO
                 if (estadisticasDocente?.Secciones?.Capacitaciones?.Datos != null)
                 {
-                    estadisticasDocente.Secciones.Capacitaciones.Datos.HorasObtenidas = horasCapacitacionObtenidas;
-                    estadisticasDocente.Secciones.Capacitaciones.Datos.HorasPedagogicasObtenidas = horasPedagogicasObtenidas;
-                    estadisticasDocente.Secciones.Capacitaciones.Datos.Cumple = cumpleCapacitaciones;
+                    // Usar los valores que vienen directamente de estadisticasDocente (API)
+                    horasCapacitacionObtenidas = estadisticasDocente.Secciones.Capacitaciones.Datos.HorasObtenidas;
+                    horasPedagogicasObtenidas = estadisticasDocente.Secciones.Capacitaciones.Datos.HorasPedagogicasObtenidas;
                     
-                    Console.WriteLine("ActualizarResumenesDinamicos: estadisticasDocente sincronizado con valores de API");
+                    Console.WriteLine("ActualizarResumenesDinamicos: Valores obtenidos directamente de estadisticasDocente (API)");
+                    Console.WriteLine($"  - Horas obtenidas desde API: {horasCapacitacionObtenidas}");
+                    Console.WriteLine($"  - Horas pedagógicas obtenidas desde API: {horasPedagogicasObtenidas}");
+                }
+                else
+                {
+                    // Si no hay estadisticasDocente, llamar a ExtractCapacitacionValues como fallback
+                    Console.WriteLine("ActualizarResumenesDinamicos: Fallback - usando ExtractCapacitacionValues");
+                    ExtractCapacitacionValues(verificacion.Capacitacion.ValorObtenido);
                 }
                 
                 Console.WriteLine($"ActualizarResumenesDinamicos: Variables actualizadas desde API");
@@ -4000,9 +4011,11 @@ private bool isLoadingInvestigaciones = false;
 
     private void ExtractCapacitacionValues(string valorObtenido)
     {
+        // FALLBACK: Parsear el texto solo si no tenemos valores directos de la API
+        
         try
         {
-            // Formato esperado: "108h (40h pedagógicas)"
+            // Formato esperado: "108h (40h pedagógicas)" o similar
             var matchHoras = System.Text.RegularExpressions.Regex.Match(
                 valorObtenido, 
                 @"(\d+)\s*h", 
@@ -4011,6 +4024,7 @@ private bool isLoadingInvestigaciones = false;
             if (matchHoras.Success)
             {
                 horasCapacitacionObtenidas = int.Parse(matchHoras.Groups[1].Value);
+                Console.WriteLine($"ExtractCapacitacionValues: Horas obtenidas del texto: {horasCapacitacionObtenidas}");
             }
             
             var matchPedagogicas = System.Text.RegularExpressions.Regex.Match(
@@ -4021,11 +4035,16 @@ private bool isLoadingInvestigaciones = false;
             if (matchPedagogicas.Success)
             {
                 horasPedagogicasObtenidas = int.Parse(matchPedagogicas.Groups[1].Value);
+                Console.WriteLine($"ExtractCapacitacionValues: Horas pedagógicas obtenidas del texto: {horasPedagogicasObtenidas}");
             }
+            
+            Console.WriteLine($"ExtractCapacitacionValues: Valores parseados del texto '{valorObtenido}'");
+            Console.WriteLine($"  - Horas totales: {horasCapacitacionObtenidas}");
+            Console.WriteLine($"  - Horas pedagógicas: {horasPedagogicasObtenidas}");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error extrayendo valores de capacitaciones: {ex.Message}");
+            Console.WriteLine($"Error en ExtractCapacitacionValues: {ex.Message}");
         }
     }
 
