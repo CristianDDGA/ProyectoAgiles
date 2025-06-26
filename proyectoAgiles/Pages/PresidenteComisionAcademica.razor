@@ -188,88 +188,85 @@
                         <!-- Resumen de Cumplimiento de Requisitos -->
                         <div class="details-section">
                             <h6><i class="fas fa-clipboard-check"></i> Resumen de Cumplimiento de Requisitos</h6>
-                            <div class="requirements-summary">
-                                <div class="requirement-summary-item">
-                                    <span class="requirement-name">Años de Experiencia</span>
-                                    <span class="requirement-status @(CumpleRequisitosExperiencia(selectedSolicitud) ? "cumple" : "no-cumple")">
-                                        @if (CumpleRequisitosExperiencia(selectedSolicitud))
-                                        {
-                                            <i class="fas fa-check"></i>
-                                        }
-                                        else
-                                        {
-                                            <i class="fas fa-times"></i>
-                                        }
-                                    </span>
+                            @if (estadisticasDocente?.Secciones != null)
+                            {
+                                <div class="requirements-summary">
+                                    <div class="requirement-summary-item">
+                                        <span class="requirement-name">Años de Experiencia</span>
+                                        <span class="requirement-status @(estadisticasDocente.Secciones.Experiencia.Datos.Cumple ? "cumple" : "no-cumple")">
+                                            @if (estadisticasDocente.Secciones.Experiencia.Datos.Cumple)
+                                            {
+                                                <i class="fas fa-check"></i>
+                                            }
+                                            else
+                                            {
+                                                <i class="fas fa-times"></i>
+                                            }
+                                        </span>
+                                    </div>
+                                    <div class="requirement-summary-item">
+                                        <span class="requirement-name">Publicaciones</span>
+                                        <span class="requirement-status @(estadisticasDocente.Secciones.Obras.Datos.Cumple ? "cumple" : "no-cumple")">
+                                            @if (estadisticasDocente.Secciones.Obras.Datos.Cumple)
+                                            {
+                                                <i class="fas fa-check"></i>
+                                            }
+                                            else
+                                            {
+                                                <i class="fas fa-times"></i>
+                                            }
+                                        </span>
+                                    </div>
+                                    <div class="requirement-summary-item">
+                                        <span class="requirement-name">Capacitaciones</span>
+                                        <span class="requirement-status @(estadisticasDocente.Secciones.Capacitaciones.Datos.Cumple ? "cumple" : "no-cumple")">
+                                            @if (estadisticasDocente.Secciones.Capacitaciones.Datos.Cumple)
+                                            {
+                                                <i class="fas fa-check"></i>
+                                            }
+                                            else
+                                            {
+                                                <i class="fas fa-times"></i>
+                                            }
+                                        </span>
+                                    </div>
+                                    <div class="requirement-summary-item">
+                                        <span class="requirement-name">Evaluación Desempeño</span>
+                                        <span class="requirement-status @(estadisticasDocente.Secciones.Evaluaciones.Datos.Cumple ? "cumple" : "no-cumple")">
+                                            @if (estadisticasDocente.Secciones.Evaluaciones.Datos.Cumple)
+                                            {
+                                                <i class="fas fa-check"></i>
+                                            }
+                                            else
+                                            {
+                                                <i class="fas fa-times"></i>
+                                            }
+                                        </span>
+                                    </div>
+                                    <div class="overall-compliance">
+                                        <span class="overall-label">Estado General:</span>
+                                        <span class="overall-status @(estadisticasDocente.Resumen.PuedeSubirNivel ? "cumple-todos" : "no-cumple-todos")">
+                                            @if (estadisticasDocente.Resumen.PuedeSubirNivel)
+                                            {
+                                                <i class="fas fa-check-circle"></i>
+                                                <span>Cumple todos los requisitos (@estadisticasDocente.Resumen.RequisitosCumplidos/@estadisticasDocente.Resumen.TotalRequisitos)</span>
+                                            }
+                                            else
+                                            {
+                                                <i class="fas fa-exclamation-triangle"></i>
+                                                <span>No cumple todos los requisitos (@estadisticasDocente.Resumen.RequisitosCumplidos/@estadisticasDocente.Resumen.TotalRequisitos)</span>
+                                            }
+                                        </span>
+                                    </div>
                                 </div>
-                                <div class="requirement-summary-item">
-                                    <span class="requirement-name">Publicaciones</span>
-                                    <span class="requirement-status @(CumpleRequisitosPublicaciones(selectedSolicitud) ? "cumple" : "no-cumple")">
-                                        @if (CumpleRequisitosPublicaciones(selectedSolicitud))
-                                        {
-                                            <i class="fas fa-check"></i>
-                                        }
-                                        else
-                                        {
-                                            <i class="fas fa-times"></i>
-                                        }
-                                    </span>
+                            }
+                            else
+                            {
+                                <div class="alert alert-warning">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                    Cargando estadísticas de requisitos...
                                 </div>
-                                <div class="requirement-summary-item">
-                                    <span class="requirement-name">Capacitaciones</span>
-                                    <span class="requirement-status @(CumpleRequisitosCapacitaciones(selectedSolicitud) ? "cumple" : "no-cumple")">
-                                        @if (CumpleRequisitosCapacitaciones(selectedSolicitud))
-                                        {
-                                            <i class="fas fa-check"></i>
-                                        }
-                                        else
-                                        {
-                                            <i class="fas fa-times"></i>
-                                        }
-                                    </span>
-                                </div>
-                                <div class="requirement-summary-item">
-                                    <span class="requirement-name">Proyectos Inv./Vinc.</span>
-                                    <span class="requirement-status @(CumpleRequisitosProyectos(selectedSolicitud) ? "cumple" : "no-cumple")">
-                                        @if (CumpleRequisitosProyectos(selectedSolicitud))
-                                        {
-                                            <i class="fas fa-check"></i>
-                                        }
-                                        else
-                                        {
-                                            <i class="fas fa-times"></i>
-                                        }
-                                    </span>
-                                </div>
-                                <div class="requirement-summary-item">
-                                    <span class="requirement-name">Evaluación Desempeño</span>
-                                    <span class="requirement-status @(CumpleEvaluacionDesempeno(selectedSolicitud) ? "cumple" : "no-cumple")">
-                                        @if (CumpleEvaluacionDesempeno(selectedSolicitud))
-                                        {
-                                            <i class="fas fa-check"></i>
-                                        }
-                                        else
-                                        {
-                                            <i class="fas fa-times"></i>
-                                        }
-                                    </span>
-                                </div>
-                                <div class="overall-compliance">
-                                    <span class="overall-label">Estado General:</span>
-                                    <span class="overall-status @(CumpleTodosRequisitos(selectedSolicitud) ? "cumple-todos" : "no-cumple-todos")">
-                                        @if (CumpleTodosRequisitos(selectedSolicitud))
-                                        {
-                                            <i class="fas fa-check-circle"></i>
-                                            <span>Cumple todos los requisitos</span>
-                                        }
-                                        else
-                                        {
-                                            <i class="fas fa-exclamation-triangle"></i>
-                                            <span>No cumple todos los requisitos</span>
-                                        }
-                                    </span>
-                                </div>
-                            </div>
+                            }
                         </div>
 
                         <!-- Información Personal -->
@@ -311,98 +308,111 @@
                                         </tr>                        <tr>
                             <td><strong>Años de Experiencia:</strong></td>
                             <td>
-                                <div class="requirement-item">
+                                @if (estadisticasDocente?.Secciones?.Experiencia?.Datos != null)
+                                {
+                                    <div class="requirement-item">
+                                        <span>@estadisticasDocente.Secciones.Experiencia.Datos.AñosObtenidos años</span>
+                                        <span class="requirement-status @(estadisticasDocente.Secciones.Experiencia.Datos.Cumple ? "cumple" : "no-cumple")">
+                                            @if (estadisticasDocente.Secciones.Experiencia.Datos.Cumple)
+                                            {
+                                                <i class="fas fa-check"></i>
+                                            }
+                                            else
+                                            {
+                                                <i class="fas fa-times"></i>
+                                            }
+                                        </span>
+                                    </div>
+                                    <small class="text-muted">Requerido: @estadisticasDocente.Secciones.Experiencia.Datos.AñosRequeridos años - @estadisticasDocente.Secciones.Experiencia.Datos.Detalles</small>
+                                }
+                                else
+                                {
                                     <span>@selectedSolicitud.AnosExperiencia años</span>
-                                    <span class="requirement-status @(CumpleRequisitosExperiencia(selectedSolicitud) ? "cumple" : "no-cumple")">
-                                        @if (CumpleRequisitosExperiencia(selectedSolicitud))
-                                        {
-                                            <i class="fas fa-check"></i>
-                                        }
-                                        else
-                                        {
-                                            <i class="fas fa-times"></i>
-                                        }
-                                    </span>
-                                </div>
-                                <small class="text-muted">Requerido: @GetRequisitoExperiencia(selectedSolicitud)</small>
+                                    <small class="text-muted">Cargando información...</small>
+                                }
                             </td>
                         </tr>
                         <tr>
                             <td><strong>Publicaciones:</strong></td>
                             <td>
-                                <div class="requirement-item">
-                                    <span>@selectedSolicitud.Publicaciones</span>
-                                    <span class="requirement-status @(CumpleRequisitosPublicaciones(selectedSolicitud) ? "cumple" : "no-cumple")">
-                                        @if (CumpleRequisitosPublicaciones(selectedSolicitud))
-                                        {
-                                            <i class="fas fa-check"></i>
-                                        }
-                                        else
-                                        {
-                                            <i class="fas fa-times"></i>
-                                        }
-                                    </span>
-                                </div>
-                                <small class="text-muted">Requerido: @GetRequisitoPublicaciones(selectedSolicitud)</small>
+                                @if (estadisticasDocente?.Secciones?.Obras?.Datos != null)
+                                {
+                                    <div class="requirement-item">
+                                        <span>Total: @estadisticasDocente.Secciones.Obras.Datos.TotalObras obra(s). Con filiación UTA: @estadisticasDocente.Secciones.Obras.Datos.ObrasConUTA obra(s)</span>
+                                        <span class="requirement-status @(estadisticasDocente.Secciones.Obras.Datos.Cumple ? "cumple" : "no-cumple")">
+                                            @if (estadisticasDocente.Secciones.Obras.Datos.Cumple)
+                                            {
+                                                <i class="fas fa-check"></i>
+                                            }
+                                            else
+                                            {
+                                                <i class="fas fa-times"></i>
+                                            }
+                                        </span>
+                                    </div>
+                                    <small class="text-muted">@estadisticasDocente.Secciones.Obras.Datos.Detalles</small>
+                                }
+                                else
+                                {
+                                    <span>@(string.IsNullOrEmpty(selectedSolicitud.Publicaciones) ? "No especificadas" : selectedSolicitud.Publicaciones)</span>
+                                    <small class="text-muted">Cargando información...</small>
+                                }
                             </td>
                         </tr>
-                                        <tr>
-                                            <td><strong>Capacitaciones:</strong></td>
-                                            <td>
-                                                <div class="requirement-item">
-                                                    <span>@(string.IsNullOrEmpty(selectedSolicitud.Capacitaciones) ? "No especificadas" : selectedSolicitud.Capacitaciones)</span>
-                                                    <span class="requirement-status @(CumpleRequisitosCapacitaciones(selectedSolicitud) ? "cumple" : "no-cumple")">
-                                                        @if (CumpleRequisitosCapacitaciones(selectedSolicitud))
-                                                        {
-                                                            <i class="fas fa-check"></i>
-                                                        }
-                                                        else
-                                                        {
-                                                            <i class="fas fa-times"></i>
-                                                        }
-                                                    </span>
-                                                </div>
-                                                <small class="text-muted">Requerido: @GetRequisitoCapacitaciones(selectedSolicitud)</small>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td><strong>Proyectos de Investigación/Vinculación:</strong></td>
-                                            <td>
-                                                <div class="requirement-item">
-                                                    <span>@(CumpleRequisitosProyectos(selectedSolicitud) ? "Cumple requisitos" : "No cumple requisitos")</span>
-                                                    <span class="requirement-status @(CumpleRequisitosProyectos(selectedSolicitud) ? "cumple" : "no-cumple")">
-                                                        @if (CumpleRequisitosProyectos(selectedSolicitud))
-                                                        {
-                                                            <i class="fas fa-check"></i>
-                                                        }
-                                                        else
-                                                        {
-                                                            <i class="fas fa-times"></i>
-                                                        }
-                                                    </span>
-                                                </div>
-                                                <small class="text-muted">Requerido: @GetRequisitoProyectos(selectedSolicitud)</small>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td><strong>Evaluación de Desempeño:</strong></td>
-                                            <td>
-                                                <div class="requirement-item">
-                                                    <span>@(CumpleEvaluacionDesempeno(selectedSolicitud) ? "Cumple requisitos" : "No cumple requisitos")</span>
-                                                    <span class="requirement-status @(CumpleEvaluacionDesempeno(selectedSolicitud) ? "cumple" : "no-cumple")">
-                                                        @if (CumpleEvaluacionDesempeno(selectedSolicitud))
-                                                        {
-                                                            <i class="fas fa-check"></i>
-                                                        }
-                                                        else
-                                                        {
-                                                            <i class="fas fa-times"></i>
-                                                        }
-                                                    </span>
-                                                </div>
-                                                <small class="text-muted">Requerido: @GetRequisitoEvaluacionDesempeno(selectedSolicitud)</small>
-                                            </td>
-                                        </tr>
+                        <tr>
+                            <td><strong>Capacitaciones:</strong></td>
+                            <td>
+                                @if (estadisticasDocente?.Secciones?.Capacitaciones?.Datos != null)
+                                {
+                                    <div class="requirement-item">
+                                        <span>Total: @estadisticasDocente.Secciones.Capacitaciones.Datos.HorasObtenidas horas. Pedagógicas: @estadisticasDocente.Secciones.Capacitaciones.Datos.HorasPedagogicasObtenidas horas</span>
+                                        <span class="requirement-status @(estadisticasDocente.Secciones.Capacitaciones.Datos.Cumple ? "cumple" : "no-cumple")">
+                                            @if (estadisticasDocente.Secciones.Capacitaciones.Datos.Cumple)
+                                            {
+                                                <i class="fas fa-check"></i>
+                                            }
+                                            else
+                                            {
+                                                <i class="fas fa-times"></i>
+                                            }
+                                        </span>
+                                    </div>
+                                    <small class="text-muted">Requerido: @estadisticasDocente.Secciones.Capacitaciones.Datos.HorasRequeridas horas totales (@estadisticasDocente.Secciones.Capacitaciones.Datos.HorasPedagogicasRequeridas pedagógicas)</small>
+                                }
+                                else
+                                {
+                                    <span>@(string.IsNullOrEmpty(selectedSolicitud.Capacitaciones) ? "No especificadas" : selectedSolicitud.Capacitaciones)</span>
+                                    <small class="text-muted">Cargando información...</small>
+                                }
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Evaluación de Desempeño:</strong></td>
+                            <td>
+                                @if (estadisticasDocente?.Secciones?.Evaluaciones?.Datos != null)
+                                {
+                                    <div class="requirement-item">
+                                        <span>Promedio: @estadisticasDocente.Secciones.Evaluaciones.Datos.PromedioObtenido% (@estadisticasDocente.Secciones.Evaluaciones.Datos.EvaluacionesAnalizadas evaluaciones)</span>
+                                        <span class="requirement-status @(estadisticasDocente.Secciones.Evaluaciones.Datos.Cumple ? "cumple" : "no-cumple")">
+                                            @if (estadisticasDocente.Secciones.Evaluaciones.Datos.Cumple)
+                                            {
+                                                <i class="fas fa-check"></i>
+                                            }
+                                            else
+                                            {
+                                                <i class="fas fa-times"></i>
+                                            }
+                                        </span>
+                                    </div>
+                                    <small class="text-muted">Requerido: @estadisticasDocente.Secciones.Evaluaciones.Datos.Requiere75% - @estadisticasDocente.Secciones.Evaluaciones.Datos.Detalles</small>
+                                }
+                                else
+                                {
+                                    <span>Cargando información...</span>
+                                    <small class="text-muted">Evaluando desempeño...</small>
+                                }
+                            </td>
+                        </tr>
                                     </tbody>
                                 </table>
                             </div>
@@ -831,6 +841,7 @@
     private List<proyectoAgiles.Services.InvestigacionDto> investigaciones = new();
     private List<proyectoAgiles.Services.EvaluacionDesempenoDto> evaluaciones = new();
     private List<ProyectoAgiles.Application.DTOs.DiticDto> capacitaciones = new();
+    private proyectoAgiles.Services.EstadisticasDocenteResponse? estadisticasDocente;
 
     protected override async Task OnInitializedAsync()
     {
@@ -1075,184 +1086,6 @@
         };
     }
 
-    // Métodos para evaluar cumplimiento de requisitos
-    private bool CumpleRequisitosExperiencia(SolicitudEscalafon solicitud)
-    {
-        // Evaluar requisitos según el nivel solicitado - REQUISITOS OFICIALES ACTUALIZADOS
-        return solicitud.NivelSolicitado.ToLower() switch
-        {
-            var nivel when nivel.Contains("titular auxiliar 2") => solicitud.AnosExperiencia >= 4, // Mínimo 4 años como titular auxiliar 1 en UTA
-            var nivel when nivel.Contains("titular agregado 1") => solicitud.AnosExperiencia >= 4, // Mínimo 4 años como titular auxiliar 2 en UTA
-            var nivel when nivel.Contains("titular agregado 2") => solicitud.AnosExperiencia >= 4, // Mínimo 4 años como titular agregado 1 en UTA
-            var nivel when nivel.Contains("titular agregado 3") => solicitud.AnosExperiencia >= 4, // Mínimo 4 años como titular agregado 2 en UTA
-            var nivel when nivel.Contains("titular principal") => solicitud.AnosExperiencia >= 15,
-            _ => solicitud.AnosExperiencia >= 2 // Requisito mínimo general
-        };
-    }
-
-    private bool CumpleRequisitosPublicaciones(SolicitudEscalafon solicitud)
-    {
-        // Extraer números de las publicaciones
-        var publicacionesText = solicitud.Publicaciones?.ToLower() ?? "";
-        var totalMatch = System.Text.RegularExpressions.Regex.Match(publicacionesText, @"total:\s*(\d+)");
-        var utaMatch = System.Text.RegularExpressions.Regex.Match(publicacionesText, @"con filiación uta:\s*(\d+)");
-        
-        int totalPublicaciones = totalMatch.Success ? int.Parse(totalMatch.Groups[1].Value) : 0;
-        int publicacionesUTA = utaMatch.Success ? int.Parse(utaMatch.Groups[1].Value) : 0;
-
-        // Evaluar según los requisitos oficiales actualizados
-        return solicitud.NivelSolicitado.ToLower() switch
-        {
-            var nivel when nivel.Contains("titular auxiliar 2") => publicacionesUTA >= 1, // 1 obra relevante o artículo indexado con filiación UTA
-            var nivel when nivel.Contains("titular agregado 1") => publicacionesUTA >= 2,  // 2 obras relevantes o artículos indexados con filiación UTA
-            var nivel when nivel.Contains("titular agregado 2") => publicacionesUTA >= 3,  // 3 obras relevantes o artículos indexados con filiación UTA
-            var nivel when nivel.Contains("titular agregado 3") => publicacionesUTA >= 5,  // 5 obras relevantes o artículos indexados con filiación UTA
-            var nivel when nivel.Contains("titular principal") => totalPublicaciones >= 15 && publicacionesUTA >= 8,
-            _ => totalPublicaciones >= 1 // Requisito mínimo general
-        };
-    }
-
-    private bool CumpleRequisitosCapacitaciones(SolicitudEscalafon solicitud)
-    {
-        // Evaluar si tiene capacitaciones registradas
-        var capacitaciones = solicitud.Capacitaciones?.Trim() ?? "";
-        
-        if (string.IsNullOrEmpty(capacitaciones))
-            return false;
-
-        // Buscar patrones de horas en el texto de capacitaciones
-        var horasMatch = System.Text.RegularExpressions.Regex.Match(capacitaciones.ToLower(), @"total:\s*(\d+)\s*horas?");
-        var pedagogicasMatch = System.Text.RegularExpressions.Regex.Match(capacitaciones.ToLower(), @"pedagógic[ao]s?\s*[:\-]?\s*(\d+)\s*horas?");
-        
-        int totalHoras = horasMatch.Success ? int.Parse(horasMatch.Groups[1].Value) : 0;
-        int horasPedagogicas = pedagogicasMatch.Success ? int.Parse(pedagogicasMatch.Groups[1].Value) : 0;
-
-        // Evaluar según los requisitos oficiales para cada nivel
-        return solicitud.NivelSolicitado.ToLower() switch
-        {
-            var nivel when nivel.Contains("titular auxiliar 2") => totalHoras >= 96 && horasPedagogicas >= 24,   // 96 horas (24 pedagógicas mínimo)
-            var nivel when nivel.Contains("titular agregado 1") => totalHoras >= 96 && horasPedagogicas >= 24,  // 96 horas (24 pedagógicas mínimo)
-            var nivel when nivel.Contains("titular agregado 2") => totalHoras >= 128 && horasPedagogicas >= 32, // 128 horas (32 pedagógicas mínimo)
-            var nivel when nivel.Contains("titular agregado 3") => totalHoras >= 160 && horasPedagogicas >= 40, // 160 horas (40 pedagógicas mínimo)
-            _ => capacitaciones.Length > 10 // Requisito mínimo general
-        };
-    }
-
-    private bool CumpleTodosRequisitos(SolicitudEscalafon solicitud)
-    {
-        return CumpleRequisitosExperiencia(solicitud) &&
-               CumpleRequisitosPublicaciones(solicitud) &&
-               CumpleRequisitosCapacitaciones(solicitud) &&
-               CumpleRequisitosProyectos(solicitud) &&
-               CumpleEvaluacionDesempeno(solicitud);
-    }
-
-    private string GetRequisitoExperiencia(SolicitudEscalafon solicitud)
-    {
-        return solicitud.NivelSolicitado.ToLower() switch
-        {
-            var nivel when nivel.Contains("titular auxiliar 2") => "4 años como Titular Auxiliar 1 en UTA",
-            var nivel when nivel.Contains("titular agregado 1") => "4 años como Titular Auxiliar 2 en UTA",
-            var nivel when nivel.Contains("titular agregado 2") => "4 años como Titular Agregado 1 en UTA",
-            var nivel when nivel.Contains("titular agregado 3") => "4 años como Titular Agregado 2 en UTA",
-            var nivel when nivel.Contains("titular principal") => "Mínimo 15 años",
-            _ => "Mínimo 2 años"
-        };
-    }
-
-    private string GetRequisitoPublicaciones(SolicitudEscalafon solicitud)
-    {
-        return solicitud.NivelSolicitado.ToLower() switch
-        {
-            var nivel when nivel.Contains("titular auxiliar 2") => "1 obra relevante o artículo indexado con filiación UTA",
-            var nivel when nivel.Contains("titular agregado 1") => "2 obras relevantes o artículos indexados con filiación UTA",
-            var nivel when nivel.Contains("titular agregado 2") => "3 obras relevantes o artículos indexados con filiación UTA",
-            var nivel when nivel.Contains("titular agregado 3") => "5 obras relevantes o artículos indexados con filiación UTA",
-            var nivel when nivel.Contains("titular principal") => "Mín. 15 total, 8 con UTA",
-            _ => "Mínimo 1 publicación"
-        };
-    }
-
-    private string GetRequisitoCapacitaciones(SolicitudEscalafon solicitud)
-    {
-        return solicitud.NivelSolicitado.ToLower() switch
-        {
-            var nivel when nivel.Contains("titular auxiliar 2") => "96 horas totales (24 horas pedagógicas mínimo)",
-            var nivel when nivel.Contains("titular agregado 1") => "96 horas totales (24 horas pedagógicas mínimo)",
-            var nivel when nivel.Contains("titular agregado 2") => "128 horas totales (32 horas pedagógicas mínimo)",
-            var nivel when nivel.Contains("titular agregado 3") => "160 horas totales (40 horas pedagógicas mínimo)",
-            var nivel when nivel.Contains("titular principal") => "Capacitación profesional actualizada",
-            _ => "Capacitación profesional"
-        };
-    }
-
-    private bool GetEvaluacionDesempeno(SolicitudEscalafon solicitud)
-    {
-        // En una implementación real, esto se evaluaría con datos de la base de datos
-        // Por ahora, asumimos que cumple si tiene observaciones positivas o está aprobado
-        if (solicitud.Status == "Aprobado") return true;
-        
-        // Simulación: si no hay observaciones negativas, asumimos que cumple el 75%
-        var observaciones = solicitud.Observaciones?.ToLower() ?? "";
-        return !observaciones.Contains("bajo rendimiento") && 
-               !observaciones.Contains("evaluación insuficiente") &&
-               !observaciones.Contains("no cumple");
-    }
-
-    // Función para evaluar proyectos de investigación/vinculación
-    private bool CumpleRequisitosProyectos(SolicitudEscalafon solicitud)
-    {
-        // Evaluar según los requisitos oficiales para cada nivel
-        return solicitud.NivelSolicitado.ToLower() switch
-        {
-            var nivel when nivel.Contains("titular auxiliar 2") => true, // No requiere proyectos
-            var nivel when nivel.Contains("titular agregado 1") => true, // 12 meses - por ahora asumimos que cumple
-            var nivel when nivel.Contains("titular agregado 2") => true, // 24 meses - por ahora asumimos que cumple
-            var nivel when nivel.Contains("titular agregado 3") => true, // 24 meses - por ahora asumimos que cumple
-            _ => true // Sin requisitos específicos
-        };
-    }
-
-    // Función para evaluar desempeño docente (75% en últimos 4 periodos)
-    private bool CumpleEvaluacionDesempeno(SolicitudEscalafon solicitud)
-    {
-        // Todos los niveles requieren 75% en evaluación de desempeño en los últimos 4 periodos
-        var requiereLevelsDesemp = new[] { "titular auxiliar 2", "titular agregado 1", "titular agregado 2", "titular agregado 3" };
-        
-        if (requiereLevelsDesemp.Any(nivel => solicitud.NivelSolicitado.ToLower().Contains(nivel)))
-        {
-            return GetEvaluacionDesempeno(solicitud);
-        }
-        
-        return true; // Para otros niveles no es requerimiento crítico
-    }
-
-    // Función para obtener el texto del requisito de proyectos
-    private string GetRequisitoProyectos(SolicitudEscalafon solicitud)
-    {
-        return solicitud.NivelSolicitado.ToLower() switch
-        {
-            var nivel when nivel.Contains("titular auxiliar 2") => "No requiere proyectos de investigación/vinculación",
-            var nivel when nivel.Contains("titular agregado 1") => "12 meses en proyectos de investigación/vinculación con UTA",
-            var nivel when nivel.Contains("titular agregado 2") => "24 meses en proyectos de investigación/vinculación con UTA",
-            var nivel when nivel.Contains("titular agregado 3") => "24 meses en proyectos de investigación/vinculación con UTA",
-            _ => "Sin requisitos específicos"
-        };
-    }
-
-    // Función para obtener el texto del requisito de evaluación de desempeño
-    private string GetRequisitoEvaluacionDesempeno(SolicitudEscalafon solicitud)
-    {
-        var requiereLevelsDesemp = new[] { "titular auxiliar 2", "titular agregado 1", "titular agregado 2", "titular agregado 3" };
-        
-        if (requiereLevelsDesemp.Any(nivel => solicitud.NivelSolicitado.ToLower().Contains(nivel)))
-        {
-            return "75% en evaluación de desempeño en los últimos 4 periodos";
-        }
-        
-        return "Sin requisitos específicos";
-    }
-
     // Método para cargar datos del docente desde la API
     private async Task CargarDatosDocente(string cedula)
     {
@@ -1262,6 +1095,7 @@
             investigaciones.Clear();
             evaluaciones.Clear();
             capacitaciones.Clear();
+            estadisticasDocente = null;
 
             // Cargar investigaciones
             await CargarInvestigaciones(cedula);
@@ -1272,7 +1106,10 @@
             // Cargar capacitaciones
             await CargarCapacitaciones(cedula);
             
-            // Obtener estadísticas actualizadas del docente
+            // Obtener estadísticas actualizadas del docente (incluye requisitos)
+            estadisticasDocente = await AuthService.ObtenerEstadisticasDocente(cedula);
+            
+            // Actualizar datos de la solicitud con las estadísticas
             await ActualizarEstadisticasSolicitud(cedula);
         }
         catch (Exception ex)
@@ -1286,36 +1123,30 @@
     {
         try
         {
-            if (selectedSolicitud == null) return;
+            if (selectedSolicitud == null || estadisticasDocente?.Secciones == null) return;
             
-            // Obtener estadísticas actualizadas del docente
-            var estadisticas = await AuthService.ObtenerEstadisticasDocente(cedula);
-            
-            if (estadisticas?.Secciones != null)
+            // Actualizar años de experiencia
+            if (estadisticasDocente.Secciones.Experiencia?.Datos != null)
             {
-                // Actualizar años de experiencia
-                if (estadisticas.Secciones.Experiencia?.Datos != null)
-                {
-                    selectedSolicitud.AnosExperiencia = (int)Math.Round(estadisticas.Secciones.Experiencia.Datos.AñosObtenidos);
-                }
-                
-                // Actualizar publicaciones
-                if (estadisticas.Secciones.Obras?.Datos != null)
-                {
-                    var datos = estadisticas.Secciones.Obras.Datos;
-                    selectedSolicitud.Publicaciones = $"Total: {datos.TotalObras} obra(s) registrada(s). Con filiación UTA: {datos.ObrasConUTA} obra(s).";
-                }
-                
-                // Actualizar capacitaciones
-                if (estadisticas.Secciones.Capacitaciones?.Datos != null)
-                {
-                    var datos = estadisticas.Secciones.Capacitaciones.Datos;
-                    selectedSolicitud.Capacitaciones = $"Total: {datos.HorasObtenidas} horas de capacitación. Horas pedagógicas: {datos.HorasPedagogicasObtenidas} horas.";
-                }
-                
-                // Forzar actualización de la UI
-                StateHasChanged();
+                selectedSolicitud.AnosExperiencia = (int)Math.Round(estadisticasDocente.Secciones.Experiencia.Datos.AñosObtenidos);
             }
+            
+            // Actualizar publicaciones
+            if (estadisticasDocente.Secciones.Obras?.Datos != null)
+            {
+                var datos = estadisticasDocente.Secciones.Obras.Datos;
+                selectedSolicitud.Publicaciones = $"Total: {datos.TotalObras} obra(s) registrada(s). Con filiación UTA: {datos.ObrasConUTA} obra(s).";
+            }
+            
+            // Actualizar capacitaciones
+            if (estadisticasDocente.Secciones.Capacitaciones?.Datos != null)
+            {
+                var datos = estadisticasDocente.Secciones.Capacitaciones.Datos;
+                selectedSolicitud.Capacitaciones = $"Total: {datos.HorasObtenidas} horas de capacitación. Horas pedagógicas: {datos.HorasPedagogicasObtenidas} horas.";
+            }
+            
+            // Forzar actualización de la UI
+            StateHasChanged();
         }
         catch (Exception ex)
         {
