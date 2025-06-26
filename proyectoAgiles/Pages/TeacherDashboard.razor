@@ -1040,13 +1040,13 @@
                                         <div class="row">
                                             <div class="col-md-6">
                                                 <div class="d-flex align-items-center">
-                                                    <span class="badge @(cumpleCapacitacionesDitic ? "bg-success" : "bg-danger") me-2">
-                                                        <i class="fas @(cumpleCapacitacionesDitic ? "fa-check" : "fa-times")"></i>
+                                                    <span class="badge @(cumpleCapacitaciones ? "bg-success" : "bg-danger") me-2">
+                                                        <i class="fas @(cumpleCapacitaciones ? "fa-check" : "fa-times")"></i>
                                                     </span>
-                                                    <strong>@(cumpleCapacitacionesDitic ? "CUMPLE" : "NO CUMPLE")</strong>
+                                                    <strong>@(cumpleCapacitaciones ? "CUMPLE" : "NO CUMPLE")</strong>
                                                 </div>
                                                 <p class="mb-1 mt-2">
-                                                    @if (cumpleCapacitacionesDitic)
+                                                    @if (cumpleCapacitaciones)
                                                     {
                                                         <text>El docente cumple con el requisito de @horasCapacitacionRequeridas horas de capacitación.</text>
                                                     }
@@ -1678,7 +1678,7 @@
                                             <select class="form-select" @bind="nuevaCapacitacion.TipoCapacitacion">
                                                 <option value="">Seleccione...</option>
                                                 <option value="Técnica">Técnica</option>
-                                                <option value="Pedagógica">Pedagógica</option>
+                                                <option value="Pedagogica">Pedagógica</option>
                                                 <option value="Investigación">Investigación</option>
                                                 <option value="Gestión">Gestión</option>
                                                 <option value="Otra">Otra</option>
@@ -2036,7 +2036,7 @@ private bool isLoadingInvestigaciones = false;
     // Variables que ya no se usan - los valores vienen de la API
     // private int totalHorasCapacitacionesDitic = 0;
     // private int horasPedagogicasDitic = 0;
-    private bool cumpleCapacitacionesDitic = false;
+    // private bool cumpleCapacitacionesDitic = false;
     
     // Variables para Solicitudes
     private List<SolicitudDto> solicitudes = new();
@@ -3921,7 +3921,6 @@ private bool isLoadingInvestigaciones = false;
                 
                 // Usar SIEMPRE los valores que vienen de la API - NO hacer cálculos locales
                 Console.WriteLine("ActualizarResumenesDinamicos: Usando valores de API para capacitaciones");
-                cumpleCapacitaciones = verificacion.Capacitacion.Cumple;
                 
                 // OBTENER LOS VALORES DIRECTAMENTE DESDE LA API EN LUGAR DE PARSEAR TEXTO
                 if (estadisticasDocente?.Secciones?.Capacitaciones?.Datos != null)
@@ -3929,15 +3928,18 @@ private bool isLoadingInvestigaciones = false;
                     // Usar los valores que vienen directamente de estadisticasDocente (API)
                     horasCapacitacionObtenidas = estadisticasDocente.Secciones.Capacitaciones.Datos.HorasObtenidas;
                     horasPedagogicasObtenidas = estadisticasDocente.Secciones.Capacitaciones.Datos.HorasPedagogicasObtenidas;
+                    cumpleCapacitaciones = estadisticasDocente.Secciones.Capacitaciones.Datos.Cumple; // También obtener el cumplimiento desde la API
                     
                     Console.WriteLine("ActualizarResumenesDinamicos: Valores obtenidos directamente de estadisticasDocente (API)");
                     Console.WriteLine($"  - Horas obtenidas desde API: {horasCapacitacionObtenidas}");
                     Console.WriteLine($"  - Horas pedagógicas obtenidas desde API: {horasPedagogicasObtenidas}");
+                    Console.WriteLine($"  - Cumple requisitos desde API: {cumpleCapacitaciones}");
                 }
                 else
                 {
-                    // Si no hay estadisticasDocente, llamar a ExtractCapacitacionValues como fallback
-                    Console.WriteLine("ActualizarResumenesDinamicos: Fallback - usando ExtractCapacitacionValues");
+                    // Si no hay estadisticasDocente, usar verificacion como fallback
+                    Console.WriteLine("ActualizarResumenesDinamicos: Fallback - usando verificacion.Capacitacion");
+                    cumpleCapacitaciones = verificacion.Capacitacion.Cumple;
                     ExtractCapacitacionValues(verificacion.Capacitacion.ValorObtenido);
                 }
                 

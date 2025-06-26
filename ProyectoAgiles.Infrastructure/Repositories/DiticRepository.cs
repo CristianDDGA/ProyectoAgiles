@@ -117,16 +117,18 @@ public class DiticRepository : IDiticRepository
         var añoActual = DateTime.Now.Year;
         var añoInicio = añoActual - 2;
 
-        return await _context.DITIC
+        // Obtener todas las capacitaciones aprobadas del período y filtrar por EsPedagogica en memoria
+        // Esto asegura consistencia con la lógica de la entidad DITIC.EsPedagogica
+        var capacitaciones = await _context.DITIC
             .Where(d => d.Cedula == cedula && 
                        d.Anio >= añoInicio && d.Anio <= añoActual &&
                        (d.Estado == "Aprobada" || d.Estado == "Completada" || 
-                        (d.Calificacion.HasValue && d.Calificacion >= d.CalificacionMinima)) &&
-                       (d.TipoCapacitacion.ToLower().Contains("pedagog") || 
-                        d.TipoCapacitacion.ToLower().Contains("didact") || 
-                        d.TipoCapacitacion.ToLower().Contains("enseñanza")))
+                        (d.Calificacion.HasValue && d.Calificacion >= d.CalificacionMinima)))
             .OrderByDescending(d => d.FechaInicio)
             .ToListAsync();
+
+        // Filtrar por capacitaciones pedagógicas usando la propiedad EsPedagogica de la entidad
+        return capacitaciones.Where(d => d.EsPedagogica).ToList();
     }
 
     public async Task<int> GetTotalHoursByCedulaAsync(string cedula)
@@ -156,15 +158,17 @@ public class DiticRepository : IDiticRepository
         var añoActual = DateTime.Now.Year;
         var añoInicio = añoActual - 2;
 
-        return await _context.DITIC
+        // Obtener todas las capacitaciones aprobadas del período y filtrar por EsPedagogica en memoria
+        // Esto asegura consistencia con la lógica de la entidad DITIC.EsPedagogica
+        var capacitaciones = await _context.DITIC
             .Where(d => d.Cedula == cedula && 
                        d.Anio >= añoInicio && d.Anio <= añoActual &&
                        (d.Estado == "Aprobada" || d.Estado == "Completada" || 
-                        (d.Calificacion.HasValue && d.Calificacion >= d.CalificacionMinima)) &&
-                       (d.TipoCapacitacion.ToLower().Contains("pedagog") || 
-                        d.TipoCapacitacion.ToLower().Contains("didact") || 
-                        d.TipoCapacitacion.ToLower().Contains("enseñanza")))
-            .SumAsync(d => d.HorasAcademicas);
+                        (d.Calificacion.HasValue && d.Calificacion >= d.CalificacionMinima)))
+            .ToListAsync();
+
+        // Filtrar por capacitaciones pedagógicas y sumar horas usando la propiedad EsPedagogica de la entidad
+        return capacitaciones.Where(d => d.EsPedagogica).Sum(d => d.HorasAcademicas);
     }
 
     public async Task<int> GetCountByCedulaAsync(string cedula)

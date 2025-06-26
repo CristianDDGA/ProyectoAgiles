@@ -92,9 +92,32 @@ public class DITIC : BaseEntity
     /// <summary>
     /// Indica si es capacitación pedagógica (para cumplir el 25% requerido)
     /// </summary>
-    public bool EsPedagogica => TipoCapacitacion.ToLower().Contains("pedagog") || 
-                               TipoCapacitacion.ToLower().Contains("didact") || 
-                               TipoCapacitacion.ToLower().Contains("enseñanza");
+    public bool EsPedagogica => 
+        // Verificar por tipo de capacitación
+        TipoCapacitacion.ToLower().Contains("pedagog") || 
+        TipoCapacitacion.ToLower().Contains("didact") || 
+        TipoCapacitacion.ToLower().Contains("enseñanza") ||
+        TipoCapacitacion.ToLower().Contains("educativ") ||
+        TipoCapacitacion.ToLower().Contains("metodolog") ||
+        TipoCapacitacion.ToLower().Contains("curric") ||
+        TipoCapacitacion.ToLower().Contains("evalua") ||
+        // Verificar por nombre de la capacitación
+        NombreCapacitacion.ToLower().Contains("pedagog") ||
+        NombreCapacitacion.ToLower().Contains("didact") ||
+        NombreCapacitacion.ToLower().Contains("enseñanza") ||
+        NombreCapacitacion.ToLower().Contains("educativ") ||
+        NombreCapacitacion.ToLower().Contains("metodolog") ||
+        NombreCapacitacion.ToLower().Contains("curric") ||
+        NombreCapacitacion.ToLower().Contains("evalua") ||
+        NombreCapacitacion.ToLower().Contains("aprendizaje") ||
+        NombreCapacitacion.ToLower().Contains("docencia") ||
+        NombreCapacitacion.ToLower().Contains("formacion") ||
+        NombreCapacitacion.ToLower().Contains("competencia") ||
+        // Verificar casos específicos comunes
+        NombreCapacitacion.ToLower().Contains("aula") ||
+        NombreCapacitacion.ToLower().Contains("estudiante") ||
+        NombreCapacitacion.ToLower().Contains("alumno") ||
+        NombreCapacitacion.ToLower().Contains("educacion");
 
     /// <summary>
     /// Descripción del contenido de la capacitación
