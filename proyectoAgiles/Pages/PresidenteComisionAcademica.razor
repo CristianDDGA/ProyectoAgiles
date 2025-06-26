@@ -53,7 +53,7 @@
             
             <div class="summary-card processed">
                 <div class="summary-icon">
-                    <i class="fas fa-certificate"></i>
+                    <i class="fas fa-envelope"></i>
                 </div>
                 <div class="summary-content">
                     <h3>@verificatedSolicitudes</h3>
@@ -1326,55 +1326,6 @@
                 "Error", 
                 $"Error al obtener el PDF: {ex.Message}");
         }
-    }
-
-    // Clases para los datos de las tablas
-    public class InvestigacionDocente
-    {
-        public int Id { get; set; }
-        public string Titulo { get; set; } = "";
-        public string Area { get; set; } = "";
-        public string Tipo { get; set; } = "";
-        public string Estado { get; set; } = "";
-        public DateTime FechaInicio { get; set; }
-        public string Filiacion { get; set; } = "";
-        public string RevistaOEditorial { get; set; } = "";
-        public bool TienePdf { get; set; }
-    }
-    
-    public class EvaluacionDocente
-    {
-        public int Id { get; set; }
-        public string PeriodoAcademico { get; set; } = "";
-        public int Anio { get; set; }
-        public string Semestre { get; set; } = "";
-        public int PuntajeObtenido { get; set; }
-        public int PuntajeMaximo { get; set; }
-        public double PorcentajeObtenido { get; set; }
-        public bool CumpleMinimo { get; set; }
-        public string Estado { get; set; } = "";
-        public DateTime FechaEvaluacion { get; set; }
-        public string Evaluador { get; set; } = "";
-        public string TipoEvaluacion { get; set; } = "";
-        public string NombreArchivoRespaldo { get; set; } = "";
-    }
-    
-    public class CapacitacionDocente
-    {
-        public int Id { get; set; }
-        public string NombreCapacitacion { get; set; } = "";
-        public string Institucion { get; set; } = "";
-        public string TipoCapacitacion { get; set; } = "";
-        public string Modalidad { get; set; } = "";
-        public int HorasAcademicas { get; set; }
-        public DateTime FechaInicio { get; set; }
-        public DateTime FechaFin { get; set; }
-        public string Estado { get; set; } = "";
-        public string Instructor { get; set; } = "";
-        public string Descripcion { get; set; } = "";
-        public bool EsPedagogica { get; set; }
-        public double? Calificacion { get; set; }
-        public string NombreArchivoCertificado { get; set; } = "";
     }
 
     // Método para enviar correo de resultado
