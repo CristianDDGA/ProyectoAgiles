@@ -3,11 +3,32 @@ using ProyectoAgiles.Application.DTOs;
 using ProyectoAgiles.Application.Interfaces;
 using ProyectoAgiles.Domain.Interfaces;
 using System.Linq;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace ProyectoAgiles.Api.Controllers;
 
+/// <summary>
+/// Controlador de Evaluaciones de Desempeño Docente
+/// </summary>
+/// <remarks>
+/// Este controlador maneja todas las operaciones relacionadas con las evaluaciones de desempeño académico,
+/// incluyendo registro, consulta, análisis y generación de estadísticas para el escalafón docente.
+/// 
+/// <para>
+/// <strong>Funcionalidades principales:</strong>
+/// </para>
+/// <list type="bullet">
+/// <item><description>Registro y gestión de evaluaciones</description></item>
+/// <item><description>Análisis de rendimiento académico</description></item>
+/// <item><description>Estadísticas y reportes</description></item>
+/// <item><description>Verificación de requisitos de promoción</description></item>
+/// <item><description>Gestión de documentos de respaldo</description></item>
+/// </list>
+/// </remarks>
 [ApiController]
 [Route("api/[controller]")]
+[Produces("application/json")]
+[Tags("Evaluaciones de Desempeño")]
 public class EvaluacionesDesempenoController : ControllerBase
 {
     private readonly IEvaluacionDesempenoService _evaluacionService;
@@ -28,9 +49,40 @@ public class EvaluacionesDesempenoController : ControllerBase
     }
 
     /// <summary>
-    /// Obtiene todas las evaluaciones de desempeño
+    /// Obtener todas las evaluaciones de desempeño
     /// </summary>
+    /// <remarks>
+    /// Recupera una lista completa de todas las evaluaciones de desempeño registradas en el sistema.
+    /// 
+    /// <para><strong>Información incluida por cada evaluación:</strong></para>
+    /// <list type="bullet">
+    /// <item><description>Datos del docente evaluado</description></item>
+    /// <item><description>Período académico y fechas</description></item>
+    /// <item><description>Puntajes obtenidos y máximos</description></item>
+    /// <item><description>Observaciones y comentarios</description></item>
+    /// <item><description>Estado de la evaluación</description></item>
+    /// <item><description>Evaluador responsable</description></item>
+    /// </list>
+    /// 
+    /// <para><strong>Casos de uso:</strong></para>
+    /// <list type="bullet">
+    /// <item><description>Dashboard administrativo</description></item>
+    /// <item><description>Análisis de rendimiento general</description></item>
+    /// <item><description>Reportes institucionales</description></item>
+    /// </list>
+    /// </remarks>
+    /// <returns>Lista completa de evaluaciones de desempeño</returns>
+    /// <response code="200">Lista de evaluaciones obtenida exitosamente</response>
+    /// <response code="500">Error interno del servidor</response>
     [HttpGet]
+    [ProducesResponseType(typeof(IEnumerable<EvaluacionDesempenoDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status500InternalServerError)]
+    [SwaggerOperation(
+        Summary = "Obtener todas las evaluaciones de desempeño",
+        Description = "Recupera la lista completa de evaluaciones de desempeño del sistema",
+        OperationId = "GetAllEvaluaciones",
+        Tags = new[] { "Evaluaciones de Desempeño" }
+    )]
     public async Task<ActionResult<IEnumerable<EvaluacionDesempenoDto>>> GetAll()
     {
         try
@@ -45,9 +97,38 @@ public class EvaluacionesDesempenoController : ControllerBase
     }
 
     /// <summary>
-    /// Obtiene una evaluación por ID
+    /// Obtener evaluación específica por ID
     /// </summary>
+    /// <remarks>
+    /// Recupera información detallada de una evaluación de desempeño específica mediante su identificador único.
+    /// 
+    /// <para><strong>Información detallada incluida:</strong></para>
+    /// <list type="bullet">
+    /// <item><description>Datos completos de la evaluación</description></item>
+    /// <item><description>Información del docente evaluado</description></item>
+    /// <item><description>Desglose detallado de puntajes</description></item>
+    /// <item><description>Documentos de respaldo asociados</description></item>
+    /// <item><description>Observaciones y recomendaciones</description></item>
+    /// <item><description>Historial de cambios</description></item>
+    /// </list>
+    /// 
+    /// <para><strong>Uso típico:</strong> Vista detallada, edición, análisis individual</para>
+    /// </remarks>
+    /// <param name="id">Identificador único de la evaluación</param>
+    /// <returns>Información completa de la evaluación</returns>
+    /// <response code="200">Evaluación encontrada exitosamente</response>
+    /// <response code="404">Evaluación no encontrada</response>
+    /// <response code="500">Error interno del servidor</response>
     [HttpGet("{id}")]
+    [ProducesResponseType(typeof(EvaluacionDesempenoDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status500InternalServerError)]
+    [SwaggerOperation(
+        Summary = "Obtener evaluación por ID",
+        Description = "Recupera la información detallada de una evaluación de desempeño específica",
+        OperationId = "GetEvaluacionById",
+        Tags = new[] { "Evaluaciones de Desempeño" }
+    )]
     public async Task<ActionResult<EvaluacionDesempenoDto>> GetById(int id)
     {
         try
@@ -65,9 +146,44 @@ public class EvaluacionesDesempenoController : ControllerBase
     }
 
     /// <summary>
-    /// Obtiene evaluaciones por cédula del docente
+    /// 🔍 Buscar evaluaciones por cédula del docente
     /// </summary>
+    /// <remarks>
+    /// Recupera todas las evaluaciones de desempeño asociadas a un docente específico identificado por su cédula.
+    /// 
+    /// <para><strong>Información proporcionada:</strong></para>
+    /// <list type="bullet">
+    /// <item><description>Historial completo de evaluaciones</description></item>
+    /// <item><description>Evaluaciones ordenadas por fecha</description></item>
+    /// <item><description>Evolución del rendimiento</description></item>
+    /// <item><description>Tendencias de mejora o deterioro</description></item>
+    /// </list>
+    /// 
+    /// <para><strong>Casos de uso:</strong></para>
+    /// <list type="bullet">
+    /// <item><description>Perfil académico del docente</description></item>
+    /// <item><description>Análisis de progreso personal</description></item>
+    /// <item><description>Evaluación para promociones</description></item>
+    /// <item><description>Reportes individuales</description></item>
+    /// </list>
+    /// 
+    /// <para><strong>Ejemplo de búsqueda:</strong> <c>GET /api/EvaluacionesDesempeno/by-cedula/1234567890</c></para>
+    /// </remarks>
+    /// <param name="cedula">Número de cédula del docente</param>
+    /// <returns>Lista de evaluaciones del docente especificado</returns>
+    /// <response code="200">Evaluaciones encontradas exitosamente</response>
+    /// <response code="400">Cédula con formato inválido</response>
+    /// <response code="500">Error interno del servidor</response>
     [HttpGet("by-cedula/{cedula}")]
+    [ProducesResponseType(typeof(IEnumerable<EvaluacionDesempenoDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status500InternalServerError)]
+    [SwaggerOperation(
+        Summary = "Buscar evaluaciones por cédula",
+        Description = "Recupera todas las evaluaciones de desempeño de un docente específico",
+        OperationId = "GetEvaluacionesByCedula",
+        Tags = new[] { "Búsquedas" }
+    )]
     public async Task<ActionResult<IEnumerable<EvaluacionDesempenoDto>>> GetByCedula(string cedula)
     {
         try
@@ -82,9 +198,33 @@ public class EvaluacionesDesempenoController : ControllerBase
     }
 
     /// <summary>
-    /// Obtiene las últimas 4 evaluaciones de un docente
+    /// Obtener las últimas 4 evaluaciones de un docente
     /// </summary>
+    /// <remarks>
+    /// Recupera las últimas cuatro evaluaciones de desempeño de un docente, utilizadas para calcular el promedio requerido para promociones.
+    /// 
+    /// <para><strong>Criterios de selección:</strong></para>
+    /// <list type="bullet">
+    /// <item><description>Evaluaciones más recientes por fecha</description></item>
+    /// <item><description>Solo evaluaciones completadas</description></item>
+    /// <item><description>Ordenadas cronológicamente</description></item>
+    /// </list>
+    /// 
+    /// <para><strong>Uso principal:</strong> Cálculo del requisito del 75% para promociones docentes</para>
+    /// </remarks>
+    /// <param name="cedula">Número de cédula del docente</param>
+    /// <returns>Lista de las últimas 4 evaluaciones del docente</returns>
+    /// <response code="200">Evaluaciones obtenidas exitosamente</response>
+    /// <response code="500">Error interno del servidor</response>
     [HttpGet("by-cedula/{cedula}/ultimas-cuatro")]
+    [ProducesResponseType(typeof(IEnumerable<EvaluacionDesempenoDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status500InternalServerError)]
+    [SwaggerOperation(
+        Summary = "Obtener últimas 4 evaluaciones",
+        Description = "Recupera las últimas cuatro evaluaciones de un docente para análisis de promoción",
+        OperationId = "GetUltimasCuatroEvaluaciones",
+        Tags = new[] { "Búsquedas" }
+    )]
     public async Task<ActionResult<IEnumerable<EvaluacionDesempenoDto>>> GetUltimasCuatroEvaluacionesByCedula(string cedula)
     {
         try
@@ -99,9 +239,31 @@ public class EvaluacionesDesempenoController : ControllerBase
     }
 
     /// <summary>
-    /// Obtiene evaluaciones por período académico
+    /// Filtrar evaluaciones por período académico
     /// </summary>
+    /// <remarks>
+    /// Recupera todas las evaluaciones realizadas en un período académico específico.
+    /// 
+    /// <para><strong>Utilidad del filtrado:</strong></para>
+    /// <list type="bullet">
+    /// <item><description>Análisis por semestres</description></item>
+    /// <item><description>Comparación entre períodos</description></item>
+    /// <item><description>Reportes administrativos</description></item>
+    /// </list>
+    /// </remarks>
+    /// <param name="periodoAcademico">Período académico (ej: 2024-1, 2024-2)</param>
+    /// <returns>Lista de evaluaciones del período especificado</returns>
+    /// <response code="200">Evaluaciones del período obtenidas</response>
+    /// <response code="500">Error interno del servidor</response>
     [HttpGet("by-periodo/{periodoAcademico}")]
+    [ProducesResponseType(typeof(IEnumerable<EvaluacionDesempenoDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status500InternalServerError)]
+    [SwaggerOperation(
+        Summary = "Filtrar por período académico",
+        Description = "Recupera evaluaciones de un período académico específico",
+        OperationId = "GetEvaluacionesByPeriodo",
+        Tags = new[] { "Búsquedas" }
+    )]
     public async Task<ActionResult<IEnumerable<EvaluacionDesempenoDto>>> GetByPeriodoAcademico(string periodoAcademico)
     {
         try
@@ -153,9 +315,45 @@ public class EvaluacionesDesempenoController : ControllerBase
     }
 
     /// <summary>
-    /// Crea una nueva evaluación de desempeño
+    /// Crear nueva evaluación de desempeño
     /// </summary>
+    /// <remarks>
+    /// Registra una nueva evaluación de desempeño docente en el sistema con validación completa.
+    /// 
+    /// <para><strong>Datos requeridos:</strong></para>
+    /// <list type="bullet">
+    /// <item><description>Cédula del docente evaluado</description></item>
+    /// <item><description>Período académico y fechas</description></item>
+    /// <item><description>Puntajes obtenidos y máximos</description></item>
+    /// <item><description>Evaluador responsable</description></item>
+    /// <item><description>Observaciones (opcional)</description></item>
+    /// </list>
+    /// 
+    /// <para><strong>Validaciones aplicadas:</strong></para>
+    /// <list type="bullet">
+    /// <item><description>Docente debe existir en el sistema</description></item>
+    /// <item><description>No duplicar evaluaciones por período</description></item>
+    /// <item><description>Puntajes dentro de rangos válidos</description></item>
+    /// <item><description>Campos obligatorios completos</description></item>
+    /// </list>
+    /// </remarks>
+    /// <param name="createDto">Datos para crear la nueva evaluación</param>
+    /// <returns>Evaluación creada con su ID asignado</returns>
+    /// <response code="201">Evaluación creada exitosamente</response>
+    /// <response code="400">Datos inválidos o incompletos</response>
+    /// <response code="409">Ya existe evaluación para este período</response>
+    /// <response code="500">Error interno del servidor</response>
     [HttpPost]
+    [ProducesResponseType(typeof(EvaluacionDesempenoDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status409Conflict)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status500InternalServerError)]
+    [SwaggerOperation(
+        Summary = "Crear nueva evaluación de desempeño",
+        Description = "Registra una nueva evaluación de desempeño docente con validación completa",
+        OperationId = "CreateEvaluacion",
+        Tags = new[] { "Evaluaciones de Desempeño" }
+    )]
     public async Task<ActionResult<EvaluacionDesempenoDto>> Create([FromBody] CreateEvaluacionDesempenoDto createDto)
     {
         try
@@ -312,9 +510,45 @@ public class EvaluacionesDesempenoController : ControllerBase
     }
 
     /// <summary>
-    /// Verifica si un docente cumple con el requisito del 75%
+    /// Verificar requisito del 75% para promoción
     /// </summary>
+    /// <remarks>
+    /// Verifica si un docente cumple con el requisito del 75% de promedio en las últimas 4 evaluaciones para optar a promoción.
+    /// 
+    /// <para><strong>Criterios de evaluación:</strong></para>
+    /// <list type="bullet">
+    /// <item><description>Promedio de últimas 4 evaluaciones ≥ 75%</description></item>
+    /// <item><description>Evaluaciones deben estar completadas</description></item>
+    /// <item><description>Consideración de períodos consecutivos</description></item>
+    /// </list>
+    /// 
+    /// <para><strong>Información de respuesta:</strong></para>
+    /// <list type="bullet">
+    /// <item><description>Promedio calculado</description></item>
+    /// <item><description>Estado de cumplimiento</description></item>
+    /// <item><description>Desglose por evaluación</description></item>
+    /// <item><description>Mensaje explicativo</description></item>
+    /// </list>
+    /// 
+    /// <para><strong>Uso crítico:</strong> Proceso de promoción y escalafón docente</para>
+    /// </remarks>
+    /// <param name="cedula">Número de cédula del docente a evaluar</param>
+    /// <returns>Resultado de la verificación del requisito del 75%</returns>
+    /// <response code="200">Verificación completada exitosamente</response>
+    /// <response code="400">Cédula inválida</response>
+    /// <response code="404">Docente no encontrado</response>
+    /// <response code="500">Error interno del servidor</response>
     [HttpGet("verificar-requisito-75/{cedula}")]
+    [ProducesResponseType(typeof(VerificacionRequisito75Dto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status500InternalServerError)]
+    [SwaggerOperation(
+        Summary = "Verificar requisito del 75%",
+        Description = "Verifica si un docente cumple el requisito del 75% de promedio para promoción",
+        OperationId = "VerificarRequisito75",
+        Tags = new[] { "Análisis de Promoción" }
+    )]
     public async Task<ActionResult<VerificacionRequisito75Dto>> VerificarRequisito75PorCiento(string cedula)
     {
         try
@@ -363,9 +597,41 @@ public class EvaluacionesDesempenoController : ControllerBase
     }
 
     /// <summary>
-    /// Obtiene el PDF de una evaluación
+    /// Descargar documento PDF de evaluación
     /// </summary>
+    /// <remarks>
+    /// Descarga el archivo PDF de respaldo asociado a una evaluación de desempeño específica.
+    /// 
+    /// <para><strong>Características de la descarga:</strong></para>
+    /// <list type="bullet">
+    /// <item><description>Formato PDF nativo</description></item>
+    /// <item><description>Descarga segura y validada</description></item>
+    /// <item><description>Nombre descriptivo del archivo</description></item>
+    /// <item><description>Optimizado para archivos grandes</description></item>
+    /// </list>
+    /// 
+    /// <para><strong>Casos de uso:</strong></para>
+    /// <list type="bullet">
+    /// <item><description>Revisión de documentos de respaldo</description></item>
+    /// <item><description>Auditoría de evaluaciones</description></item>
+    /// <item><description>Generación de reportes oficiales</description></item>
+    /// </list>
+    /// </remarks>
+    /// <param name="id">ID de la evaluación cuyo PDF se desea descargar</param>
+    /// <returns>Archivo PDF para descarga directa</returns>
+    /// <response code="200">PDF descargado exitosamente</response>
+    /// <response code="404">Evaluación o PDF no encontrado</response>
+    /// <response code="500">Error interno del servidor</response>
     [HttpGet("{id}/pdf")]
+    [ProducesResponseType(typeof(FileResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status500InternalServerError)]
+    [SwaggerOperation(
+        Summary = "Descargar PDF de evaluación",
+        Description = "Descarga el documento PDF de respaldo de una evaluación específica",
+        OperationId = "GetEvaluacionPdf",
+        Tags = new[] { "Archivos" }
+    )]
     public async Task<IActionResult> GetPdf(int id)
     {
         try
@@ -418,9 +684,53 @@ public class EvaluacionesDesempenoController : ControllerBase
     }
 
     /// <summary>
-    /// Obtiene estadísticas completas de un docente para los requisitos de promoción
+    /// Obtener estadísticas completas de promoción docente
     /// </summary>
+    /// <remarks>
+    /// Genera un reporte completo del estado de un docente respecto a todos los requisitos para promoción en el escalafón.
+    /// 
+    /// <para><strong>Requisitos evaluados:</strong></para>
+    /// <list type="bullet">
+    /// <item><description>Experiencia: 4 años como titular auxiliar</description></item>
+    /// <item><description>Obras: Al menos una publicación con filiación UTA</description></item>
+    /// <item><description>Evaluaciones: Promedio ≥75% en últimas 4 evaluaciones</description></item>
+    /// <item><description>Capacitaciones: 96 horas profesionales + 24 pedagógicas</description></item>
+    /// </list>
+    /// 
+    /// <para><strong>Información detallada por sección:</strong></para>
+    /// <list type="bullet">
+    /// <item><description>Estado de cumplimiento individual</description></item>
+    /// <item><description>Porcentaje de completitud</description></item>
+    /// <item><description>Estadísticas específicas</description></item>
+    /// <item><description>Recomendaciones de mejora</description></item>
+    /// </list>
+    /// 
+    /// <para><strong>Resultado final:</strong></para>
+    /// <list type="bullet">
+    /// <item><description>Porcentaje general de completitud</description></item>
+    /// <item><description>Elegibilidad para promoción</description></item>
+    /// <item><description>Resumen ejecutivo</description></item>
+    /// </list>
+    /// 
+    /// <para><strong>Uso crítico:</strong> Decisiones de promoción en escalafón docente UTA</para>
+    /// </remarks>
+    /// <param name="cedula">Número de cédula del docente a evaluar</param>
+    /// <returns>Estadísticas completas para promoción docente</returns>
+    /// <response code="200">Estadísticas generadas exitosamente</response>
+    /// <response code="400">Cédula inválida</response>
+    /// <response code="404">Docente no encontrado</response>
+    /// <response code="500">Error interno del servidor</response>
     [HttpGet("estadisticas-docente/{cedula}")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status500InternalServerError)]
+    [SwaggerOperation(
+        Summary = "Estadísticas completas de promoción",
+        Description = "Genera reporte completo del estado de un docente para promoción en escalafón",
+        OperationId = "GetEstadisticasPromocion",
+        Tags = new[] { "Análisis de Promoción" }
+    )]
     public async Task<ActionResult> GetEstadisticasDocente(string cedula)
     {
         try
