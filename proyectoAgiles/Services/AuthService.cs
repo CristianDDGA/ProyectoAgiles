@@ -826,7 +826,7 @@ namespace proyectoAgiles.Services
                             Datos = new DatosSeccion
                             {
                                 MesesRequeridos = configuracion.MesesProyectosInvestigacion,
-                                MesesObtenidos = 0, // TODO: Implementar lógica de cálculo
+                                MesesObtenidos = ParsearMesesInvestigacion(verificacion.ProyectosInvestigacion?.ValorObtenido),
                                 ProyectosActivos = 0, // TODO: Implementar consulta
                                 Cumple = verificacion.ProyectosInvestigacion?.Cumple ?? !configuracion.RequiereProyectosInvestigacion,
                                 Detalles = verificacion.ProyectosInvestigacion?.Mensaje ?? (configuracion.RequiereProyectosInvestigacion ? "No se requieren proyectos para este nivel" : "Sin información de proyectos")
@@ -1012,6 +1012,38 @@ namespace proyectoAgiles.Services
             catch (Exception ex)
             {
                 Console.WriteLine($"ParsearObrasUTA: error = {ex.Message}");
+                return 0;
+            }
+        }
+
+        /// <summary>
+        /// Extrae el número de meses desde una cadena tipo "12 meses estimados desde la investigación UTA más antigua (fecha)".
+        /// Si no se puede extraer, devuelve 0.
+        /// </summary>
+        private int ParsearMesesInvestigacion(string? valorObtenido)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(valorObtenido)) return 0;
+                
+                // Buscar patrón de meses: "12 meses" al inicio
+                var match = System.Text.RegularExpressions.Regex.Match(
+                    valorObtenido,
+                    @"^(\d+)\s+meses",
+                    System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                    
+                if (match.Success && int.TryParse(match.Groups[1].Value, out var meses))
+                {
+                    Console.WriteLine($"ParsearMesesInvestigacion: resultado = {meses}");
+                    return meses;
+                }
+                
+                Console.WriteLine($"ParsearMesesInvestigacion: no se pudo parsear, devuelve 0");
+                return 0;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"ParsearMesesInvestigacion: error = {ex.Message}");
                 return 0;
             }
         }
