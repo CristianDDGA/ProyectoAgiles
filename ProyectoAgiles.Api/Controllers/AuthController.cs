@@ -1,11 +1,17 @@
 using Microsoft.AspNetCore.Mvc;
 using ProyectoAgiles.Application.DTOs;
 using ProyectoAgiles.Application.Interfaces;
+using System.ComponentModel.DataAnnotations;
 
 namespace ProyectoAgiles.Api.Controllers;
 
+/// <summary>
+/// Controlador para la gestión de autenticación y autorización de usuarios
+/// </summary>
 [ApiController]
 [Route("api/[controller]")]
+[Produces("application/json")]
+[Tags("Autenticación")]
 public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
@@ -17,7 +23,18 @@ public class AuthController : ControllerBase
         _fileService = fileService;
     }
 
+    /// <summary>
+    /// Registra un nuevo usuario en el sistema
+    /// </summary>
+    /// <param name="registerDto">Datos del usuario a registrar</param>
+    /// <returns>Información del usuario registrado</returns>
+    /// <response code="200">Usuario registrado exitosamente</response>
+    /// <response code="400">Datos de entrada inválidos</response>
+    /// <response code="409">El usuario ya existe</response>
     [HttpPost("register")]
+    [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<UserDto>> Register([FromBody] RegisterDto registerDto)
     {
         try
@@ -38,7 +55,20 @@ public class AuthController : ControllerBase
         {
             return StatusCode(500, new { message = "Error interno del servidor", details = ex.Message });
         }
-    }    [HttpPost("login")]
+    }
+
+    /// <summary>
+    /// Inicia sesión de un usuario en el sistema
+    /// </summary>
+    /// <param name="loginDto">Credenciales de inicio de sesión</param>
+    /// <returns>Token de autenticación y datos del usuario</returns>
+    /// <response code="200">Inicio de sesión exitoso</response>
+    /// <response code="400">Credenciales inválidas</response>
+    /// <response code="401">Usuario no autorizado</response>
+    [HttpPost("login")]
+    [ProducesResponseType(typeof(LoginResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<LoginResponse>> Login([FromBody] LoginDto loginDto)
     {
         try
