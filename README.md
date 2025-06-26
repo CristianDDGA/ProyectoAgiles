@@ -1,5 +1,428 @@
 # 🎓 **ProyectoAgiles - Sistema de Escalafón Docente UTA**
 
+## 🚀 **GUÍA DE INSTALACIÓN Y CONFIGURACIÓN**
+
+### **📋 REQUISITOS PREVIOS**
+
+Antes de comenzar, asegúrate de tener instalado:
+
+| **Software** | **Versión Mínima** | **Descarga** | **Propósito** |
+|--------------|-------------------|--------------|---------------|
+| **.NET SDK** | 9.0 | [Descargar](https://dotnet.microsoft.com/download) | Framework principal |
+| **SQL Server** | 2019+ | [Descargar](https://www.microsoft.com/sql-server/sql-server-downloads) | Base de datos |
+| **SQL Server Management Studio** | Última | [Descargar](https://aka.ms/ssmsfullsetup) | Gestión de BD (opcional) |
+| **Visual Studio** | 2022+ | [Descargar](https://visualstudio.microsoft.com/) | IDE recomendado |
+
+**Alternativas:**
+- **Visual Studio Code** + Extensiones C#
+- **SQL Server LocalDB** (incluido con Visual Studio)
+- **Azure Data Studio** para gestión de BD
+
+### **✅ VERIFICACIÓN DE ARCHIVOS DEL PROYECTO**
+
+Antes de comenzar, verifica que tengas **TODOS** estos archivos y carpetas:
+
+```
+proyectoAgiles/                           # 📁 Carpeta principal del proyecto
+├── proyectoAgiles.slnx                   # ✅ OBLIGATORIO - Archivo de solución
+├── README.md                             # ✅ OBLIGATORIO - Este archivo
+├── ProyectoAgiles.Api/                   # ✅ OBLIGATORIO - Proyecto API Backend
+│   ├── ProyectoAgiles.Api.csproj         # ✅ OBLIGATORIO
+│   ├── Program.cs                        # ✅ OBLIGATORIO
+│   ├── appsettings.json                  # ✅ OBLIGATORIO
+│   └── Controllers/                      # ✅ OBLIGATORIO
+├── proyectoAgiles/                       # ✅ OBLIGATORIO - Proyecto Frontend Blazor
+│   ├── proyectoAgiles.csproj             # ✅ OBLIGATORIO
+│   ├── Program.cs                        # ✅ OBLIGATORIO
+│   ├── App.razor                         # ✅ OBLIGATORIO
+│   └── wwwroot/                          # ✅ OBLIGATORIO
+├── ProyectoAgiles.Application/           # ✅ OBLIGATORIO - Capa de aplicación
+│   └── ProyectoAgiles.Application.csproj # ✅ OBLIGATORIO
+├── ProyectoAgiles.Domain/                # ✅ OBLIGATORIO - Capa de dominio
+│   └── ProyectoAgiles.Domain.csproj      # ✅ OBLIGATORIO
+└── ProyectoAgiles.Infrastructure/        # ✅ OBLIGATORIO - Capa de infraestructura
+    └── ProyectoAgiles.Infrastructure.csproj # ✅ OBLIGATORIO
+```
+
+**🚨 IMPORTANTE:** Si falta alguno de estos archivos/carpetas, el proyecto NO funcionará.
+
+---
+
+### **📥 PASO 1: PREPARAR EL PROYECTO**
+
+Si tienes la carpeta completa del proyecto:
+
+```bash
+# Extraer/copiar la carpeta del proyecto a tu ubicación deseada
+# Navegar al directorio del proyecto
+cd ruta/hacia/proyectoAgiles
+
+# Verificar que tienes todos los archivos necesarios
+dir  # En Windows
+ls   # En Linux/macOS
+```
+
+**Archivos y carpetas que DEBES tener:**
+- ✅ `proyectoAgiles.slnx` (archivo de solución)
+- ✅ `ProyectoAgiles.Api/` (proyecto backend)
+- ✅ `proyectoAgiles/` (proyecto frontend)
+- ✅ `ProyectoAgiles.Application/`
+- ✅ `ProyectoAgiles.Domain/`
+- ✅ `ProyectoAgiles.Infrastructure/`
+
+---
+
+### **🗃️ PASO 2: CONFIGURAR BASE DE DATOS**
+
+#### **Opción A: SQL Server LocalDB (Recomendado para desarrollo)**
+```bash
+# Verificar si LocalDB está disponible
+sqllocaldb info
+
+# Si no está disponible, instalar SQL Server Express LocalDB
+```
+
+#### **Opción B: SQL Server Completo**
+1. Instalar SQL Server
+2. Crear una nueva base de datos llamada `ProyectoAgilesDB`
+3. Actualizar la cadena de conexión en `appsettings.json`
+
+#### **Configuración de Cadena de Conexión**
+Editar `ProyectoAgiles.Api/appsettings.json`:
+
+```json
+{
+  "ConnectionStrings": {
+    // Para LocalDB (por defecto)
+    "DefaultConnection": "Server=(localdb)\\mssqllocaldb;Database=ProyectoAgilesDB;Trusted_Connection=true;MultipleActiveResultSets=true"
+    
+    // Para SQL Server completo (opcional)
+    // "DefaultConnection": "Server=localhost;Database=ProyectoAgilesDB;Trusted_Connection=true;MultipleActiveResultSets=true"
+    
+    // Para SQL Server con autenticación (opcional)
+    // "DefaultConnection": "Server=localhost;Database=ProyectoAgilesDB;User Id=tu_usuario;Password=tu_password;MultipleActiveResultSets=true"
+  }
+}
+```
+
+---
+
+### **🔧 PASO 3: RESTAURAR DEPENDENCIAS**
+
+```bash
+# Navegar al directorio raíz del proyecto (donde está el archivo .slnx)
+cd proyectoAgiles
+
+# Restaurar dependencias de toda la solución
+dotnet restore
+
+# Si hay errores, restaurar cada proyecto individualmente:
+dotnet restore ProyectoAgiles.Domain/ProyectoAgiles.Domain.csproj
+dotnet restore ProyectoAgiles.Application/ProyectoAgiles.Application.csproj
+dotnet restore ProyectoAgiles.Infrastructure/ProyectoAgiles.Infrastructure.csproj
+dotnet restore ProyectoAgiles.Api/ProyectoAgiles.Api.csproj
+dotnet restore proyectoAgiles/proyectoAgiles.csproj
+
+# Compilar toda la solución para verificar dependencias
+dotnet build
+```
+
+---
+
+### **🗂️ PASO 4: EJECUTAR MIGRACIONES**
+
+```bash
+# Navegar al proyecto de API
+cd ProyectoAgiles.Api
+
+# Verificar migraciones disponibles
+dotnet ef migrations list
+
+# Aplicar migraciones a la base de datos
+dotnet ef database update
+
+# Si hay problemas, recrear la base de datos
+dotnet ef database drop
+dotnet ef database update
+```
+
+**Si `dotnet ef` no está instalado:**
+```bash
+dotnet tool install --global dotnet-ef
+```
+
+---
+
+### **⚙️ PASO 5: CONFIGURAR APLICACIONES**
+
+#### **Backend API - Puerto 5200**
+Verificar `ProyectoAgiles.Api/Properties/launchSettings.json`:
+```json
+{
+  "profiles": {
+    "http": {
+      "applicationUrl": "http://localhost:5200"
+    }
+  }
+}
+```
+
+#### **Frontend Blazor - Puerto 5043**
+Verificar `proyectoAgiles/Properties/launchSettings.json`:
+```json
+{
+  "profiles": {
+    "http": {
+      "applicationUrl": "http://localhost:5043"
+    }
+  }
+}
+```
+
+Verificar `proyectoAgiles/wwwroot/appsettings.json`:
+```json
+{
+  "ApiSettings": {
+    "BaseUrl": "http://localhost:5200"
+  }
+}
+```
+
+---
+
+### **🚀 PASO 6: EJECUTAR EL PROYECTO**
+
+#### **Opción A: Ejecutar desde Visual Studio**
+1. Abrir `proyectoAgiles.slnx` en Visual Studio
+2. Establecer múltiples proyectos de inicio:
+   - `ProyectoAgiles.Api`
+   - `proyectoAgiles`
+3. Presionar `F5` o clic en "Iniciar"
+
+#### **Opción B: Ejecutar desde línea de comandos**
+
+**Terminal 1 - Backend API:**
+```bash
+cd ProyectoAgiles.Api
+dotnet run
+```
+
+**Terminal 2 - Frontend Blazor:**
+```bash
+cd proyectoAgiles
+dotnet run
+```
+
+#### **Opción C: Ejecutar ambos con un comando**
+```bash
+# Desde el directorio raíz
+dotnet run --project ProyectoAgiles.Api &
+dotnet run --project proyectoAgiles
+```
+
+---
+
+### **🌐 PASO 7: VERIFICAR INSTALACIÓN**
+
+Una vez ejecutado, verifica que las aplicaciones estén funcionando:
+
+| **Aplicación** | **URL** | **Descripción** |
+|----------------|---------|-----------------|
+| **Frontend** | http://localhost:5043 | Aplicación Blazor WebAssembly |
+| **API** | http://localhost:5200 | API REST Backend |
+| **Swagger** | http://localhost:5200/swagger | Documentación de API |
+
+### **✅ URLs de Verificación:**
+- **Página de inicio:** http://localhost:5043
+- **API Health Check:** http://localhost:5200/api/Dashboard/stats
+- **Swagger UI:** http://localhost:5200/swagger/index.html
+
+---
+
+### **👤 PASO 8: DATOS INICIALES**
+
+El sistema incluye datos semilla para comenzar:
+
+#### **Usuario Administrador por Defecto:**
+- **Email:** `admin@uta.edu.ec`
+- **Contraseña:** `Admin123!`
+- **Tipo:** Administrador
+
+#### **Usuario de Prueba:**
+- **Email:** `docente@uta.edu.ec`
+- **Contraseña:** `Docente123!`
+- **Tipo:** Docente
+
+**⚠️ Importante:** Cambiar estas credenciales en producción.
+
+---
+
+### **🛠️ CONFIGURACIONES ADICIONALES**
+
+#### **Configuración de Email (Opcional)**
+En `ProyectoAgiles.Api/appsettings.json`:
+```json
+{
+  "EmailSettings": {
+    "SmtpHost": "smtp.gmail.com",
+    "SmtpPort": 587,
+    "SmtpUsername": "tu_email@gmail.com",
+    "SmtpPassword": "tu_app_password",
+    "EnableSsl": true,
+    "FromName": "Sistema UTA",
+    "FromEmail": "tu_email@gmail.com"
+  }
+}
+```
+
+#### **Configuración de CORS**
+Ya está configurado para desarrollo local en:
+- `http://localhost:5043` (Frontend)
+- `http://localhost:5022` (Admin)
+
+---
+
+### **🐛 SOLUCIÓN DE PROBLEMAS COMUNES**
+
+#### **❌ Error: "No se puede encontrar el archivo .slnx"**
+```bash
+# Verificar que estás en el directorio correcto
+dir proyectoAgiles.slnx  # Windows
+ls proyectoAgiles.slnx   # Linux/macOS
+
+# Si no existe, buscar archivos .sln
+dir *.sln*
+```
+
+#### **❌ Error: "No se puede restaurar el paquete"**
+```bash
+# Limpiar cache de NuGet y restaurar
+dotnet nuget locals all --clear
+dotnet clean
+dotnet restore
+dotnet build
+```
+
+#### **❌ Error de Base de Datos**
+```bash
+# Recrear base de datos completamente
+dotnet ef database drop --force -p ProyectoAgiles.Infrastructure -s ProyectoAgiles.Api
+dotnet ef database update -p ProyectoAgiles.Infrastructure -s ProyectoAgiles.Api
+```
+
+#### **❌ Error de Dependencias**
+```bash
+# Restaurar dependencias paso a paso
+dotnet clean
+dotnet restore ProyectoAgiles.Domain/
+dotnet restore ProyectoAgiles.Application/
+dotnet restore ProyectoAgiles.Infrastructure/
+dotnet restore ProyectoAgiles.Api/
+dotnet restore proyectoAgiles/
+dotnet build
+```
+
+#### **❌ Error de Puertos Ocupados**
+- **Puerto 5043 ocupado:** Cambiar en `proyectoAgiles/Properties/launchSettings.json`
+- **Puerto 5200 ocupado:** Cambiar en `ProyectoAgiles.Api/Properties/launchSettings.json`
+- **También actualizar:** `proyectoAgiles/wwwroot/appsettings.json`
+
+#### **❌ Error de CORS**
+- Verificar que el frontend use la URL correcta del backend
+- Verificar configuración de CORS en `ProyectoAgiles.Api/Program.cs`
+
+#### **❌ Error de Entity Framework**
+```bash
+# Instalar/actualizar herramientas EF globalmente
+dotnet tool install --global dotnet-ef
+dotnet tool update --global dotnet-ef
+
+# Verificar instalación
+dotnet ef --version
+```
+
+#### **❌ Error: "SDK de .NET no encontrado"**
+```bash
+# Verificar versión de .NET instalada
+dotnet --version
+
+# Descargar .NET 9.0 SDK si no está instalado
+# https://dotnet.microsoft.com/download
+```
+
+#### **❌ Problemas de Compilación**
+```bash
+# Verificar que todos los proyectos compilen individualmente
+dotnet build ProyectoAgiles.Domain/
+dotnet build ProyectoAgiles.Application/
+dotnet build ProyectoAgiles.Infrastructure/
+dotnet build ProyectoAgiles.Api/
+dotnet build proyectoAgiles/
+```
+
+---
+
+### **🆘 SI NADA FUNCIONA - REINICIO COMPLETO**
+
+```bash
+# 1. Limpiar todo
+dotnet clean
+rm -rf bin/ obj/  # Linux/macOS
+rmdir /s bin obj  # Windows
+
+# 2. Reinstalar herramientas
+dotnet tool uninstall --global dotnet-ef
+dotnet tool install --global dotnet-ef
+
+# 3. Restaurar desde cero
+dotnet restore
+dotnet build
+
+# 4. Recrear base de datos
+dotnet ef database drop --force -p ProyectoAgiles.Infrastructure -s ProyectoAgiles.Api
+dotnet ef database update -p ProyectoAgiles.Infrastructure -s ProyectoAgiles.Api
+
+# 5. Ejecutar
+dotnet run --project ProyectoAgiles.Api &
+dotnet run --project proyectoAgiles
+```
+
+---
+
+## **✅ ¡LISTO PARA DESARROLLAR!**
+
+Si todos los pasos anteriores se completaron exitosamente, tendrás:
+
+- ✅ **Frontend funcionando** en http://localhost:5043
+- ✅ **API funcionando** en http://localhost:5200
+- ✅ **Base de datos configurada** y con migraciones aplicadas
+- ✅ **Swagger disponible** para probar la API
+- ✅ **Usuarios de prueba** para hacer login
+
+### **🎯 CHECKLIST FINAL DE VERIFICACIÓN**
+
+Marca cada elemento cuando esté funcionando:
+
+- [ ] **Proyecto compilado:** `dotnet build` ejecuta sin errores
+- [ ] **Base de datos creada:** Migraciones aplicadas correctamente
+- [ ] **Backend funcionando:** http://localhost:5200/swagger abre correctamente
+- [ ] **Frontend funcionando:** http://localhost:5043 carga la aplicación
+- [ ] **Login funcional:** Puedes hacer login con `admin@uta.edu.ec` / `Admin123!`
+- [ ] **API conectada:** El frontend puede comunicarse con el backend
+
+### **📞 ¿NECESITAS AYUDA?**
+
+Si tienes problemas que no están en la sección de troubleshooting:
+
+1. **Verificar logs:** Revisar la consola donde ejecutaste los comandos
+2. **Verificar archivos:** Asegúrate de tener todos los archivos requeridos
+3. **Revisar versiones:** Verificar que tienes .NET 9.0 SDK instalado
+4. **Revisar puertos:** Asegúrate de que los puertos 5043 y 5200 estén libres
+
+**🎉 ¡El sistema está listo para ser usado y desarrollado!**
+
+---
+
 ## 📁 **ESTRUCTURA COMPLETA DEL PROYECTO**
 
 ```
@@ -543,3 +966,76 @@ Tu proyecto utiliza un **stack tecnológico moderno y completo** con **.NET 9.0*
 ### **📈 TOTAL: 83 ENDPOINTS**
 
 Tu proyecto tiene una **API muy completa** con 83 endpoints distribuidos en 9 controladores, cubriendo todas las funcionalidades del sistema académico de escalafón docente.
+
+### **📚 COMANDOS ÚTILES PARA DESARROLLO LOCAL**
+
+```bash
+# ===== VERIFICACIÓN INICIAL =====
+# Verificar versión de .NET
+dotnet --version
+
+# Verificar estructura del proyecto
+dotnet sln list
+
+# Verificar que todos los proyectos están en la solución
+dotnet sln proyectoAgiles.slnx list
+
+# ===== COMPILACIÓN =====
+# Compilar toda la solución
+dotnet build
+
+# Compilar en modo Release
+dotnet build --configuration Release
+
+# Limpiar archivos de compilación
+dotnet clean
+
+# ===== DEPENDENCIAS =====
+# Ver dependencias de un proyecto
+dotnet list ProyectoAgiles.Api/ package
+
+# Actualizar paquetes NuGet
+dotnet list package --outdated
+dotnet add package [NombrePaquete] --version [Version]
+
+# ===== BASE DE DATOS =====
+# Ver todas las migraciones
+dotnet ef migrations list -p ProyectoAgiles.Infrastructure -s ProyectoAgiles.Api
+
+# Crear nueva migración
+dotnet ef migrations add NombreMigracion -p ProyectoAgiles.Infrastructure -s ProyectoAgiles.Api
+
+# Aplicar migraciones
+dotnet ef database update -p ProyectoAgiles.Infrastructure -s ProyectoAgiles.Api
+
+# Ver SQL que se ejecutará
+dotnet ef migrations script -p ProyectoAgiles.Infrastructure -s ProyectoAgiles.Api
+
+# Eliminar base de datos
+dotnet ef database drop -p ProyectoAgiles.Infrastructure -s ProyectoAgiles.Api
+
+# ===== EJECUCIÓN =====
+# Ejecutar backend solamente
+dotnet run --project ProyectoAgiles.Api
+
+# Ejecutar frontend solamente
+dotnet run --project proyectoAgiles
+
+# Ejecutar en modo watch (recarga automática)
+dotnet watch run --project ProyectoAgiles.Api
+dotnet watch run --project proyectoAgiles
+
+# ===== PRUEBAS (si existen) =====
+# Ejecutar todas las pruebas
+dotnet test
+
+# Ejecutar pruebas con detalles
+dotnet test --verbosity normal
+
+# ===== PUBLICACIÓN =====
+# Publicar backend para producción
+dotnet publish ProyectoAgiles.Api/ --configuration Release --output ./publish/api
+
+# Publicar frontend para producción
+dotnet publish proyectoAgiles/ --configuration Release --output ./publish/web
+```
