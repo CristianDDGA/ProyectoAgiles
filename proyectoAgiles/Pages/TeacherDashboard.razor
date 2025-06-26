@@ -29,7 +29,7 @@
                 </div>
                   <div class="nivel-current-info">
                     <div class="nivel-badge-container">
-                        <span class="badge bg-info text-dark nivel-badge">@UserSession.GetUserNivel()</span>
+                        <span class="nivel-badge">@UserSession.GetUserNivel()</span>
                     </div>
                 </div>
                 
@@ -1836,7 +1836,6 @@
     <!-- Tarjetas de Estadísticas de Promoción -->
     <div class="stats-section">
         <div class="d-flex justify-content-between align-items-center mb-3">
-            <h4 class="mb-0">Estadísticas de Promoción</h4>
         </div>
         
         @if (estadisticasDocente is null)
@@ -1977,9 +1976,9 @@
         }
     </div>
 
-    <!-- Sección de Acciones Rápidas -->
+    <!-- Sección de Gestión Académica -->
     <div class="quick-actions">
-        <h2 class="section-title">Acciones Rápidas</h2>
+        <h2 class="section-title">Gestión Académica</h2>
         <div class="row">
             <div class="col-lg-3 col-md-6 mb-4">
                 <div class="action-card" @onclick="() => NavigateToInvestigaciones()">
