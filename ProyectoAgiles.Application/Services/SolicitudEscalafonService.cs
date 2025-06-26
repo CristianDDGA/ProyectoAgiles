@@ -142,7 +142,7 @@ public class SolicitudEscalafonService : ISolicitudEscalafonService
             </body>
             </html>";
 
-        return await _emailService.SendEmailAsync(solicitud.DocenteEmail, subject, body, true);
+        return await _emailService.SendAdminNotificationEmailAsync(solicitud.DocenteEmail, subject, body, true);
     }
 
     public async Task<bool> FinalizarEscalafonAsync(int solicitudId)
@@ -209,7 +209,7 @@ public class SolicitudEscalafonService : ISolicitudEscalafonService
                 </body>
                 </html>";
 
-            await _emailService.SendEmailAsync(solicitud.DocenteEmail, subject, body, true);
+            await _emailService.SendAdminNotificationEmailAsync(solicitud.DocenteEmail, subject, body, true);
             
             return true;
         }

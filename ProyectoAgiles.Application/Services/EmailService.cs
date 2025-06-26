@@ -159,4 +159,51 @@ public class EmailService : IEmailService
         </body>
         </html>";
     }
+
+    public async Task<bool> SendAdminNotificationEmailAsync(string toEmail, string subject, string body, bool isHtml = true)
+    {
+        try
+        {
+            var smtpHost = _configuration["EmailSettings:SmtpHost"] ?? "smtp.gmail.com";
+            var smtpPort = int.Parse(_configuration["EmailSettings:SmtpPort"] ?? "587");
+            var senderEmail = _configuration["EmailSettings:FromEmail"] ?? "";
+            var senderPassword = _configuration["EmailSettings:SmtpPassword"] ?? "";
+            var senderName = _configuration["EmailSettings:FromName"] ?? "Universidad Técnica de Ambato";
+
+            if (string.IsNullOrEmpty(senderEmail) || string.IsNullOrEmpty(senderPassword))
+            {
+                throw new InvalidOperationException("La configuración de email no está completa.");
+            }
+
+            // Para notificaciones administrativas, usar la URL administrativa
+            var adminBaseUrl = _configuration["AppSettings:AdminBaseUrl"] ?? "http://localhost:5022";
+            
+            // Si el body contiene enlaces relativos, reemplazarlos con la URL administrativa
+            var processedBody = body.Replace("{{AdminBaseUrl}}", adminBaseUrl);
+
+            var mailMessage = new MailMessage
+            {
+                From = new MailAddress(senderEmail, senderName),
+                Subject = subject,
+                Body = processedBody,
+                IsBodyHtml = isHtml
+            };
+
+            mailMessage.To.Add(toEmail);
+
+            using var smtpClient = new SmtpClient(smtpHost, smtpPort)
+            {
+                Credentials = new NetworkCredential(_configuration["EmailSettings:SmtpUsername"], senderPassword),
+                EnableSsl = bool.Parse(_configuration["EmailSettings:EnableSsl"] ?? "true")
+            };
+
+            await smtpClient.SendMailAsync(mailMessage);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error enviando email administrativo: {ex.Message}");
+            return false;
+        }
+    }
 }

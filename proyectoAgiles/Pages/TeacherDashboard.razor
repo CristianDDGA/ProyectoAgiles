@@ -1040,25 +1040,25 @@
                                         <div class="row">
                                             <div class="col-md-6">
                                                 <div class="d-flex align-items-center">
-                                                    <span class="badge @(cumpleCapacitaciones ? "bg-success" : "bg-danger") me-2">
-                                                        <i class="fas @(cumpleCapacitaciones ? "fa-check" : "fa-times")"></i>
+                                                    <span class="badge @(cumpleCapacitacionesDitic ? "bg-success" : "bg-danger") me-2">
+                                                        <i class="fas @(cumpleCapacitacionesDitic ? "fa-check" : "fa-times")"></i>
                                                     </span>
-                                                    <strong>@(cumpleCapacitaciones ? "CUMPLE" : "NO CUMPLE")</strong>
+                                                    <strong>@(cumpleCapacitacionesDitic ? "CUMPLE" : "NO CUMPLE")</strong>
                                                 </div>
                                                 <p class="mb-1 mt-2">
-                                                    @if (cumpleCapacitaciones)
+                                                    @if (cumpleCapacitacionesDitic)
                                                     {
                                                         <text>El docente cumple con el requisito de @horasCapacitacionRequeridas horas de capacitación.</text>
                                                     }
                                                     else
                                                     {
-                                                        @if (horasCapacitacionObtenidas < horasCapacitacionRequeridas)
+                                                        @if (totalHorasCapacitacionesDitic < horasCapacitacionRequeridas)
                                                         {
-                                                            <text>Te faltan @(horasCapacitacionRequeridas - horasCapacitacionObtenidas) horas más de capacitación.</text>
+                                                            <text>Te faltan @(horasCapacitacionRequeridas - totalHorasCapacitacionesDitic) horas más de capacitación.</text>
                                                         }
-                                                        else if (horasPedagogicasObtenidas < horasPedagogicasRequeridas)
+                                                        else if (horasPedagogicasDitic < horasPedagogicasRequeridas)
                                                         {
-                                                            <text>Tienes suficientes horas totales (@horasCapacitacionObtenidas/@horasCapacitacionRequeridas), pero te faltan @(horasPedagogicasRequeridas - horasPedagogicasObtenidas) horas pedagógicas.</text>
+                                                            <text>Tienes suficientes horas totales (@totalHorasCapacitacionesDitic/@horasCapacitacionRequeridas), pero te faltan @(horasPedagogicasRequeridas - horasPedagogicasDitic) horas pedagógicas.</text>
                                                         }
                                                         else
                                                         {
@@ -1068,9 +1068,9 @@
                                                 </p>
                                             </div>
                                             <div class="col-md-6">
-                                                <p class="mb-1"><strong>Capacitaciones válidas:</strong> @capacitaciones.Count (últimos 3 años)</p>
-                                                <p class="mb-1"><strong>Horas totales:</strong> @horasCapacitacionObtenidas / @horasCapacitacionRequeridas</p>
-                                                <p class="mb-0"><strong>Horas pedagógicas:</strong> @horasPedagogicasObtenidas / @horasPedagogicasRequeridas</p>
+                                                <p class="mb-1"><strong>Capacitaciones válidas:</strong> @capacitaciones.Where(c => c.FechaFin >= DateTime.Now.AddYears(-3)).Count() (últimos 3 años)</p>
+                                                <p class="mb-1"><strong>Horas totales:</strong> @totalHorasCapacitacionesDitic / @horasCapacitacionRequeridas</p>
+                                                <p class="mb-0"><strong>Horas pedagógicas:</strong> @horasPedagogicasDitic / @horasPedagogicasRequeridas</p>
                                             </div>
                                         </div>
                                     </div>
@@ -2032,6 +2032,11 @@ private bool isLoadingInvestigaciones = false;
     private ProyectoAgiles.Application.DTOs.DiticDto nuevaCapacitacion = new();
     private ProyectoAgiles.Application.DTOs.DiticDto? editingCapacitacion = null;
     
+    // Variables específicas para cálculos DITIC
+    private int totalHorasCapacitacionesDitic = 0;
+    private int horasPedagogicasDitic = 0;
+    private bool cumpleCapacitacionesDitic = false;
+    
     // Variables para Solicitudes
     private List<SolicitudDto> solicitudes = new();
     private ProyectoAgiles.Application.DTOs.VerificacionRequisitoDiticDto? verificacionRequisitoDitic = null;
@@ -2170,6 +2175,11 @@ private bool isLoadingInvestigaciones = false;
             Console.WriteLine("LoadDashboardData: Iniciando carga inicial de estadísticas...");
             await CargarEstadisticas();
             Console.WriteLine("LoadDashboardData: Estadísticas cargadas al inicializar.");
+            
+            // Cargar capacitaciones para que estén disponibles desde el inicio
+            Console.WriteLine("LoadDashboardData: Cargando capacitaciones DITIC...");
+            await CargarCapacitaciones();
+            Console.WriteLine($"LoadDashboardData: {capacitaciones.Count} capacitaciones cargadas.");
         }
         catch (Exception ex)
         {
@@ -3298,6 +3308,111 @@ private bool isLoadingInvestigaciones = false;
     }
 
     // Métodos para DITIC
+    private void CalcularHorasCapacitacionesDitic()
+    {
+        Console.WriteLine($"=== INICIANDO CÁLCULO DE HORAS DITIC ===");
+        Console.WriteLine($"Total capacitaciones DITIC: {capacitaciones?.Count ?? 0}");
+        
+        if (capacitaciones == null || !capacitaciones.Any())
+        {
+            Console.WriteLine("No hay capacitaciones DITIC para calcular");
+            totalHorasCapacitacionesDitic = 0;
+            horasPedagogicasDitic = 0;
+            cumpleCapacitacionesDitic = false;
+            StateHasChanged();
+            return;
+        }
+
+        var fechaLimite = DateTime.Now.AddYears(-3);
+        Console.WriteLine($"Fecha límite (3 años atrás): {fechaLimite:yyyy-MM-dd}");
+
+        var capacitacionesValidas = capacitaciones
+            .Where(c => c.FechaFin >= fechaLimite)
+            .ToList();
+
+        Console.WriteLine($"Capacitaciones válidas (últimos 3 años): {capacitacionesValidas.Count}");
+
+        totalHorasCapacitacionesDitic = capacitacionesValidas.Sum(c => c.HorasAcademicas);
+        Console.WriteLine($"Total horas calculadas: {totalHorasCapacitacionesDitic}");
+
+        // Calcular horas pedagógicas usando múltiples criterios
+        horasPedagogicasDitic = 0;
+        
+        Console.WriteLine("\n=== ANÁLISIS DETALLADO DE CAPACITACIONES DITIC ===");
+        foreach (var cap in capacitacionesValidas)
+        {
+            Console.WriteLine($"Capacitación: {cap.NombreCapacitacion}");
+            Console.WriteLine($"  - Tipo: '{cap.TipoCapacitacion}' (length: {cap.TipoCapacitacion?.Length ?? 0})");
+            Console.WriteLine($"  - EsPedagogica: {cap.EsPedagogica}");
+            Console.WriteLine($"  - Horas: {cap.HorasAcademicas}");
+            Console.WriteLine($"  - Fecha finalización: {cap.FechaFin:yyyy-MM-dd}");
+            
+            // Múltiples criterios para detectar capacitaciones pedagógicas
+            var tipoPedagogico = false;
+            if (!string.IsNullOrEmpty(cap.TipoCapacitacion))
+            {
+                var tipo = cap.TipoCapacitacion.ToUpper().Trim();
+                tipoPedagogico = tipo.Contains("PEDAGÓGICA") || 
+                                tipo.Contains("PEDAGOGICA") ||
+                                tipo.Contains("PEDAGÓGICO") ||
+                                tipo.Contains("PEDAGOGICO") ||
+                                tipo.Contains("DIDÁCTICA") ||
+                                tipo.Contains("DIDACTICA") ||
+                                tipo.Contains("ENSEÑANZA") ||
+                                tipo.Contains("ENSENANZA") ||
+                                tipo.Contains("METODOLOGÍA") ||
+                                tipo.Contains("METODOLOGIA") ||
+                                tipo.Contains("EDUCATIVA") ||
+                                tipo.Contains("EDUCATIVO");
+                
+                Console.WriteLine($"  - Tipo contiene palabras pedagógicas: {tipoPedagogico}");
+            }
+            
+            var nombrePedagogico = false;
+            if (!string.IsNullOrEmpty(cap.NombreCapacitacion))
+            {
+                var nombre = cap.NombreCapacitacion.ToUpper().Trim();
+                nombrePedagogico = nombre.Contains("PEDAGÓG") || 
+                                  nombre.Contains("PEDAGOGIC") ||
+                                  nombre.Contains("DIDÁCTIC") ||
+                                  nombre.Contains("DIDACTIC") ||
+                                  nombre.Contains("ENSEÑANZ") ||
+                                  nombre.Contains("EDUCATIV") ||
+                                  nombre.Contains("METODOLOG");
+                
+                Console.WriteLine($"  - Nombre contiene palabras pedagógicas: {nombrePedagogico}");
+            }
+            
+            bool esPedagogica = cap.EsPedagogica || tipoPedagogico || nombrePedagogico;
+            
+            Console.WriteLine($"  - ES PEDAGÓGICA (cualquier criterio): {esPedagogica}");
+            
+            if (esPedagogica)
+            {
+                horasPedagogicasDitic += cap.HorasAcademicas;
+                Console.WriteLine($"  - ✓ AGREGADA. Total pedagógicas: {horasPedagogicasDitic}");
+            }
+            else
+            {
+                Console.WriteLine($"  - ✗ No cumple criterios pedagógicos");
+            }
+            Console.WriteLine($"  {new string('-', 50)}");
+        }
+
+        // Calcular si cumple los requisitos
+        cumpleCapacitacionesDitic = totalHorasCapacitacionesDitic >= horasCapacitacionRequeridas && 
+                                   horasPedagogicasDitic >= horasPedagogicasRequeridas;
+
+        Console.WriteLine($"\n=== RESULTADO FINAL DITIC ===");
+        Console.WriteLine($"Total horas: {totalHorasCapacitacionesDitic}");
+        Console.WriteLine($"Horas pedagógicas: {horasPedagogicasDitic}");
+        Console.WriteLine($"Cumple requisito pedagógico (>={horasPedagogicasRequeridas}h): {horasPedagogicasDitic >= horasPedagogicasRequeridas}");
+        Console.WriteLine($"Cumple requisito total (>={horasCapacitacionRequeridas}h): {totalHorasCapacitacionesDitic >= horasCapacitacionRequeridas}");
+        Console.WriteLine($"Cumple ambos requisitos: {cumpleCapacitacionesDitic}");
+        Console.WriteLine($"=========================\n");
+
+        StateHasChanged();
+    }
     
     private void ShowCapacitacionesModal()
     {
@@ -3321,12 +3436,104 @@ private bool isLoadingInvestigaciones = false;
             if (apiCapacitaciones is not null)
             {
                 capacitaciones = apiCapacitaciones.ToList();
+                
+                // Calcular horas directamente desde las capacitaciones DITIC cargadas
+                CalcularHorasCapacitacionesDitic();
+                
                 StateHasChanged();
             }
         }        catch (Exception ex)
         {
             await JSRuntime.InvokeVoidAsync("alert", $"Error al cargar capacitaciones: {ex.Message}");
         }
+    }
+
+    private void CalcularHorasCapacitaciones()
+    {
+        if (capacitaciones == null || !capacitaciones.Any())
+        {
+            horasCapacitacionObtenidas = 0;
+            horasPedagogicasObtenidas = 0;
+            cumpleCapacitaciones = false;
+            return;
+        }
+
+        try
+        {
+            Console.WriteLine($"CalcularHorasCapacitaciones: Iniciando cálculo...");
+            Console.WriteLine($"  - Total capacitaciones disponibles: {capacitaciones.Count}");
+            
+            // Filtrar capacitaciones de los últimos 3 años
+            var fechaLimite = DateTime.Now.AddYears(-3);
+            var capacitacionesValidas = capacitaciones.Where(c => c.FechaFin >= fechaLimite).ToList();
+            Console.WriteLine($"  - Capacitaciones válidas (últimos 3 años): {capacitacionesValidas.Count}");
+            
+            // Debug de cada capacitación
+            foreach (var cap in capacitacionesValidas)
+            {
+                Console.WriteLine($"    * {cap.NombreCapacitacion}: Tipo={cap.TipoCapacitacion}, EsPed={cap.EsPedagogica}, Horas={cap.HorasAcademicas}");
+            }
+
+            // Calcular horas totales
+            horasCapacitacionObtenidas = capacitacionesValidas.Sum(c => c.HorasAcademicas);
+
+            // Calcular horas pedagógicas con verificación manual del tipo
+            var capacitacionesPedagogicas = capacitacionesValidas.Where(c => 
+                c.EsPedagogica || 
+                c.TipoCapacitacion.ToLower().Contains("pedagog") ||
+                c.TipoCapacitacion.ToLower().Contains("didact") ||
+                c.TipoCapacitacion.ToLower().Contains("enseñanza")
+            ).ToList();
+            
+            horasPedagogicasObtenidas = capacitacionesPedagogicas.Sum(c => c.HorasAcademicas);
+            
+            Console.WriteLine($"  - Horas totales calculadas: {horasCapacitacionObtenidas}");
+            Console.WriteLine($"  - Capacitaciones pedagógicas encontradas: {capacitacionesPedagogicas.Count}");
+            foreach (var capPed in capacitacionesPedagogicas)
+            {
+                Console.WriteLine($"    * {capPed.NombreCapacitacion}: {capPed.HorasAcademicas} horas (Tipo: {capPed.TipoCapacitacion})");
+            }
+            Console.WriteLine($"  - Horas pedagógicas calculadas: {horasPedagogicasObtenidas}");
+
+            // Calcular si cumple los requisitos
+            cumpleCapacitaciones = horasCapacitacionObtenidas >= horasCapacitacionRequeridas && 
+                                   horasPedagogicasObtenidas >= horasPedagogicasRequeridas;
+
+            Console.WriteLine($"Horas calculadas desde capacitaciones:");
+            Console.WriteLine($"  - Total: {horasCapacitacionObtenidas} horas (req: {horasCapacitacionRequeridas})");
+            Console.WriteLine($"  - Pedagógicas: {horasPedagogicasObtenidas} horas (req: {horasPedagogicasRequeridas})");
+            Console.WriteLine($"  - Capacitaciones válidas: {capacitacionesValidas.Count} (últimos 3 años)");
+            Console.WriteLine($"  - Cumple requisitos: {cumpleCapacitaciones}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error calculando horas de capacitaciones: {ex.Message}");
+            horasCapacitacionObtenidas = 0;
+            horasPedagogicasObtenidas = 0;
+            cumpleCapacitaciones = false;
+        }
+    }
+
+    private async Task RecargarCapacitacionesYActualizarResumen()
+    {
+        Console.WriteLine("RecargarCapacitacionesYActualizarResumen: Iniciando...");
+        
+        await CargarCapacitaciones();
+        Console.WriteLine($"RecargarCapacitacionesYActualizarResumen: Capacitaciones cargadas: {capacitaciones.Count}");
+        
+        // Recalcular horas tras cargar capacitaciones DITIC
+        CalcularHorasCapacitacionesDitic();
+        Console.WriteLine($"RecargarCapacitacionesYActualizarResumen: Horas recalculadas - Total: {totalHorasCapacitacionesDitic}, Ped: {horasPedagogicasDitic}");
+        
+        // Forzar actualización inmediata de la UI
+        StateHasChanged();
+        
+        // Actualizar estadísticas automáticamente después de un pequeño delay para el backend
+        await Task.Delay(500); 
+        await CargarEstadisticas();
+        
+        Console.WriteLine("RecargarCapacitacionesYActualizarResumen: Estadísticas actualizadas");
+        StateHasChanged();
     }
 
     private async Task ImportarCapacitaciones()
@@ -3344,8 +3551,19 @@ private bool isLoadingInvestigaciones = false;
             // Simular importación llamando a CargarCapacitaciones
             await CargarCapacitaciones();
             
-            // Actualizar resúmenes dinámicos para sincronizar con los datos cargados
+            // Actualizar resúmenes dinámicos para obtener configuración de requisitos
             await ActualizarResumenesDinamicos();
+            
+            // Recalcular después de la actualización para asegurar valores correctos desde las capacitaciones reales
+            CalcularHorasCapacitacionesDitic();
+            
+            // Forzar actualización de UI después del cálculo
+            StateHasChanged();
+            
+            Console.WriteLine("ImportarCapacitaciones: Valores finales después del recálculo:");
+            Console.WriteLine($"  - Horas totales DITIC: {totalHorasCapacitacionesDitic}/{horasCapacitacionRequeridas}");
+            Console.WriteLine($"  - Horas pedagógicas DITIC: {horasPedagogicasDitic}/{horasPedagogicasRequeridas}");
+            Console.WriteLine($"  - Cumple requisitos DITIC: {cumpleCapacitacionesDitic}");
             
             if (capacitaciones.Any())
             {
@@ -3420,11 +3638,7 @@ private bool isLoadingInvestigaciones = false;
                 {
                     await AuthService.ActualizarCertificadoCapacitacion(editingCapacitacion.Id, selectedCapacitacionPdf);
                 }                  await MostrarNotificacionExito("🎓 Capacitación Actualizada", "La capacitación DITIC ha sido actualizada correctamente en el sistema académico.");
-                await CargarCapacitaciones();
-                
-                // Actualizar estadísticas automáticamente
-                await Task.Delay(500); // Esperar medio segundo para que el backend procese
-                await CargarEstadisticas();
+                await RecargarCapacitacionesYActualizarResumen();
                 CloseAgregarCapacitacionModal();
             }
             else            {                if (selectedCapacitacionPdf is not null)
@@ -3453,13 +3667,9 @@ private bool isLoadingInvestigaciones = false;
                         nuevaCapacitacion.FechaFinAutoridad,
                         selectedCapacitacionPdf
                     );                    await MostrarNotificacionExito("🎓 Capacitación Registrada", "La capacitación DITIC ha sido creada exitosamente con su certificado PDF adjunto.");
-                    await CargarCapacitaciones();
+                    await RecargarCapacitacionesYActualizarResumen();
                     
-                    // Actualizar estadísticas automáticamente con mejor logging
-                    Console.WriteLine("GuardarCapacitacion: Iniciando actualización de estadísticas (con PDF)...");
-                    await Task.Delay(500); // Esperar medio segundo para que el backend procese
-                    await CargarEstadisticas();
-                    Console.WriteLine("GuardarCapacitacion: Estadísticas actualizadas (con PDF).");
+                    Console.WriteLine("GuardarCapacitacion: Capacitación con PDF guardada y estadísticas actualizadas.");
                     CloseAgregarCapacitacionModal();
                 }else
                 {
@@ -3488,12 +3698,8 @@ private bool isLoadingInvestigaciones = false;
                         FechaFinAutoridad = nuevaCapacitacion.FechaFinAutoridad
                     };
                     var created = await AuthService.CrearCapacitacion(createDto);                    await MostrarNotificacionExito("🎓 Capacitación Registrada", "La capacitación DITIC ha sido creada correctamente en el sistema académico.");
-                    await CargarCapacitaciones();
+                    await RecargarCapacitacionesYActualizarResumen();
                     
-                    // Actualizar estadísticas automáticamente con mejor logging
-                    Console.WriteLine("GuardarCapacitacion: Iniciando actualización de estadísticas...");
-                    await Task.Delay(500); // Esperar medio segundo para que el backend procese
-                    await CargarEstadisticas();
                     Console.WriteLine("GuardarCapacitacion: Estadísticas actualizadas.");
                     CloseAgregarCapacitacionModal();
                 }
@@ -3598,11 +3804,7 @@ private bool isLoadingInvestigaciones = false;
                 var success = await AuthService.EliminarCapacitacion(id);                if (success)
                 {
                     await MostrarNotificacionExito("🗑️ Capacitación Eliminada", "La capacitación DITIC ha sido eliminada permanentemente del sistema.");
-                    await CargarCapacitaciones();
-                    
-                    // Actualizar estadísticas automáticamente
-                    await Task.Delay(500); // Esperar medio segundo para que el backend procese
-                    await CargarEstadisticas();
+                    await RecargarCapacitacionesYActualizarResumen();
                     StateHasChanged();
                 }                else
                 {
@@ -3697,8 +3899,7 @@ private bool isLoadingInvestigaciones = false;
                 }
                 ExtractEvaluacionValues(verificacion.EvaluacionDesempeno.ValorObtenido);
                 
-                // Actualizar variables para capacitaciones
-                cumpleCapacitaciones = verificacion.Capacitacion.Cumple;
+                // Actualizar solo la configuración de requisitos para capacitaciones, pero NO sobrescribir valores calculados
                 if (configuracionRequisitos != null)
                 {
                     horasCapacitacionRequeridas = configuracionRequisitos.HorasCapacitacionRequeridas;
@@ -3710,7 +3911,22 @@ private bool isLoadingInvestigaciones = false;
                     horasCapacitacionRequeridas = 96;
                     horasPedagogicasRequeridas = 24;
                 }
-                ExtractCapacitacionValues(verificacion.Capacitacion.ValorObtenido);
+                
+                // Solo usar ExtractCapacitacionValues si no tenemos capacitaciones cargadas localmente
+                if (!capacitaciones.Any())
+                {
+                    Console.WriteLine("ActualizarResumenesDinamicos: No hay capacitaciones locales, usando valores de API");
+                    cumpleCapacitaciones = verificacion.Capacitacion.Cumple;
+                    ExtractCapacitacionValues(verificacion.Capacitacion.ValorObtenido);
+                }
+                else
+                {
+                    Console.WriteLine("ActualizarResumenesDinamicos: Manteniendo valores calculados desde capacitaciones locales");
+                    // Los valores de horasCapacitacionObtenidas y horasPedagogicasObtenidas ya están calculados localmente
+                    // Solo actualizar cumpleCapacitaciones basándose en los valores locales
+                    cumpleCapacitaciones = horasCapacitacionObtenidas >= horasCapacitacionRequeridas && 
+                                           horasPedagogicasObtenidas >= horasPedagogicasRequeridas;
+                }
                 
                 Console.WriteLine($"ActualizarResumenesDinamicos: Variables actualizadas");
                 Console.WriteLine($"  - Nivel: {nivelActual}");

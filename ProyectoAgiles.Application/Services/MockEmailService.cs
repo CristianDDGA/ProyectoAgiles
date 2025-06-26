@@ -73,4 +73,32 @@ public class MockEmailService : IEmailService
             return false;
         }
     }
+
+    public async Task<bool> SendAdminNotificationEmailAsync(string to, string subject, string body, bool isHtml = true)
+    {
+        try
+        {
+            var adminBaseUrl = _configuration["AppSettings:AdminBaseUrl"] ?? "http://localhost:5022";
+            var processedBody = body.Replace("{{AdminBaseUrl}}", adminBaseUrl);
+
+            Console.WriteLine("=".PadRight(80, '='));
+            Console.WriteLine("EMAIL SIMULADO - NOTIFICACIÓN ADMINISTRATIVA");
+            Console.WriteLine("=".PadRight(80, '='));
+            Console.WriteLine($"Para: {to}");
+            Console.WriteLine($"Asunto: {subject}");
+            Console.WriteLine($"Es HTML: {isHtml}");
+            Console.WriteLine($"URL Base Admin: {adminBaseUrl}");
+            Console.WriteLine("Contenido:");
+            Console.WriteLine(processedBody);
+            Console.WriteLine("=".PadRight(80, '='));
+
+            await Task.Delay(100); // Simular operación asíncrona
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error en MockEmailService: {ex.Message}");
+            return false;
+        }
+    }
 }
