@@ -2912,13 +2912,22 @@ private bool isLoadingInvestigaciones = false;
                 return;
             }
 
-            // Usar verificación dinámica en lugar del método hardcodeado
+            Console.WriteLine("VerificarRequisitos: Obteniendo datos EXCLUSIVAMENTE de la API...");
+            
+            // Usar solo verificación dinámica que viene de la API - NO hacer cálculos locales
             requisitosEscalafonDinamicos = await AuthService.VerificarRequisitosEscalafonDinamico(cedula, nivelActual);
             
             // Mantener compatibilidad con el sistema anterior para la UI
-            // TODO: En el futuro se puede migrar completamente al sistema dinámico
             var verificacion = await AuthService.VerificarRequisitosSubirNivel(cedula);
             requisitosVerificacion = verificacion;
+            
+            Console.WriteLine($"VerificarRequisitos: Datos obtenidos de API:");
+            if (requisitosEscalafonDinamicos != null)
+            {
+                Console.WriteLine($"  - Capacitación cumple: {requisitosEscalafonDinamicos.Capacitacion.Cumple}");
+                Console.WriteLine($"  - Capacitación valor: {requisitosEscalafonDinamicos.Capacitacion.ValorObtenido}");
+                Console.WriteLine($"  - Cumple todos los requisitos: {requisitosEscalafonDinamicos.CumpleTodosRequisitos}");
+            }
             
             showRequisitosModal = true;
         }
@@ -3308,6 +3317,8 @@ private bool isLoadingInvestigaciones = false;
     }
 
     // Métodos para DITIC
+    // NOTA: Este método está comentado porque ahora todos los cálculos vienen de la API
+    /*
     private void CalcularHorasCapacitacionesDitic()
     {
         Console.WriteLine($"=== INICIANDO CÁLCULO DE HORAS DITIC ===");
@@ -3413,6 +3424,7 @@ private bool isLoadingInvestigaciones = false;
 
         StateHasChanged();
     }
+    */
     
     private void ShowCapacitacionesModal()
     {
@@ -3436,13 +3448,10 @@ private bool isLoadingInvestigaciones = false;
             if (apiCapacitaciones is not null)
             {
                 capacitaciones = apiCapacitaciones.ToList();
-                
-                // Calcular horas directamente desde las capacitaciones DITIC cargadas
-                CalcularHorasCapacitacionesDitic();
-                
                 StateHasChanged();
             }
-        }        catch (Exception ex)
+        }
+        catch (Exception ex)
         {
             await JSRuntime.InvokeVoidAsync("alert", $"Error al cargar capacitaciones: {ex.Message}");
         }
@@ -3521,10 +3530,6 @@ private bool isLoadingInvestigaciones = false;
         await CargarCapacitaciones();
         Console.WriteLine($"RecargarCapacitacionesYActualizarResumen: Capacitaciones cargadas: {capacitaciones.Count}");
         
-        // Recalcular horas tras cargar capacitaciones DITIC
-        CalcularHorasCapacitacionesDitic();
-        Console.WriteLine($"RecargarCapacitacionesYActualizarResumen: Horas recalculadas - Total: {totalHorasCapacitacionesDitic}, Ped: {horasPedagogicasDitic}");
-        
         // Forzar actualización inmediata de la UI
         StateHasChanged();
         
@@ -3548,22 +3553,20 @@ private bool isLoadingInvestigaciones = false;
                 await MostrarNotificacionError("❌ Error de importación", "No se pudo obtener la cédula del usuario.");
                 return;
             }
-            // Simular importación llamando a CargarCapacitaciones
+            
+            // Cargar capacitaciones desde la API
             await CargarCapacitaciones();
             
-            // Actualizar resúmenes dinámicos para obtener configuración de requisitos
+            // Actualizar resúmenes dinámicos para obtener configuración de requisitos desde la API
             await ActualizarResumenesDinamicos();
             
-            // Recalcular después de la actualización para asegurar valores correctos desde las capacitaciones reales
-            CalcularHorasCapacitacionesDitic();
-            
-            // Forzar actualización de UI después del cálculo
+            // Forzar actualización de UI
             StateHasChanged();
             
-            Console.WriteLine("ImportarCapacitaciones: Valores finales después del recálculo:");
-            Console.WriteLine($"  - Horas totales DITIC: {totalHorasCapacitacionesDitic}/{horasCapacitacionRequeridas}");
-            Console.WriteLine($"  - Horas pedagógicas DITIC: {horasPedagogicasDitic}/{horasPedagogicasRequeridas}");
-            Console.WriteLine($"  - Cumple requisitos DITIC: {cumpleCapacitacionesDitic}");
+            Console.WriteLine("ImportarCapacitaciones: Valores obtenidos desde API");
+            Console.WriteLine($"  - Horas totales: {horasCapacitacionObtenidas}/{horasCapacitacionRequeridas}");
+            Console.WriteLine($"  - Horas pedagógicas: {horasPedagogicasObtenidas}/{horasPedagogicasRequeridas}");
+            Console.WriteLine($"  - Cumple requisitos: {cumpleCapacitaciones}");
             
             if (capacitaciones.Any())
             {
@@ -3861,7 +3864,7 @@ private bool isLoadingInvestigaciones = false;
                 CargarConfiguracionRequisitos();
             }
 
-            // Obtener verificación de requisitos dinámicos
+            // Obtener verificación de requisitos dinámicos - TODO viene de la API
             var verificacion = await AuthService.VerificarRequisitosEscalafonDinamico(cedula, nivelActual);
             if (verificacion != null)
             {
@@ -3899,7 +3902,7 @@ private bool isLoadingInvestigaciones = false;
                 }
                 ExtractEvaluacionValues(verificacion.EvaluacionDesempeno.ValorObtenido);
                 
-                // Actualizar solo la configuración de requisitos para capacitaciones, pero NO sobrescribir valores calculados
+                // Actualizar configuración de requisitos para capacitaciones
                 if (configuracionRequisitos != null)
                 {
                     horasCapacitacionRequeridas = configuracionRequisitos.HorasCapacitacionRequeridas;
@@ -3912,27 +3915,27 @@ private bool isLoadingInvestigaciones = false;
                     horasPedagogicasRequeridas = 24;
                 }
                 
-                // Solo usar ExtractCapacitacionValues si no tenemos capacitaciones cargadas localmente
-                if (!capacitaciones.Any())
+                // Usar SIEMPRE los valores que vienen de la API - NO hacer cálculos locales
+                Console.WriteLine("ActualizarResumenesDinamicos: Usando valores de API para capacitaciones");
+                cumpleCapacitaciones = verificacion.Capacitacion.Cumple;
+                ExtractCapacitacionValues(verificacion.Capacitacion.ValorObtenido);
+                
+                // También actualizar el objeto estadisticasDocente si existe para sincronizar con las estadísticas
+                if (estadisticasDocente?.Secciones?.Capacitaciones?.Datos != null)
                 {
-                    Console.WriteLine("ActualizarResumenesDinamicos: No hay capacitaciones locales, usando valores de API");
-                    cumpleCapacitaciones = verificacion.Capacitacion.Cumple;
-                    ExtractCapacitacionValues(verificacion.Capacitacion.ValorObtenido);
-                }
-                else
-                {
-                    Console.WriteLine("ActualizarResumenesDinamicos: Manteniendo valores calculados desde capacitaciones locales");
-                    // Los valores de horasCapacitacionObtenidas y horasPedagogicasObtenidas ya están calculados localmente
-                    // Solo actualizar cumpleCapacitaciones basándose en los valores locales
-                    cumpleCapacitaciones = horasCapacitacionObtenidas >= horasCapacitacionRequeridas && 
-                                           horasPedagogicasObtenidas >= horasPedagogicasRequeridas;
+                    estadisticasDocente.Secciones.Capacitaciones.Datos.HorasObtenidas = horasCapacitacionObtenidas;
+                    estadisticasDocente.Secciones.Capacitaciones.Datos.HorasPedagogicasObtenidas = horasPedagogicasObtenidas;
+                    estadisticasDocente.Secciones.Capacitaciones.Datos.Cumple = cumpleCapacitaciones;
+                    
+                    Console.WriteLine("ActualizarResumenesDinamicos: estadisticasDocente sincronizado con valores de API");
                 }
                 
-                Console.WriteLine($"ActualizarResumenesDinamicos: Variables actualizadas");
+                Console.WriteLine($"ActualizarResumenesDinamicos: Variables actualizadas desde API");
                 Console.WriteLine($"  - Nivel: {nivelActual}");
                 Console.WriteLine($"  - Obras: {obrasConUTAObtenidas}/{obrasConUTARequeridas} UTA, {totalObrasObtenidas}/{totalObrasRequeridas} total");
                 Console.WriteLine($"  - Evaluaciones: {porcentajeEvaluacionObtenido}%/{porcentajeEvaluacionRequerido}%");
                 Console.WriteLine($"  - Capacitaciones: {horasCapacitacionObtenidas}h/{horasCapacitacionRequeridas}h, {horasPedagogicasObtenidas}h/{horasPedagogicasRequeridas}h ped");
+                Console.WriteLine($"  - Cumple todos los requisitos: {verificacion.CumpleTodosRequisitos}");
                 
                 // Forzar actualización de la UI
                 StateHasChanged();
