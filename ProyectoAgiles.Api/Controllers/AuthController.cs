@@ -2,16 +2,32 @@ using Microsoft.AspNetCore.Mvc;
 using ProyectoAgiles.Application.DTOs;
 using ProyectoAgiles.Application.Interfaces;
 using System.ComponentModel.DataAnnotations;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace ProyectoAgiles.Api.Controllers;
 
 /// <summary>
-/// Controlador para la gestión de autenticación y autorización de usuarios
+/// 🔐 Controlador de Autenticación y Autorización
 /// </summary>
+/// <remarks>
+/// Este controlador maneja todas las operaciones relacionadas con la autenticación de usuarios,
+/// incluyendo registro, inicio de sesión, recuperación de contraseña y gestión de tokens JWT.
+/// 
+/// <para>
+/// <strong>Funcionalidades principales:</strong>
+/// </para>
+/// <list type="bullet">
+/// <item><description>🔑 Registro de nuevos usuarios en el sistema</description></item>
+/// <item><description>🚪 Inicio de sesión con credenciales</description></item>
+/// <item><description>🔄 Recuperación y restablecimiento de contraseña</description></item>
+/// <item><description>👤 Gestión de perfiles de usuario</description></item>
+/// <item><description>🎫 Generación y validación de tokens JWT</description></item>
+/// </list>
+/// </remarks>
 [ApiController]
 [Route("api/[controller]")]
 [Produces("application/json")]
-[Tags("Autenticación")]
+[Tags("🔐 Autenticación")]
 public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
@@ -24,17 +40,59 @@ public class AuthController : ControllerBase
     }
 
     /// <summary>
-    /// Registra un nuevo usuario en el sistema
+    /// 📝 Registrar nuevo usuario
     /// </summary>
-    /// <param name="registerDto">Datos del usuario a registrar</param>
-    /// <returns>Información del usuario registrado</returns>
-    /// <response code="200">Usuario registrado exitosamente</response>
-    /// <response code="400">Datos de entrada inválidos</response>
-    /// <response code="409">El usuario ya existe</response>
+    /// <remarks>
+    /// Registra un nuevo usuario en el sistema con validación completa de datos.
+    /// 
+    /// <para><strong>Proceso de registro:</strong></para>
+    /// <list type="number">
+    /// <item><description>Validación de datos de entrada</description></item>
+    /// <item><description>Verificación de usuario único</description></item>
+    /// <item><description>Encriptación de contraseña</description></item>
+    /// <item><description>Creación del usuario en base de datos</description></item>
+    /// <item><description>Generación de perfil inicial</description></item>
+    /// </list>
+    /// 
+    /// <para><strong>Campos requeridos:</strong></para>
+    /// <list type="bullet">
+    /// <item><description><c>Email</c>: Correo electrónico único y válido</description></item>
+    /// <item><description><c>Password</c>: Contraseña segura (mín. 8 caracteres)</description></item>
+    /// <item><description><c>FirstName</c>: Nombre del usuario</description></item>
+    /// <item><description><c>LastName</c>: Apellido del usuario</description></item>
+    /// <item><description><c>Role</c>: Rol en el sistema (Docente, Admin, etc.)</description></item>
+    /// </list>
+    /// 
+    /// <para><strong>💡 Ejemplo de uso:</strong></para>
+    /// <code>
+    /// POST /api/Auth/register
+    /// {
+    ///   "email": "profesor@uta.edu.ec",
+    ///   "password": "MiContraseña123!",
+    ///   "firstName": "Juan",
+    ///   "lastName": "Pérez",
+    ///   "role": "Docente",
+    ///   "phoneNumber": "+593123456789"
+    /// }
+    /// </code>
+    /// </remarks>
+    /// <param name="registerDto">Datos completos del usuario a registrar</param>
+    /// <returns>Información del usuario creado incluyendo ID y datos básicos</returns>
+    /// <response code="201">✅ Usuario registrado exitosamente</response>
+    /// <response code="400">❌ Datos de entrada inválidos o incompletos</response>
+    /// <response code="409">⚠️ El email ya está registrado en el sistema</response>
+    /// <response code="500">💥 Error interno del servidor</response>
     [HttpPost("register")]
-    [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    [ProducesResponseType(typeof(UserDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status409Conflict)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status500InternalServerError)]
+    [SwaggerOperation(
+        Summary = "Registrar nuevo usuario en el sistema",
+        Description = "Crea una nueva cuenta de usuario con validación completa y encriptación de contraseña",
+        OperationId = "RegisterUser",
+        Tags = new[] { "🔐 Autenticación" }
+    )]
     public async Task<ActionResult<UserDto>> Register([FromBody] RegisterDto registerDto)
     {
         try

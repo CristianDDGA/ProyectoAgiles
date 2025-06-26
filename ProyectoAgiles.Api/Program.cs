@@ -6,6 +6,7 @@ using ProyectoAgiles.Application.Mappings;
 using ProyectoAgiles.Domain.Interfaces;
 using ProyectoAgiles.Infrastructure.Data;
 using ProyectoAgiles.Infrastructure.Repositories;
+using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,29 +19,33 @@ builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo
     {
-        Title = "ProyectoAgiles API",
-        Version = "v1",
-        Description = "API para el Sistema de Gestión de Escalafón Docente - Universidad Técnica de Ambato",
-        Contact = new OpenApiContact
-        {
-            Name = "Equipo de Desarrollo",
-            Email = "desarrollo@uta.edu.ec"
-        }
+        Title = "🎓 ProyectoAgiles API",
+        Version = "v1.0.0",
+        Description = "API REST para la gestión integral del escalafón docente de la Universidad Técnica de Ambato"
     });
 
-    // Configuración para incluir comentarios XML (opcional)
-    // var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
-    // var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-    // c.IncludeXmlComments(xmlPath);
+    // Configuración para incluir comentarios XML
+    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    if (File.Exists(xmlPath))
+    {
+        c.IncludeXmlComments(xmlPath);
+    }
 
-    // Configuración de seguridad (si necesitas autenticación)
+    // Configuración avanzada de UI
+    c.EnableAnnotations();
+    c.DescribeAllParametersInCamelCase();
+    c.CustomSchemaIds(type => type.FullName?.Replace("+", "."));
+
+    // Configuración de seguridad JWT
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
-        Description = "JWT Authorization header usando el esquema Bearer. Ejemplo: \"Authorization: Bearer {token}\"",
         Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
         In = ParameterLocation.Header,
-        Type = SecuritySchemeType.ApiKey,
-        Scheme = "Bearer"
+        Description = "🔐 JWT Authorization header usando el esquema Bearer. Ejemplo: 'Bearer {token}'"
     });
 
     c.AddSecurityRequirement(new OpenApiSecurityRequirement()
@@ -52,12 +57,9 @@ builder.Services.AddSwaggerGen(c =>
                 {
                     Type = ReferenceType.SecurityScheme,
                     Id = "Bearer"
-                },
-                Scheme = "oauth2",
-                Name = "Bearer",
-                In = ParameterLocation.Header,
+                }
             },
-            new List<string>()
+            Array.Empty<string>()
         }
     });
 });
@@ -120,25 +122,38 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI(c =>
     {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "ProyectoAgiles API v1");
-        c.RoutePrefix = "swagger"; // Para acceder en /swagger
-        c.DocumentTitle = "ProyectoAgiles API - Documentación";
-        c.DefaultModelsExpandDepth(-1); // Ocultar modelos por defecto
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "ProyectoAgiles API v1.0.0");
+        c.RoutePrefix = "swagger";
+        c.DocumentTitle = "🎓 ProyectoAgiles API - Sistema de Escalafón Docente";
+        c.DefaultModelsExpandDepth(2);
+        c.DefaultModelRendering(Swashbuckle.AspNetCore.SwaggerUI.ModelRendering.Model);
         c.DisplayRequestDuration();
         c.EnableFilter();
         c.EnableDeepLinking();
+        c.EnableValidator();
+        c.SupportedSubmitMethods(
+            Swashbuckle.AspNetCore.SwaggerUI.SubmitMethod.Get,
+            Swashbuckle.AspNetCore.SwaggerUI.SubmitMethod.Post,
+            Swashbuckle.AspNetCore.SwaggerUI.SubmitMethod.Put,
+            Swashbuckle.AspNetCore.SwaggerUI.SubmitMethod.Delete,
+            Swashbuckle.AspNetCore.SwaggerUI.SubmitMethod.Patch
+        );
+        c.InjectStylesheet("/swagger-ui/custom.css");
+        c.InjectJavascript("/swagger-ui/custom.js");
     });
     app.UseDeveloperExceptionPage();
 }
 
-// También habilitar Swagger en producción (opcional)
+// También habilitar Swagger en producción con seguridad adicional
 if (app.Environment.IsProduction())
 {
     app.UseSwagger();
     app.UseSwaggerUI(c =>
     {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "ProyectoAgiles API v1");
-        c.RoutePrefix = "api-docs"; // Para acceder en /api-docs en producción
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "ProyectoAgiles API v1.0.0");
+        c.RoutePrefix = "api-docs";
+        c.DocumentTitle = "🎓 ProyectoAgiles API - Documentación Oficial";
+        c.SupportedSubmitMethods(); // Deshabilitar pruebas en producción
     });
 }
 
