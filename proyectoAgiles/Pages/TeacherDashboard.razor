@@ -2193,10 +2193,8 @@ private bool isLoadingInvestigaciones = false;
             await CargarEstadisticas();
             Console.WriteLine("LoadDashboardData: Estadísticas cargadas al inicializar.");
             
-            // Cargar capacitaciones para que estén disponibles desde el inicio
-            Console.WriteLine("LoadDashboardData: Cargando capacitaciones DITIC...");
-            await CargarCapacitaciones();
-            Console.WriteLine($"LoadDashboardData: {capacitaciones.Count} capacitaciones cargadas.");
+            // NO cargar capacitaciones automáticamente - solo cuando el usuario lo solicite
+            Console.WriteLine("LoadDashboardData: Capacitaciones DITIC se cargarán bajo demanda.");
         }
         catch (Exception ex)
         {
@@ -3403,6 +3401,8 @@ private bool isLoadingInvestigaciones = false;
     
     private void ShowCapacitacionesModal()
     {
+        // Solo abrir el modal, NO cargar datos automáticamente
+        // NO limpiar la lista - mantener los datos ya importados
         showCapacitacionesModal = true;
         StateHasChanged();
     }
