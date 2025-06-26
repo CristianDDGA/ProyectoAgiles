@@ -3015,12 +3015,17 @@ private bool isLoadingInvestigaciones = false;
 
         try
         {
-            // Calcular el siguiente nivel en la jerarquía
-            var nivelSolicitado = CalcularSiguienteNivel(nivelActual);
+            // Usar el nivel objetivo de la configuración de requisitos (viene de la API)
+            string nivelSolicitado = "";
             
-            if (string.IsNullOrEmpty(nivelSolicitado))
+            if (configuracionRequisitos != null && !string.IsNullOrEmpty(configuracionRequisitos.NivelObjetivo))
             {
-                await MostrarNotificacionError("Error", "No se pudo determinar el siguiente nivel de escalafón.");
+                nivelSolicitado = configuracionRequisitos.NivelObjetivo;
+                Console.WriteLine($"SubirNivel: Usando nivel objetivo de configuración: {nivelActual} -> {nivelSolicitado}");
+            }
+            else
+            {
+                await MostrarNotificacionError("Error", "No se pudo determinar el siguiente nivel de escalafón. La configuración de requisitos no está disponible.");
                 return;
             }
             
@@ -3072,36 +3077,7 @@ private bool isLoadingInvestigaciones = false;
         }
     }
 
-    private string CalcularSiguienteNivel(string nivelActual)
-    {
-        // Jerarquía de escalafón académico según reglamento UTA
-        var jerarquia = new Dictionary<string, string>
-        {
-            { "Titular Auxiliar 1", "Titular Auxiliar 2" },
-            { "Titular Auxiliar 2", "Titular Agregado 1" },
-            { "Titular Agregado 1", "Titular Agregado 2" },
-            { "Titular Agregado 2", "Titular Principal 1" },
-            { "Titular Principal 1", "Titular Principal 2" },
-            { "Titular Principal 2", "Titular Principal 3" },
-            { "Titular Principal 3", "Titular Principal 4" },
-            { "Titular Principal 4", "" } // Nivel máximo
-        };
-
-        if (jerarquia.TryGetValue(nivelActual, out var siguienteNivel))
-        {
-            if (string.IsNullOrEmpty(siguienteNivel))
-            {
-                Console.WriteLine($"CalcularSiguienteNivel: {nivelActual} es el nivel máximo");
-                return "";
-            }
-            
-            Console.WriteLine($"CalcularSiguienteNivel: {nivelActual} -> {siguienteNivel}");
-            return siguienteNivel;
-        }
-        
-        Console.WriteLine($"CalcularSiguienteNivel: Nivel no reconocido: {nivelActual}");
-        return "";
-    }    // Métodos para notificaciones profesionales con toast
+    // Métodos para notificaciones profesionales con toast
     private async Task MostrarNotificacionExito(string titulo, string mensaje, int duracion = 5000)
     {
         await JSRuntime.InvokeVoidAsync("toastNotifications.success", titulo, mensaje, duracion);
