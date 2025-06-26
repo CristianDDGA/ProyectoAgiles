@@ -29,9 +29,6 @@
                   <div class="nivel-current-info">
                     <div class="nivel-badge-container">
                         <span class="badge bg-info text-dark nivel-badge">@UserSession.GetUserNivel()</span>
-                        <button class="btn btn-sm btn-outline-secondary ms-2" @onclick="RefreshUserData" title="Actualizar datos">
-                            <i class="fas fa-sync-alt"></i>
-                        </button>
                     </div>
                 </div>
                 
@@ -4016,23 +4013,6 @@ private bool isLoadingInvestigaciones = false;
         }
     }
 
-    private async Task RefreshUserData()
-    {
-        try
-        {
-            await UserSession.RefreshUserDataAsync(HttpClient);
-            StateHasChanged();
-            await JSRuntime.InvokeVoidAsync("toastNotifications.success", 
-                "Datos actualizados", 
-                "Los datos del usuario han sido actualizados correctamente.");
-        }
-        catch (Exception ex)
-        {
-            await JSRuntime.InvokeVoidAsync("toastNotifications.error", 
-                "Error", 
-                $"Error al actualizar datos: {ex.Message}");
-        }
-    }
 }
 
 <style>
