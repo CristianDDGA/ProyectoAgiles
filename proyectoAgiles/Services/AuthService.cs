@@ -818,6 +818,19 @@ namespace proyectoAgiles.Services
                                 Cumple = verificacion.Capacitacion.Cumple,
                                 Detalles = verificacion.Capacitacion.Mensaje
                             }
+                        },
+                        Proyectos = new SeccionEstadistica
+                        {
+                            Titulo = "Proyectos de Investigación",
+                            Icono = "fas fa-flask",
+                            Datos = new DatosSeccion
+                            {
+                                MesesRequeridos = configuracion.MesesProyectosInvestigacion,
+                                MesesObtenidos = 0, // TODO: Implementar lógica de cálculo
+                                ProyectosActivos = 0, // TODO: Implementar consulta
+                                Cumple = verificacion.ProyectosInvestigacion?.Cumple ?? !configuracion.RequiereProyectosInvestigacion,
+                                Detalles = verificacion.ProyectosInvestigacion?.Mensaje ?? (configuracion.RequiereProyectosInvestigacion ? "No se requieren proyectos para este nivel" : "Sin información de proyectos")
+                            }
                         }
                     }
                 };
@@ -1010,10 +1023,43 @@ namespace proyectoAgiles.Services
                 Cedula = cedula,
                 Resumen = new ResumenEstadisticas 
                 { 
-                    TotalRequisitos = 4, 
+                    TotalRequisitos = 5, // Actualizado a 5 requisitos incluyendo Proyectos
                     RequisitosCumplidos = 0, 
                     PorcentajeCompletitud = 0, 
                     PuedeSubirNivel = false 
+                },
+                Secciones = new SeccionesEstadisticas
+                {
+                    Experiencia = new SeccionEstadistica 
+                    { 
+                        Titulo = "Experiencia Docente", 
+                        Icono = "fas fa-chalkboard-teacher",
+                        Datos = new DatosSeccion { Cumple = false, Detalles = "Sin información disponible" }
+                    },
+                    Obras = new SeccionEstadistica 
+                    { 
+                        Titulo = "Obras/Publicaciones", 
+                        Icono = "fas fa-book",
+                        Datos = new DatosSeccion { Cumple = false, Detalles = "Sin información disponible" }
+                    },
+                    Evaluaciones = new SeccionEstadistica 
+                    { 
+                        Titulo = "Evaluaciones DAC", 
+                        Icono = "fas fa-star",
+                        Datos = new DatosSeccion { Cumple = false, Detalles = "Sin información disponible" }
+                    },
+                    Capacitaciones = new SeccionEstadistica 
+                    { 
+                        Titulo = "Capacitaciones DITIC", 
+                        Icono = "fas fa-graduation-cap",
+                        Datos = new DatosSeccion { Cumple = false, Detalles = "Sin información disponible" }
+                    },
+                    Proyectos = new SeccionEstadistica 
+                    { 
+                        Titulo = "Proyectos de Investigación", 
+                        Icono = "fas fa-flask",
+                        Datos = new DatosSeccion { Cumple = false, Detalles = "Sin información disponible" }
+                    }
                 }
             };
         }
@@ -2381,6 +2427,7 @@ public class RegisterRequest
         public SeccionEstadistica Obras { get; set; } = new();
         public SeccionEstadistica Evaluaciones { get; set; } = new();
         public SeccionEstadistica Capacitaciones { get; set; } = new();
+        public SeccionEstadistica Proyectos { get; set; } = new();
     }
 
     public class SeccionEstadistica
@@ -2411,6 +2458,11 @@ public class RegisterRequest
         public int HorasObtenidas { get; set; }
         public int HorasPedagogicasRequeridas { get; set; }
         public int HorasPedagogicasObtenidas { get; set; }
+        
+        // Proyectos de Investigación
+        public int MesesRequeridos { get; set; }
+        public int MesesObtenidos { get; set; }
+        public int ProyectosActivos { get; set; }
         
         // Común
         public bool Cumple { get; set; }

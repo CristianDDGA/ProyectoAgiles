@@ -186,48 +186,195 @@
     margin-bottom: 40px;
 }
 
+/* Animación de entrada para las tarjetas */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes pulse-glow {
+    0%, 100% {
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+    }
+    50% {
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+    }
+}
+
+/* Contenedor responsivo para las tarjetas de estadísticas */
+.stats-cards-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+/* En pantallas grandes, forzar exactamente 5 columnas si hay 5 tarjetas */
+@media (min-width: 1400px) {
+    .stats-cards-container.five-cards {
+        grid-template-columns: repeat(5, 1fr);
+        gap: 15px;
+    }
+}
+
+/* En pantallas medianas-grandes, permitir hasta 4 columnas */
+@media (min-width: 1200px) and (max-width: 1399px) {
+    .stats-cards-container {
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 18px;
+    }
+}
+
+/* En tablets, máximo 3 columnas */
+@media (min-width: 768px) and (max-width: 1199px) {
+    .stats-cards-container {
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 15px;
+    }
+}
+
+/* En móviles, una sola columna */
+@media (max-width: 767px) {
+    .stats-cards-container {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+}
+
 .stat-card {
     background: white;
-    border-radius: 12px;
+    border-radius: 16px;
     padding: 25px;
     display: flex;
     align-items: center;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-    transition: all 0.3s ease;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     border-left: 4px solid transparent;
+    width: 100%;
+    min-height: 140px;
+    position: relative;
+    overflow: hidden;
+    animation: fadeInUp 0.6s ease-out;
+    animation-fill-mode: both;
+}
+
+.stat-card:nth-child(1) { animation-delay: 0.1s; }
+.stat-card:nth-child(2) { animation-delay: 0.2s; }
+.stat-card:nth-child(3) { animation-delay: 0.3s; }
+.stat-card:nth-child(4) { animation-delay: 0.4s; }
+.stat-card:nth-child(5) { animation-delay: 0.5s; }
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
 }
 
 .stat-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+    transform: translateY(-8px) scale(1.03);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.18);
+    border-left-color: #28a745;
+    animation: pulse-glow 2s infinite;
+}
+
+.stat-card:hover::before {
+    opacity: 1;
 }
 
 .stat-icon {
     width: 60px;
     height: 60px;
-    border-radius: 12px;
+    border-radius: 15px;
     display: flex;
     align-items: center;
     justify-content: center;
     margin-right: 20px;
     font-size: 1.5rem;
     color: white;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-icon::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.1) 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.stat-card:hover .stat-icon {
+    transform: scale(1.1) rotate(5deg);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+}
+
+.stat-card:hover .stat-icon::after {
+    opacity: 1;
 }
 
 .stat-icon.courses {
     background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
 }
 
 .stat-icon.students {
     background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
 }
 
 .stat-icon.pending {
     background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+    box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3);
 }
 
 .stat-icon.schedule {
     background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+    box-shadow: 0 4px 15px rgba(23, 162, 184, 0.3);
+}
+
+/* Proyectos de investigación - color personalizado */
+.stat-icon.proyectos {
+    background: linear-gradient(135deg, #6f42c1 0%, #8e44ad 100%);
+    box-shadow: 0 4px 15px rgba(111, 66, 193, 0.3);
+}
+
+/* Efectos de hover específicos para cada icono */
+.stat-card:hover .stat-icon.courses {
+    box-shadow: 0 8px 25px rgba(0, 123, 255, 0.4);
+}
+
+.stat-card:hover .stat-icon.students {
+    box-shadow: 0 8px 25px rgba(40, 167, 69, 0.4);
+}
+
+.stat-card:hover .stat-icon.pending {
+    box-shadow: 0 8px 25px rgba(255, 193, 7, 0.4);
+}
+
+.stat-card:hover .stat-icon.schedule {
+    box-shadow: 0 8px 25px rgba(23, 162, 184, 0.4);
+}
+
+.stat-card:hover .stat-icon.proyectos {
+    box-shadow: 0 8px 25px rgba(111, 66, 193, 0.4);
 }
 
 .stat-content .stat-number {
@@ -235,12 +382,46 @@
     font-weight: 700;
     margin: 0;
     color: #2c3e50;
+    transition: all 0.3s ease;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .stat-content .stat-label {
     font-size: 0.9rem;
     color: #6c757d;
     margin: 0;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.stat-card:hover .stat-content .stat-number {
+    color: #28a745;
+    transform: scale(1.05);
+    text-shadow: 0 3px 6px rgba(40, 167, 69, 0.2);
+}
+
+.stat-card:hover .stat-content .stat-label {
+    color: #495057;
+    transform: translateX(2px);
+}
+
+/* Ajustes específicos para 5 tarjetas */
+.stats-cards-container.five-cards .stat-card {
+    min-height: 150px;
+}
+
+.stats-cards-container.five-cards .stat-content .stat-number {
+    font-size: 1.8rem;
+}
+
+.stats-cards-container.five-cards .stat-content .stat-label {
+    font-size: 0.85rem;
+}
+
+.stats-cards-container.five-cards .stat-icon {
+    width: 50px;
+    height: 50px;
+    font-size: 1.3rem;
 }
 
 /* Secciones */
@@ -1623,7 +1804,6 @@ select::-webkit-search-decoration {
         text-indent: 0.01px !important;
         text-overflow: '' !important;
         color: #2d3748 !important;
-        background-color: #ffffff !important;
     }
 }
 

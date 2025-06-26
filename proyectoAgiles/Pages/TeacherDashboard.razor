@@ -3,6 +3,7 @@
 @using System.Text.Json
 @using System.Net.Http.Json
 @using Microsoft.AspNetCore.Components.Forms
+@using System.Reflection
 @using proyectoAgiles.Services
 @using static proyectoAgiles.Services.AuthService
 @using ProyectoAgiles.Application.DTOs
@@ -1849,94 +1850,129 @@
         }
         else
         {
-            <div class="row">
-                <!-- Experiencia -->
-                <div class="col-lg-3 col-md-6 mb-4">
-                    <div class="stat-card @(estadisticasDocente.Secciones.Experiencia.Datos.Cumple ? "border-success" : "border-warning")">
-                        <div class="stat-icon @(estadisticasDocente.Secciones.Experiencia.Datos.Cumple ? "courses" : "pending")">
-                            <i class="@estadisticasDocente.Secciones.Experiencia.Icono"></i>
-                        </div>
-                        <div class="stat-content">
-                            <h3 class="stat-number">@estadisticasDocente.Secciones.Experiencia.Datos.AñosObtenidos.ToString("F1")</h3>
-                            <p class="stat-label">Años Experiencia</p>
-                            <small class="text-muted">Requiere: @estadisticasDocente.Secciones.Experiencia.Datos.AñosRequeridos años</small>
-                            @if (estadisticasDocente.Secciones.Experiencia.Datos.Cumple)
+            // Contar el número de secciones para aplicar clase CSS específica
+            var numSecciones = estadisticasDocente.Secciones.GetType().GetProperties().Count(p => p.GetValue(estadisticasDocente.Secciones) != null);
+            var containerClass = numSecciones == 5 ? "stats-cards-container five-cards" : "stats-cards-container";
+            
+            <div class="@containerClass">
+                @* Generar tarjetas dinámicamente para cada sección de requisitos *@
+                @foreach (var seccion in estadisticasDocente.Secciones.GetType().GetProperties())
+                {
+                    var valorSeccion = seccion.GetValue(estadisticasDocente.Secciones);
+                    if (valorSeccion != null)
+                    {
+                        var tituloPropiedad = valorSeccion.GetType().GetProperty("Titulo");
+                        var iconoPropiedad = valorSeccion.GetType().GetProperty("Icono");
+                        var datosPropiedad = valorSeccion.GetType().GetProperty("Datos");
+                        
+                        if (tituloPropiedad != null && iconoPropiedad != null && datosPropiedad != null)
+                        {
+                            var titulo = tituloPropiedad.GetValue(valorSeccion)?.ToString() ?? seccion.Name;
+                            var icono = iconoPropiedad.GetValue(valorSeccion)?.ToString() ?? "fas fa-chart-bar";
+                            var datos = datosPropiedad.GetValue(valorSeccion);
+                            
+                            if (datos != null)
                             {
-                                <div class="mt-1"><i class="fas fa-check-circle text-success"></i> Cumple</div>
+                                var cumplePropiedad = datos.GetType().GetProperty("Cumple");
+                                var detallesPropiedad = datos.GetType().GetProperty("Detalles");
+                                
+                                if (cumplePropiedad != null)
+                                {
+                                    var cumple = (bool)(cumplePropiedad.GetValue(datos) ?? false);
+                                    var detalles = detallesPropiedad?.GetValue(datos)?.ToString() ?? "";
+                                    
+                                    <!-- Tarjeta dinámica para @titulo -->
+                                    <div class="stat-card @(cumple ? "border-success" : "border-warning")">
+                                        @{
+                                            // Asignar clase específica para cada tipo de requisito
+                                            var claseIcono = seccion.Name switch
+                                            {
+                                                "Experiencia" => "students",
+                                                "Obras" => "courses",
+                                                "Evaluaciones" => "schedule",
+                                                "Capacitaciones" => "pending",
+                                                "Proyectos" => "proyectos",
+                                                _ => "courses"
+                                            };
+                                            
+                                            // Si no cumple el requisito, usar pending siempre
+                                            if (!cumple) claseIcono = "pending";
+                                        }
+                                        <div class="stat-icon @claseIcono">
+                                            <i class="@icono"></i>
+                                        </div>
+                                        <div class="stat-content">
+                                            @* Mostrar valores específicos según el tipo de requisito *@
+                                            @if (seccion.Name == "Experiencia")
+                                            {
+                                                var añosObtenidos = datos.GetType().GetProperty("AñosObtenidos")?.GetValue(datos);
+                                                var añosRequeridos = datos.GetType().GetProperty("AñosRequeridos")?.GetValue(datos);
+                                                <h3 class="stat-number">@(añosObtenidos?.ToString() ?? "0")</h3>
+                                                <p class="stat-label">Años Experiencia</p>
+                                                <small class="text-muted">Requiere: @(añosRequeridos?.ToString() ?? "0") años</small>
+                                            }
+                                            else if (seccion.Name == "Obras")
+                                            {
+                                                var obrasConUTA = datos.GetType().GetProperty("ObrasConUTA")?.GetValue(datos);
+                                                <h3 class="stat-number">@(obrasConUTA?.ToString() ?? "0")</h3>
+                                                <p class="stat-label">Obras con UTA</p>
+                                                <small class="text-muted">@detalles</small>
+                                            }
+                                            else if (seccion.Name == "Evaluaciones")
+                                            {
+                                                var promedioObtenido = datos.GetType().GetProperty("PromedioObtenido")?.GetValue(datos);
+                                                var requiere75 = datos.GetType().GetProperty("Requiere75")?.GetValue(datos);
+                                                <h3 class="stat-number">@(promedioObtenido?.ToString() ?? "0")%</h3>
+                                                <p class="stat-label">Promedio Evaluaciones</p>
+                                                <small class="text-muted">Requiere: @(requiere75?.ToString() ?? "75")%</small>
+                                            }
+                                            else if (seccion.Name == "Capacitaciones")
+                                            {
+                                                var horasObtenidas = datos.GetType().GetProperty("HorasObtenidas")?.GetValue(datos);
+                                                var horasRequeridas = datos.GetType().GetProperty("HorasRequeridas")?.GetValue(datos);
+                                                var horasPedagogicasObtenidas = datos.GetType().GetProperty("HorasPedagogicasObtenidas")?.GetValue(datos);
+                                                var horasPedagogicasRequeridas = datos.GetType().GetProperty("HorasPedagogicasRequeridas")?.GetValue(datos);
+                                                <h3 class="stat-number">@(horasObtenidas?.ToString() ?? "0")</h3>
+                                                <p class="stat-label">Horas Capacitación</p>
+                                                <small class="text-muted">Requiere: @(horasRequeridas?.ToString() ?? "0") h (Ped: @(horasPedagogicasObtenidas?.ToString() ?? "0")/@(horasPedagogicasRequeridas?.ToString() ?? "0"))</small>
+                                            }
+                                            else if (seccion.Name == "Proyectos")
+                                            {
+                                                var mesesObtenidos = datos.GetType().GetProperty("MesesObtenidos")?.GetValue(datos);
+                                                var mesesRequeridos = datos.GetType().GetProperty("MesesRequeridos")?.GetValue(datos);
+                                                var proyectosActivos = datos.GetType().GetProperty("ProyectosActivos")?.GetValue(datos);
+                                                <h3 class="stat-number">@(mesesObtenidos?.ToString() ?? "0")</h3>
+                                                <p class="stat-label">Meses Investigación</p>
+                                                <small class="text-muted">Requiere: @(mesesRequeridos?.ToString() ?? "0") meses | Proyectos: @(proyectosActivos?.ToString() ?? "0")</small>
+                                            }
+                                            else
+                                            {
+                                                @* Para nuevos requisitos que se agreguen *@
+                                                var valorObtenidoProp = datos.GetType().GetProperty("ValorObtenido");
+                                                var valorRequeridoProp = datos.GetType().GetProperty("ValorRequerido");
+                                                var valorObtenido = valorObtenidoProp?.GetValue(datos)?.ToString() ?? "0";
+                                                var valorRequerido = valorRequeridoProp?.GetValue(datos)?.ToString() ?? "0";
+                                                
+                                                <h3 class="stat-number">@valorObtenido</h3>
+                                                <p class="stat-label">@titulo</p>
+                                                <small class="text-muted">@detalles</small>
+                                            }
+                                            
+                                            @if (cumple)
+                                            {
+                                                <div class="mt-1"><i class="fas fa-check-circle text-success"></i> Cumple</div>
+                                            }
+                                            else
+                                            {
+                                                <div class="mt-1"><i class="fas fa-times-circle text-warning"></i> Pendiente</div>
+                                            }
+                                        </div>
+                                    </div>
+                                }
                             }
-                            else
-                            {
-                                <div class="mt-1"><i class="fas fa-times-circle text-warning"></i> Pendiente</div>
-                            }
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Obras -->
-                <div class="col-lg-3 col-md-6 mb-4">
-                    <div class="stat-card @(estadisticasDocente.Secciones.Obras.Datos.Cumple ? "border-success" : "border-warning")">
-                        <div class="stat-icon @(estadisticasDocente.Secciones.Obras.Datos.Cumple ? "students" : "pending")">
-                            <i class="@estadisticasDocente.Secciones.Obras.Icono"></i>
-                        </div>
-                        <div class="stat-content">
-                            <h3 class="stat-number">@estadisticasDocente.Secciones.Obras.Datos.ObrasConUTA</h3>
-                            <p class="stat-label">Obras con UTA</p>
-                            <small class="text-muted">Requiere: @obrasConUTARequeridas obra(s) filiación UTA </small>
-                            @if (estadisticasDocente.Secciones.Obras.Datos.Cumple)
-                            {
-                                <div class="mt-1"><i class="fas fa-check-circle text-success"></i> Cumple</div>
-                            }
-                            else
-                            {
-                                <div class="mt-1"><i class="fas fa-times-circle text-warning"></i> Pendiente</div>
-                            }
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Evaluaciones -->
-                <div class="col-lg-3 col-md-6 mb-4">
-                    <div class="stat-card @(estadisticasDocente.Secciones.Evaluaciones.Datos.Cumple ? "border-success" : "border-warning")">
-                        <div class="stat-icon @(estadisticasDocente.Secciones.Evaluaciones.Datos.Cumple ? "courses" : "pending")">
-                            <i class="@estadisticasDocente.Secciones.Evaluaciones.Icono"></i>
-                        </div>
-                        <div class="stat-content">
-                            <h3 class="stat-number">@estadisticasDocente.Secciones.Evaluaciones.Datos.PromedioObtenido.ToString("F1")%</h3>
-                            <p class="stat-label">Promedio Evaluaciones</p>
-                            <small class="text-muted">Requiere: @estadisticasDocente.Secciones.Evaluaciones.Datos.Requiere75.ToString("F1")%</small>
-                            @if (estadisticasDocente.Secciones.Evaluaciones.Datos.Cumple)
-                            {
-                                <div class="mt-1"><i class="fas fa-check-circle text-success"></i> Cumple</div>
-                            }
-                            else
-                            {
-                                <div class="mt-1"><i class="fas fa-times-circle text-warning"></i> Pendiente</div>
-                            }
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Capacitaciones -->
-                <div class="col-lg-3 col-md-6 mb-4">
-                    <div class="stat-card @(estadisticasDocente.Secciones.Capacitaciones.Datos.Cumple ? "border-success" : "border-warning")">
-                        <div class="stat-icon @(estadisticasDocente.Secciones.Capacitaciones.Datos.Cumple ? "schedule" : "pending")">
-                            <i class="@estadisticasDocente.Secciones.Capacitaciones.Icono"></i>
-                        </div>
-                        <div class="stat-content">
-                            <h3 class="stat-number">@estadisticasDocente.Secciones.Capacitaciones.Datos.HorasObtenidas</h3>
-                            <p class="stat-label">Horas Capacitación</p>
-                            <small class="text-muted">Requiere: @estadisticasDocente.Secciones.Capacitaciones.Datos.HorasRequeridas h (Ped: @estadisticasDocente.Secciones.Capacitaciones.Datos.HorasPedagogicasObtenidas/@estadisticasDocente.Secciones.Capacitaciones.Datos.HorasPedagogicasRequeridas)</small>
-                            @if (estadisticasDocente.Secciones.Capacitaciones.Datos.Cumple)
-                            {
-                                <div class="mt-1"><i class="fas fa-check-circle text-success"></i> Cumple</div>
-                            }
-                            else
-                            {
-                                <div class="mt-1"><i class="fas fa-times-circle text-warning"></i> Pendiente</div>
-                            }
-                        </div>
-                    </div>
-                </div>
+                        }
+                    }
+                }
             </div>
         }
     </div>
