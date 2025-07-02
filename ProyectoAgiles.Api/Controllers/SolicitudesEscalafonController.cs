@@ -516,7 +516,9 @@ public class SolicitudesEscalafonController : ControllerBase
     {
         try
         {
+            _logger.LogInformation("Obteniendo historial para cédula: {Cedula}", cedula);
             var historial = await _solicitudService.GetHistorialEscalafonAsync(cedula);
+            _logger.LogInformation("Historial obtenido: {Count} registros para cédula {Cedula}", historial.Count(), cedula);
             return Ok(historial);
         }
         catch (Exception ex)

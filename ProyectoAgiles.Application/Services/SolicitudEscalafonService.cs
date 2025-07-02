@@ -175,8 +175,8 @@ public class SolicitudEscalafonService : ISolicitudEscalafonService
                 return false;
             }
 
-            // Actualizar el estado de la solicitud a "Finalizada"
-            solicitud.Status = "Finalizada";
+            // Actualizar el estado de la solicitud a "Finalizado"
+            solicitud.Status = "Finalizado";
             solicitud.FechaAprobacion = DateTime.Now;
             solicitud.UpdatedAt = DateTime.UtcNow;
 
@@ -544,13 +544,19 @@ public class SolicitudEscalafonService : ISolicitudEscalafonService
     {
         try
         {
+            Console.WriteLine($"[HISTORIAL] Obteniendo historial para cédula: {cedula}");
+            
             // Obtener todas las solicitudes finalizadas del docente
             var solicitudesFinalizadas = await _repository.GetHistorialEscalafonAsync(cedula);
+            
+            Console.WriteLine($"[HISTORIAL] Solicitudes encontradas: {solicitudesFinalizadas.Count()}");
             
             var historialList = new List<HistorialEscalafonDto>();
             
             foreach (var solicitud in solicitudesFinalizadas)
             {
+                Console.WriteLine($"[HISTORIAL] Procesando solicitud ID: {solicitud.Id}, Estado: {solicitud.Status}, Nivel: {solicitud.NivelActual} -> {solicitud.NivelSolicitado}");
+                
                 var historial = new HistorialEscalafonDto
                 {
                     Id = solicitud.Id,
@@ -566,10 +572,13 @@ public class SolicitudEscalafonService : ISolicitudEscalafonService
                 historialList.Add(historial);
             }
             
+            Console.WriteLine($"[HISTORIAL] Historial final: {historialList.Count} registros para cédula {cedula}");
+            
             return historialList.OrderByDescending(h => h.FechaPromocion);
         }
         catch (Exception ex)
         {
+            Console.WriteLine($"[HISTORIAL] Error: {ex.Message}");
             throw new InvalidOperationException($"Error al obtener historial de escalafón: {ex.Message}", ex);
         }
     }

@@ -3272,19 +3272,31 @@ private bool isLoadingInvestigaciones = false;
             var cedula = UserSession.CurrentUser?.Cedula;
             if (string.IsNullOrEmpty(cedula))
             {
+                await JSRuntime.InvokeVoidAsync("console.error", "No se encontró la cédula del usuario");
                 return;
             }
+
+            await JSRuntime.InvokeVoidAsync("console.log", $"Cargando historial para cédula: {cedula}");
 
             // Llamar al endpoint para obtener el historial
             var response = await HttpClient.GetAsync($"/api/escalafon/historial/{cedula}");
             
+            await JSRuntime.InvokeVoidAsync("console.log", $"Respuesta del endpoint: {response.StatusCode}");
+            
             if (response.IsSuccessStatusCode)
             {
+                var responseContent = await response.Content.ReadAsStringAsync();
+                await JSRuntime.InvokeVoidAsync("console.log", $"Contenido de la respuesta: {responseContent}");
+                
                 var historial = await response.Content.ReadFromJsonAsync<List<HistorialEscalafonDto>>();
                 historialEscalafones = historial ?? new List<HistorialEscalafonDto>();
+                
+                await JSRuntime.InvokeVoidAsync("console.log", $"Historial cargado: {historialEscalafones.Count} registros");
             }
             else
             {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                await JSRuntime.InvokeVoidAsync("console.error", $"Error en la respuesta: {response.StatusCode} - {errorContent}");
                 historialEscalafones = new List<HistorialEscalafonDto>();
             }
         }
