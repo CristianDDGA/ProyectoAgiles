@@ -13,4 +13,5 @@ public interface ISolicitudEscalafonRepository
     Task<SolicitudEscalafon> UpdateAsync(SolicitudEscalafon solicitud);
     Task<bool> DeleteAsync(int id);
     Task<bool> ExistePendienteByCedulaAsync(string cedula);
+    Task<IEnumerable<SolicitudEscalafon>> GetHistorialEscalafonAsync(string cedula);
 }

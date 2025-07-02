@@ -45,6 +45,10 @@
                             <text>Subir de Nivel</text>
                         }
                     </button>
+                    <button class="btn btn-info nivel-btn ms-2" @onclick="ShowHistorialModal">
+                        <i class="fas fa-history me-2"></i>
+                        Historial
+                    </button>
                 </div>
             </div>
         </div>
@@ -385,6 +389,118 @@
                 </div>
             </div>
         </div>    }
+
+    <!-- Modal de Historial de Escalafones -->
+    @if (showHistorialModal)
+    {
+        <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,0.3);">
+            <div class="modal-dialog modal-xl">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="fas fa-history me-2"></i>
+                            Historial de Escalafones
+                        </h5>
+                        <button type="button" class="btn-close" @onclick="CloseHistorialModal"></button>
+                    </div>
+                    <div class="modal-body">
+                        @if (isLoadingHistorial)
+                        {
+                            <div class="text-center py-4">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Cargando historial...</span>
+                                </div>
+                                <p class="mt-2">Cargando historial de escalafones...</p>
+                            </div>
+                        }
+                        else if (historialEscalafones?.Any() == true)
+                        {
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <strong>Información importante:</strong> Los documentos marcados como "utilizados" ya no pueden ser reutilizados para futuras promociones.
+                            </div>
+                            
+                            @foreach (var historial in historialEscalafones.OrderByDescending(h => h.FechaPromocion))
+                            {
+                                <div class="card mb-3">
+                                    <div class="card-header d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-0">
+                                                <i class="fas fa-arrow-up text-success me-2"></i>
+                                                Promoción de <span class="badge bg-secondary">@historial.NivelAnterior</span> 
+                                                a <span class="badge bg-primary">@historial.NivelNuevo</span>
+                                            </h6>
+                                        </div>
+                                        <div>
+                                            <span class="badge bg-success">@historial.EstadoSolicitud</span>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <h6><i class="fas fa-calendar me-2"></i>Información General</h6>
+                                                <table class="table table-sm">
+                                                    <tr>
+                                                        <td><strong>Fecha de Promoción:</strong></td>
+                                                        <td>@historial.FechaPromocion.ToString("dd/MM/yyyy")</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td><strong>Aprobado por:</strong></td>
+                                                        <td>@historial.AprobadoPor</td>
+                                                    </tr>
+                                                </table>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <h6><i class="fas fa-file-alt me-2"></i>Documentos Utilizados</h6>
+                                                @if (historial.DocumentosUtilizados?.Any() == true)
+                                                {
+                                                    <div class="documentos-utilizados">
+                                                        @foreach (var documento in historial.DocumentosUtilizados)
+                                                        {
+                                                            <span class="badge bg-warning text-dark me-1 mb-1">
+                                                                <i class="fas fa-lock me-1"></i>@documento
+                                                            </span>
+                                                        }
+                                                    </div>
+                                                }
+                                                else
+                                                {
+                                                    <p class="text-muted">No se especificaron documentos</p>
+                                                }
+                                            </div>
+                                        </div>
+                                        @if (!string.IsNullOrEmpty(historial.ObservacionesFinales))
+                                        {
+                                            <div class="mt-3">
+                                                <h6><i class="fas fa-comment me-2"></i>Observaciones</h6>
+                                                <p class="text-muted">@historial.ObservacionesFinales</p>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <div class="text-center py-5">
+                                <div class="mb-3">
+                                    <i class="fas fa-history fa-3x text-muted"></i>
+                                </div>
+                                <h5>No hay historial de escalafones</h5>
+                                <p class="text-muted">Aún no has realizado ninguna promoción de nivel académico.</p>
+                            </div>
+                        }
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" @onclick="CloseHistorialModal">
+                            <i class="fas fa-times me-1"></i>
+                            Cerrar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
 
     @if (showInvestigacionesModal)
     {
@@ -2165,6 +2281,7 @@
     private int totalStudents = 0;
     private int pendingTasks = 0;
     private int weeklyHours = 0;    private bool showRequisitosModal = false;
+    private bool showHistorialModal = false;
     private bool isLoadingEstadisticas = false;
     private EstadisticasDocenteResponse? estadisticasDocente = null;
     private bool showInvestigacionesModal = false;
@@ -2202,6 +2319,10 @@ private bool isLoadingInvestigaciones = false;
     
     // Variables para Solicitudes
     private List<SolicitudDto> solicitudes = new();
+    
+    // Variables para Historial de Escalafones
+    private List<HistorialEscalafonDto> historialEscalafones = new();
+    private bool isLoadingHistorial = false;
     private ProyectoAgiles.Application.DTOs.VerificacionRequisitoDiticDto? verificacionRequisitoDitic = null;
     private ProyectoAgiles.Application.DTOs.ResumenCapacitacionesDto? resumenCapacitaciones = null;
       // Variables para verificación de requisitos de subir de nivel
@@ -3130,6 +3251,55 @@ private bool isLoadingInvestigaciones = false;
         showRequisitosModal = false;
     }
 
+    private async Task ShowHistorialModal()
+    {
+        showHistorialModal = true;
+        await CargarHistorialEscalafones();
+    }
+
+    private void CloseHistorialModal()
+    {
+        showHistorialModal = false;
+    }
+
+    private async Task CargarHistorialEscalafones()
+    {
+        try
+        {
+            isLoadingHistorial = true;
+            StateHasChanged();
+
+            var cedula = UserSession.CurrentUser?.Cedula;
+            if (string.IsNullOrEmpty(cedula))
+            {
+                return;
+            }
+
+            // Llamar al endpoint para obtener el historial
+            var response = await HttpClient.GetAsync($"/api/escalafon/historial/{cedula}");
+            
+            if (response.IsSuccessStatusCode)
+            {
+                var historial = await response.Content.ReadFromJsonAsync<List<HistorialEscalafonDto>>();
+                historialEscalafones = historial ?? new List<HistorialEscalafonDto>();
+            }
+            else
+            {
+                historialEscalafones = new List<HistorialEscalafonDto>();
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("console.error", $"Error cargando historial: {ex.Message}");
+            historialEscalafones = new List<HistorialEscalafonDto>();
+        }
+        finally
+        {
+            isLoadingHistorial = false;
+            StateHasChanged();
+        }
+    }
+
     private async Task CargarEstadisticas()
     {
         var cedula = UserSession.CurrentUser?.Cedula;
@@ -3613,6 +3783,18 @@ private bool isLoadingInvestigaciones = false;
         public string NivelActual { get; set; } = string.Empty;
         public string NivelSolicitado { get; set; } = string.Empty;
         public string Observaciones { get; set; } = string.Empty;
+    }
+
+    public class HistorialEscalafonDto
+    {
+        public int Id { get; set; }
+        public string NivelAnterior { get; set; } = string.Empty;
+        public string NivelNuevo { get; set; } = string.Empty;
+        public DateTime FechaPromocion { get; set; }
+        public string EstadoSolicitud { get; set; } = string.Empty;
+        public List<string> DocumentosUtilizados { get; set; } = new();
+        public string ObservacionesFinales { get; set; } = string.Empty;
+        public string AprobadoPor { get; set; } = string.Empty;
     }
 
     // Métodos para DITIC
@@ -4479,5 +4661,29 @@ private bool isLoadingInvestigaciones = false;
 
     .action-btn.appeal:active {
         transform: translateY(0);
+    }
+
+    /* Estilos para el historial de escalafones */
+    .documentos-utilizados {
+        max-height: 200px;
+        overflow-y: auto;
+    }
+
+    .documentos-utilizados .badge {
+        font-size: 0.75rem;
+        max-width: 200px;
+        text-overflow: ellipsis;
+        overflow: hidden;
+        white-space: nowrap;
+        display: inline-block;
+    }
+
+    .card-header h6 {
+        color: #495057;
+        font-weight: 600;
+    }
+
+    .nivel-actions .btn + .btn {
+        margin-left: 0.5rem;
     }
 </style>

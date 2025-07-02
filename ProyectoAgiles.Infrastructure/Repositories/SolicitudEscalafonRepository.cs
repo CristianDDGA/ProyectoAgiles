@@ -81,4 +81,12 @@ public class SolicitudEscalafonRepository : ISolicitudEscalafonRepository
         return await _context.SolicitudesEscalafon
             .AnyAsync(s => s.DocenteCedula == cedula && s.Status == "Pendiente" && !s.IsDeleted);
     }
+
+    public async Task<IEnumerable<SolicitudEscalafon>> GetHistorialEscalafonAsync(string cedula)
+    {
+        return await _context.SolicitudesEscalafon
+            .Where(s => s.DocenteCedula == cedula && s.Status == "Finalizado" && !s.IsDeleted)
+            .OrderByDescending(s => s.FechaAprobacion ?? s.FechaSolicitud)
+            .ToListAsync();
+    }
 }

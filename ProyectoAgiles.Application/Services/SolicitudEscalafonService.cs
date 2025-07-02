@@ -539,4 +539,58 @@ public class SolicitudEscalafonService : ISolicitudEscalafonService
             Console.WriteLine($"Error enviando correo de apelación: {ex.Message}");
         }
     }
+
+    public async Task<IEnumerable<HistorialEscalafonDto>> GetHistorialEscalafonAsync(string cedula)
+    {
+        try
+        {
+            // Obtener todas las solicitudes finalizadas del docente
+            var solicitudesFinalizadas = await _repository.GetHistorialEscalafonAsync(cedula);
+            
+            var historialList = new List<HistorialEscalafonDto>();
+            
+            foreach (var solicitud in solicitudesFinalizadas)
+            {
+                var historial = new HistorialEscalafonDto
+                {
+                    Id = solicitud.Id,
+                    NivelAnterior = solicitud.NivelActual,
+                    NivelNuevo = solicitud.NivelSolicitado,
+                    FechaPromocion = solicitud.FechaAprobacion ?? solicitud.FechaSolicitud,
+                    EstadoSolicitud = "Finalizado",
+                    DocumentosUtilizados = ObtenerDocumentosUtilizados(solicitud.Id, cedula),
+                    ObservacionesFinales = solicitud.Observaciones ?? "Escalafón completado exitosamente",
+                    AprobadoPor = solicitud.ProcesadoPor ?? "Comisión Académica de Escalafón"
+                };
+                
+                historialList.Add(historial);
+            }
+            
+            return historialList.OrderByDescending(h => h.FechaPromocion);
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException($"Error al obtener historial de escalafón: {ex.Message}", ex);
+        }
+    }
+
+    private List<string> ObtenerDocumentosUtilizados(int solicitudId, string cedula)
+    {
+        try
+        {
+            // Por ahora devolvemos tipos genéricos de documentos
+            // TODO: Implementar lógica real para obtener documentos específicos utilizados
+            return new List<string> 
+            { 
+                "Publicaciones científicas", 
+                "Certificados de capacitación", 
+                "Evaluaciones de desempeño",
+                "Proyectos de investigación"
+            };
+        }
+        catch
+        {
+            return new List<string> { "Documentos académicos diversos" };
+        }
+    }
 }

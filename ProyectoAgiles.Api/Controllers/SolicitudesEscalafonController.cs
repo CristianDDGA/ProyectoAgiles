@@ -13,13 +13,16 @@ public class SolicitudesEscalafonController : ControllerBase
 {
     private readonly ISolicitudEscalafonService _solicitudService;
     private readonly ILogger<SolicitudesEscalafonController> _logger;
+    private readonly IWebHostEnvironment _webHostEnvironment;
 
     public SolicitudesEscalafonController(
         ISolicitudEscalafonService solicitudService,
-        ILogger<SolicitudesEscalafonController> logger)
+        ILogger<SolicitudesEscalafonController> logger,
+        IWebHostEnvironment webHostEnvironment)
     {
         _solicitudService = solicitudService;
         _logger = logger;
+        _webHostEnvironment = webHostEnvironment;
     }
 
     /// <summary>
@@ -138,7 +141,7 @@ public class SolicitudesEscalafonController : ControllerBase
     /// Crea una nueva solicitud de escalafón
     /// </summary>
     [HttpPost]
-    public async Task<ActionResult<SolicitudEscalafonDto>> CreateSolicitud([FromBody] CreateSolicitudEscalafonDto createDto)
+    public async Task<ActionResult<SolicitudEscalafonDto>> CreateSolicitud([FromBody] ProyectoAgiles.Application.DTOs.CreateSolicitudEscalafonDto createDto)
     {
         try
         {
@@ -160,7 +163,7 @@ public class SolicitudesEscalafonController : ControllerBase
     /// Actualiza el estado de una solicitud
     /// </summary>
     [HttpPut("estado")]
-    public async Task<ActionResult<SolicitudEscalafonDto>> UpdateSolicitudStatus([FromBody] UpdateSolicitudStatusDto updateDto)
+    public async Task<ActionResult<SolicitudEscalafonDto>> UpdateSolicitudStatus([FromBody] ProyectoAgiles.Application.DTOs.UpdateSolicitudStatusDto updateDto)
     {
         try
         {
@@ -182,7 +185,7 @@ public class SolicitudesEscalafonController : ControllerBase
     /// Actualiza el estado de una solicitud específica por ID
     /// </summary>
     [HttpPut("{id}/status")]
-    public async Task<ActionResult<SolicitudEscalafonDto>> UpdateSolicitudStatusById(int id, [FromBody] UpdateSolicitudStatusDto updateDto)
+    public async Task<ActionResult<SolicitudEscalafonDto>> UpdateSolicitudStatusById(int id, [FromBody] ProyectoAgiles.Application.DTOs.UpdateSolicitudStatusDto updateDto)
     {
         try
         {
@@ -334,24 +337,193 @@ public class SolicitudesEscalafonController : ControllerBase
             return StatusCode(500, "Error interno del servidor");
         }
     }
-}
 
-/// <summary>
-/// DTO para rechazar una solicitud
-/// </summary>
-public class RechazarSolicitudDto
-{
-    public string MotivoRechazo { get; set; } = string.Empty;
-    public string RechazadoPor { get; set; } = string.Empty;
-    public string NivelRechazo { get; set; } = string.Empty;
-}
+    /// <summary>
+    /// Obtiene un archivo de apelación para visualizar en el navegador
+    /// </summary>
+    [HttpGet("archivo/{id:int}/{nombreArchivo}")]
+    public async Task<IActionResult> ObtenerArchivoApelacion(int id, string nombreArchivo)
+    {
+        try
+        {
+            _logger.LogInformation("Solicitando archivo de apelación: {NombreArchivo} para solicitud {Id}", nombreArchivo, id);
+            _logger.LogInformation("WebRootPath: {WebRootPath}", _webHostEnvironment.WebRootPath);
 
-/// <summary>
-/// DTO para crear una apelación
-/// </summary>
-public class CrearApelacionDto
-{
-    public string ObservacionesApelacion { get; set; } = string.Empty;
-    public string Destinatario { get; set; } = string.Empty;
-    public List<IFormFile>? Archivos { get; set; }
+            // Verificar que la solicitud existe
+            var solicitud = await _solicitudService.GetSolicitudByIdAsync(id);
+            if (solicitud == null)
+            {
+                _logger.LogWarning("Solicitud {Id} no encontrada", id);
+                return NotFound($"Solicitud {id} no encontrada");
+            }
+
+            // Construir la ruta del archivo
+            var uploadsPath = Path.Combine(_webHostEnvironment.WebRootPath, "uploads", "apelaciones", id.ToString());
+            var archivoPath = Path.Combine(uploadsPath, nombreArchivo);
+
+            _logger.LogInformation("Buscando archivo en ruta: {ArchivoPath}", archivoPath);
+
+            // Verificar que el archivo existe
+            if (!System.IO.File.Exists(archivoPath))
+            {
+                _logger.LogWarning("Archivo no encontrado: {ArchivoPath}", archivoPath);
+                return NotFound($"Archivo '{nombreArchivo}' no encontrado para la solicitud {id}");
+            }
+
+            // Leer el archivo
+            var archivoBytes = await System.IO.File.ReadAllBytesAsync(archivoPath);
+            
+            // Determinar el tipo de contenido basado en la extensión
+            var contentType = GetContentType(nombreArchivo);
+            
+            _logger.LogInformation("Archivo encontrado. Tamaño: {Tamaño} bytes, Tipo: {ContentType}", archivoBytes.Length, contentType);
+
+            // Configurar headers para visualización en línea (no descarga)
+            Response.Headers.Append("Content-Disposition", $"inline; filename=\"{nombreArchivo}\"");
+            Response.Headers.Append("X-Content-Type-Options", "nosniff");
+            
+            return File(archivoBytes, contentType);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al obtener archivo de apelación {NombreArchivo} para solicitud {Id}", nombreArchivo, id);
+            return StatusCode(500, $"Error al obtener el archivo: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Determina el tipo de contenido basado en la extensión del archivo
+    /// </summary>
+    private static string GetContentType(string nombreArchivo)
+    {
+        var extension = Path.GetExtension(nombreArchivo).ToLowerInvariant();
+        return extension switch
+        {
+            ".pdf" => "application/pdf",
+            ".doc" => "application/msword",
+            ".docx" => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            ".jpg" or ".jpeg" => "image/jpeg",
+            ".png" => "image/png",
+            ".gif" => "image/gif",
+            ".txt" => "text/plain",
+            ".html" => "text/html",
+            _ => "application/octet-stream"
+        };
+    }
+
+    /// <summary>
+    /// Acepta una apelación y reinicia el ciclo de evaluación
+    /// </summary>
+    [HttpPost("{id}/apelacion/aceptar")]
+    public async Task<ActionResult<SolicitudEscalafonDto>> AceptarApelacion(int id, [FromBody] AceptarApelacionDto aceptarDto)
+    {
+        try
+        {
+            var solicitud = await _solicitudService.GetSolicitudByIdAsync(id);
+            if (solicitud == null)
+            {
+                return NotFound($"Solicitud {id} no encontrada");
+            }
+
+            // Verificar que sea una apelación pendiente
+            if (solicitud.Status != "PendienteComision")
+            {
+                return BadRequest("La solicitud no es una apelación pendiente de evaluación");
+            }
+
+            // Cambiar estado a pendiente para reiniciar el ciclo
+            var updateDto = new ProyectoAgiles.Application.DTOs.UpdateSolicitudStatusDto
+            {
+                Id = id,
+                Status = "Pendiente",
+                MotivoRechazo = $"APELACIÓN ACEPTADA por {aceptarDto.AceptadoPor}: {aceptarDto.ObservacionesAceptacion}",
+                ProcesadoPor = aceptarDto.AceptadoPor
+            };
+
+            var solicitudActualizada = await _solicitudService.UpdateSolicitudStatusAsync(updateDto);
+            
+            _logger.LogInformation("Apelación aceptada para solicitud {Id} por {Usuario}", id, aceptarDto.AceptadoPor);
+            
+            return Ok(solicitudActualizada);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al aceptar apelación para solicitud {Id}", id);
+            return StatusCode(500, "Error interno del servidor");
+        }
+    }
+
+    /// <summary>
+    /// Rechaza una apelación definitivamente y notifica al docente
+    /// </summary>
+    [HttpPost("{id}/apelacion/rechazar")]
+    public async Task<ActionResult<SolicitudEscalafonDto>> RechazarApelacion(int id, [FromBody] RechazarApelacionDto rechazarDto)
+    {
+        try
+        {
+            var solicitud = await _solicitudService.GetSolicitudByIdAsync(id);
+            if (solicitud == null)
+            {
+                return NotFound($"Solicitud {id} no encontrada");
+            }
+
+            // Verificar que sea una apelación pendiente
+            if (solicitud.Status != "PendienteComision")
+            {
+                return BadRequest("La solicitud no es una apelación pendiente de evaluación");
+            }
+
+            // Cambiar estado a rechazado definitivamente
+            var updateDto = new ProyectoAgiles.Application.DTOs.UpdateSolicitudStatusDto
+            {
+                Id = id,
+                Status = "RechazadoDefinitivo",
+                MotivoRechazo = $"APELACIÓN RECHAZADA por {rechazarDto.RechazadoPor}: {rechazarDto.MotivoRechazoApelacion}",
+                ProcesadoPor = rechazarDto.RechazadoPor
+            };
+
+            var solicitudActualizada = await _solicitudService.UpdateSolicitudStatusAsync(updateDto);
+
+            // Enviar notificación por correo al docente
+            try
+            {
+                // Aquí puedes agregar la lógica de envío de correo específica para rechazo de apelación
+                // await _emailService.EnviarNotificacionRechazoApelacionAsync(solicitud);
+                _logger.LogInformation("Notificación de rechazo de apelación enviada para solicitud {Id}", id);
+            }
+            catch (Exception emailEx)
+            {
+                _logger.LogWarning(emailEx, "Error al enviar notificación de rechazo de apelación para solicitud {Id}", id);
+                // No fallar la operación por problemas de email
+            }
+            
+            _logger.LogInformation("Apelación rechazada para solicitud {Id} por {Usuario}", id, rechazarDto.RechazadoPor);
+            
+            return Ok(solicitudActualizada);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al rechazar apelación para solicitud {Id}", id);
+            return StatusCode(500, "Error interno del servidor");
+        }
+    }
+
+    /// <summary>
+    /// Obtiene el historial de escalafones completados de un docente
+    /// </summary>
+    [HttpGet("~/api/escalafon/historial/{cedula}")]
+    public async Task<ActionResult<IEnumerable<HistorialEscalafonDto>>> GetHistorialEscalafon(string cedula)
+    {
+        try
+        {
+            var historial = await _solicitudService.GetHistorialEscalafonAsync(cedula);
+            return Ok(historial);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al obtener historial de escalafón para docente {Cedula}", cedula);
+            return StatusCode(500, "Error interno del servidor");
+        }
+    }
+
 }

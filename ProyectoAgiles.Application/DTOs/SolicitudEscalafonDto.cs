@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Http;
+
 namespace ProyectoAgiles.Application.DTOs;
 
 public class SolicitudEscalafonDto
@@ -52,4 +54,42 @@ public class UpdateSolicitudStatusDto
     public string Status { get; set; } = string.Empty;
     public string? MotivoRechazo { get; set; }
     public string? ProcesadoPor { get; set; }
+}
+
+public class HistorialEscalafonDto
+{
+    public int Id { get; set; }
+    public string NivelAnterior { get; set; } = string.Empty;
+    public string NivelNuevo { get; set; } = string.Empty;
+    public DateTime FechaPromocion { get; set; }
+    public string EstadoSolicitud { get; set; } = string.Empty;
+    public List<string> DocumentosUtilizados { get; set; } = new();
+    public string ObservacionesFinales { get; set; } = string.Empty;
+    public string AprobadoPor { get; set; } = string.Empty;
+}
+
+public class RechazarSolicitudDto
+{
+    public string MotivoRechazo { get; set; } = string.Empty;
+    public string RechazadoPor { get; set; } = string.Empty;
+    public string NivelRechazo { get; set; } = string.Empty;
+}
+
+public class CrearApelacionDto
+{
+    public string ObservacionesApelacion { get; set; } = string.Empty;
+    public string Destinatario { get; set; } = string.Empty;
+    public List<IFormFile>? Archivos { get; set; }
+}
+
+public class AceptarApelacionDto
+{
+    public string AceptadoPor { get; set; } = string.Empty;
+    public string ObservacionesAceptacion { get; set; } = string.Empty;
+}
+
+public class RechazarApelacionDto
+{
+    public string RechazadoPor { get; set; } = string.Empty;
+    public string MotivoRechazoApelacion { get; set; } = string.Empty;
 }
