@@ -450,23 +450,173 @@
                                                     </tr>
                                                 </table>
                                             </div>
-                                            <div class="col-md-6">
-                                                <h6><i class="fas fa-file-alt me-2"></i>Documentos Utilizados</h6>
-                                                @if (historial.DocumentosUtilizados?.Any() == true)
+                                            <div class="col-md-12">
+                                                <h6><i class="fas fa-file-alt me-2"></i>Documentos Específicos Utilizados</h6>
+                                                
+                                                <!-- Mostrar resumen de verificación de requisitos -->
+                                                @if (historial.DocumentosDetalles?.VerificacionRequisitos != null)
                                                 {
-                                                    <div class="documentos-utilizados">
-                                                        @foreach (var documento in historial.DocumentosUtilizados)
-                                                        {
-                                                            <span class="badge bg-warning text-dark me-1 mb-1">
-                                                                <i class="fas fa-lock me-1"></i>@documento
-                                                            </span>
-                                                        }
+                                                    <div class="alert alert-info mb-3">
+                                                        <div class="row text-center">
+                                                            <div class="col-3">
+                                                                <h6 class="mb-0">@historial.DocumentosDetalles.VerificacionRequisitos.TotalInvestigaciones</h6>
+                                                                <small>Publicaciones</small>
+                                                            </div>
+                                                            <div class="col-3">
+                                                                <h6 class="mb-0">@historial.DocumentosDetalles.VerificacionRequisitos.TotalHorasCapacitacion h</h6>
+                                                                <small>Capacitación</small>
+                                                            </div>
+                                                            <div class="col-3">
+                                                                <h6 class="mb-0">@historial.DocumentosDetalles.VerificacionRequisitos.PromedioEvaluaciones.ToString("F1")%</h6>
+                                                                <small>Promedio DAC</small>
+                                                            </div>
+                                                            <div class="col-3">
+                                                                <h6 class="mb-0">@historial.DocumentosDetalles.VerificacionRequisitos.PeriodosEvaluados</h6>
+                                                                <small>Evaluaciones</small>
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 }
-                                                else
-                                                {
-                                                    <p class="text-muted">No se especificaron documentos</p>
-                                                }
+                                                
+                                                <!-- Tabs para cada tipo de documento -->
+                                                <ul class="nav nav-tabs" id="documentos-tabs-@historial.Id" role="tablist">
+                                                    <li class="nav-item" role="presentation">
+                                                        <button class="nav-link active" id="investigaciones-tab-@historial.Id" data-bs-toggle="tab" 
+                                                                data-bs-target="#investigaciones-@historial.Id" type="button" role="tab">
+                                                            <i class="fas fa-microscope me-1"></i>
+                                                            Investigaciones (@(historial.DocumentosDetalles?.Investigaciones?.Count ?? 0))
+                                                        </button>
+                                                    </li>
+                                                    <li class="nav-item" role="presentation">
+                                                        <button class="nav-link" id="evaluaciones-tab-@historial.Id" data-bs-toggle="tab" 
+                                                                data-bs-target="#evaluaciones-@historial.Id" type="button" role="tab">
+                                                            <i class="fas fa-star me-1"></i>
+                                                            Evaluaciones (@(historial.DocumentosDetalles?.Evaluaciones?.Count ?? 0))
+                                                        </button>
+                                                    </li>
+                                                    <li class="nav-item" role="presentation">
+                                                        <button class="nav-link" id="capacitaciones-tab-@historial.Id" data-bs-toggle="tab" 
+                                                                data-bs-target="#capacitaciones-@historial.Id" type="button" role="tab">
+                                                            <i class="fas fa-graduation-cap me-1"></i>
+                                                            Capacitaciones (@(historial.DocumentosDetalles?.Capacitaciones?.Count ?? 0))
+                                                        </button>
+                                                    </li>
+                                                </ul>
+                                                
+                                                <div class="tab-content mt-3" id="documentos-content-@historial.Id">
+                                                    <!-- Tab de Investigaciones -->
+                                                    <div class="tab-pane fade show active" id="investigaciones-@historial.Id" role="tabpanel">
+                                                        @if (historial.DocumentosDetalles?.Investigaciones?.Any() == true)
+                                                        {
+                                                            @foreach (var inv in historial.DocumentosDetalles.Investigaciones)
+                                                            {
+                                                                <div class="border rounded p-2 mb-2">
+                                                                    <div class="d-flex justify-content-between align-items-start">
+                                                                        <div class="flex-grow-1">
+                                                                            <h6 class="mb-1">
+                                                                                <i class="fas fa-file-text me-1"></i>
+                                                                                @inv.Titulo
+                                                                                @if (inv.TieneFiliacionUTA)
+                                                                                {
+                                                                                    <span class="badge bg-success ms-2">UTA</span>
+                                                                                }
+                                                                            </h6>
+                                                                            <p class="mb-1 text-muted small">
+                                                                                <strong>@inv.Tipo</strong> - @inv.RevistaOEditorial
+                                                                            </p>
+                                                                            <p class="mb-0 text-muted small">
+                                                                                <i class="fas fa-calendar me-1"></i>@inv.FechaPublicacion.ToString("MMM yyyy")
+                                                                                | <i class="fas fa-university me-1"></i>@inv.Filiacion
+                                                                            </p>
+                                                                        </div>
+                                                                        <span class="badge bg-warning text-dark">
+                                                                            <i class="fas fa-lock me-1"></i>Utilizada
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                            }
+                                                        }
+                                                        else
+                                                        {
+                                                            <p class="text-muted text-center py-3">No se utilizaron investigaciones específicas</p>
+                                                        }
+                                                    </div>
+                                                    
+                                                    <!-- Tab de Evaluaciones -->
+                                                    <div class="tab-pane fade" id="evaluaciones-@historial.Id" role="tabpanel">
+                                                        @if (historial.DocumentosDetalles?.Evaluaciones?.Any() == true)
+                                                        {
+                                                            @foreach (var eval in historial.DocumentosDetalles.Evaluaciones)
+                                                            {
+                                                                <div class="border rounded p-2 mb-2">
+                                                                    <div class="d-flex justify-content-between align-items-center">
+                                                                        <div class="flex-grow-1">
+                                                                            <h6 class="mb-1">
+                                                                                <i class="fas fa-star me-1"></i>
+                                                                                Evaluación @eval.PeriodoAcademico
+                                                                            </h6>
+                                                                            <p class="mb-0 text-muted small">
+                                                                                <i class="fas fa-calendar me-1"></i>@eval.Anio - Semestre @eval.Semestre
+                                                                                | <i class="fas fa-chart-line me-1"></i>@eval.PuntajeObtenido/@eval.PuntajeMaximo puntos
+                                                                            </p>
+                                                                        </div>
+                                                                        <div class="text-end">
+                                                                            <span class="badge @(eval.Porcentaje >= 75 ? "bg-success" : "bg-warning")">
+                                                                                @eval.Porcentaje.ToString("F1")%
+                                                                            </span>
+                                                                            <br>
+                                                                            <span class="badge bg-warning text-dark mt-1">
+                                                                                <i class="fas fa-lock me-1"></i>Utilizada
+                                                                            </span>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            }
+                                                        }
+                                                        else
+                                                        {
+                                                            <p class="text-muted text-center py-3">No se utilizaron evaluaciones específicas</p>
+                                                        }
+                                                    </div>
+                                                    
+                                                    <!-- Tab de Capacitaciones -->
+                                                    <div class="tab-pane fade" id="capacitaciones-@historial.Id" role="tabpanel">
+                                                        @if (historial.DocumentosDetalles?.Capacitaciones?.Any() == true)
+                                                        {
+                                                            @foreach (var cap in historial.DocumentosDetalles.Capacitaciones)
+                                                            {
+                                                                <div class="border rounded p-2 mb-2">
+                                                                    <div class="d-flex justify-content-between align-items-start">
+                                                                        <div class="flex-grow-1">
+                                                                            <h6 class="mb-1">
+                                                                                <i class="fas fa-graduation-cap me-1"></i>
+                                                                                @cap.NombreCurso
+                                                                                @if (cap.EsPedagogica)
+                                                                                {
+                                                                                    <span class="badge bg-info ms-2">Pedagógica</span>
+                                                                                }
+                                                                            </h6>
+                                                                            <p class="mb-1 text-muted small">
+                                                                                <strong>@cap.HorasAcademicas horas</strong> - @cap.Tipo
+                                                                            </p>
+                                                                            <p class="mb-0 text-muted small">
+                                                                                <i class="fas fa-user me-1"></i>@cap.Facilitador
+                                                                                | <i class="fas fa-calendar me-1"></i>@cap.FechaInicio.ToString("MMM yyyy") - @cap.FechaFin.ToString("MMM yyyy")
+                                                                            </p>
+                                                                        </div>
+                                                                        <span class="badge bg-warning text-dark">
+                                                                            <i class="fas fa-lock me-1"></i>Utilizada
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                            }
+                                                        }
+                                                        else
+                                                        {
+                                                            <p class="text-muted text-center py-3">No se utilizaron capacitaciones específicas</p>
+                                                        }
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                         @if (!string.IsNullOrEmpty(historial.ObservacionesFinales))
@@ -3805,8 +3955,63 @@ private bool isLoadingInvestigaciones = false;
         public DateTime FechaPromocion { get; set; }
         public string EstadoSolicitud { get; set; } = string.Empty;
         public List<string> DocumentosUtilizados { get; set; } = new();
+        public DocumentosDetallados DocumentosDetalles { get; set; } = new();
         public string ObservacionesFinales { get; set; } = string.Empty;
         public string AprobadoPor { get; set; } = string.Empty;
+    }
+
+    public class DocumentosDetallados
+    {
+        public List<InvestigacionUtilizada> Investigaciones { get; set; } = new();
+        public List<EvaluacionUtilizada> Evaluaciones { get; set; } = new();
+        public List<CapacitacionUtilizada> Capacitaciones { get; set; } = new();
+        public VerificacionRequisitos VerificacionRequisitos { get; set; } = new();
+    }
+
+    public class InvestigacionUtilizada
+    {
+        public int Id { get; set; }
+        public string Titulo { get; set; } = string.Empty;
+        public string Tipo { get; set; } = string.Empty;
+        public string RevistaOEditorial { get; set; } = string.Empty;
+        public DateTime FechaPublicacion { get; set; }
+        public string Filiacion { get; set; } = string.Empty;
+        public bool TieneFiliacionUTA { get; set; }
+    }
+
+    public class EvaluacionUtilizada
+    {
+        public int Id { get; set; }
+        public string PeriodoAcademico { get; set; } = string.Empty;
+        public int Anio { get; set; }
+        public int Semestre { get; set; }
+        public decimal PuntajeObtenido { get; set; }
+        public decimal PuntajeMaximo { get; set; }
+        public decimal Porcentaje { get; set; }
+        public string Estado { get; set; } = string.Empty;
+    }
+
+    public class CapacitacionUtilizada
+    {
+        public int Id { get; set; }
+        public string NombreCurso { get; set; } = string.Empty;
+        public string Facilitador { get; set; } = string.Empty;
+        public int HorasAcademicas { get; set; }
+        public DateTime FechaInicio { get; set; }
+        public DateTime FechaFin { get; set; }
+        public string Tipo { get; set; } = string.Empty;
+        public bool EsPedagogica { get; set; }
+    }
+
+    public class VerificacionRequisitos
+    {
+        public int TotalInvestigaciones { get; set; }
+        public int InvestigacionesConUTA { get; set; }
+        public int TotalHorasCapacitacion { get; set; }
+        public int HorasPedagogicas { get; set; }
+        public decimal PromedioEvaluaciones { get; set; }
+        public int PeriodosEvaluados { get; set; }
+        public bool CumpleTodosRequisitos { get; set; }
     }
 
     // Métodos para DITIC
