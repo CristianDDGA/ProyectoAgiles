@@ -180,4 +180,39 @@ public class ArchivosUtilizadosInfrastructureService : IArchivosUtilizadosServic
 
         return estadisticas;
     }
+
+    public async Task<List<ArchivosUtilizadosDto>> ObtenerArchivosPorSolicitud(int solicitudEscalafonId)
+    {
+        var archivos = await _context.ArchivosUtilizadosEscalafon
+            .Where(a => a.SolicitudEscalafonId == solicitudEscalafonId)
+            .OrderBy(a => a.TipoRecurso)
+            .ToListAsync();
+
+        return archivos.Select(a => new ArchivosUtilizadosDto
+        {
+            Id = a.Id,
+            SolicitudEscalafonId = a.SolicitudEscalafonId,
+            TipoRecurso = a.TipoRecurso,
+            RecursoId = a.RecursoId,
+            DocenteCedula = a.DocenteCedula,
+            NivelOrigen = a.NivelOrigen,
+            NivelDestino = a.NivelDestino,
+            FechaUtilizacion = a.FechaUtilizacion,
+            Descripcion = a.Descripcion,
+            EstadoAscenso = a.EstadoAscenso,
+            TituloRecurso = a.Descripcion ?? ObtenerTituloGenerico(a.TipoRecurso),
+            DetallesRecurso = a.Descripcion ?? "Sin detalles específicos"
+        }).ToList();
+    }
+
+    private static string ObtenerTituloGenerico(string tipoRecurso)
+    {
+        return tipoRecurso switch
+        {
+            "Investigacion" => "Publicación científica",
+            "EvaluacionDesempeno" => "Evaluación de desempeño",
+            "Capacitacion" => "Capacitación profesional",
+            _ => "Documento académico"
+        };
+    }
 }

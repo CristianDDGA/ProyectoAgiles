@@ -47,4 +47,13 @@ public class ArchivosUtilizadosRepository : Repository<ArchivosUtilizadosEscalaf
                           a.RecursoId == recursoId && 
                           a.EstadoAscenso == "Aprobado");
     }
+
+    public async Task<List<ArchivosUtilizadosEscalafon>> GetBySolicitudEscalafonIdAsync(int solicitudEscalafonId)
+    {
+        return await _context.ArchivosUtilizadosEscalafon
+            .Where(a => a.SolicitudEscalafonId == solicitudEscalafonId)
+            .Include(a => a.SolicitudEscalafon)
+            .OrderBy(a => a.TipoRecurso)
+            .ToListAsync();
+    }
 }

@@ -528,4 +528,38 @@ public class SolicitudesEscalafonController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Endpoint de debug para obtener todos los archivos utilizados por solicitud específica
+    /// </summary>
+    [HttpGet("~/api/debug/archivos-solicitud/{solicitudId}")]
+    public async Task<ActionResult> GetArchivosPorSolicitudDebug(int solicitudId)
+    {
+        try
+        {
+            _logger.LogInformation("DEBUG: Obteniendo archivos para solicitud {SolicitudId}", solicitudId);
+            
+            // Usar el servicio directamente
+            var archivos = await _solicitudService.GetSolicitudByIdAsync(solicitudId);
+            if (archivos == null)
+            {
+                return NotFound($"Solicitud {solicitudId} no encontrada");
+            }
+            
+            return Ok(new
+            {
+                SolicitudId = solicitudId,
+                SolicitudEncontrada = true,
+                DocenteCedula = archivos.DocenteCedula ?? "N/A",
+                Status = archivos.Status ?? "N/A",
+                NivelActual = archivos.NivelActual ?? "N/A",
+                NivelSolicitado = archivos.NivelSolicitado ?? "N/A"
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error en debug de archivos para solicitud {SolicitudId}", solicitudId);
+            return StatusCode(500, new { error = ex.Message, stackTrace = ex.StackTrace });
+        }
+    }
+
 }

@@ -41,4 +41,9 @@ public interface IArchivosUtilizadosService
     /// Obtiene estadísticas de archivos utilizados por tipo
     /// </summary>
     Task<Dictionary<string, int>> ObtenerEstadisticasArchivosUtilizados(string docenteCedula);
+
+    /// <summary>
+    /// Obtiene los archivos utilizados en una solicitud específica de escalafón
+    /// </summary>
+    Task<List<ArchivosUtilizadosDto>> ObtenerArchivosPorSolicitud(int solicitudEscalafonId);
 }

@@ -27,4 +27,9 @@ public interface IArchivosUtilizadosRepository : IRepository<ArchivosUtilizadosE
     /// Verifica si un recurso ya fue utilizado
     /// </summary>
     Task<bool> IsRecursoUtilizadoAsync(string docenteCedula, string tipoRecurso, int recursoId);
+
+    /// <summary>
+    /// Obtiene archivos utilizados por ID de solicitud de escalafón
+    /// </summary>
+    Task<List<ArchivosUtilizadosEscalafon>> GetBySolicitudEscalafonIdAsync(int solicitudEscalafonId);
 }
