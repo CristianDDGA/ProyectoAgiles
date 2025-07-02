@@ -3442,8 +3442,10 @@ private bool isLoadingInvestigaciones = false;
             return;
         }
 
-        var confirmacion = await JSRuntime.InvokeAsync<bool>("confirm", 
+        await MostrarNotificacionAdvertencia("⚠️ Confirmar Apelación", 
             $"¿Está seguro de que desea apelar la solicitud #{solicitudParaApelar.Id}? Esta acción creará una nueva solicitud de apelación que será enviada a la Comisión Académica de Escalafón.");
+        
+        var confirmacion = await JSRuntime.InvokeAsync<bool>("confirm", "¿Continuar con la apelación?");
         
         if (!confirmacion) return;
 
@@ -3469,7 +3471,7 @@ private bool isLoadingInvestigaciones = false;
             }
 
             // Llamar al endpoint de apelación
-            var response = await HttpClient.PostAsync($"https://localhost:7125/api/solicitudes-escalafon/{solicitudParaApelar.Id}/apelar", content);
+            var response = await HttpClient.PostAsync($"/api/solicitudes-escalafon/{solicitudParaApelar.Id}/apelar", content);
 
             if (response.IsSuccessStatusCode)
             {
