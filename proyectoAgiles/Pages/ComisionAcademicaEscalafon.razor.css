@@ -1211,4 +1211,25 @@ body, html {
     font-size: 0.9rem;
     color: #495057;
     word-break: break-all;
+    flex: 1; /* Para que ocupe el espacio disponible */
+}
+
+.archivo-item .btn {
+    padding: 4px 8px;
+    font-size: 0.8rem;
+    line-height: 1.2;
+    border-radius: 4px;
+    margin-left: 8px;
+    min-width: 60px;
+    transition: all 0.2s ease;
+}
+
+.archivo-item .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 123, 255, 0.3);
+}
+
+.archivo-item .btn i {
+    margin-right: 4px;
+    font-size: 0.8rem;
 }

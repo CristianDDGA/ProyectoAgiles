@@ -16,7 +16,7 @@ public class ArchivosUtilizadosService : IArchivosUtilizadosService
         _repository = repository;
     }
 
-    public Task RegistrarArchivosUtilizados(int solicitudEscalafonId, string docenteCedula, string nivelOrigen, string nivelDestino)
+    public async Task RegistrarArchivosUtilizados(int solicitudEscalafonId, string docenteCedula, string nivelOrigen, string nivelDestino)
     {
         // Este método se implementará en la capa de infraestructura
         // que tiene acceso al DbContext
