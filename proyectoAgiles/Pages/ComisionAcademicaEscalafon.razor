@@ -152,7 +152,10 @@
                                 <button class="btn btn-success" @onclick="() => FinalizarEscalafon(solicitud.Id)">
                                     <i class="fas fa-check-circle"></i> Verificar
                                 </button>
-                                <button class="btn btn-danger" @onclick="() => RechazarSolicitudComision(solicitud.Id)">
+                                <button class="btn btn-warning ms-2" @onclick="() => VerEstadisticas(solicitud.Id)">
+                                    <i class="fas fa-chart-bar"></i> Estadísticas
+                                </button>
+                                <button class="btn btn-danger ms-2" @onclick="() => RechazarSolicitudComision(solicitud.Id)">
                                     <i class="fas fa-times"></i> Rechazar
                                 </button>
                             }
@@ -1061,23 +1064,30 @@
                 return;
             }
 
-            var updateDto = new { Id = solicitudToReject, Status = "RechazadoComision", MotivoRechazo = motivoRechazo };
-            var response = await HttpClient.PutAsJsonAsync($"/api/solicitudes-escalafon/{solicitudToReject}/status", updateDto);
+            // Usar el nuevo endpoint de rechazo con motivo
+            var rechazarDto = new { 
+                MotivoRechazo = motivoRechazo,
+                RechazadoPor = "Comisión Académica de Escalafón",
+                NivelRechazo = "ComisionAcademica"
+            };
+            
+            var response = await HttpClient.PostAsJsonAsync($"/api/solicitudes-escalafon/{solicitudToReject}/rechazar", rechazarDto);
             
             if (response.IsSuccessStatusCode)
             {
                 await JSRuntime.InvokeVoidAsync("toastNotifications.success", 
                     "Solicitud Rechazada", 
-                    "La solicitud ha sido rechazada por la Comisión Académica.");
+                    "La solicitud ha sido rechazada por la Comisión Académica. Se ha enviado un email al docente con el motivo del rechazo.");
                 await RefreshSolicitudes();
                 CloseDetailsModal();
                 CloseRejectModal();
             }
             else
             {
+                var errorMessage = await response.Content.ReadAsStringAsync();
                 await JSRuntime.InvokeVoidAsync("toastNotifications.error", 
                     "Error", 
-                    "No se pudo rechazar la solicitud.");
+                    $"No se pudo rechazar la solicitud: {errorMessage}");
             }
         }
         catch (Exception ex)
@@ -1685,5 +1695,19 @@
         }
         
         return detalles.ToString();
+    }
+
+    private async Task VerEstadisticas(int solicitudId)
+    {
+        // Buscar la solicitud seleccionada
+        var solicitud = filteredSolicitudes.FirstOrDefault(s => s.Id == solicitudId);
+        if (solicitud != null)
+        {
+            selectedSolicitud = solicitud;
+            // Cargar estadísticas del docente (ya existe lógica similar en VerDetalles)
+            await ActualizarEstadisticasSolicitud(solicitud.DocenteCedula);
+            showDetailsModal = true;
+            StateHasChanged();
+        }
     }
 }

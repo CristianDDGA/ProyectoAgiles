@@ -1017,23 +1017,29 @@
                 return;
             }
 
-            var updateDto = new { Id = solicitudToReject, Status = "RechazadoTH", MotivoRechazo = motivoRechazo };
-            var response = await HttpClient.PutAsJsonAsync($"/api/solicitudes-escalafon/{solicitudToReject}/status", updateDto);
+            // Usar el nuevo endpoint de rechazo con motivo
+            var rechazarDto = new { 
+                MotivoRechazo = motivoRechazo,
+                RechazadoPor = "Dirección de Talento Humano",
+                NivelRechazo = "DireccionTalentoHumano"
+            };
+            var response = await HttpClient.PostAsJsonAsync($"/api/solicitudes-escalafon/{solicitudToReject}/rechazar", rechazarDto);
             
             if (response.IsSuccessStatusCode)
             {
                 await JSRuntime.InvokeVoidAsync("toastNotifications.success", 
                     "Solicitud Rechazada", 
-                    "La solicitud ha sido rechazada por Talento Humano.");
+                    "La solicitud ha sido rechazada por Talento Humano. Se ha enviado un email al docente con el motivo del rechazo.");
                 await RefreshSolicitudes();
                 CloseDetailsModal();
                 CloseRejectModal();
             }
             else
             {
+                var errorMessage = await response.Content.ReadAsStringAsync();
                 await JSRuntime.InvokeVoidAsync("toastNotifications.error", 
                     "Error", 
-                    "No se pudo rechazar la solicitud.");
+                    $"No se pudo rechazar la solicitud: {errorMessage}");
             }
         }
         catch (Exception ex)

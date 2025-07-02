@@ -286,4 +286,70 @@ public class SolicitudesEscalafonController : ControllerBase
             return StatusCode(500, "Error interno del servidor");
         }
     }
+
+    /// <summary>
+    /// Rechaza una solicitud con motivo y envía notificación por correo
+    /// </summary>
+    [HttpPost("{id}/rechazar")]
+    public async Task<ActionResult<SolicitudEscalafonDto>> RechazarSolicitud(int id, [FromBody] RechazarSolicitudDto rechazarDto)
+    {
+        try
+        {
+            var solicitud = await _solicitudService.RechazarSolicitudAsync(id, rechazarDto.MotivoRechazo, rechazarDto.RechazadoPor, rechazarDto.NivelRechazo);
+            return Ok(solicitud);
+        }
+        catch (ArgumentException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al rechazar solicitud {Id}", id);
+            return StatusCode(500, "Error interno del servidor");
+        }
+    }
+
+    /// <summary>
+    /// Crea una apelación para una solicitud rechazada
+    /// </summary>
+    [HttpPost("{id}/apelar")]
+    public async Task<ActionResult<SolicitudEscalafonDto>> CrearApelacion(int id, [FromBody] CrearApelacionDto apelacionDto)
+    {
+        try
+        {
+            var nuevaSolicitud = await _solicitudService.CrearApelacionAsync(id, apelacionDto.ObservacionesApelacion);
+            return CreatedAtAction(nameof(GetSolicitudById), new { id = nuevaSolicitud.Id }, nuevaSolicitud);
+        }
+        catch (ArgumentException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al crear apelación para solicitud {Id}", id);
+            return StatusCode(500, "Error interno del servidor");
+        }
+    }
+}
+
+/// <summary>
+/// DTO para rechazar una solicitud
+/// </summary>
+public class RechazarSolicitudDto
+{
+    public string MotivoRechazo { get; set; } = string.Empty;
+    public string RechazadoPor { get; set; } = string.Empty;
+    public string NivelRechazo { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// DTO para crear una apelación
+/// </summary>
+public class CrearApelacionDto
+{
+    public string ObservacionesApelacion { get; set; } = string.Empty;
 }

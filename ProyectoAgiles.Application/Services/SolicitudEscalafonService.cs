@@ -12,17 +12,20 @@ public class SolicitudEscalafonService : ISolicitudEscalafonService
     private readonly IMapper _mapper;
     private readonly IEmailService _emailService;
     private readonly IUserRepository _userRepository;
+    private readonly IArchivosUtilizadosService _archivosUtilizadosService;
 
     public SolicitudEscalafonService(
         ISolicitudEscalafonRepository repository, 
         IMapper mapper, 
         IEmailService emailService,
-        IUserRepository userRepository)
+        IUserRepository userRepository,
+        IArchivosUtilizadosService archivosUtilizadosService)
     {
         _repository = repository;
         _mapper = mapper;
         _emailService = emailService;
         _userRepository = userRepository;
+        _archivosUtilizadosService = archivosUtilizadosService;
     }
 
     public async Task<IEnumerable<SolicitudEscalafonDto>> GetAllSolicitudesAsync()
@@ -80,6 +83,7 @@ public class SolicitudEscalafonService : ISolicitudEscalafonService
             throw new ArgumentException("Solicitud no encontrada");
         }
 
+        var estadoAnterior = solicitud.Status;
         solicitud.Status = updateDto.Status;
         solicitud.ProcesadoPor = updateDto.ProcesadoPor;
 
@@ -94,6 +98,13 @@ public class SolicitudEscalafonService : ISolicitudEscalafonService
         }
 
         var updatedSolicitud = await _repository.UpdateAsync(solicitud);
+
+        // Si el escalafón se finaliza exitosamente, registrar archivos utilizados
+        if (updateDto.Status == "Finalizado" && estadoAnterior != "Finalizado")
+        {
+            await RegistrarArchivosUtilizadosEnEscalafon(solicitud);
+        }
+
         return _mapper.Map<SolicitudEscalafonDto>(updatedSolicitud);
     }
 
@@ -216,6 +227,200 @@ public class SolicitudEscalafonService : ISolicitudEscalafonService
         catch (Exception)
         {
             return false;
+        }
+    }
+
+    /// <summary>
+    /// Registra los archivos utilizados cuando se completa un escalafón exitosamente
+    /// </summary>
+    private async Task RegistrarArchivosUtilizadosEnEscalafon(SolicitudEscalafon solicitud)
+    {
+        try
+        {
+            await _archivosUtilizadosService.RegistrarArchivosUtilizados(
+                solicitud.Id,
+                solicitud.DocenteCedula,
+                solicitud.NivelActual,
+                solicitud.NivelSolicitado
+            );
+        }
+        catch (Exception ex)
+        {
+            // Log el error pero no fallar el proceso principal
+            // El registro de archivos utilizados es informativo
+            Console.WriteLine($"Error al registrar archivos utilizados para solicitud {solicitud.Id}: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Rechaza una solicitud y envía notificación por correo
+    /// </summary>
+    public async Task<SolicitudEscalafonDto> RechazarSolicitudAsync(int solicitudId, string motivoRechazo, string rechazadoPor, string nivelRechazo)
+    {
+        var solicitud = await _repository.GetByIdAsync(solicitudId);
+        if (solicitud == null)
+        {
+            throw new ArgumentException("Solicitud no encontrada");
+        }
+
+        // Determinar el estado de rechazo según el nivel
+        var estadoRechazo = nivelRechazo switch
+        {
+            "PresidenteComision" => "RechazadoPresidente",
+            "DireccionTalentoHumano" => "RechazadoTTHH",
+            "ComisionAcademica" => "RechazadoComision",
+            _ => "Rechazado"
+        };
+
+        solicitud.Status = estadoRechazo;
+        solicitud.FechaRechazo = DateTime.Now;
+        solicitud.MotivoRechazo = motivoRechazo;
+        solicitud.ProcesadoPor = rechazadoPor;
+
+        var updatedSolicitud = await _repository.UpdateAsync(solicitud);
+
+        // Enviar correo de notificación de rechazo
+        await EnviarCorreoRechazoAsync(solicitud, nivelRechazo, rechazadoPor);
+
+        return _mapper.Map<SolicitudEscalafonDto>(updatedSolicitud);
+    }
+
+    /// <summary>
+    /// Crea una apelación para una solicitud rechazada
+    /// </summary>
+    public async Task<SolicitudEscalafonDto> CrearApelacionAsync(int solicitudOriginalId, string observacionesApelacion)
+    {
+        var solicitudOriginal = await _repository.GetByIdAsync(solicitudOriginalId);
+        if (solicitudOriginal == null)
+        {
+            throw new ArgumentException("Solicitud original no encontrada");
+        }
+
+        // Verificar que la solicitud esté rechazada
+        if (!solicitudOriginal.Status.Contains("Rechazado"))
+        {
+            throw new InvalidOperationException("Solo se pueden apelar solicitudes rechazadas");
+        }
+
+        // Crear nueva solicitud como apelación
+        var solicitudApelacion = new SolicitudEscalafon
+        {
+            DocenteCedula = solicitudOriginal.DocenteCedula,
+            DocenteNombre = solicitudOriginal.DocenteNombre,
+            DocenteEmail = solicitudOriginal.DocenteEmail,
+            DocenteTelefono = solicitudOriginal.DocenteTelefono,
+            Facultad = solicitudOriginal.Facultad,
+            Carrera = solicitudOriginal.Carrera,
+            NivelActual = solicitudOriginal.NivelActual,
+            NivelSolicitado = solicitudOriginal.NivelSolicitado,
+            AnosExperiencia = solicitudOriginal.AnosExperiencia,
+            Titulos = solicitudOriginal.Titulos,
+            Publicaciones = solicitudOriginal.Publicaciones,
+            Capacitaciones = solicitudOriginal.Capacitaciones,
+            FechaSolicitud = DateTime.Now,
+            Status = "PendienteApelacion",
+            Observaciones = $"APELACIÓN DE SOLICITUD #{solicitudOriginalId}: {observacionesApelacion}",
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+
+        var nuevaSolicitud = await _repository.AddAsync(solicitudApelacion);
+
+        // Marcar la solicitud original como apelada
+        solicitudOriginal.Observaciones = $"{solicitudOriginal.Observaciones}\n\nAPELADA: Nueva solicitud #{nuevaSolicitud.Id}";
+        await _repository.UpdateAsync(solicitudOriginal);
+
+        return _mapper.Map<SolicitudEscalafonDto>(nuevaSolicitud);
+    }
+
+    /// <summary>
+    /// Envía correo de notificación de rechazo
+    /// </summary>
+    private async Task EnviarCorreoRechazoAsync(SolicitudEscalafon solicitud, string nivelRechazo, string rechazadoPor)
+    {
+        try
+        {
+            var nivelTexto = nivelRechazo switch
+            {
+                "PresidenteComision" => "Presidente de la Comisión Académica",
+                "DireccionTalentoHumano" => "Dirección de Talento Humano",
+                "ComisionAcademica" => "Comisión Académica de Escalafón",
+                _ => "Administración"
+            };
+
+            var subject = $"Solicitud de Escalafón Rechazada - {nivelTexto}";
+            var body = $@"
+            <html>
+            <head>
+                <style>
+                    body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+                    .header {{ background-color: #d32f2f; color: white; padding: 20px; text-align: center; }}
+                    .content {{ padding: 20px; }}
+                    .details {{ background-color: #f5f5f5; padding: 15px; margin: 15px 0; border-radius: 5px; }}
+                    .footer {{ background-color: #f0f0f0; padding: 15px; text-align: center; font-size: 12px; }}
+                    .warning {{ color: #d32f2f; font-weight: bold; }}
+                    .appeal-info {{ background-color: #e3f2fd; padding: 15px; margin: 15px 0; border-left: 4px solid #2196f3; }}
+                </style>
+            </head>
+            <body>
+                <div class='header'>
+                    <h2>🚫 Solicitud de Escalafón Rechazada</h2>
+                </div>
+                
+                <div class='content'>
+                    <h3>Estimado/a {solicitud.DocenteNombre},</h3>
+                    
+                    <p>Lamentamos informarle que su solicitud de escalafón ha sido <span class='warning'>RECHAZADA</span> por <strong>{nivelTexto}</strong>.</p>
+                    
+                    <div class='details'>
+                        <h4>📋 Detalles de la solicitud:</h4>
+                        <ul>
+                            <li><strong>Número de solicitud:</strong> #{solicitud.Id}</li>
+                            <li><strong>Nivel actual:</strong> {solicitud.NivelActual}</li>
+                            <li><strong>Nivel solicitado:</strong> {solicitud.NivelSolicitado}</li>
+                            <li><strong>Fecha de solicitud:</strong> {solicitud.FechaSolicitud:dd/MM/yyyy}</li>
+                            <li><strong>Fecha de rechazo:</strong> {solicitud.FechaRechazo:dd/MM/yyyy HH:mm}</li>
+                            <li><strong>Rechazado por:</strong> {rechazadoPor}</li>
+                            <li><strong>Nivel de rechazo:</strong> {nivelTexto}</li>
+                        </ul>
+                    </div>
+                    
+                    <div class='details'>
+                        <h4>📝 Motivo del rechazo:</h4>
+                        <p><em>{solicitud.MotivoRechazo}</em></p>
+                    </div>
+                    
+                    <div class='appeal-info'>
+                        <h4>📢 Derecho de Apelación</h4>
+                        <p>Usted tiene derecho a apelar esta decisión. Para ello:</p>
+                        <ol>
+                            <li>Ingrese a su dashboard en el sistema</li>
+                            <li>Vaya a la sección ""Mis Solicitudes""</li>
+                            <li>Busque la solicitud rechazada</li>
+                            <li>Haga clic en el botón ""Apelar""</li>
+                            <li>Proporcione la documentación adicional o justificación necesaria</li>
+                        </ol>
+                        <p><strong>Nota:</strong> Puede presentar su apelación en cualquier momento desde su dashboard.</p>
+                    </div>
+                    
+                    <p>Si tiene alguna consulta sobre este proceso, no dude en contactarnos.</p>
+                </div>
+                
+                <div class='footer'>
+                    <p>Atentamente,<br>
+                    <strong>Sistema de Escalafón Docente</strong><br>
+                    Universidad Técnica de Ambato<br>
+                    📧 escalafon@uta.edu.ec | 📞 03-2848487</p>
+                </div>
+            </body>
+            </html>";
+
+            await _emailService.SendEmailAsync(solicitud.DocenteEmail, subject, body);
+        }
+        catch (Exception ex)
+        {
+            // Log error but don't fail the main process
+            Console.WriteLine($"Error enviando correo de rechazo: {ex.Message}");
         }
     }
 }

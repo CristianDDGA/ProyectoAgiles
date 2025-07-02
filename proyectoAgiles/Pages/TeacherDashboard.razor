@@ -1187,7 +1187,19 @@
                                                                 <button class="action-btn cancel" @onclick="() => CancelarSolicitud(solicitud.Id)" title="Cancelar Solicitud">
                                                                     <i class="fas fa-ban"></i>
                                                                 </button>
-                                                            }
+                                                            }                                            @* Debug: mostrar el estado y la condición de apelación *@
+                                            @{
+                                                bool esRechazada = solicitud.Estado.ToLower().Contains("rechazada") || 
+                                                                   solicitud.Estado.ToLower().Contains("rechazado") ||
+                                                                   solicitud.Estado.ToLower().Contains("denegada") ||
+                                                                   solicitud.Estado.ToLower().Contains("denegado");
+                                            }
+                                            @if (esRechazada)
+                                            {
+                                                <button class="action-btn appeal" @onclick="() => AbrirModalApelacion(solicitud.Id)" title="Apelar Decisión">
+                                                    <i class="fas fa-gavel"></i>
+                                                </button>
+                                            }
                                                         </div>
                                                     </td>
                                                 </tr>
@@ -1410,6 +1422,88 @@
                             </button>
                         }
                         <button class="btn btn-secondary" @onclick="CloseDetalleSolicitudModal">Cerrar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    @* Modal para Apelación de Solicitud *@
+    @if (showApelacionModal && solicitudParaApelar != null)
+    {
+        <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,0.3);">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header bg-warning text-dark">
+                        <h5 class="modal-title">
+                            <i class="fas fa-gavel me-2"></i>
+                            Apelación de Solicitud Rechazada
+                        </h5>
+                        <button type="button" class="btn-close btn-close-dark" @onclick="CerrarModalApelacion"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="alert alert-info mb-4">
+                            <h6 class="alert-heading">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Información de la Solicitud Original
+                            </h6>
+                            <div class="row mt-3">
+                                <div class="col-md-6">
+                                    <strong>Solicitud:</strong> #@solicitudParaApelar.Id<br>
+                                    <strong>Nivel solicitado:</strong> @solicitudParaApelar.NivelSolicitado<br>
+                                    <strong>Estado:</strong> <span class="badge bg-danger">@solicitudParaApelar.Estado</span>
+                                </div>
+                                <div class="col-md-6">
+                                    <strong>Fecha solicitud:</strong> @solicitudParaApelar.FechaSolicitud.ToString("dd/MM/yyyy")<br>
+                                    <strong>Motivo rechazo:</strong><br>
+                                    <small class="text-muted">@solicitudParaApelar.Observaciones</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="fas fa-pen me-2"></i>
+                                Justificación de la Apelación *
+                            </label>
+                            <textarea class="form-control" @bind="justificacionApelacion" 
+                                      rows="6" placeholder="Explique detalladamente por qué considera que la decisión de rechazo debe ser revisada. Incluya cualquier documentación adicional o argumento que respalde su apelación." 
+                                      maxlength="1000" required></textarea>
+                            <small class="form-text text-muted">
+                                Máximo 1000 caracteres. Caracteres restantes: @(1000 - (justificacionApelacion?.Length ?? 0))
+                            </small>
+                        </div>
+
+                        <div class="alert alert-warning mt-3">
+                            <h6 class="alert-heading">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                Importante
+                            </h6>
+                            <ul class="mb-0">
+                                <li>La apelación será revisada por la autoridad competente.</li>
+                                <li>Se creará una nueva solicitud con estado "Apelación Pendiente".</li>
+                                <li>Recibirá una notificación por correo electrónico cuando se procese su apelación.</li>
+                                <li>Esta acción no se puede deshacer una vez enviada.</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" @onclick="CerrarModalApelacion" disabled="@isCreatingApelacion">
+                            <i class="fas fa-times me-1"></i>
+                            Cancelar
+                        </button>
+                        <button class="btn btn-warning" @onclick="CrearApelacion" disabled="@(isCreatingApelacion || string.IsNullOrWhiteSpace(justificacionApelacion))">
+                            @if (isCreatingApelacion)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                <text>Enviando Apelación...</text>
+                            }
+                            else
+                            {
+                                <i class="fas fa-gavel me-1"></i>
+                                <text>Enviar Apelación</text>
+                            }
+                        </button>
                     </div>
                 </div>
             </div>
@@ -2032,7 +2126,11 @@
     private bool showCapacitacionesModal = false;
     private bool showSolicitudesModal = false;
     private bool showDetalleSolicitudModal = false;
+    private bool showApelacionModal = false;
     private SolicitudDto? solicitudSeleccionada = null;
+    private SolicitudDto? solicitudParaApelar = null;
+    private string justificacionApelacion = string.Empty;
+    private bool isCreatingApelacion = false;
     private bool showAgregarModal = false;
     private bool showAgregarEvaluacionModal = false;
     private bool showAgregarCapacitacionModal = false;
@@ -2557,18 +2655,38 @@ private bool isLoadingInvestigaciones = false;
             
             if (apiSolicitudes is not null && apiSolicitudes.Any())
             {
+                // Debug: mostrar los estados originales
+                await JSRuntime.InvokeVoidAsync("console.log", "Estados originales de las solicitudes:");
+                foreach (var s in apiSolicitudes)
+                {
+                    await JSRuntime.InvokeVoidAsync("console.log", $"Solicitud {s.Id}: Status='{s.Status}' -> Mapeado='{MapearEstado(s.Status)}'");
+                }
+
                 // Mapear las solicitudes de la API a nuestro modelo local
                 solicitudes = apiSolicitudes.Select(s => new SolicitudDto
                 {
                     Id = s.Id,
                     TipoSolicitud = "Promoción de Escalafón", // No hay TipoSolicitud en el DTO, usar valor fijo
-                    Estado = s.Status ?? "Pendiente", // Usar Status como Estado
+                    Estado = MapearEstado(s.Status), // Mapear el estado para mejor visualización
                     FechaSolicitud = s.FechaSolicitud,
                     FechaRespuesta = s.FechaAprobacion ?? s.FechaRechazo, // Usar la fecha que esté disponible
                     NivelActual = s.NivelActual ?? "No especificado",
                     NivelSolicitado = s.NivelSolicitado ?? "No especificado",
                     Observaciones = s.Observaciones ?? s.MotivoRechazo ?? "Sin observaciones"
                 }).ToList();
+
+                // Debug: Mostrar información de mapeo de estados
+                await JSRuntime.InvokeVoidAsync("console.log", "=== DEBUG SOLICITUDES ===");
+                foreach (var solicitud in solicitudes)
+                {
+                    var estadoOriginal = apiSolicitudes.FirstOrDefault(a => a.Id == solicitud.Id)?.Status;
+                    var esRechazada = solicitud.Estado.ToLower().Contains("rechazada") || 
+                                      solicitud.Estado.ToLower().Contains("rechazado") ||
+                                      solicitud.Estado.ToLower().Contains("denegada") ||
+                                      solicitud.Estado.ToLower().Contains("denegado");
+                    await JSRuntime.InvokeVoidAsync("console.log", $"Solicitud #{solicitud.Id}: Estado original='{estadoOriginal}', Estado mapeado='{solicitud.Estado}', Es rechazada={esRechazada}");
+                }
+                await JSRuntime.InvokeVoidAsync("console.log", "========================");
                 
                 await MostrarNotificacionExito($"📋 Solicitudes Importadas", 
                     $"Se han cargado {solicitudes.Count} solicitud{(solicitudes.Count != 1 ? "es" : "")} desde la base de datos.");
@@ -3200,6 +3318,101 @@ private bool isLoadingInvestigaciones = false;
                 await MostrarNotificacionError("Error", $"No se pudo cancelar la solicitud: {ex.Message}");
             }
         }
+    }
+
+    // Métodos para Apelación de Solicitudes
+    
+    private void AbrirModalApelacion(int solicitudId)
+    {
+        var solicitud = solicitudes.FirstOrDefault(s => s.Id == solicitudId);
+        if (solicitud != null)
+        {
+            solicitudParaApelar = solicitud;
+            justificacionApelacion = string.Empty;
+            showApelacionModal = true;
+            StateHasChanged();
+        }
+    }
+
+    private void CerrarModalApelacion()
+    {
+        showApelacionModal = false;
+        solicitudParaApelar = null;
+        justificacionApelacion = string.Empty;
+        StateHasChanged();
+    }
+
+    private async Task CrearApelacion()
+    {
+        if (solicitudParaApelar == null || string.IsNullOrWhiteSpace(justificacionApelacion))
+        {
+            await MostrarNotificacionError("❌ Datos Incompletos", "Debe proporcionar una justificación para la apelación.");
+            return;
+        }
+
+        var confirmacion = await JSRuntime.InvokeAsync<bool>("confirm", 
+            $"¿Está seguro de que desea apelar la solicitud #{solicitudParaApelar.Id}? Esta acción creará una nueva solicitud de apelación.");
+        
+        if (!confirmacion) return;
+
+        try
+        {
+            isCreatingApelacion = true;
+            StateHasChanged();
+
+            // Llamar al endpoint de apelación
+            var response = await HttpClient.PostAsJsonAsync($"https://localhost:7125/api/solicitudes-escalafon/{solicitudParaApelar.Id}/apelar", 
+                new { observacionesApelacion = justificacionApelacion });
+
+            if (response.IsSuccessStatusCode)
+            {
+                // Actualizar la lista de solicitudes
+                await ImportarSolicitudes();
+                
+                await MostrarNotificacionExito("✅ Apelación Enviada", 
+                    "Su apelación ha sido registrada exitosamente. Recibirá una notificación por correo cuando sea procesada.");
+                
+                CerrarModalApelacion();
+            }
+            else
+            {
+                var errorMessage = await response.Content.ReadAsStringAsync();
+                await MostrarNotificacionError("❌ Error al Crear Apelación", 
+                    $"No se pudo procesar su apelación: {errorMessage}");
+            }
+        }
+        catch (Exception ex)
+        {
+            await MostrarNotificacionError("❌ Error de Conexión", 
+                $"Error al enviar la apelación: {ex.Message}");
+        }
+        finally
+        {
+            isCreatingApelacion = false;
+            StateHasChanged();
+        }
+    }
+
+    // Método para mapear estados del backend a estados legibles
+    private string MapearEstado(string? status)
+    {
+        return status switch
+        {
+            "PendientePresidente" => "En Revisión - Presidente",
+            "PendienteTTHH" => "En Revisión - Talento Humano",
+            "PendienteComision" => "En Revisión - Comisión",
+            "RechazadoPresidente" => "Rechazada por Presidente",
+            "RechazadoTTHH" => "Rechazada por Talento Humano",
+            "RechazadoComision" => "Rechazada por Comisión",
+            "Rechazado" => "Rechazada", // Estado genérico de rechazo
+            "PendienteApelacion" => "Apelación Pendiente",
+            "AprobadoPresidente" => "En Revisión - Siguiente Nivel",
+            "AprobadoTTHH" => "En Revisión - Siguiente Nivel",
+            "AprobadoComision" => "Aprobada",
+            "Completado" => "Completada",
+            null => "Pendiente",
+            _ => status
+        };
     }
 
     // Métodos auxiliares para generar resúmenes detallados de la solicitud
@@ -4127,6 +4340,31 @@ private bool isLoadingInvestigaciones = false;
     }
 
     .action-btn.cancel:active {
+        transform: translateY(0);
+    }
+
+    .action-btn.appeal {
+        background: linear-gradient(135deg, #ff9800, #f57c00);
+        color: white;
+        border: none;
+        padding: 0.5rem;
+        border-radius: 6px;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        margin-left: 0.25rem;
+    }
+
+    .action-btn.appeal:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(255, 152, 0, 0.3);
+        background: linear-gradient(135deg, #f57c00, #ef6c00);
+    }
+
+    .action-btn.appeal:active {
         transform: translateY(0);
     }
 </style>

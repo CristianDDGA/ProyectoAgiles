@@ -15,6 +15,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<EvaluacionDesempeno> DAC { get; set; }
     public DbSet<DITIC> DITIC { get; set; }
     public DbSet<SolicitudEscalafon> SolicitudesEscalafon { get; set; }
+    public DbSet<ArchivosUtilizadosEscalafon> ArchivosUtilizadosEscalafon { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -375,6 +376,46 @@ public class ApplicationDbContext : DbContext
             entity.HasQueryFilter(e => !e.IsDeleted);
         });
 
+        // Configuración de ArchivosUtilizadosEscalafon
+        modelBuilder.Entity<ArchivosUtilizadosEscalafon>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            
+            entity.Property(e => e.TipoRecurso)
+                .IsRequired()
+                .HasMaxLength(50);
+            
+            entity.Property(e => e.DocenteCedula)
+                .IsRequired()
+                .HasMaxLength(10);
+            
+            entity.Property(e => e.NivelOrigen)
+                .IsRequired()
+                .HasMaxLength(100);
+            
+            entity.Property(e => e.NivelDestino)
+                .IsRequired()
+                .HasMaxLength(100);
+            
+            entity.Property(e => e.EstadoAscenso)
+                .IsRequired()
+                .HasMaxLength(50);
+            
+            entity.Property(e => e.Descripcion)
+                .HasMaxLength(500);
+            
+            // Relación con SolicitudEscalafon
+            entity.HasOne(e => e.SolicitudEscalafon)
+                .WithMany()
+                .HasForeignKey(e => e.SolicitudEscalafonId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            // Índices para optimizar consultas
+            entity.HasIndex(e => e.DocenteCedula);
+            entity.HasIndex(e => new { e.TipoRecurso, e.RecursoId });
+            entity.HasIndex(e => new { e.DocenteCedula, e.TipoRecurso });
+        });
+        
         // Datos semilla para el administrador por defecto
         SeedData(modelBuilder);
     }    private void SeedData(ModelBuilder modelBuilder)

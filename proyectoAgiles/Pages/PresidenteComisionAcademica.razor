@@ -1009,20 +1009,20 @@
                 return;
             }
 
-            var updateDto = new UpdateSolicitudStatusDto
-            {
-                Id = selectedSolicitudId,
-                Status = "Rechazado",
-                MotivoRechazo = motivoRechazo
+            // Usar el nuevo endpoint de rechazo con motivo
+            var rechazarDto = new { 
+                MotivoRechazo = motivoRechazo,
+                RechazadoPor = "Presidente de la Comisión Académica",
+                NivelRechazo = "PresidenteComision"
             };
 
-            var response = await HttpClient.PutAsJsonAsync($"/api/solicitudes-escalafon/{selectedSolicitudId}/status", updateDto);
+            var response = await HttpClient.PostAsJsonAsync($"/api/solicitudes-escalafon/{selectedSolicitudId}/rechazar", rechazarDto);
             
             if (response.IsSuccessStatusCode)
             {
                 await JSRuntime.InvokeVoidAsync("toastNotifications.success", 
                     "Solicitud Rechazada", 
-                    "La solicitud de escalafón ha sido rechazada.");
+                    "La solicitud de escalafón ha sido rechazada. Se ha enviado un email al docente con el motivo del rechazo.");
                 
                 await LoadSolicitudes();
                 CloseRejectModal();
@@ -1030,9 +1030,10 @@
             }
             else
             {
+                var errorMessage = await response.Content.ReadAsStringAsync();
                 await JSRuntime.InvokeVoidAsync("toastNotifications.error", 
                     "Error", 
-                    "No se pudo rechazar la solicitud. Inténtalo más tarde.");
+                    $"No se pudo rechazar la solicitud: {errorMessage}");
             }
         }
         catch (Exception ex)

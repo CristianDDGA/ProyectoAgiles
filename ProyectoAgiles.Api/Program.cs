@@ -81,6 +81,7 @@ builder.Services.AddScoped<IInvestigacionRepository, InvestigacionRepository>();
 builder.Services.AddScoped<IEvaluacionDesempenoRepository, EvaluacionDesempenoRepository>();
 builder.Services.AddScoped<IDiticRepository, DiticRepository>();
 builder.Services.AddScoped<ISolicitudEscalafonRepository, SolicitudEscalafonRepository>();
+builder.Services.AddScoped<IArchivosUtilizadosRepository, ArchivosUtilizadosRepository>();
 
 // Servicio para manejo de archivos
 builder.Services.AddScoped<IFileService, FileService>();
@@ -95,6 +96,7 @@ builder.Services.AddScoped<IInvestigacionService, InvestigacionService>();
 builder.Services.AddScoped<IEvaluacionDesempenoService, EvaluacionDesempenoService>();
 builder.Services.AddScoped<IDiticService, DiticService>();
 builder.Services.AddScoped<ISolicitudEscalafonService, SolicitudEscalafonService>();
+builder.Services.AddScoped<IArchivosUtilizadosService, ProyectoAgiles.Infrastructure.Services.ArchivosUtilizadosInfrastructureService>();
 
 // Configuración de CORS
 builder.Services.AddCors(options =>

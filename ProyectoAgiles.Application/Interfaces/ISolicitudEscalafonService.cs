@@ -15,4 +15,6 @@ public interface ISolicitudEscalafonService
     Task<bool> ExisteSolicitudPendienteAsync(string cedula);
     Task<bool> NotificarAprobacionAsync(int solicitudId);
     Task<bool> FinalizarEscalafonAsync(int solicitudId);
+    Task<SolicitudEscalafonDto> RechazarSolicitudAsync(int solicitudId, string motivoRechazo, string rechazadoPor, string nivelRechazo);
+    Task<SolicitudEscalafonDto> CrearApelacionAsync(int solicitudOriginalId, string observacionesApelacion);
 }
