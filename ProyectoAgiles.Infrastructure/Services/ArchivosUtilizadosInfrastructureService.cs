@@ -91,7 +91,7 @@ public class ArchivosUtilizadosInfrastructureService : IArchivosUtilizadosServic
                         NivelOrigen = nivelOrigen,
                         NivelDestino = nivelDestino,
                         FechaUtilizacion = DateTime.UtcNow,
-                        Descripcion = $"{evaluacion.PeriodoAcademico} - {evaluacion.PorcentajeObtenido}%",
+                        Descripcion = $"{evaluacion.PeriodoAcademico} - {evaluacion.PorcentajeObtenido:F1}%",
                         EstadoAscenso = "Aprobado"
                     });
                 }

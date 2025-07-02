@@ -838,9 +838,9 @@ public class SolicitudEscalafonService : ISolicitudEscalafonService
                 PeriodoAcademico = ExtractPeriodoFromDescription(eval.Descripcion),
                 Anio = ExtractAnioFromDescription(eval.Descripcion),
                 Semestre = ExtractSemestreFromDescription(eval.Descripcion),
-                PuntajeObtenido = (decimal)ExtractPuntajeFromDescription(eval.Descripcion),
+                PuntajeObtenido = (decimal)ExtractPuntajeFromDescription(eval.Descripcion), // Corregido: valor correcto del puntaje
                 PuntajeMaximo = 100,
-                Porcentaje = (decimal)ExtractPuntajeFromDescription(eval.Descripcion),
+                Porcentaje = (decimal)ExtractPuntajeFromDescription(eval.Descripcion), // Corregido: porcentaje sin multiplicar por 100
                 Estado = "Completada"
             }).ToList();
             
@@ -927,16 +927,30 @@ public class SolicitudEscalafonService : ISolicitudEscalafonService
     {
         if (string.IsNullOrEmpty(descripcion)) return 0;
         
-        // Buscar patrón como "85.5%" o "90,0%"
+        Console.WriteLine($"[DEBUG] Extrayendo puntaje de: '{descripcion}'");
+        
+        // Buscar patrón como "85.5%" o "90,0%" o "78,200%"
         var match = System.Text.RegularExpressions.Regex.Match(descripcion, @"(\d+[,.]?\d*)%");
         if (match.Success)
         {
             var puntajeStr = match.Groups[1].Value.Replace(",", ".");
-            if (double.TryParse(puntajeStr, out double puntaje))
+            Console.WriteLine($"[DEBUG] String extraído: '{puntajeStr}'");
+            
+            if (double.TryParse(puntajeStr, System.Globalization.CultureInfo.InvariantCulture, out double puntaje))
             {
+                Console.WriteLine($"[DEBUG] Valor parseado: {puntaje}");
+                
+                // Si el valor es mayor a 100, probablemente viene con demasiados decimales (ej: 78200 en lugar de 78.2)
+                // En ese caso dividir entre 1000
+                if (puntaje > 100)
+                {
+                    puntaje = puntaje / 1000.0;
+                    Console.WriteLine($"[DEBUG] Valor corregido (dividido entre 1000): {puntaje}");
+                }
                 return puntaje;
             }
         }
+        Console.WriteLine($"[DEBUG] No se pudo extraer puntaje, retornando 0");
         return 0;
     }
     

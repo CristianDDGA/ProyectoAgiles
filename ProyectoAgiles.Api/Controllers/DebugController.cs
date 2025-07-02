@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using ProyectoAgiles.Application.Interfaces;
+using System.Text.Json;
 
 namespace ProyectoAgiles.Api.Controllers;
 
@@ -106,23 +107,94 @@ public class DebugController : ControllerBase
     }
 
     /// <summary>
-    /// Obtiene el historial completo de una cédula
+    /// Obtiene el historial completo de una cédula con verificación de requisitos opcional
     /// </summary>
     [HttpGet("historial-completo/{cedula}")]
-    public async Task<IActionResult> GetHistorialCompleto(string cedula)
+    public async Task<IActionResult> GetHistorialCompleto(string cedula, [FromQuery] bool incluirVerificacion = false)
     {
         try
         {
             var historial = await _solicitudService.GetHistorialEscalafonAsync(cedula);
+            
+            if (incluirVerificacion)
+            {
+                Console.WriteLine($"[DEBUG] Obteniendo verificación de requisitos para cédula: {cedula}");
+                
+                // Obtener la verificación de requisitos actual
+                object verificacionRequisitos = null;
+                
+                try
+                {
+                    // Llamar a la API de verificación de requisitos
+                    using var httpClient = new HttpClient();
+                    httpClient.BaseAddress = new Uri(Request.Scheme + "://" + Request.Host);
+                    
+                    var url = $"/api/EvaluacionesDesempeno/estadisticas-docente/{cedula}";
+                    Console.WriteLine($"[DEBUG] Llamando a URL: {url}");
+                    
+                    var response = await httpClient.GetAsync(url);
+                    
+                    Console.WriteLine($"[DEBUG] Response status: {response.StatusCode}");
+                    
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var responseContent = await response.Content.ReadAsStringAsync();
+                        Console.WriteLine($"[DEBUG] Response content length: {responseContent.Length}");
+                        verificacionRequisitos = JsonSerializer.Deserialize<object>(responseContent);
+                        Console.WriteLine($"[DEBUG] Verificación de requisitos obtenida exitosamente");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"[DEBUG] Error en respuesta: {response.StatusCode}");
+                        verificacionRequisitos = new
+                        {
+                            error = "No se pudo obtener la verificación de requisitos",
+                            status = (int)response.StatusCode
+                        };
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[DEBUG] Exception en verificación: {ex.Message}");
+                    verificacionRequisitos = new
+                    {
+                        error = $"Error al consultar API de verificación: {ex.Message}"
+                    };
+                }
+                
+                Console.WriteLine($"[DEBUG] Devolviendo respuesta con verificación");
+                
+                return Ok(new
+                {
+                    Cedula = cedula,
+                    TotalRegistros = historial.Count(),
+                    Historial = historial,
+                    VerificacionRequisitosActual = verificacionRequisitos,
+                    Metadata = new
+                    {
+                        IncluirVerificacionRequisitos = true,
+                        ApiVerificacionUtilizada = "/api/EvaluacionesDesempeno/estadisticas-docente/{cedula}",
+                        Descripcion = "Historial de escalafones con verificación de requisitos actual agregada"
+                    }
+                });
+            }
+            
             return Ok(new
             {
                 Cedula = cedula,
                 TotalRegistros = historial.Count(),
-                Historial = historial
+                Historial = historial,
+                OpcionesDisponibles = new
+                {
+                    VerificacionRequisitos = $"/api/debug/historial-completo/{cedula}?incluirVerificacion=true",
+                    HistorialConVerificacion = $"/api/debug/historial-con-verificacion/{cedula}",
+                    DepuracionAvanzada = $"/api/debug/historial-debug/{cedula}"
+                }
             });
         }
         catch (Exception ex)
         {
+            Console.WriteLine($"[DEBUG] Exception general: {ex.Message}");
             return BadRequest(new { Error = ex.Message });
         }
     }
@@ -303,6 +375,99 @@ public class DebugController : ControllerBase
         catch (Exception ex)
         {
             return BadRequest(new { Error = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Obtiene el historial con verificación de requisitos integrada
+    /// </summary>
+    [HttpGet("historial-con-verificacion/{cedula}")]
+    public async Task<IActionResult> GetHistorialConVerificacion(string cedula)
+    {
+        try
+        {
+            // Obtener historial completo
+            var historial = await _solicitudService.GetHistorialEscalafonAsync(cedula);
+            
+            // Para cada registro del historial, agregar la verificación de requisitos
+            var historialEnriquecido = new List<object>();
+            
+            foreach (var registro in historial)
+            {
+                object verificacionRequisitos = null;
+                
+                try
+                {
+                    // Llamar a la API de verificación de requisitos
+                    using var httpClient = new HttpClient();
+                    httpClient.BaseAddress = new Uri(Request.Scheme + "://" + Request.Host);
+                    
+                    var response = await httpClient.GetAsync($"/api/EvaluacionesDesempeno/estadisticas-docente/{cedula}");
+                    
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var responseContent = await response.Content.ReadAsStringAsync();
+                        verificacionRequisitos = JsonSerializer.Deserialize<object>(responseContent);
+                    }
+                    else
+                    {
+                        verificacionRequisitos = new
+                        {
+                            error = "No se pudo obtener la verificación de requisitos",
+                            status = (int)response.StatusCode
+                        };
+                    }
+                }
+                catch (Exception ex)
+                {
+                    verificacionRequisitos = new
+                    {
+                        error = $"Error al consultar API de verificación: {ex.Message}"
+                    };
+                }
+                
+                // Crear registro enriquecido
+                var registroEnriquecido = new
+                {
+                    HistorialBase = new
+                    {
+                        registro.Id,
+                        registro.NivelAnterior,
+                        registro.NivelNuevo,
+                        registro.FechaPromocion,
+                        registro.EstadoSolicitud,
+                        DocumentosUtilizadosCount = registro.DocumentosUtilizados?.Count ?? 0,
+                        registro.ObservacionesFinales,
+                        registro.AprobadoPor
+                    },
+                    DocumentosDetalles = registro.DocumentosDetalles,
+                    VerificacionRequisitosActual = verificacionRequisitos
+                };
+                
+                historialEnriquecido.Add(registroEnriquecido);
+            }
+            
+            return Ok(new
+            {
+                CedulaConsultada = cedula,
+                FechaConsulta = DateTime.Now,
+                TotalRegistros = historial.Count(),
+                HistorialConVerificacion = historialEnriquecido,
+                Metadatos = new
+                {
+                    IncluirVerificacionRequisitos = true,
+                    ApiVerificacionUtilizada = "/api/EvaluacionesDesempeno/estadisticas-docente/{cedula}",
+                    Descripcion = "Historial de escalafones con verificación de requisitos actual para cada registro"
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { 
+                Error = ex.Message, 
+                StackTrace = ex.StackTrace,
+                Endpoint = "historial-con-verificacion"
+            });
         }
     }
 
