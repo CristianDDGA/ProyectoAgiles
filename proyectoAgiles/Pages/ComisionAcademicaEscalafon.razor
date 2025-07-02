@@ -748,7 +748,49 @@
                                         </tr>
                                         <tr>
                                             <td><strong>Observaciones:</strong></td>
-                                            <td>@(string.IsNullOrEmpty(selectedSolicitud.Observaciones) ? "Sin observaciones" : selectedSolicitud.Observaciones)</td>
+                                            <td>
+                                                @if (string.IsNullOrEmpty(selectedSolicitud.Observaciones))
+                                                {
+                                                    <span class="text-muted">Sin observaciones</span>
+                                                }
+                                                else
+                                                {
+                                                    var (textoFormateado, archivos) = FormatearObservacionesApelacion(selectedSolicitud.Observaciones);
+                                                    
+                                                    <div class="observaciones-container">
+                                                        @if (selectedSolicitud.Observaciones.Contains("APELACIÓN DE SOLICITUD"))
+                                                        {
+                                                            <div class="apelacion-badge mb-2">
+                                                                <i class="fas fa-exclamation-triangle text-warning"></i>
+                                                                <strong>APELACIÓN</strong>
+                                                            </div>
+                                                        }
+                                                        
+                                                        <div class="observacion-texto">
+                                                            @textoFormateado
+                                                        </div>
+                                                        
+                                                        @if (archivos.Any())
+                                                        {
+                                                            <div class="archivos-adjuntos mt-3">
+                                                                <div class="archivos-header">
+                                                                    <i class="fas fa-paperclip text-primary"></i>
+                                                                    <strong>Archivos Adjuntos (@archivos.Count)</strong>
+                                                                </div>
+                                                                <ul class="archivos-lista mt-2">
+                                                                    @foreach (var archivo in archivos)
+                                                                    {
+                                                                        <li class="archivo-item">
+                                                                            <i class="fas fa-file-pdf text-danger me-2"></i>
+                                                                            <span class="archivo-nombre">@archivo</span>
+                                                                        </li>
+                                                                    }
+                                                                </ul>
+                                                            </div>
+                                                        }
+                                                    </div>
+                                                }
+                                            </td>
                                         </tr>
                                         @if (!string.IsNullOrEmpty(selectedSolicitud.MotivoRechazo))
                                         {
@@ -1709,5 +1751,82 @@
             showDetailsModal = true;
             StateHasChanged();
         }
+    }
+
+    // Función para formatear observaciones de apelación con archivos adjuntos
+    private (string textoFormateado, List<string> archivos) FormatearObservacionesApelacion(string observaciones)
+    {
+        var archivos = new List<string>();
+        var textoFormateado = observaciones;
+        
+        if (string.IsNullOrEmpty(observaciones))
+            return (textoFormateado, archivos);
+
+        // Buscar patrón de apelación con archivos adjuntos
+        if (observaciones.Contains("APELACIÓN DE SOLICITUD") && observaciones.Contains("Archivos adjuntos:"))
+        {
+            var partes = observaciones.Split(new[] { "Archivos adjuntos:" }, StringSplitOptions.None);
+            if (partes.Length == 2)
+            {
+                textoFormateado = partes[0].Trim();
+                var partesArchivos = partes[1].Trim();
+                
+                // Extraer información de archivos - buscar tanto nombres de archivos como patrones
+                var lineas = partesArchivos.Split(new[] { '\n', '\r', '-' }, StringSplitOptions.RemoveEmptyEntries);
+                foreach (var linea in lineas)
+                {
+                    var lineaLimpia = linea.Trim();
+                    
+                    // Buscar patrones de archivos
+                    if (lineaLimpia.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase) || 
+                        lineaLimpia.EndsWith(".doc", StringComparison.OrdinalIgnoreCase) ||
+                        lineaLimpia.EndsWith(".docx", StringComparison.OrdinalIgnoreCase) || 
+                        lineaLimpia.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) || 
+                        lineaLimpia.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
+                    {
+                        archivos.Add(lineaLimpia);
+                    }
+                    // También buscar líneas que contengan información de archivos con números
+                    else if (lineaLimpia.Contains("archivo(s)") && lineaLimpia.Contains(".pdf"))
+                    {
+                        // Extraer el nombre del archivo después del patrón
+                        var partesPdf = lineaLimpia.Split(new[] { " - " }, StringSplitOptions.None);
+                        if (partesPdf.Length > 1)
+                        {
+                            var nombreArchivo = partesPdf[partesPdf.Length - 1].Trim();
+                            if (nombreArchivo.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
+                            {
+                                archivos.Add(nombreArchivo);
+                            }
+                        }
+                    }
+                }
+                
+                // Si no se encontraron archivos con extensiones, buscar patrones específicos
+                if (!archivos.Any() && partesArchivos.Contains("archivo(s)"))
+                {
+                    // Buscar patrón específico como "1 archivo(s) - APE No. 4 Ajuste_Funcional (1).pdf"
+                    var lineasArchivos = partesArchivos.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+                    foreach (var linea in lineasArchivos)
+                    {
+                        if (linea.Contains("archivo(s)"))
+                        {
+                            // Extraer todo después de "archivo(s) - "
+                            var indiceDash = linea.IndexOf(" - ");
+                            if (indiceDash > 0 && indiceDash < linea.Length - 3)
+                            {
+                                var nombreArchivo = linea.Substring(indiceDash + 3).Trim();
+                                if (!string.IsNullOrEmpty(nombreArchivo))
+                                {
+                                    archivos.Add(nombreArchivo);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        return (textoFormateado, archivos);
     }
 }
