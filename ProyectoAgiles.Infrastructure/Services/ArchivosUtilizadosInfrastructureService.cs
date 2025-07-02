@@ -23,86 +23,182 @@ public class ArchivosUtilizadosInfrastructureService : IArchivosUtilizadosServic
     {
         try
         {
-            // Obtener investigaciones del docente
-            var investigaciones = await _context.Investigaciones
-                .Where(i => i.Cedula == docenteCedula)
-                .Select(i => new { i.Id, i.Titulo })
-                .ToListAsync();
-
-            // Obtener evaluaciones del docente (últimas 4)
-            var evaluaciones = await _context.DAC
-                .Where(e => e.Cedula == docenteCedula)
-                .OrderByDescending(e => e.FechaEvaluacion)
-                .Take(4)
-                .Select(e => new { e.Id, Titulo = $"{e.PeriodoAcademico} - {e.PorcentajeObtenido}%" })
-                .ToListAsync();
-
-            // Obtener capacitaciones del docente
-            var capacitaciones = await _context.DITIC
-                .Where(c => c.Cedula == docenteCedula)
-                .Select(c => new { c.Id, c.NombreCapacitacion })
-                .ToListAsync();
-
+            Console.WriteLine($"[ARCHIVOS] Iniciando registro inteligente de archivos para solicitud {solicitudEscalafonId}");
+            
+            // Verificar si ya existen archivos registrados para esta solicitud
+            var archivosExistentes = await _context.ArchivosUtilizadosEscalafon
+                .Where(a => a.SolicitudEscalafonId == solicitudEscalafonId)
+                .CountAsync();
+            
+            if (archivosExistentes > 0)
+            {
+                Console.WriteLine($"[ARCHIVOS] Ya existen {archivosExistentes} archivos registrados para la solicitud {solicitudEscalafonId}. Saltando registro.");
+                return;
+            }
+            
+            // Determinar requisitos mínimos según el nivel de destino
+            var requisitos = DeterminarRequisitos(nivelOrigen, nivelDestino);
+            
             var archivosUtilizados = new List<ArchivosUtilizadosEscalafon>();
 
-            // Registrar investigaciones utilizadas
-            foreach (var investigacion in investigaciones)
+            // 1. Seleccionar investigaciones necesarias (ordenadas por fecha más antigua primero)
+            if (requisitos.InvestigacionesMinimas > 0)
             {
-                archivosUtilizados.Add(new ArchivosUtilizadosEscalafon
+                var investigaciones = await _context.Investigaciones
+                    .Where(i => i.Cedula == docenteCedula)
+                    .OrderBy(i => i.FechaPublicacion) // Más antiguas primero
+                    .Take(requisitos.InvestigacionesMinimas)
+                    .ToListAsync();
+
+                Console.WriteLine($"[ARCHIVOS] Seleccionadas {investigaciones.Count} investigaciones de {requisitos.InvestigacionesMinimas} requeridas");
+
+                foreach (var investigacion in investigaciones)
                 {
-                    SolicitudEscalafonId = solicitudEscalafonId,
-                    TipoRecurso = "Investigacion",
-                    RecursoId = investigacion.Id,
-                    DocenteCedula = docenteCedula,
-                    NivelOrigen = nivelOrigen,
-                    NivelDestino = nivelDestino,
-                    FechaUtilizacion = DateTime.UtcNow,
-                    Descripcion = investigacion.Titulo,
-                    EstadoAscenso = "Aprobado"
-                });
+                    archivosUtilizados.Add(new ArchivosUtilizadosEscalafon
+                    {
+                        SolicitudEscalafonId = solicitudEscalafonId,
+                        TipoRecurso = "Investigacion",
+                        RecursoId = investigacion.Id,
+                        DocenteCedula = docenteCedula,
+                        NivelOrigen = nivelOrigen,
+                        NivelDestino = nivelDestino,
+                        FechaUtilizacion = DateTime.UtcNow,
+                        Descripcion = investigacion.Titulo,
+                        EstadoAscenso = "Aprobado"
+                    });
+                }
             }
 
-            // Registrar evaluaciones utilizadas
-            foreach (var evaluacion in evaluaciones)
+            // 2. Seleccionar evaluaciones necesarias (ordenadas por fecha más antigua primero)
+            if (requisitos.EvaluacionesMinimas > 0)
             {
-                archivosUtilizados.Add(new ArchivosUtilizadosEscalafon
+                var evaluaciones = await _context.DAC
+                    .Where(e => e.Cedula == docenteCedula)
+                    .OrderBy(e => e.FechaEvaluacion) // Más antiguas primero
+                    .Take(requisitos.EvaluacionesMinimas)
+                    .ToListAsync();
+
+                Console.WriteLine($"[ARCHIVOS] Seleccionadas {evaluaciones.Count} evaluaciones de {requisitos.EvaluacionesMinimas} requeridas");
+
+                foreach (var evaluacion in evaluaciones)
                 {
-                    SolicitudEscalafonId = solicitudEscalafonId,
-                    TipoRecurso = "EvaluacionDesempeno",
-                    RecursoId = evaluacion.Id,
-                    DocenteCedula = docenteCedula,
-                    NivelOrigen = nivelOrigen,
-                    NivelDestino = nivelDestino,
-                    FechaUtilizacion = DateTime.UtcNow,
-                    Descripcion = evaluacion.Titulo,
-                    EstadoAscenso = "Aprobado"
-                });
+                    archivosUtilizados.Add(new ArchivosUtilizadosEscalafon
+                    {
+                        SolicitudEscalafonId = solicitudEscalafonId,
+                        TipoRecurso = "EvaluacionDesempeno",
+                        RecursoId = evaluacion.Id,
+                        DocenteCedula = docenteCedula,
+                        NivelOrigen = nivelOrigen,
+                        NivelDestino = nivelDestino,
+                        FechaUtilizacion = DateTime.UtcNow,
+                        Descripcion = $"{evaluacion.PeriodoAcademico} - {evaluacion.PorcentajeObtenido}%",
+                        EstadoAscenso = "Aprobado"
+                    });
+                }
             }
 
-            // Registrar capacitaciones utilizadas
-            foreach (var capacitacion in capacitaciones)
+            // 3. Seleccionar capacitaciones necesarias hasta cumplir las horas mínimas (ordenadas por fecha más antigua primero)
+            if (requisitos.HorasCapacitacionMinimas > 0)
             {
-                archivosUtilizados.Add(new ArchivosUtilizadosEscalafon
+                var capacitaciones = await _context.DITIC
+                    .Where(c => c.Cedula == docenteCedula)
+                    .OrderBy(c => c.FechaInicio) // Más antiguas primero
+                    .ToListAsync();
+
+                Console.WriteLine($"[ARCHIVOS] Evaluando capacitaciones para cumplir {requisitos.HorasCapacitacionMinimas} horas mínimas");
+
+                int horasAcumuladas = 0;
+                foreach (var capacitacion in capacitaciones)
                 {
-                    SolicitudEscalafonId = solicitudEscalafonId,
-                    TipoRecurso = "Capacitacion",
-                    RecursoId = capacitacion.Id,
-                    DocenteCedula = docenteCedula,
-                    NivelOrigen = nivelOrigen,
-                    NivelDestino = nivelDestino,
-                    FechaUtilizacion = DateTime.UtcNow,
-                    Descripcion = capacitacion.NombreCapacitacion,
-                    EstadoAscenso = "Aprobado"
-                });
+                    if (horasAcumuladas >= requisitos.HorasCapacitacionMinimas) break;
+
+                    var horasCapacitacion = capacitacion.HorasAcademicas > 0 ? capacitacion.HorasAcademicas : 20; // Default 20 horas si no está especificado
+                    horasAcumuladas += horasCapacitacion;
+
+                    archivosUtilizados.Add(new ArchivosUtilizadosEscalafon
+                    {
+                        SolicitudEscalafonId = solicitudEscalafonId,
+                        TipoRecurso = "Capacitacion",
+                        RecursoId = capacitacion.Id,
+                        DocenteCedula = docenteCedula,
+                        NivelOrigen = nivelOrigen,
+                        NivelDestino = nivelDestino,
+                        FechaUtilizacion = DateTime.UtcNow,
+                        Descripcion = capacitacion.NombreCapacitacion,
+                        EstadoAscenso = "Aprobado"
+                    });
+                }
+
+                Console.WriteLine($"[ARCHIVOS] Acumuladas {horasAcumuladas} horas con {archivosUtilizados.Count(a => a.TipoRecurso == "Capacitacion")} capacitaciones");
             }
 
             _context.ArchivosUtilizadosEscalafon.AddRange(archivosUtilizados);
             await _context.SaveChangesAsync();
+
+            Console.WriteLine($"[ARCHIVOS] Registrados {archivosUtilizados.Count} documentos total para la solicitud {solicitudEscalafonId}");
         }
         catch (Exception ex)
         {
-            throw new Exception($"Error al registrar archivos utilizados: {ex.Message}", ex);
+            Console.WriteLine($"[ARCHIVOS] Error: {ex.Message}");
+            throw;
         }
+    }
+
+    /// <summary>
+    /// Determina los requisitos mínimos según el nivel de escalafón
+    /// </summary>
+    private RequisitosPorNivel DeterminarRequisitos(string nivelOrigen, string nivelDestino)
+    {
+        Console.WriteLine($"[ARCHIVOS] Determinando requisitos - Origen: '{nivelOrigen}', Destino: '{nivelDestino}'");
+        
+        // Definir requisitos según el nivel de destino
+        // Estos valores podrían venir de una tabla de configuración en una implementación más avanzada
+        var requisitos = nivelDestino.ToLower() switch
+        {
+            var nivel when nivel.Contains("auxiliar 2") => new RequisitosPorNivel 
+            { 
+                InvestigacionesMinimas = 2, 
+                EvaluacionesMinimas = 3, 
+                HorasCapacitacionMinimas = 80 
+            },
+            var nivel when nivel.Contains("auxiliar 3") => new RequisitosPorNivel 
+            { 
+                InvestigacionesMinimas = 3, 
+                EvaluacionesMinimas = 4, 
+                HorasCapacitacionMinimas = 100 
+            },
+            var nivel when nivel.Contains("agregado") => new RequisitosPorNivel 
+            { 
+                InvestigacionesMinimas = 4, 
+                EvaluacionesMinimas = 4, 
+                HorasCapacitacionMinimas = 120 
+            },
+            var nivel when nivel.Contains("principal") => new RequisitosPorNivel 
+            { 
+                InvestigacionesMinimas = 6, 
+                EvaluacionesMinimas = 4, 
+                HorasCapacitacionMinimas = 150 
+            },
+            _ => new RequisitosPorNivel 
+            { 
+                InvestigacionesMinimas = 2, 
+                EvaluacionesMinimas = 3, 
+                HorasCapacitacionMinimas = 80 
+            }
+        };
+
+        Console.WriteLine($"[ARCHIVOS] Requisitos determinados - Investigaciones: {requisitos.InvestigacionesMinimas}, Evaluaciones: {requisitos.EvaluacionesMinimas}, Horas: {requisitos.HorasCapacitacionMinimas}");
+        return requisitos;
+    }
+
+    /// <summary>
+    /// Clase auxiliar para definir requisitos por nivel
+    /// </summary>
+    private class RequisitosPorNivel
+    {
+        public int InvestigacionesMinimas { get; set; }
+        public int EvaluacionesMinimas { get; set; }
+        public int HorasCapacitacionMinimas { get; set; }
     }
 
     public async Task<List<int>> ObtenerInvestigacionesUtilizadas(string docenteCedula)

@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ProyectoAgiles.Api")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+f25ccdd5afbc1b6c66876efe9a21b7b9ef49d698")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+d2882f09511e869f06819d54968e4341cd75b188")]
 [assembly: System.Reflection.AssemblyProductAttribute("ProyectoAgiles.Api")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ProyectoAgiles.Api")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

@@ -126,4 +126,252 @@ public class DebugController : ControllerBase
             return BadRequest(new { Error = ex.Message });
         }
     }
+
+    /// <summary>
+    /// Lista todas las solicitudes de escalafón para depuración
+    /// </summary>
+    [HttpGet("solicitudes")]
+    public async Task<IActionResult> GetTodasLasSolicitudes()
+    {
+        try
+        {
+            var solicitudes = await _solicitudService.GetAllSolicitudesAsync();
+            return Ok(new
+            {
+                Total = solicitudes.Count(),
+                Solicitudes = solicitudes.Select(s => new
+                {
+                    s.Id,
+                    s.DocenteCedula,
+                    s.NivelActual,
+                    s.NivelSolicitado,
+                    s.FechaSolicitud,
+                    s.Status
+                })
+            });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { Error = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Lista todos los docentes con investigaciones para depuración
+    /// </summary>
+    [HttpGet("docentes-con-investigaciones")]
+    public async Task<IActionResult> GetDocentesConInvestigaciones()
+    {
+        try
+        {
+            // Este método necesitaríamos implementarlo en el servicio
+            return Ok(new { Mensaje = "Endpoint en desarrollo" });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { Error = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Limpia archivos duplicados para una solicitud específica
+    /// </summary>
+    [HttpDelete("limpiar-archivos/{solicitudId}")]
+    public async Task<IActionResult> LimpiarArchivos(int solicitudId)
+    {
+        try
+        {
+            // Este endpoint necesitaríamos implementar una funcionalidad de limpieza en el servicio
+            // Por ahora solo retornamos información
+            var archivos = await _archivosService.ObtenerArchivosPorSolicitud(solicitudId);
+            return Ok(new
+            {
+                Mensaje = "Funcionalidad de limpieza en desarrollo",
+                SolicitudId = solicitudId,
+                ArchivosActuales = archivos.Count
+            });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { Error = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Elimina todos los archivos utilizados para una solicitud específica para poder volver a probar
+    /// </summary>
+    [HttpDelete("limpiar-archivos-solicitud/{solicitudId}")]
+    public async Task<IActionResult> LimpiarArchivosSolicitud(int solicitudId)
+    {
+        try
+        {
+            // Implementar la limpieza directamente aquí por simplicidad
+            return Ok(new
+            {
+                Mensaje = "Para limpiar archivos, use SQL: DELETE FROM ArchivosUtilizadosEscalafon WHERE SolicitudEscalafonId = " + solicitudId,
+                SolicitudId = solicitudId
+            });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { Error = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Obtiene archivos utilizados filtrados estrictamente por cédula
+    /// </summary>
+    [HttpGet("archivos-cedula-estricto/{cedula}")]
+    public async Task<IActionResult> GetArchivosEstrictoPorCedula(string cedula)
+    {
+        try
+        {
+            var archivos = await _archivosService.ObtenerHistorialArchivos(cedula);
+            
+            // Filtrar adicionalmente por cédula para asegurar que solo vengan de esa cédula
+            var archivosFiltrados = archivos.Where(a => a.DocenteCedula == cedula).ToList();
+            
+            return Ok(new
+            {
+                CedulaSolicitada = cedula,
+                TotalArchivos = archivosFiltrados.Count,
+                Archivos = archivosFiltrados.Select(a => new 
+                {
+                    a.Id,
+                    a.SolicitudEscalafonId,
+                    a.TipoRecurso,
+                    a.RecursoId,
+                    a.DocenteCedula,
+                    a.Descripcion,
+                    a.FechaUtilizacion,
+                    a.EstadoAscenso
+                }),
+                VerificacionCedulas = archivos.GroupBy(a => a.DocenteCedula)
+                    .Select(g => new { Cedula = g.Key, Cantidad = g.Count() })
+                    .ToList()
+            });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { Error = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Endpoint para limpiar y re-registrar archivos utilizados correctamente
+    /// </summary>
+    [HttpPost("limpiar-y-re-registrar/{solicitudId}")]
+    public async Task<IActionResult> LimpiarYReRegistrar(int solicitudId)
+    {
+        try
+        {
+            var solicitud = await _solicitudService.GetSolicitudByIdAsync(solicitudId);
+            if (solicitud == null)
+            {
+                return NotFound($"Solicitud {solicitudId} no encontrada");
+            }
+
+            // Esto requeriría un método adicional en el servicio para eliminar archivos
+            // Por ahora, solo mostramos la información actual
+            var archivosActuales = await _archivosService.ObtenerArchivosPorSolicitud(solicitudId);
+            
+            return Ok(new
+            {
+                Mensaje = "Para limpiar y re-registrar:",
+                PasosSugeridos = new[]
+                {
+                    $"1. Ejecutar SQL: DELETE FROM ArchivosUtilizadosEscalafon WHERE SolicitudEscalafonId = {solicitudId}",
+                    $"2. Llamar POST /api/debug/simular-registro/{solicitudId}",
+                    "3. Verificar que solo se registren los documentos mínimos necesarios"
+                },
+                SolicitudInfo = new
+                {
+                    solicitud.Id,
+                    solicitud.DocenteCedula,
+                    solicitud.NivelActual,
+                    solicitud.NivelSolicitado
+                },
+                ArchivosActuales = archivosActuales.Count,
+                RequisitosTeoricos = new
+                {
+                    InvestigacionesNecesarias = 2,
+                    EvaluacionesNecesarias = 3,
+                    HorasCapacitacionNecesarias = 80
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { Error = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Depura el historial de escalafones para identificar problemas de duplicación o cédulas incorrectas
+    /// </summary>
+    [HttpGet("historial-debug/{cedula}")]
+    public async Task<IActionResult> DepurarHistorial(string cedula)
+    {
+        try
+        {
+            // Obtener historial completo
+            var historial = await _solicitudService.GetHistorialEscalafonAsync(cedula);
+            
+            // Obtener también los archivos utilizados directamente
+            var archivosUtilizados = await _archivosService.ObtenerHistorialArchivos(cedula);
+            
+            return Ok(new
+            {
+                CedulaSolicitada = cedula,
+                ResumenHistorial = new
+                {
+                    TotalRegistrosHistorial = historial.Count(),
+                    RegistrosHistorial = historial.Select(h => new
+                    {
+                        h.Id,
+                        h.NivelAnterior,
+                        h.NivelNuevo,
+                        h.FechaPromocion,
+                        h.EstadoSolicitud,
+                        DocumentosUtilizadosCount = h.DocumentosUtilizados?.Count ?? 0,
+                        TieneDocumentosDetalles = h.DocumentosDetalles != null,
+                        InvestigacionesCount = h.DocumentosDetalles?.Investigaciones?.Count ?? 0,
+                        EvaluacionesCount = h.DocumentosDetalles?.Evaluaciones?.Count ?? 0,
+                        CapacitacionesCount = h.DocumentosDetalles?.Capacitaciones?.Count ?? 0
+                    }).ToList()
+                },
+                ResumenArchivosUtilizados = new
+                {
+                    TotalArchivos = archivosUtilizados.Count,
+                    ArchivosPorSolicitud = archivosUtilizados
+                        .GroupBy(a => a.SolicitudEscalafonId)
+                        .Select(g => new
+                        {
+                            SolicitudId = g.Key,
+                            TotalArchivos = g.Count(),
+                            TiposRecurso = g.GroupBy(a => a.TipoRecurso)
+                                .Select(tr => new { Tipo = tr.Key, Cantidad = tr.Count() })
+                                .ToList(),
+                            CedulasEncontradas = g.Select(a => a.DocenteCedula).Distinct().ToList()
+                        }).ToList()
+                },
+                VerificacionDuplicados = new
+                {
+                    SolicitudesDuplicadas = historial
+                        .GroupBy(h => new { h.NivelAnterior, h.NivelNuevo, h.FechaPromocion })
+                        .Where(g => g.Count() > 1)
+                        .Select(g => new { Grupo = g.Key, Cantidad = g.Count() })
+                        .ToList(),
+                    ArchivosConCedulaIncorrecta = archivosUtilizados
+                        .Where(a => a.DocenteCedula != cedula)
+                        .Select(a => new { a.Id, a.DocenteCedula, a.SolicitudEscalafonId })
+                        .ToList()
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { Error = ex.Message, StackTrace = ex.StackTrace });
+        }
+    }
 }

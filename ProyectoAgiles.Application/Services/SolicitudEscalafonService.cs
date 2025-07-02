@@ -608,15 +608,17 @@ public class SolicitudEscalafonService : ISolicitudEscalafonService
             
             Console.WriteLine($"[HISTORIAL] Archivos encontrados para solicitud {solicitudId}: {archivosUtilizados.Count}");
             
-            // Agregar logs más detallados
-            foreach (var archivo in archivosUtilizados)
-            {
-                Console.WriteLine($"[HISTORIAL] Archivo encontrado - ID: {archivo.Id}, Tipo: {archivo.TipoRecurso}, Recurso ID: {archivo.RecursoId}, Descripción: {archivo.Descripcion}");
-            }
+            // Filtrar duplicados por tipo de recurso y ID de recurso
+            var archivosUnicos = archivosUtilizados
+                .GroupBy(a => new { a.TipoRecurso, a.RecursoId })
+                .Select(g => g.OrderBy(a => a.FechaUtilizacion).First())
+                .ToList();
+            
+            Console.WriteLine($"[HISTORIAL] Archivos únicos después de eliminar duplicados: {archivosUnicos.Count}");
             
             var documentos = new List<string>();
             
-            foreach (var archivo in archivosUtilizados)
+            foreach (var archivo in archivosUnicos)
             {
                 var icono = archivo.TipoRecurso switch
                 {
@@ -631,32 +633,12 @@ public class SolicitudEscalafonService : ISolicitudEscalafonService
                     : archivo.TituloRecurso;
                 
                 documentos.Add($"{icono} {archivo.TipoRecurso}: {descripcion}");
-                
                 Console.WriteLine($"[HISTORIAL] Documento: {archivo.TipoRecurso} - {descripcion}");
             }
             
             if (!documentos.Any())
             {
                 Console.WriteLine($"[HISTORIAL] No se encontraron documentos para solicitud {solicitudId}, usando documentos por defecto");
-                
-                // Intentar obtener desde la base de datos directamente para debug
-                Console.WriteLine($"[HISTORIAL] Debug: Verificando registros en base de datos para solicitud {solicitudId}");
-                try
-                {
-                    // Si el servicio no encuentra nada, intentemos verificar qué hay en la base de datos
-                    var allArchivos = await _archivosUtilizadosService.ObtenerHistorialArchivos(cedula);
-                    Console.WriteLine($"[HISTORIAL] Debug: Total archivos para docente {cedula}: {allArchivos.Count}");
-                    
-                    foreach (var archivo in allArchivos)
-                    {
-                        Console.WriteLine($"[HISTORIAL] Debug: Archivo en historial - SolicitudID: {archivo.SolicitudEscalafonId}, Tipo: {archivo.TipoRecurso}, Descripcion: {archivo.Descripcion}");
-                    }
-                }
-                catch (Exception debugEx)
-                {
-                    Console.WriteLine($"[HISTORIAL] Error en debug: {debugEx.Message}");
-                }
-                
                 return new List<string> { "📄 Documentos académicos utilizados en la promoción" };
             }
             
@@ -665,7 +647,6 @@ public class SolicitudEscalafonService : ISolicitudEscalafonService
         catch (Exception ex)
         {
             Console.WriteLine($"[HISTORIAL] Error obteniendo documentos utilizados: {ex.Message}");
-            Console.WriteLine($"[HISTORIAL] Stack trace: {ex.StackTrace}");
             return new List<string> { "❌ Error al cargar documentos utilizados" };
         }
     }
@@ -823,12 +804,20 @@ public class SolicitudEscalafonService : ISolicitudEscalafonService
             // Obtener archivos utilizados reales de la base de datos
             var archivosUtilizados = await _archivosUtilizadosService.ObtenerArchivosPorSolicitud(solicitudId);
             
+            // Filtrar duplicados por tipo de recurso y ID de recurso
+            var archivosUnicos = archivosUtilizados
+                .GroupBy(a => new { a.TipoRecurso, a.RecursoId })
+                .Select(g => g.OrderBy(a => a.FechaUtilizacion).First())
+                .ToList();
+            
+            Console.WriteLine($"[DOCUMENTOS] Archivos únicos después de eliminar duplicados: {archivosUnicos.Count}");
+            
             var documentosDetallados = new DocumentosDetallados();
             
-            // Agrupar por tipo de recurso
-            var investigaciones = archivosUtilizados.Where(a => a.TipoRecurso == "Investigacion").ToList();
-            var evaluaciones = archivosUtilizados.Where(a => a.TipoRecurso == "EvaluacionDesempeno").ToList();
-            var capacitaciones = archivosUtilizados.Where(a => a.TipoRecurso == "Capacitacion").ToList();
+            // Agrupar por tipo de recurso (ya sin duplicados)
+            var investigaciones = archivosUnicos.Where(a => a.TipoRecurso == "Investigacion").ToList();
+            var evaluaciones = archivosUnicos.Where(a => a.TipoRecurso == "EvaluacionDesempeno").ToList();
+            var capacitaciones = archivosUnicos.Where(a => a.TipoRecurso == "Capacitacion").ToList();
             
             // Mapear investigaciones
             documentosDetallados.Investigaciones = investigaciones.Select(inv => new InvestigacionUtilizada
