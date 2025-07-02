@@ -313,11 +313,11 @@ public class SolicitudesEscalafonController : ControllerBase
     /// Crea una apelación para una solicitud rechazada
     /// </summary>
     [HttpPost("{id}/apelar")]
-    public async Task<ActionResult<SolicitudEscalafonDto>> CrearApelacion(int id, [FromBody] CrearApelacionDto apelacionDto)
+    public async Task<ActionResult<SolicitudEscalafonDto>> CrearApelacion(int id, [FromForm] CrearApelacionDto apelacionDto)
     {
         try
         {
-            var nuevaSolicitud = await _solicitudService.CrearApelacionAsync(id, apelacionDto.ObservacionesApelacion);
+            var nuevaSolicitud = await _solicitudService.CrearApelacionAsync(id, apelacionDto.ObservacionesApelacion, apelacionDto.Destinatario, apelacionDto.Archivos);
             return CreatedAtAction(nameof(GetSolicitudById), new { id = nuevaSolicitud.Id }, nuevaSolicitud);
         }
         catch (ArgumentException ex)
@@ -352,4 +352,6 @@ public class RechazarSolicitudDto
 public class CrearApelacionDto
 {
     public string ObservacionesApelacion { get; set; } = string.Empty;
+    public string Destinatario { get; set; } = string.Empty;
+    public List<IFormFile>? Archivos { get; set; }
 }

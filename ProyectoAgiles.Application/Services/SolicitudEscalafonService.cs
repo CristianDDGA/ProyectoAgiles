@@ -3,6 +3,7 @@ using ProyectoAgiles.Application.DTOs;
 using ProyectoAgiles.Application.Interfaces;
 using ProyectoAgiles.Domain.Entities;
 using ProyectoAgiles.Domain.Interfaces;
+using Microsoft.AspNetCore.Http;
 
 namespace ProyectoAgiles.Application.Services;
 
@@ -288,7 +289,7 @@ public class SolicitudEscalafonService : ISolicitudEscalafonService
     /// <summary>
     /// Crea una apelación para una solicitud rechazada
     /// </summary>
-    public async Task<SolicitudEscalafonDto> CrearApelacionAsync(int solicitudOriginalId, string observacionesApelacion)
+    public async Task<SolicitudEscalafonDto> CrearApelacionAsync(int solicitudOriginalId, string observacionesApelacion, string destinatario = "", List<IFormFile>? archivos = null)
     {
         var solicitudOriginal = await _repository.GetByIdAsync(solicitudOriginalId);
         if (solicitudOriginal == null)
@@ -300,6 +301,27 @@ public class SolicitudEscalafonService : ISolicitudEscalafonService
         if (!solicitudOriginal.Status.Contains("Rechazado"))
         {
             throw new InvalidOperationException("Solo se pueden apelar solicitudes rechazadas");
+        }
+
+        // Determinar el estado basado en el destinatario
+        var nuevoStatus = "PendienteApelacion";
+        if (!string.IsNullOrEmpty(destinatario))
+        {
+            nuevoStatus = destinatario switch
+            {
+                "ComisionAcademica" => "PendienteComision", // Va directamente a la Comisión Académica
+                "PresidenteComision" => "PendientePresidente",
+                "DireccionTalentoHumano" => "PendienteTTHH",
+                _ => "PendienteApelacion"
+            };
+        }
+
+        // Preparar observaciones con información de archivos
+        var observacionesCompletas = $"APELACIÓN DE SOLICITUD #{solicitudOriginalId}: {observacionesApelacion}";
+        if (archivos?.Any() == true)
+        {
+            observacionesCompletas += $"\n\nArchivos adjuntos: {archivos.Count} archivo(s) - ";
+            observacionesCompletas += string.Join(", ", archivos.Select(a => a.FileName));
         }
 
         // Crear nueva solicitud como apelación
@@ -318,8 +340,8 @@ public class SolicitudEscalafonService : ISolicitudEscalafonService
             Publicaciones = solicitudOriginal.Publicaciones,
             Capacitaciones = solicitudOriginal.Capacitaciones,
             FechaSolicitud = DateTime.Now,
-            Status = "PendienteApelacion",
-            Observaciones = $"APELACIÓN DE SOLICITUD #{solicitudOriginalId}: {observacionesApelacion}",
+            Status = nuevoStatus,
+            Observaciones = observacionesCompletas,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
@@ -329,6 +351,9 @@ public class SolicitudEscalafonService : ISolicitudEscalafonService
         // Marcar la solicitud original como apelada
         solicitudOriginal.Observaciones = $"{solicitudOriginal.Observaciones}\n\nAPELADA: Nueva solicitud #{nuevaSolicitud.Id}";
         await _repository.UpdateAsync(solicitudOriginal);
+
+        // Enviar notificación por correo
+        await EnviarCorreoApelacionAsync(nuevaSolicitud, destinatario, archivos?.Count ?? 0);
 
         return _mapper.Map<SolicitudEscalafonDto>(nuevaSolicitud);
     }
@@ -421,6 +446,97 @@ public class SolicitudEscalafonService : ISolicitudEscalafonService
         {
             // Log error but don't fail the main process
             Console.WriteLine($"Error enviando correo de rechazo: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Envía correo de notificación de apelación
+    /// </summary>
+    private async Task EnviarCorreoApelacionAsync(SolicitudEscalafon solicitud, string destinatario, int cantidadArchivos)
+    {
+        try
+        {
+            var subject = $"Apelación Registrada - Solicitud de Escalafón #{solicitud.Id}";
+            var destinatarioTexto = destinatario switch
+            {
+                "ComisionAcademica" => "Comisión Académica de Escalafón",
+                "PresidenteComision" => "Presidente de la Comisión Académica",
+                "DireccionTalentoHumano" => "Dirección de Talento Humano",
+                _ => "autoridad competente"
+            };
+
+            var body = $@"
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset='utf-8'>
+                <style>
+                    .container {{ max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif; }}
+                    .header {{ background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; text-align: center; }}
+                    .content {{ padding: 20px; }}
+                    .footer {{ background-color: #f8f9fa; padding: 15px; text-align: center; font-size: 12px; }}
+                    .info-box {{ background-color: #e7f3ff; border-left: 4px solid #2196F3; padding: 15px; margin: 15px 0; }}
+                    .success-badge {{ background: #4CAF50; color: white; padding: 5px 10px; border-radius: 15px; }}
+                </style>
+            </head>
+            <body>
+                <div class='container'>
+                    <div class='header'>
+                        <h2>🎯 Apelación Registrada Exitosamente</h2>
+                        <p>Solicitud de Escalafón Docente</p>
+                    </div>
+                    
+                    <div class='content'>
+                        <h3>Estimado/a {solicitud.DocenteNombre},</h3>
+                        
+                        <p>Su apelación ha sido registrada exitosamente en el sistema y ha sido enviada a <strong>{destinatarioTexto}</strong> para su evaluación.</p>
+                        
+                        <div class='info-box'>
+                            <h4>📋 Detalles de la Apelación:</h4>
+                            <ul>
+                                <li><strong>Número de apelación:</strong> #{solicitud.Id}</li>
+                                <li><strong>Nivel solicitado:</strong> {solicitud.NivelSolicitado}</li>
+                                <li><strong>Fecha de registro:</strong> {solicitud.FechaSolicitud:dd/MM/yyyy HH:mm}</li>
+                                <li><strong>Destino:</strong> {destinatarioTexto}</li>";
+
+            if (cantidadArchivos > 0)
+            {
+                body += $"<li><strong>Archivos adjuntos:</strong> {cantidadArchivos} archivo(s)</li>";
+            }
+
+            body += $@"
+                            </ul>
+                        </div>
+                        
+                        <div class='info-box'>
+                            <h4>🔄 Próximos Pasos:</h4>
+                            <ol>
+                                <li>Su apelación será revisada por {destinatarioTexto}</li>
+                                <li>Recibirá una notificación cuando se tome una decisión</li>
+                                <li>Puede consultar el estado en su dashboard del sistema</li>
+                            </ol>
+                        </div>
+                        
+                        <p><strong>Estado actual:</strong> <span class='success-badge'>En Revisión</span></p>
+                        <p>Gracias por utilizar nuestro sistema de escalafón docente.</p>
+                    </div>
+                    
+                    <div class='footer'>
+                        <p>Atentamente,<br>
+                        <strong>Sistema de Escalafón Docente</strong><br>
+                        Universidad Técnica de Ambato<br>
+                        📧 escalafon@uta.edu.ec | 📞 03-2848487</p>
+                    </div>
+                </div>
+            </body>
+            </html>";
+
+            await _emailService.SendEmailAsync(solicitud.DocenteEmail, subject, body);
+        }
+        catch (Exception ex)
+        {
+            // Log error but don't fail the main process
+            Console.WriteLine($"Error enviando correo de apelación: {ex.Message}");
         }
     }
 }

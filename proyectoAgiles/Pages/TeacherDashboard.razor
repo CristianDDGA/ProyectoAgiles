@@ -1474,14 +1474,60 @@
                             </small>
                         </div>
 
+                        <div class="form-group mt-4">
+                            <label class="form-label">
+                                <i class="fas fa-paperclip me-2"></i>
+                                Documentos de Respaldo (Opcional)
+                            </label>
+                            <div class="border rounded p-3 bg-light">
+                                <InputFile multiple OnChange="HandleArchivosApelacionSelected" 
+                                          accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" 
+                                          class="form-control mb-2" />
+                                <small class="form-text text-muted">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Formatos permitidos: PDF, DOC, DOCX, JPG, PNG. Máximo 5 archivos, 10MB cada uno.
+                                </small>
+                                
+                                @if (archivosApelacion.Any())
+                                {
+                                    <div class="mt-3">
+                                        <h6 class="mb-2">Archivos seleccionados:</h6>
+                                        @foreach (var archivo in archivosApelacion)
+                                        {
+                                            <div class="d-flex align-items-center justify-content-between bg-white p-2 border rounded mb-2">
+                                                <span>
+                                                    <i class="fas fa-file me-2 text-primary"></i>
+                                                    @archivo.Name
+                                                    <small class="text-muted">(@(Math.Round((double)archivo.Size / 1024 / 1024, 2)) MB)</small>
+                                                </span>
+                                                <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                        @onclick="() => RemoverArchivoApelacion(archivo)">
+                                                    <i class="fas fa-times"></i>
+                                                </button>
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                                
+                                @if (errorMensajeArchivos != null)
+                                {
+                                    <div class="alert alert-danger mt-2 mb-0">
+                                        <i class="fas fa-exclamation-triangle me-2"></i>
+                                        @errorMensajeArchivos
+                                    </div>
+                                }
+                            </div>
+                        </div>
+
                         <div class="alert alert-warning mt-3">
                             <h6 class="alert-heading">
                                 <i class="fas fa-exclamation-triangle me-2"></i>
                                 Importante
                             </h6>
                             <ul class="mb-0">
-                                <li>La apelación será revisada por la autoridad competente.</li>
+                                <li>La apelación será enviada directamente a la <strong>Comisión Académica de Escalafón</strong> para su revisión.</li>
                                 <li>Se creará una nueva solicitud con estado "Apelación Pendiente".</li>
+                                <li>Los documentos adjuntos servirán como respaldo a su solicitud de apelación.</li>
                                 <li>Recibirá una notificación por correo electrónico cuando se procese su apelación.</li>
                                 <li>Esta acción no se puede deshacer una vez enviada.</li>
                             </ul>
@@ -2131,6 +2177,8 @@
     private SolicitudDto? solicitudParaApelar = null;
     private string justificacionApelacion = string.Empty;
     private bool isCreatingApelacion = false;
+    private List<IBrowserFile> archivosApelacion = new List<IBrowserFile>();
+    private string? errorMensajeArchivos = null;
     private bool showAgregarModal = false;
     private bool showAgregarEvaluacionModal = false;
     private bool showAgregarCapacitacionModal = false;
@@ -3329,6 +3377,8 @@ private bool isLoadingInvestigaciones = false;
         {
             solicitudParaApelar = solicitud;
             justificacionApelacion = string.Empty;
+            archivosApelacion.Clear();
+            errorMensajeArchivos = null;
             showApelacionModal = true;
             StateHasChanged();
         }
@@ -3339,6 +3389,48 @@ private bool isLoadingInvestigaciones = false;
         showApelacionModal = false;
         solicitudParaApelar = null;
         justificacionApelacion = string.Empty;
+        archivosApelacion.Clear();
+        errorMensajeArchivos = null;
+        StateHasChanged();
+    }
+
+    private void HandleArchivosApelacionSelected(InputFileChangeEventArgs e)
+    {
+        errorMensajeArchivos = null;
+        var archivosSeleccionados = e.GetMultipleFiles(5).ToList(); // Máximo 5 archivos
+
+        foreach (var archivo in archivosSeleccionados)
+        {
+            // Validar tamaño (10MB máximo)
+            if (archivo.Size > 10 * 1024 * 1024)
+            {
+                errorMensajeArchivos = $"El archivo '{archivo.Name}' excede el tamaño máximo de 10MB.";
+                return;
+            }
+
+            // Validar tipo de archivo
+            var extensionesPermitidas = new[] { ".pdf", ".doc", ".docx", ".jpg", ".jpeg", ".png" };
+            var extension = Path.GetExtension(archivo.Name).ToLower();
+            if (!extensionesPermitidas.Contains(extension))
+            {
+                errorMensajeArchivos = $"El archivo '{archivo.Name}' no tiene un formato válido. Formatos permitidos: PDF, DOC, DOCX, JPG, PNG.";
+                return;
+            }
+
+            // Evitar duplicados
+            if (!archivosApelacion.Any(a => a.Name == archivo.Name && a.Size == archivo.Size))
+            {
+                archivosApelacion.Add(archivo);
+            }
+        }
+
+        StateHasChanged();
+    }
+
+    private void RemoverArchivoApelacion(IBrowserFile archivo)
+    {
+        archivosApelacion.Remove(archivo);
+        errorMensajeArchivos = null;
         StateHasChanged();
     }
 
@@ -3351,7 +3443,7 @@ private bool isLoadingInvestigaciones = false;
         }
 
         var confirmacion = await JSRuntime.InvokeAsync<bool>("confirm", 
-            $"¿Está seguro de que desea apelar la solicitud #{solicitudParaApelar.Id}? Esta acción creará una nueva solicitud de apelación.");
+            $"¿Está seguro de que desea apelar la solicitud #{solicitudParaApelar.Id}? Esta acción creará una nueva solicitud de apelación que será enviada a la Comisión Académica de Escalafón.");
         
         if (!confirmacion) return;
 
@@ -3360,17 +3452,36 @@ private bool isLoadingInvestigaciones = false;
             isCreatingApelacion = true;
             StateHasChanged();
 
+            // Crear contenido multipart para enviar archivos
+            using var content = new MultipartFormDataContent();
+            content.Add(new StringContent(justificacionApelacion), "observacionesApelacion");
+            content.Add(new StringContent("ComisionAcademica"), "destinatario"); // Especificar que va a la Comisión Académica
+
+            // Agregar archivos si los hay
+            if (archivosApelacion.Any())
+            {
+                foreach (var archivo in archivosApelacion)
+                {
+                    var fileContent = new StreamContent(archivo.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024)); // 10MB max
+                    fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(archivo.ContentType);
+                    content.Add(fileContent, "archivos", archivo.Name);
+                }
+            }
+
             // Llamar al endpoint de apelación
-            var response = await HttpClient.PostAsJsonAsync($"https://localhost:7125/api/solicitudes-escalafon/{solicitudParaApelar.Id}/apelar", 
-                new { observacionesApelacion = justificacionApelacion });
+            var response = await HttpClient.PostAsync($"https://localhost:7125/api/solicitudes-escalafon/{solicitudParaApelar.Id}/apelar", content);
 
             if (response.IsSuccessStatusCode)
             {
                 // Actualizar la lista de solicitudes
                 await ImportarSolicitudes();
                 
+                var mensajeExito = archivosApelacion.Any() ? 
+                    $"Su apelación con {archivosApelacion.Count} archivo(s) adjunto(s) ha sido enviada a la Comisión Académica de Escalafón." :
+                    "Su apelación ha sido enviada a la Comisión Académica de Escalafón.";
+                
                 await MostrarNotificacionExito("✅ Apelación Enviada", 
-                    "Su apelación ha sido registrada exitosamente. Recibirá una notificación por correo cuando sea procesada.");
+                    $"{mensajeExito} Recibirá una notificación por correo cuando sea procesada.");
                 
                 CerrarModalApelacion();
             }

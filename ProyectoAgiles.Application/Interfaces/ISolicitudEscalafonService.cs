@@ -1,4 +1,5 @@
 using ProyectoAgiles.Application.DTOs;
+using Microsoft.AspNetCore.Http;
 
 namespace ProyectoAgiles.Application.Interfaces;
 
@@ -16,5 +17,5 @@ public interface ISolicitudEscalafonService
     Task<bool> NotificarAprobacionAsync(int solicitudId);
     Task<bool> FinalizarEscalafonAsync(int solicitudId);
     Task<SolicitudEscalafonDto> RechazarSolicitudAsync(int solicitudId, string motivoRechazo, string rechazadoPor, string nivelRechazo);
-    Task<SolicitudEscalafonDto> CrearApelacionAsync(int solicitudOriginalId, string observacionesApelacion);
+    Task<SolicitudEscalafonDto> CrearApelacionAsync(int solicitudOriginalId, string observacionesApelacion, string destinatario = "", List<IFormFile>? archivos = null);
 }
