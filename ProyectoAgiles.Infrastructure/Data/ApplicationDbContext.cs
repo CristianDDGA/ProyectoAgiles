@@ -16,6 +16,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<DITIC> DITIC { get; set; }
     public DbSet<SolicitudEscalafon> SolicitudesEscalafon { get; set; }
     public DbSet<ArchivosUtilizadosEscalafon> ArchivosUtilizadosEscalafon { get; set; }
+    public DbSet<PeriodoPostulacion> PeriodosPostulacion { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -25,39 +26,39 @@ public class ApplicationDbContext : DbContext
         modelBuilder.Entity<User>(entity =>
         {
             entity.HasKey(e => e.Id);
-            
+
             entity.Property(e => e.FirstName)
                 .IsRequired()
                 .HasMaxLength(100);
-            
+
             entity.Property(e => e.LastName)
                 .IsRequired()
                 .HasMaxLength(100);
-            
+
             entity.Property(e => e.Email)
                 .IsRequired()
                 .HasMaxLength(255);
-            
+
             entity.HasIndex(e => e.Email)
                 .IsUnique();
-            
+
             entity.Property(e => e.PasswordHash)
                 .IsRequired()
                 .HasMaxLength(255);
-              entity.Property(e => e.UserType)
-                .IsRequired()
-                .HasConversion<int>();
-            
+            entity.Property(e => e.UserType)
+              .IsRequired()
+              .HasConversion<int>();
+
             entity.Property(e => e.Cedula)
                 .IsRequired()
                 .HasMaxLength(10);
-            
+
             entity.Property(e => e.CreatedAt)
                 .IsRequired();
-            
+
             entity.Property(e => e.IsActive)
                 .HasDefaultValue(true);
-            
+
             entity.Property(e => e.IsDeleted)
                 .HasDefaultValue(false);
 
@@ -69,137 +70,139 @@ public class ApplicationDbContext : DbContext
         modelBuilder.Entity<PasswordResetToken>(entity =>
         {
             entity.HasKey(e => e.Id);
-            
+
             entity.Property(e => e.Token)
                 .IsRequired()
                 .HasMaxLength(255);
-            
+
             entity.Property(e => e.ExpiryDate)
                 .IsRequired();
-            
+
             entity.Property(e => e.CreatedAt)
                 .IsRequired();
-            
+
             entity.Property(e => e.IsUsed)
                 .HasDefaultValue(false);
-            
+
             // Configurar relación con User
             entity.HasOne(e => e.User)
                 .WithMany()
                 .HasForeignKey(e => e.UserId)
-                .OnDelete(DeleteBehavior.Cascade);        });
+                .OnDelete(DeleteBehavior.Cascade);
+        });
 
         // Configuración de la entidad ExternalTeacher
         modelBuilder.Entity<ExternalTeacher>(entity =>
         {
             entity.HasKey(e => e.Id);
-            
+
             entity.Property(e => e.Cedula)
                 .IsRequired()
                 .HasMaxLength(10);
-            
+
             entity.HasIndex(e => e.Cedula)
                 .IsUnique();
-            
+
             entity.Property(e => e.Universidad)
                 .IsRequired()
                 .HasMaxLength(200);
-            
+
             entity.Property(e => e.NombresCompletos)
                 .IsRequired()
                 .HasMaxLength(200);
-            
+
             entity.Property(e => e.CreatedAt)
                 .IsRequired();
-            
+
             entity.Property(e => e.UpdatedAt)
-                .IsRequired();        });        // Configuración de la entidad Investigacion
+                .IsRequired();
+        });        // Configuración de la entidad Investigacion
         modelBuilder.Entity<Investigacion>(entity =>
         {
             entity.HasKey(e => e.Id);
-            
+
             entity.Property(e => e.Cedula)
                 .IsRequired();
-            
+
             entity.Property(e => e.Titulo)
                 .IsRequired();
-            
+
             entity.Property(e => e.Tipo)
                 .IsRequired();
-            
+
             entity.Property(e => e.RevistaOEditorial)
                 .IsRequired();
-            
+
             entity.Property(e => e.FechaPublicacion)
                 .IsRequired();
-            
+
             entity.Property(e => e.CampoConocimiento)
                 .IsRequired();
-            
+
             entity.Property(e => e.Filiacion)
                 .IsRequired();
-            
+
             entity.Property(e => e.Observacion)
                 .IsRequired();
-            
+
             entity.Property(e => e.CreatedAt)
                 .IsRequired();
-            
+
             entity.Property(e => e.IsDeleted)
                 .HasDefaultValue(false);
         });        // Configuración de la entidad EvaluacionDesempeno
         modelBuilder.Entity<EvaluacionDesempeno>(entity =>
         {
             entity.ToTable("DAC"); // Nombre específico de la tabla
-            
+
             entity.HasKey(e => e.Id);
-            
+
             entity.Property(e => e.Cedula)
                 .IsRequired()
                 .HasMaxLength(10);
-            
+
             entity.Property(e => e.PeriodoAcademico)
                 .IsRequired()
                 .HasMaxLength(10);
-            
+
             entity.Property(e => e.Anio)
                 .IsRequired();
-            
+
             entity.Property(e => e.Semestre)
                 .IsRequired();
-            
+
             entity.Property(e => e.PuntajeObtenido)
                 .IsRequired()
                 .HasColumnType("decimal(5,2)");
-            
+
             entity.Property(e => e.PuntajeMaximo)
                 .IsRequired()
                 .HasColumnType("decimal(5,2)")
                 .HasDefaultValue(100);
-            
+
             entity.Property(e => e.FechaEvaluacion)
                 .IsRequired();
-            
+
             entity.Property(e => e.TipoEvaluacion)
                 .HasMaxLength(50)
                 .HasDefaultValue("Integral");
-            
+
             entity.Property(e => e.Observaciones)
                 .HasMaxLength(500);
-            
+
             entity.Property(e => e.Estado)
                 .HasMaxLength(20)
                 .HasDefaultValue("Completada");
-            
+
             entity.Property(e => e.Evaluador)
                 .HasMaxLength(100);
-            
+
             entity.Property(e => e.NombreArchivoRespaldo)
                 .HasMaxLength(255);
-            
+
             entity.Property(e => e.CreatedAt)
                 .IsRequired();
-            
+
             entity.Property(e => e.IsDeleted)
                 .HasDefaultValue(false);
 
@@ -213,83 +216,83 @@ public class ApplicationDbContext : DbContext
         modelBuilder.Entity<DITIC>(entity =>
         {
             entity.HasKey(e => e.Id);
-            
+
             entity.Property(e => e.Cedula)
                 .IsRequired()
                 .HasMaxLength(10);
-            
+
             entity.Property(e => e.NombreCapacitacion)
                 .IsRequired()
                 .HasMaxLength(500);
-            
+
             entity.Property(e => e.Institucion)
                 .IsRequired()
                 .HasMaxLength(300);
-            
+
             entity.Property(e => e.TipoCapacitacion)
                 .IsRequired()
                 .HasMaxLength(50);
-            
+
             entity.Property(e => e.Modalidad)
                 .HasMaxLength(30)
                 .HasDefaultValue("Presencial");
-            
+
             entity.Property(e => e.HorasAcademicas)
                 .IsRequired();
-            
+
             entity.Property(e => e.FechaInicio)
                 .IsRequired();
-            
+
             entity.Property(e => e.FechaFin)
                 .IsRequired();
-            
+
             entity.Property(e => e.Anio)
                 .IsRequired();
-            
+
             entity.Property(e => e.Estado)
                 .HasMaxLength(20)
                 .HasDefaultValue("Completada");
-            
+
             entity.Property(e => e.Calificacion)
                 .HasColumnType("decimal(5,2)");
-            
+
             entity.Property(e => e.CalificacionMinima)
                 .HasColumnType("decimal(5,2)")
                 .HasDefaultValue(70);
-            
+
             entity.Property(e => e.Descripcion)
                 .HasMaxLength(1000);
-            
+
             entity.Property(e => e.NumeroCertificado)
                 .HasMaxLength(100);
-            
+
             entity.Property(e => e.Instructor)
                 .HasMaxLength(200);
-            
+
             entity.Property(e => e.Observaciones)
                 .HasMaxLength(500);
-            
+
             entity.Property(e => e.NombreArchivoCertificado)
                 .HasMaxLength(255);
-            
+
             entity.Property(e => e.ExencionPorAutoridad)
                 .HasDefaultValue(false);
-            
+
             entity.Property(e => e.CargoAutoridad)
                 .HasMaxLength(100);
-            
+
             entity.Property(e => e.CreatedAt)
                 .IsRequired();
-            
+
             entity.Property(e => e.IsDeleted)
                 .HasDefaultValue(false);
 
             // Índice para búsquedas por cédula
             entity.HasIndex(e => e.Cedula);
-            
+
             // Índice para búsquedas por año
             entity.HasIndex(e => e.Anio);
-            
+
             // Índice compuesto para verificación de duplicados
             entity.HasIndex(e => new { e.Cedula, e.NombreCapacitacion, e.Institucion, e.FechaInicio });
 
@@ -301,74 +304,74 @@ public class ApplicationDbContext : DbContext
         modelBuilder.Entity<SolicitudEscalafon>(entity =>
         {
             entity.HasKey(e => e.Id);
-            
+
             entity.Property(e => e.DocenteCedula)
                 .IsRequired()
                 .HasMaxLength(10);
-            
+
             entity.Property(e => e.DocenteNombre)
                 .IsRequired()
                 .HasMaxLength(200);
-            
+
             entity.Property(e => e.DocenteEmail)
                 .IsRequired()
                 .HasMaxLength(255);
-            
+
             entity.Property(e => e.DocenteTelefono)
                 .HasMaxLength(20);
-            
+
             entity.Property(e => e.Facultad)
                 .HasMaxLength(200);
-            
+
             entity.Property(e => e.Carrera)
                 .HasMaxLength(200);
-            
+
             entity.Property(e => e.NivelActual)
                 .IsRequired()
                 .HasMaxLength(100);
-            
+
             entity.Property(e => e.NivelSolicitado)
                 .IsRequired()
                 .HasMaxLength(100);
-            
+
             entity.Property(e => e.Titulos)
                 .HasMaxLength(1000);
-            
+
             entity.Property(e => e.Publicaciones)
                 .HasMaxLength(1000);
-            
+
             entity.Property(e => e.ProyectosInvestigacion)
                 .HasMaxLength(1000);
-            
+
             entity.Property(e => e.Capacitaciones)
                 .HasMaxLength(1000);
-            
+
             entity.Property(e => e.Status)
                 .IsRequired()
                 .HasMaxLength(20)
                 .HasDefaultValue("Pendiente");
-            
+
             entity.Property(e => e.Observaciones)
                 .HasMaxLength(1000);
-            
+
             entity.Property(e => e.MotivoRechazo)
                 .HasMaxLength(1000);
-            
+
             entity.Property(e => e.ProcesadoPor)
                 .HasMaxLength(100);
-            
+
             entity.Property(e => e.FechaSolicitud)
                 .IsRequired();
-            
+
             entity.Property(e => e.CreatedAt)
                 .IsRequired();
-            
+
             entity.Property(e => e.IsDeleted)
                 .HasDefaultValue(false);
 
             // Índice para búsquedas por cédula
             entity.HasIndex(e => e.DocenteCedula);
-            
+
             // Índice para búsquedas por estado
             entity.HasIndex(e => e.Status);
 
@@ -380,46 +383,83 @@ public class ApplicationDbContext : DbContext
         modelBuilder.Entity<ArchivosUtilizadosEscalafon>(entity =>
         {
             entity.HasKey(e => e.Id);
-            
+
             entity.Property(e => e.TipoRecurso)
                 .IsRequired()
                 .HasMaxLength(50);
-            
+
             entity.Property(e => e.DocenteCedula)
                 .IsRequired()
                 .HasMaxLength(10);
-            
+
             entity.Property(e => e.NivelOrigen)
                 .IsRequired()
                 .HasMaxLength(100);
-            
+
             entity.Property(e => e.NivelDestino)
                 .IsRequired()
                 .HasMaxLength(100);
-            
+
             entity.Property(e => e.EstadoAscenso)
                 .IsRequired()
                 .HasMaxLength(50);
-            
+
             entity.Property(e => e.Descripcion)
                 .HasMaxLength(500);
-            
+
             // Relación con SolicitudEscalafon
             entity.HasOne(e => e.SolicitudEscalafon)
                 .WithMany()
                 .HasForeignKey(e => e.SolicitudEscalafonId)
                 .OnDelete(DeleteBehavior.Cascade);
-            
+
             // Índices para optimizar consultas
             entity.HasIndex(e => e.DocenteCedula);
             entity.HasIndex(e => new { e.TipoRecurso, e.RecursoId });
             entity.HasIndex(e => new { e.DocenteCedula, e.TipoRecurso });
         });
-        
+
+        // Configuración de la entidad PeriodoPostulacion
+        modelBuilder.Entity<PeriodoPostulacion>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+
+            entity.Property(e => e.FechaInicio)
+                .IsRequired();
+
+            entity.Property(e => e.FechaFin)
+                .IsRequired();
+
+            entity.Property(e => e.Activo)
+                .IsRequired()
+                .HasDefaultValue(false);
+
+            entity.Property(e => e.Descripcion)
+                .HasMaxLength(500);
+
+            entity.Property(e => e.FechaCreacion)
+                .IsRequired();
+
+            // Índices para optimizar consultas
+            entity.HasIndex(e => e.Activo);
+            entity.HasIndex(e => new { e.FechaInicio, e.FechaFin });
+        });
+
+        // Configurar relación entre SolicitudEscalafon y PeriodoPostulacion
+        modelBuilder.Entity<SolicitudEscalafon>(entity =>
+        {
+            entity.HasOne(e => e.PeriodoPostulacion)
+                .WithMany(p => p.Solicitudes)
+                .HasForeignKey(e => e.PeriodoPostulacionId)
+                .OnDelete(DeleteBehavior.SetNull); // Si se elimina un período, no se eliminan las solicitudes
+        });
         // Datos semilla para el administrador por defecto
         SeedData(modelBuilder);
-    }    private void SeedData(ModelBuilder modelBuilder)
-    {        // Crear un usuario administrador por defecto
+    }
+
+    private void SeedData(ModelBuilder modelBuilder)
+    {
+        // Crear un usuario administrador por defecto
         modelBuilder.Entity<User>().HasData(
             new User
             {
