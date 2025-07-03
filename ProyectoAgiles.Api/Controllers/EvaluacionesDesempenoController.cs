@@ -198,6 +198,49 @@ public class EvaluacionesDesempenoController : ControllerBase
     }
 
     /// <summary>
+    /// Obtener evaluaciones disponibles (no utilizadas) para escalafón
+    /// </summary>
+    /// <remarks>
+    /// Recupera todas las evaluaciones de un docente que no han sido utilizadas previamente en procesos de escalafón.
+    /// Este endpoint excluye automáticamente las evaluaciones que ya fueron usadas en promociones anteriores.
+    /// 
+    /// <para><strong>Funcionalidad:</strong></para>
+    /// <list type="bullet">
+    /// <item><description>Filtra evaluaciones no utilizadas</description></item>
+    /// <item><description>Excluye documentos de promociones previas</description></item>
+    /// <item><description>Solo muestra evaluaciones elegibles</description></item>
+    /// <item><description>Ordenadas por fecha más antigua primero</description></item>
+    /// </list>
+    /// </remarks>
+    /// <param name="cedula">Número de cédula del docente</param>
+    /// <returns>Lista de evaluaciones disponibles para escalafón</returns>
+    /// <response code="200">Evaluaciones disponibles obtenidas exitosamente</response>
+    /// <response code="400">Cédula con formato inválido</response>
+    /// <response code="500">Error interno del servidor</response>
+    [HttpGet("disponibles/{cedula}")]
+    [ProducesResponseType(typeof(IEnumerable<EvaluacionDesempenoDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status500InternalServerError)]
+    [SwaggerOperation(
+        Summary = "Obtener evaluaciones disponibles para escalafón",
+        Description = "Recupera evaluaciones no utilizadas previamente en promociones de escalafón",
+        OperationId = "GetEvaluacionesDisponibles",
+        Tags = new[] { "Búsquedas", "Escalafón" }
+    )]
+    public async Task<ActionResult<IEnumerable<EvaluacionDesempenoDto>>> GetDisponibles(string cedula)
+    {
+        try
+        {
+            var evaluaciones = await _evaluacionService.GetDisponiblesParaEscalafonAsync(cedula);
+            return Ok(evaluaciones);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "Error interno del servidor", error = ex.Message });
+        }
+    }
+
+    /// <summary>
     /// Obtener las últimas 4 evaluaciones de un docente
     /// </summary>
     /// <remarks>

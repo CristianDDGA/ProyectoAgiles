@@ -23,6 +23,11 @@ public interface IEvaluacionDesempenoService
     Task<IEnumerable<EvaluacionDesempenoDto>> GetByCedulaAsync(string cedula);
 
     /// <summary>
+    /// Obtiene evaluaciones disponibles (no utilizadas) para escalafón
+    /// </summary>
+    Task<IEnumerable<EvaluacionDesempenoDto>> GetDisponiblesParaEscalafonAsync(string cedula);
+
+    /// <summary>
     /// Obtiene las últimas 4 evaluaciones de un docente
     /// </summary>
     Task<IEnumerable<EvaluacionDesempenoDto>> GetUltimasCuatroEvaluacionesByCedulaAsync(string cedula);

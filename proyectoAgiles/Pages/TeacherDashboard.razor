@@ -2392,12 +2392,8 @@
 </div>
 
 
-@code {    private int totalCourses = 0;
-    private int totalStudents = 0;
-    private int pendingTasks = 0;
-    private int weeklyHours = 0;    private bool showRequisitosModal = false;
+@code {    private bool showRequisitosModal = false;
     private bool showHistorialModal = false;
-    private bool isLoadingEstadisticas = false;
     private EstadisticasDocenteResponse? estadisticasDocente = null;
     private bool showInvestigacionesModal = false;
     private bool showEvaluacionesModal = false;
@@ -2438,8 +2434,6 @@ private bool isLoadingInvestigaciones = false;
     // Variables para Historial de Escalafones
     private List<HistorialEscalafonDto> historialEscalafones = new();
     private bool isLoadingHistorial = false;
-    private ProyectoAgiles.Application.DTOs.VerificacionRequisitoDiticDto? verificacionRequisitoDitic = null;
-    private ProyectoAgiles.Application.DTOs.ResumenCapacitacionesDto? resumenCapacitaciones = null;
       // Variables para verificación de requisitos de subir de nivel
     private proyectoAgiles.Services.VerificacionRequisitosSubirNivelDto? requisitosVerificacion = null;
     
@@ -2925,8 +2919,17 @@ private bool isLoadingInvestigaciones = false;
 
             var cedula = UserSession.CurrentUser.Cedula;
 
-            // Importar evaluaciones usando AuthService
-            var apiEvaluaciones = await AuthService.GetEvaluacionesPorCedula(cedula);
+            // Importar solo evaluaciones disponibles (no utilizadas en escalafones previos)
+            var response = await HttpClient.GetAsync($"/api/evaluaciones-desempeno/disponibles/{cedula}");
+            List<proyectoAgiles.Services.EvaluacionDesempenoDto>? apiEvaluaciones = null;
+            
+            if (response.IsSuccessStatusCode)
+            {
+                var jsonResponse = await response.Content.ReadAsStringAsync();
+                apiEvaluaciones = System.Text.Json.JsonSerializer.Deserialize<List<proyectoAgiles.Services.EvaluacionDesempenoDto>>(
+                    jsonResponse, 
+                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            }
             
             if (apiEvaluaciones is not null && apiEvaluaciones.Any())
             {
@@ -3481,7 +3484,6 @@ private bool isLoadingInvestigaciones = false;
         try
         {
             Console.WriteLine($"CargarEstadisticas: Iniciando carga para cédula {cedula}");
-            isLoadingEstadisticas = true;
             StateHasChanged();
 
             // Limpiar estadísticas anteriores para forzar recarga
@@ -3525,7 +3527,6 @@ private bool isLoadingInvestigaciones = false;
         }
         finally
         {
-            isLoadingEstadisticas = false;
             StateHasChanged();
         }
     }
@@ -4092,7 +4093,17 @@ private bool isLoadingInvestigaciones = false;
             if (string.IsNullOrEmpty(cedula))
                 return;
 
-            var apiCapacitaciones = await AuthService.GetCapacitacionesPorCedula(cedula);
+            // Cargar solo capacitaciones disponibles (no utilizadas en escalafones previos)
+            var response = await HttpClient.GetAsync($"/api/ditic/disponibles/{cedula}");
+            List<ProyectoAgiles.Application.DTOs.DiticDto>? apiCapacitaciones = null;
+            
+            if (response.IsSuccessStatusCode)
+            {
+                var jsonResponse = await response.Content.ReadAsStringAsync();
+                apiCapacitaciones = System.Text.Json.JsonSerializer.Deserialize<List<ProyectoAgiles.Application.DTOs.DiticDto>>(
+                    jsonResponse, 
+                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            }
             if (apiCapacitaciones is not null)
             {
                 capacitaciones = apiCapacitaciones.ToList();
@@ -4717,7 +4728,7 @@ private bool isLoadingInvestigaciones = false;
         
         try
         {
-            // Obtener todas las investigaciones no utilizadas, ordenadas por fecha más antigua
+            // Obtener investigaciones disponibles (no utilizadas) desde la API
             var response = await HttpClient.GetAsync($"/api/investigaciones/disponibles/{cedula}");
             if (response.IsSuccessStatusCode)
             {
@@ -4744,6 +4755,8 @@ private bool isLoadingInvestigaciones = false;
                             TieneFiliacionUTA = true
                         });
                     }
+                    
+                    Console.WriteLine($"SeleccionarInvestigacionesMasAntiguas: Seleccionadas {investigacionesSeleccionadas.Count} investigaciones disponibles");
                 }
             }
         }

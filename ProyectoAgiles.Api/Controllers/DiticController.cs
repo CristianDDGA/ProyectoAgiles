@@ -82,6 +82,25 @@ public class DiticController : ControllerBase
     }
 
     /// <summary>
+    /// Obtiene capacitaciones DITIC disponibles (no utilizadas) para escalafón
+    /// </summary>
+    [HttpGet("disponibles/{cedula}")]
+    public async Task<ActionResult<IEnumerable<DiticDto>>> GetDisponibles(
+        [Required] string cedula)
+    {
+        try
+        {
+            var capacitaciones = await _diticService.GetDisponiblesParaEscalafonAsync(cedula);
+            return Ok(capacitaciones);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al obtener capacitaciones DITIC disponibles para la cédula {Cedula}", cedula);
+            return StatusCode(500, "Error interno del servidor");
+        }
+    }
+
+    /// <summary>
     /// Obtiene las capacitaciones DITIC de los últimos 3 años por cédula
     /// </summary>
     [HttpGet("docente/{cedula}/ultimos-tres-anos")]

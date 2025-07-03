@@ -188,6 +188,48 @@ public class InvestigacionesController : ControllerBase
     }
 
     /// <summary>
+    /// 📋 Obtener investigaciones disponibles (no utilizadas) para escalafón
+    /// </summary>
+    /// <remarks>
+    /// Recupera todas las investigaciones de un docente que no han sido utilizadas previamente en procesos de escalafón.
+    /// Este endpoint excluye automáticamente las investigaciones que ya fueron usadas en promociones anteriores.
+    /// 
+    /// <para><strong>Funcionalidad:</strong></para>
+    /// <list type="bullet">
+    /// <item><description>🔍 Filtra investigaciones no utilizadas</description></item>
+    /// <item><description>📊 Excluye documentos de promociones previas</description></item>
+    /// <item><description>✅ Solo muestra investigaciones elegibles</description></item>
+    /// </list>
+    /// </remarks>
+    /// <param name="cedula">Número de cédula del docente</param>
+    /// <returns>Lista de investigaciones disponibles para escalafón</returns>
+    /// <response code="200">✅ Investigaciones disponibles obtenidas exitosamente</response>
+    /// <response code="400">❌ Cédula con formato inválido</response>
+    /// <response code="500">💥 Error interno del servidor</response>
+    [HttpGet("disponibles/{cedula}")]
+    [ProducesResponseType(typeof(IEnumerable<InvestigacionDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(object), StatusCodes.Status500InternalServerError)]
+    [SwaggerOperation(
+        Summary = "Obtener investigaciones disponibles para escalafón",
+        Description = "Recupera investigaciones no utilizadas previamente en promociones de escalafón",
+        OperationId = "GetInvestigacionesDisponibles",
+        Tags = new[] { "🔍 Búsquedas", "🏆 Escalafón" }
+    )]
+    public async Task<ActionResult<IEnumerable<InvestigacionDto>>> GetDisponibles(string cedula)
+    {
+        try
+        {
+            var investigaciones = await _investigacionService.GetDisponiblesParaEscalafonAsync(cedula);
+            return Ok(investigaciones);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "Error interno del servidor", error = ex.Message });
+        }
+    }
+
+    /// <summary>
     /// 🏷️ Filtrar investigaciones por tipo de proyecto
     /// </summary>
     /// <remarks>

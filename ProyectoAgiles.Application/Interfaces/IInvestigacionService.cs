@@ -7,6 +7,7 @@ public interface IInvestigacionService
     Task<IEnumerable<InvestigacionDto>> GetAllAsync();
     Task<InvestigacionDto?> GetByIdAsync(int id);
     Task<IEnumerable<InvestigacionDto>> GetByCedulaAsync(string cedula);
+    Task<IEnumerable<InvestigacionDto>> GetDisponiblesParaEscalafonAsync(string cedula);
     Task<IEnumerable<InvestigacionDto>> GetByTipoAsync(string tipo);
     Task<IEnumerable<InvestigacionDto>> GetByCampoConocimientoAsync(string campoConocimiento);    Task<InvestigacionDto> CreateAsync(CreateInvestigacionDto createDto);
     Task<InvestigacionDto> CreateWithPdfAsync(CreateInvestigacionWithPdfDto createDto);

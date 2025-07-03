@@ -18,6 +18,7 @@ public interface IDiticService
 
     // Consultas específicas por cédula
     Task<IEnumerable<DiticDto>> GetByCedulaAsync(string cedula);
+    Task<IEnumerable<DiticDto>> GetDisponiblesParaEscalafonAsync(string cedula);
     Task<IEnumerable<DiticDto>> GetByCedulaLastThreeYearsAsync(string cedula);
 
     // Verificación de requisitos DITIC

@@ -11,98 +11,146 @@ namespace ProyectoAgiles.Application.Services;
 public class ArchivosUtilizadosService : IArchivosUtilizadosService
 {
     private readonly IArchivosUtilizadosRepository _repository;
+    private readonly IInvestigacionService _investigacionService;
+    private readonly IEvaluacionDesempenoService _evaluacionService;
+    private readonly IDiticService _diticService;
+    private readonly IRequisitosEscalafonService _requisitosService;
 
-    public ArchivosUtilizadosService(IArchivosUtilizadosRepository repository)
+    public ArchivosUtilizadosService(
+        IArchivosUtilizadosRepository repository,
+        IInvestigacionService investigacionService,
+        IEvaluacionDesempenoService evaluacionService,
+        IDiticService diticService,
+        IRequisitosEscalafonService requisitosService)
     {
         _repository = repository;
+        _investigacionService = investigacionService;
+        _evaluacionService = evaluacionService;
+        _diticService = diticService;
+        _requisitosService = requisitosService;
     }
 
     public async Task RegistrarArchivosUtilizados(int solicitudEscalafonId, string docenteCedula, string nivelOrigen, string nivelDestino)
     {
         try
         {
-            // Necesitamos obtener los documentos reales que tiene el docente y registrarlos
-            // TODO: Implementar inyección de dependencias para obtener documentos específicos
-            
             Console.WriteLine($"[ARCHIVOS] Registrando archivos utilizados para solicitud {solicitudEscalafonId}, docente {docenteCedula}");
+            Console.WriteLine($"[ARCHIVOS] Promoción: {nivelOrigen} → {nivelDestino}");
             
-            // Por ahora, registramos que se utilizaron documentos específicos
-            // Esto debe ser reemplazado por la lógica real para obtener investigaciones, evaluaciones y capacitaciones
+            // Obtener configuración de requisitos para este nivel
+            var configuracion = _requisitosService.GetRequisitosParaNivel(nivelOrigen);
+            if (configuracion == null)
+            {
+                Console.WriteLine($"[ARCHIVOS] No se encontró configuración de requisitos para nivel {nivelOrigen}");
+                return;
+            }
             
-            // Ejemplo: Si el docente tiene investigaciones, registrarlas
-            await RegistrarDocumentosEspecificos(solicitudEscalafonId, docenteCedula, nivelOrigen, nivelDestino);
+            // Obtener investigaciones disponibles y seleccionar las más antiguas
+            var investigacionesDisponibles = (await _investigacionService.GetDisponiblesParaEscalafonAsync(docenteCedula)).ToList();
+            var investigacionesSeleccionadas = investigacionesDisponibles
+                .Where(inv => !string.IsNullOrEmpty(inv.Filiacion) && 
+                             inv.Filiacion.ToUpper().Contains("UTA"))
+                .OrderBy(inv => inv.FechaPublicacion)
+                .Take(configuracion.ObrasRelevantesMinimoTotal)
+                .ToList();
+            
+            Console.WriteLine($"[ARCHIVOS] Investigaciones disponibles: {investigacionesDisponibles.Count}, seleccionadas: {investigacionesSeleccionadas.Count}");
+            
+            // Registrar investigaciones utilizadas
+            foreach (var investigacion in investigacionesSeleccionadas)
+            {
+                var archivoUtilizado = new ArchivosUtilizadosEscalafon
+                {
+                    SolicitudEscalafonId = solicitudEscalafonId,
+                    TipoRecurso = "Investigacion",
+                    RecursoId = investigacion.Id,
+                    DocenteCedula = docenteCedula,
+                    NivelOrigen = nivelOrigen,
+                    NivelDestino = nivelDestino,
+                    FechaUtilizacion = DateTime.Now,
+                    Descripcion = $"Investigación: {investigacion.Titulo}",
+                    EstadoAscenso = "Aprobado"
+                };
+                
+                await _repository.AddAsync(archivoUtilizado);
+                Console.WriteLine($"[ARCHIVOS] Registrada investigación ID {investigacion.Id}: {investigacion.Titulo}");
+            }
+            
+            // Obtener evaluaciones disponibles y seleccionar las más antiguas con puntaje >= 75%
+            var evaluacionesDisponibles = (await _evaluacionService.GetDisponiblesParaEscalafonAsync(docenteCedula)).ToList();
+            var evaluacionesSeleccionadas = evaluacionesDisponibles
+                .Where(eval => eval.PorcentajeObtenido >= 75)
+                .OrderBy(eval => eval.Anio)
+                .ThenBy(eval => eval.Semestre)
+                .Take(configuracion.PeriodosEvaluacionRequeridos)
+                .ToList();
+            
+            Console.WriteLine($"[ARCHIVOS] Evaluaciones disponibles: {evaluacionesDisponibles.Count}, seleccionadas: {evaluacionesSeleccionadas.Count}");
+            
+            // Registrar evaluaciones utilizadas
+            foreach (var evaluacion in evaluacionesSeleccionadas)
+            {
+                var archivoUtilizado = new ArchivosUtilizadosEscalafon
+                {
+                    SolicitudEscalafonId = solicitudEscalafonId,
+                    TipoRecurso = "EvaluacionDesempeno",
+                    RecursoId = evaluacion.Id,
+                    DocenteCedula = docenteCedula,
+                    NivelOrigen = nivelOrigen,
+                    NivelDestino = nivelDestino,
+                    FechaUtilizacion = DateTime.Now,
+                    Descripcion = $"Evaluación {evaluacion.PeriodoAcademico}: {evaluacion.PorcentajeObtenido}%",
+                    EstadoAscenso = "Aprobado"
+                };
+                
+                await _repository.AddAsync(archivoUtilizado);
+                Console.WriteLine($"[ARCHIVOS] Registrada evaluación ID {evaluacion.Id}: {evaluacion.PeriodoAcademico}");
+            }
+            
+            // Obtener capacitaciones disponibles y seleccionar hasta cumplir las horas requeridas
+            var capacitacionesDisponibles = (await _diticService.GetDisponiblesParaEscalafonAsync(docenteCedula)).ToList();
+            var capacitacionesSeleccionadas = new List<DiticDto>();
+            int horasAcumuladas = 0;
+            
+            foreach (var capacitacion in capacitacionesDisponibles.OrderBy(c => c.FechaInicio))
+            {
+                if (horasAcumuladas >= configuracion.HorasCapacitacionRequeridas)
+                    break;
+                    
+                capacitacionesSeleccionadas.Add(capacitacion);
+                horasAcumuladas += capacitacion.HorasAcademicas;
+            }
+            
+            Console.WriteLine($"[ARCHIVOS] Capacitaciones disponibles: {capacitacionesDisponibles.Count}, seleccionadas: {capacitacionesSeleccionadas.Count}");
+            
+            // Registrar capacitaciones utilizadas
+            foreach (var capacitacion in capacitacionesSeleccionadas)
+            {
+                var archivoUtilizado = new ArchivosUtilizadosEscalafon
+                {
+                    SolicitudEscalafonId = solicitudEscalafonId,
+                    TipoRecurso = "Capacitacion",
+                    RecursoId = capacitacion.Id,
+                    DocenteCedula = docenteCedula,
+                    NivelOrigen = nivelOrigen,
+                    NivelDestino = nivelDestino,
+                    FechaUtilizacion = DateTime.Now,
+                    Descripcion = $"Capacitación: {capacitacion.NombreCapacitacion} ({capacitacion.HorasAcademicas}h)",
+                    EstadoAscenso = "Aprobado"
+                };
+                
+                await _repository.AddAsync(archivoUtilizado);
+                Console.WriteLine($"[ARCHIVOS] Registrada capacitación ID {capacitacion.Id}: {capacitacion.NombreCapacitacion}");
+            }
             
             Console.WriteLine($"[ARCHIVOS] Completado registro de archivos utilizados para solicitud {solicitudEscalafonId}");
+            Console.WriteLine($"[ARCHIVOS] Total registrado: {investigacionesSeleccionadas.Count} investigaciones, {evaluacionesSeleccionadas.Count} evaluaciones, {capacitacionesSeleccionadas.Count} capacitaciones");
         }
         catch (Exception ex)
         {
             Console.WriteLine($"[ARCHIVOS] Error al registrar archivos utilizados: {ex.Message}");
             throw new InvalidOperationException($"Error al registrar archivos utilizados: {ex.Message}", ex);
         }
-    }
-
-    private async Task RegistrarDocumentosEspecificos(int solicitudEscalafonId, string docenteCedula, string nivelOrigen, string nivelDestino)
-    {
-        Console.WriteLine($"[ARCHIVOS] Iniciando registro de documentos específicos para solicitud {solicitudEscalafonId}");
-        
-        // Registrar un documento de cada tipo por ahora
-        // TODO: Reemplazar por consulta real a las tablas de investigaciones, evaluaciones y capacitaciones
-        
-        var investigacion = new ArchivosUtilizadosEscalafon
-        {
-            SolicitudEscalafonId = solicitudEscalafonId,
-            TipoRecurso = "Investigacion",
-            RecursoId = GenerarIdTemporalBasadoEnSolicitud(solicitudEscalafonId, 1),
-            DocenteCedula = docenteCedula,
-            NivelOrigen = nivelOrigen,
-            NivelDestino = nivelDestino,
-            FechaUtilizacion = DateTime.Now,
-            Descripcion = $"Artículo científico utilizado en promoción de {nivelOrigen} a {nivelDestino}",
-            EstadoAscenso = "Aprobado"
-        };
-        
-        Console.WriteLine($"[ARCHIVOS] Registrando investigación: ID={investigacion.RecursoId}, Descripción={investigacion.Descripcion}");
-        await _repository.AddAsync(investigacion);
-
-        var evaluacion = new ArchivosUtilizadosEscalafon
-        {
-            SolicitudEscalafonId = solicitudEscalafonId,
-            TipoRecurso = "EvaluacionDesempeno", 
-            RecursoId = GenerarIdTemporalBasadoEnSolicitud(solicitudEscalafonId, 2),
-            DocenteCedula = docenteCedula,
-            NivelOrigen = nivelOrigen,
-            NivelDestino = nivelDestino,
-            FechaUtilizacion = DateTime.Now,
-            Descripcion = $"Evaluación DAC período 2024-2025 - Puntaje: 85%",
-            EstadoAscenso = "Aprobado"
-        };
-        
-        Console.WriteLine($"[ARCHIVOS] Registrando evaluación: ID={evaluacion.RecursoId}, Descripción={evaluacion.Descripcion}");
-        await _repository.AddAsync(evaluacion);
-
-        var capacitacion = new ArchivosUtilizadosEscalafon
-        {
-            SolicitudEscalafonId = solicitudEscalafonId,
-            TipoRecurso = "Capacitacion",
-            RecursoId = GenerarIdTemporalBasadoEnSolicitud(solicitudEscalafonId, 3),
-            DocenteCedula = docenteCedula,
-            NivelOrigen = nivelOrigen,
-            NivelDestino = nivelDestino,
-            FechaUtilizacion = DateTime.Now,
-            Descripcion = $"Capacitación DITIC - Tecnologías Educativas (40 horas)",
-            EstadoAscenso = "Aprobado"
-        };
-        
-        Console.WriteLine($"[ARCHIVOS] Registrando capacitación: ID={capacitacion.RecursoId}, Descripción={capacitacion.Descripcion}");
-        await _repository.AddAsync(capacitacion);
-        
-        Console.WriteLine($"[ARCHIVOS] Completado registro de 3 documentos para solicitud {solicitudEscalafonId}");
-    }
-
-    private int GenerarIdTemporalBasadoEnSolicitud(int solicitudId, int tipoDocumento)
-    {
-        // Generar IDs únicos basados en la solicitud para evitar conflictos
-        return (solicitudId * 1000) + tipoDocumento;
     }
 
     public async Task<List<int>> ObtenerInvestigacionesUtilizadas(string docenteCedula)

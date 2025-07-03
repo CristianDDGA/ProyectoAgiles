@@ -13,13 +13,16 @@ public class EvaluacionDesempenoService : IEvaluacionDesempenoService
 {
     private readonly IEvaluacionDesempenoRepository _repository;
     private readonly IMapper _mapper;
+    private readonly IArchivosUtilizadosService _archivosUtilizadosService;
 
     public EvaluacionDesempenoService(
         IEvaluacionDesempenoRepository repository,
-        IMapper mapper)
+        IMapper mapper,
+        IArchivosUtilizadosService archivosUtilizadosService)
     {
         _repository = repository;
         _mapper = mapper;
+        _archivosUtilizadosService = archivosUtilizadosService;
     }
 
     /// <summary>
@@ -47,6 +50,32 @@ public class EvaluacionDesempenoService : IEvaluacionDesempenoService
     {
         var evaluaciones = await _repository.GetByCedulaAsync(cedula);
         return _mapper.Map<IEnumerable<EvaluacionDesempenoDto>>(evaluaciones);
+    }
+
+    /// <summary>
+    /// Obtiene evaluaciones disponibles (no utilizadas) para escalafón
+    /// </summary>
+    public async Task<IEnumerable<EvaluacionDesempenoDto>> GetDisponiblesParaEscalafonAsync(string cedula)
+    {
+        // Obtener todas las evaluaciones del docente
+        var todasLasEvaluaciones = await _repository.GetByCedulaAsync(cedula);
+        
+        // Obtener los IDs de evaluaciones ya utilizadas en escalafones previos
+        var evaluacionesUtilizadas = await _archivosUtilizadosService.ObtenerEvaluacionesUtilizadas(cedula);
+        
+        // Filtrar para excluir las ya utilizadas
+        var evaluacionesDisponibles = todasLasEvaluaciones
+            .Where(eval => !evaluacionesUtilizadas.Contains(eval.Id))
+            .OrderBy(eval => eval.Anio)
+            .ThenBy(eval => eval.Semestre) // Ordenar por año y semestre más antiguos primero
+            .ToList();
+        
+        Console.WriteLine($"EvaluacionDesempenoService.GetDisponiblesParaEscalafonAsync:");
+        Console.WriteLine($"  - Total evaluaciones del docente: {todasLasEvaluaciones.Count()}");
+        Console.WriteLine($"  - Evaluaciones utilizadas: {evaluacionesUtilizadas.Count}");
+        Console.WriteLine($"  - Evaluaciones disponibles: {evaluacionesDisponibles.Count}");
+        
+        return _mapper.Map<IEnumerable<EvaluacionDesempenoDto>>(evaluacionesDisponibles);
     }
 
     /// <summary>

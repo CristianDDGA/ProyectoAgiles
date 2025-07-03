@@ -13,11 +13,16 @@ public class DiticService : IDiticService
 {
     private readonly IDiticRepository _diticRepository;
     private readonly IMapper _mapper;
+    private readonly IArchivosUtilizadosService _archivosUtilizadosService;
 
-    public DiticService(IDiticRepository diticRepository, IMapper mapper)
+    public DiticService(
+        IDiticRepository diticRepository, 
+        IMapper mapper,
+        IArchivosUtilizadosService archivosUtilizadosService)
     {
         _diticRepository = diticRepository;
         _mapper = mapper;
+        _archivosUtilizadosService = archivosUtilizadosService;
     }
 
     public async Task<DiticDto?> GetByIdAsync(int id)
@@ -90,6 +95,28 @@ public class DiticService : IDiticService
     {
         var ditics = await _diticRepository.GetByCedulaAsync(cedula);
         return _mapper.Map<IEnumerable<DiticDto>>(ditics);
+    }
+
+    public async Task<IEnumerable<DiticDto>> GetDisponiblesParaEscalafonAsync(string cedula)
+    {
+        // Obtener todas las capacitaciones del docente
+        var todasLasCapacitaciones = await _diticRepository.GetByCedulaAsync(cedula);
+        
+        // Obtener los IDs de capacitaciones ya utilizadas en escalafones previos
+        var capacitacionesUtilizadas = await _archivosUtilizadosService.ObtenerCapacitacionesUtilizadas(cedula);
+        
+        // Filtrar para excluir las ya utilizadas
+        var capacitacionesDisponibles = todasLasCapacitaciones
+            .Where(cap => !capacitacionesUtilizadas.Contains(cap.Id))
+            .OrderBy(cap => cap.FechaInicio) // Ordenar por fecha más antigua primero
+            .ToList();
+        
+        Console.WriteLine($"DiticService.GetDisponiblesParaEscalafonAsync:");
+        Console.WriteLine($"  - Total capacitaciones del docente: {todasLasCapacitaciones.Count()}");
+        Console.WriteLine($"  - Capacitaciones utilizadas: {capacitacionesUtilizadas.Count}");
+        Console.WriteLine($"  - Capacitaciones disponibles: {capacitacionesDisponibles.Count}");
+        
+        return _mapper.Map<IEnumerable<DiticDto>>(capacitacionesDisponibles);
     }
 
     public async Task<IEnumerable<DiticDto>> GetByCedulaLastThreeYearsAsync(string cedula)

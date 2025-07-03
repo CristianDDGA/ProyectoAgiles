@@ -8,10 +8,14 @@ namespace ProyectoAgiles.Application.Services;
 public class InvestigacionService : IInvestigacionService
 {
     private readonly IInvestigacionRepository _investigacionRepository;
+    private readonly IArchivosUtilizadosService _archivosUtilizadosService;
 
-    public InvestigacionService(IInvestigacionRepository investigacionRepository)
+    public InvestigacionService(
+        IInvestigacionRepository investigacionRepository,
+        IArchivosUtilizadosService archivosUtilizadosService)
     {
         _investigacionRepository = investigacionRepository;
+        _archivosUtilizadosService = archivosUtilizadosService;
     }
 
     public async Task<IEnumerable<InvestigacionDto>> GetAllAsync()
@@ -30,6 +34,28 @@ public class InvestigacionService : IInvestigacionService
     {
         var investigaciones = await _investigacionRepository.GetByCedulaAsync(cedula);
         return investigaciones.Select(MapToDto);
+    }
+
+    public async Task<IEnumerable<InvestigacionDto>> GetDisponiblesParaEscalafonAsync(string cedula)
+    {
+        // Obtener todas las investigaciones del docente
+        var todasLasInvestigaciones = await _investigacionRepository.GetByCedulaAsync(cedula);
+        
+        // Obtener los IDs de investigaciones ya utilizadas en escalafones previos
+        var investigacionesUtilizadas = await _archivosUtilizadosService.ObtenerInvestigacionesUtilizadas(cedula);
+        
+        // Filtrar para excluir las ya utilizadas
+        var investigacionesDisponibles = todasLasInvestigaciones
+            .Where(inv => !investigacionesUtilizadas.Contains(inv.Id))
+            .OrderBy(inv => inv.FechaPublicacion) // Ordenar por fecha más antigua primero
+            .ToList();
+        
+        Console.WriteLine($"InvestigacionService.GetDisponiblesParaEscalafonAsync:");
+        Console.WriteLine($"  - Total investigaciones del docente: {todasLasInvestigaciones.Count()}");
+        Console.WriteLine($"  - Investigaciones utilizadas: {investigacionesUtilizadas.Count}");
+        Console.WriteLine($"  - Investigaciones disponibles: {investigacionesDisponibles.Count}");
+        
+        return investigacionesDisponibles.Select(MapToDto);
     }
 
     public async Task<IEnumerable<InvestigacionDto>> GetByTipoAsync(string tipo)
