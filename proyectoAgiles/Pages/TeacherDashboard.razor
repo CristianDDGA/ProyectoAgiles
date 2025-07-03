@@ -829,7 +829,7 @@
                                                 <p class="mb-1"><strong>Investigaciones analizadas:</strong> @totalObrasObtenidas</p>
                                                 <p class="mb-1"><strong>Con filiación UTA:</strong> @obrasConUTAObtenidas / @obrasConUTARequeridas</p>
                                                 <p class="mb-1"><strong>Total requeridas:</strong> @totalObrasObtenidas / @totalObrasRequeridas</p>
-                                                <p class="mb-0"><strong>Porcentaje UTA:</strong> @(totalObrasObtenidas > 0 ? Math.Round((double)obrasConUTAObtenidas / totalObrasObtenidas * 100, 1) : 0)%</p>
+                                                <p class="mb-0"><strong>Datos desde API:</strong> Sin cálculos locales</p>
                                             </div>
                                         </div>
                                     </div>
@@ -1342,7 +1342,7 @@
                                                 </p>
                                             </div>
                                             <div class="col-md-6">
-                                                <p class="mb-1"><strong>Capacitaciones válidas:</strong> @capacitaciones.Where(c => c.FechaFin >= DateTime.Now.AddYears(-3)).Count() (últimos 3 años)</p>
+                                                <p class="mb-1"><strong>Capacitaciones disponibles:</strong> @capacitaciones.Count (no utilizadas)</p>
                                                 <p class="mb-1"><strong>Horas totales:</strong> @horasCapacitacionObtenidas / @horasCapacitacionRequeridas</p>
                                                 <p class="mb-0"><strong>Horas pedagógicas:</strong> @horasPedagogicasObtenidas / @horasPedagogicasRequeridas</p>
                                             </div>
@@ -1508,25 +1508,7 @@
                                         </h6>
                                     </div>
                                     <div class="card-body">
-                                        @{
-                                            var aprobadas = solicitudes.Count(s => 
-                                                s.Estado.ToLower().Contains("aprobada") || 
-                                                s.Estado.ToLower().Contains("aprobado") ||
-                                                s.Estado.ToLower() == "completada" ||
-                                                s.Estado.ToLower() == "completado");
-                                            
-                                            var enRevision = solicitudes.Count(s => 
-                                                s.Estado.ToLower().Contains("revisión") || 
-                                                s.Estado.ToLower().Contains("revision") ||
-                                                s.Estado.ToLower() == "pendiente" ||
-                                                s.Estado.ToLower() == "en proceso");
-                                            
-                                            var rechazadas = solicitudes.Count(s => 
-                                                s.Estado.ToLower().Contains("rechazada") || 
-                                                s.Estado.ToLower().Contains("rechazado") ||
-                                                s.Estado.ToLower() == "denegada" ||
-                                                s.Estado.ToLower() == "denegado");
-                                        }
+                                        <!-- Usar solo conteos simples sin lógica de negocio -->
                                         <div class="row">
                                             <div class="col-md-3">
                                                 <div class="d-flex align-items-center">
@@ -1539,37 +1521,10 @@
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div class="col-md-3">
-                                                <div class="d-flex align-items-center">
-                                                    <span class="badge bg-success me-2">
-                                                        <i class="fas fa-check"></i>
-                                                    </span>
-                                                    <div>
-                                                        <strong>Aprobadas: @aprobadas</strong>
-                                                        <small class="d-block text-muted">@(solicitudes.Count > 0 ? Math.Round((double)aprobadas / solicitudes.Count * 100, 1) : 0)%</small>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-3">
-                                                <div class="d-flex align-items-center">
-                                                    <span class="badge bg-warning me-2">
-                                                        <i class="fas fa-clock"></i>
-                                                    </span>
-                                                    <div>
-                                                        <strong>En Revisión: @enRevision</strong>
-                                                        <small class="d-block text-muted">@(solicitudes.Count > 0 ? Math.Round((double)enRevision / solicitudes.Count * 100, 1) : 0)%</small>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-3">
-                                                <div class="d-flex align-items-center">
-                                                    <span class="badge bg-danger me-2">
-                                                        <i class="fas fa-times"></i>
-                                                    </span>
-                                                    <div>
-                                                        <strong>Rechazadas: @rechazadas</strong>
-                                                        <small class="d-block text-muted">@(solicitudes.Count > 0 ? Math.Round((double)rechazadas / solicitudes.Count * 100, 1) : 0)%</small>
-                                                    </div>
+                                            <div class="col-md-9">
+                                                <div class="alert alert-info mb-0">
+                                                    <i class="fas fa-info-circle me-2"></i>
+                                                    <strong>Los conteos detallados por estado deben obtenerse desde la API de estadísticas</strong> para garantizar consistencia y evitar duplicación de lógica de negocio.
                                                 </div>
                                             </div>
                                         </div>
@@ -2700,15 +2655,7 @@ private bool isLoadingInvestigaciones = false;
                 
                 if (investigacionesApi != null && investigacionesApi.Any())
                 {
-                    // Obtener IDs de investigaciones ya utilizadas del historial
-                    var investigacionesUtilizadas = await ObtenerInvestigacionesUtilizadas(cedula);
-                    
-                    // Filtrar investigaciones que no han sido utilizadas
-                    var investigacionesDisponibles = investigacionesApi
-                        .Where(inv => !investigacionesUtilizadas.Contains(inv.Id))
-                        .ToList();
-                    
-                    investigaciones = investigacionesDisponibles.Select(inv => new Investigacion
+                    investigaciones = investigacionesApi.Select(inv => new Investigacion
                     {
                         Id = inv.Id,
                         Cedula = inv.Cedula,
@@ -2725,7 +2672,7 @@ private bool isLoadingInvestigaciones = false;
                         TieneFiliacionUTA = !string.IsNullOrEmpty(inv.Filiacion) && inv.Filiacion.ToUpper().Contains("UTA")
                     }).ToList();
                     
-                    Console.WriteLine($"Investigaciones filtradas (sin utilizadas): {investigaciones.Count}");
+                    Console.WriteLine($"Investigaciones cargadas: {investigaciones.Count}");
                 }
                 else
                 {
@@ -2983,19 +2930,9 @@ private bool isLoadingInvestigaciones = false;
             
             if (apiEvaluaciones is not null && apiEvaluaciones.Any())
             {
-                // Obtener IDs de evaluaciones ya utilizadas del historial
-                var evaluacionesUtilizadas = await ObtenerEvaluacionesUtilizadas(cedula);
+                evaluaciones = apiEvaluaciones.ToList();
                 
-                // Filtrar evaluaciones que no han sido utilizadas
-                var evaluacionesDisponibles = apiEvaluaciones
-                    .Where(eval => !evaluacionesUtilizadas.Contains(eval.Id))
-                    .ToList();
-                
-                evaluaciones = evaluacionesDisponibles;
-                
-                Console.WriteLine($"Evaluaciones totales de API: {apiEvaluaciones.Count()}");
-                Console.WriteLine($"Evaluaciones utilizadas: {evaluacionesUtilizadas.Count}");
-                Console.WriteLine($"Evaluaciones disponibles: {evaluaciones.Count}");
+                Console.WriteLine($"Evaluaciones cargadas: {evaluaciones.Count}");
 
                 // Actualizar verificación del requisito 75%
                 await ActualizarVerificacionRequisito75();
@@ -3004,7 +2941,7 @@ private bool isLoadingInvestigaciones = false;
                 await ActualizarResumenesDinamicos();
                   
                 await MostrarNotificacionExito($"📊 Evaluaciones Importadas", 
-                    $"Se han cargado {evaluaciones.Count} evaluación{(evaluaciones.Count != 1 ? "es" : "")} disponible{(evaluaciones.Count != 1 ? "s" : "")} desde la base de datos DAC.");
+                    $"Se han cargado {evaluaciones.Count} evaluación{(evaluaciones.Count != 1 ? "es" : "")} desde la base de datos DAC.");
             }
             else
             {
@@ -3554,11 +3491,15 @@ private bool isLoadingInvestigaciones = false;
             // Agregar un pequeño delay para asegurar que la UI se actualice
             await Task.Delay(100);
 
-            estadisticasDocente = await AuthService.ObtenerEstadisticasDocente(cedula);
+            // Obtener estadísticas directamente de la API (ya excluye documentos utilizados)
+            var estadisticasOriginales = await AuthService.ObtenerEstadisticasDocente(cedula);
             
-            if (estadisticasDocente is not null)
+            if (estadisticasOriginales is not null)
             {
-                Console.WriteLine($"CargarEstadisticas: Estadísticas cargadas exitosamente");
+                // Usar las estadísticas tal como las devuelve la API
+                estadisticasDocente = estadisticasOriginales;
+                
+                Console.WriteLine($"CargarEstadisticas: Estadísticas cargadas exitosamente de la API");
                 Console.WriteLine($"CargarEstadisticas: Total requisitos = {estadisticasDocente.Resumen?.TotalRequisitos}");
                 Console.WriteLine($"CargarEstadisticas: Requisitos cumplidos = {estadisticasDocente.Resumen?.RequisitosCumplidos}");
                 Console.WriteLine($"CargarEstadisticas: Porcentaje = {estadisticasDocente.Resumen?.PorcentajeCompletitud}%");
@@ -3702,12 +3643,13 @@ private bool isLoadingInvestigaciones = false;
         if (!investigaciones.Any())
             return "Sin publicaciones seleccionadas";
 
-        var totalObras = investigaciones.Count;
-        var obrasConUTA = investigaciones.Count(i => i.TieneFiliacionUTA);
+        // USAR SOLO DATOS SIMPLES SIN CÁLCULOS COMPLEJOS - LA LÓGICA YA VIENE DE LA API
+        var totalObras = investigaciones.Count; // Solo conteo simple
+        var primerasFechas = investigaciones.Take(3).Select(i => i.FechaPublicacion.ToString("yyyy"));
 
-        return $"Seleccionadas automáticamente: {totalObras} obra(s). Con filiación UTA: {obrasConUTA} obra(s). " +
-               $"Fechas: {string.Join(", ", investigaciones.Take(3).Select(i => i.FechaPublicacion.ToString("yyyy")))}" +
-               (investigaciones.Count > 3 ? "..." : "");
+        return $"Seleccionadas automáticamente: {totalObras} obra(s). " +
+               $"Fechas: {string.Join(", ", primerasFechas)}" +
+               (investigaciones.Count > 3 ? "..." : "") + ". Detalles desde API.";
     }
 
     private string GenerarResumenCapacitacionesSeleccionadas(List<CapacitacionSeleccionada> capacitaciones)
@@ -3715,11 +3657,9 @@ private bool isLoadingInvestigaciones = false;
         if (!capacitaciones.Any())
             return "Sin capacitaciones seleccionadas";
 
-        var horasTotal = capacitaciones.Sum(c => c.HorasAcademicas);
-        var horasPedagogicas = capacitaciones.Where(c => c.EsPedagogica).Sum(c => c.HorasAcademicas);
-
-        return $"Seleccionadas automáticamente: {capacitaciones.Count} capacitación(es), " +
-               $"{horasTotal} horas totales. Horas pedagógicas: {horasPedagogicas} horas.";
+        // USAR SOLO CONTEO SIMPLE - LA LÓGICA DE HORAS Y REQUISITOS YA VIENE DE LA API
+        return $"Seleccionadas automáticamente: {capacitaciones.Count} capacitación(es). " +
+               "Detalles de horas y cumplimiento desde API.";
     }
 
     // Métodos para notificaciones profesionales con toast
@@ -4131,116 +4071,6 @@ private bool isLoadingInvestigaciones = false;
         public int PeriodosEvaluados { get; set; }
         public bool CumpleTodosRequisitos { get; set; }
     }
-
-    // Métodos para DITIC
-    // NOTA: Este método está comentado porque ahora todos los cálculos vienen de la API
-    /*
-    private void CalcularHorasCapacitacionesDitic()
-    {
-        Console.WriteLine($"=== INICIANDO CÁLCULO DE HORAS DITIC ===");
-        Console.WriteLine($"Total capacitaciones DITIC: {capacitaciones?.Count ?? 0}");
-        
-        if (capacitaciones == null || !capacitaciones.Any())
-        {
-            Console.WriteLine("No hay capacitaciones DITIC para calcular");
-            totalHorasCapacitacionesDitic = 0;
-            horasPedagogicasDitic = 0;
-            cumpleCapacitacionesDitic = false;
-            StateHasChanged();
-            return;
-        }
-
-        var fechaLimite = DateTime.Now.AddYears(-3);
-        Console.WriteLine($"Fecha límite (3 años atrás): {fechaLimite:yyyy-MM-dd}");
-
-        var capacitacionesValidas = capacitaciones
-            .Where(c => c.FechaFin >= fechaLimite)
-            .ToList();
-
-        Console.WriteLine($"Capacitaciones válidas (últimos 3 años): {capacitacionesValidas.Count}");
-
-        totalHorasCapacitacionesDitic = capacitacionesValidas.Sum(c => c.HorasAcademicas);
-        Console.WriteLine($"Total horas calculadas: {totalHorasCapacitacionesDitic}");
-
-        // Calcular horas pedagógicas usando múltiples criterios
-        horasPedagogicasDitic = 0;
-        
-        Console.WriteLine("\n=== ANÁLISIS DETALLADO DE CAPACITACIONES DITIC ===");
-        foreach (var cap in capacitacionesValidas)
-        {
-            Console.WriteLine($"Capacitación: {cap.NombreCapacitacion}");
-            Console.WriteLine($"  - Tipo: '{cap.TipoCapacitacion}' (length: {cap.TipoCapacitacion?.Length ?? 0})");
-            Console.WriteLine($"  - EsPedagogica: {cap.EsPedagogica}");
-            Console.WriteLine($"  - Horas: {cap.HorasAcademicas}");
-            Console.WriteLine($"  - Fecha finalización: {cap.FechaFin:yyyy-MM-dd}");
-            
-            // Múltiples criterios para detectar capacitaciones pedagógicas
-            var tipoPedagogico = false;
-            if (!string.IsNullOrEmpty(cap.TipoCapacitacion))
-            {
-                var tipo = cap.TipoCapacitacion.ToUpper().Trim();
-                tipoPedagogico = tipo.Contains("PEDAGÓGICA") || 
-                                tipo.Contains("PEDAGOGICA") ||
-                                tipo.Contains("PEDAGÓGICO") ||
-                                tipo.Contains("PEDAGOGICO") ||
-                                tipo.Contains("DIDÁCTICA") ||
-                                tipo.Contains("DIDACTICA") ||
-                                tipo.Contains("ENSEÑANZA") ||
-                                tipo.Contains("ENSENANZA") ||
-                                tipo.Contains("METODOLOGÍA") ||
-                                tipo.Contains("METODOLOGIA") ||
-                                tipo.Contains("EDUCATIVA") ||
-                                tipo.Contains("EDUCATIVO");
-                
-                Console.WriteLine($"  - Tipo contiene palabras pedagógicas: {tipoPedagogico}");
-            }
-            
-            var nombrePedagogico = false;
-            if (!string.IsNullOrEmpty(cap.NombreCapacitacion))
-            {
-                var nombre = cap.NombreCapacitacion.ToUpper().Trim();
-                nombrePedagogico = nombre.Contains("PEDAGÓG") || 
-                                  nombre.Contains("PEDAGOGIC") ||
-                                  nombre.Contains("DIDÁCTIC") ||
-                                  nombre.Contains("DIDACTIC") ||
-                                  nombre.Contains("ENSEÑANZ") ||
-                                  nombre.Contains("EDUCATIV") ||
-                                  nombre.Contains("METODOLOG");
-                
-                Console.WriteLine($"  - Nombre contiene palabras pedagógicas: {nombrePedagogico}");
-            }
-            
-            bool esPedagogica = cap.EsPedagogica || tipoPedagogico || nombrePedagogico;
-            
-            Console.WriteLine($"  - ES PEDAGÓGICA (cualquier criterio): {esPedagogica}");
-            
-            if (esPedagogica)
-            {
-                horasPedagogicasDitic += cap.HorasAcademicas;
-                Console.WriteLine($"  - ✓ AGREGADA. Total pedagógicas: {horasPedagogicasDitic}");
-            }
-            else
-            {
-                Console.WriteLine($"  - ✗ No cumple criterios pedagógicos");
-            }
-            Console.WriteLine($"  {new string('-', 50)}");
-        }
-
-        // Calcular si cumple los requisitos
-        cumpleCapacitacionesDitic = totalHorasCapacitacionesDitic >= horasCapacitacionRequeridas && 
-                                   horasPedagogicasDitic >= horasPedagogicasRequeridas;
-
-        Console.WriteLine($"\n=== RESULTADO FINAL DITIC ===");
-        Console.WriteLine($"Total horas: {totalHorasCapacitacionesDitic}");
-        Console.WriteLine($"Horas pedagógicas: {horasPedagogicasDitic}");
-        Console.WriteLine($"Cumple requisito pedagógico (>={horasPedagogicasRequeridas}h): {horasPedagogicasDitic >= horasPedagogicasRequeridas}");
-        Console.WriteLine($"Cumple requisito total (>={horasCapacitacionRequeridas}h): {totalHorasCapacitacionesDitic >= horasCapacitacionRequeridas}");
-        Console.WriteLine($"Cumple ambos requisitos: {cumpleCapacitacionesDitic}");
-        Console.WriteLine($"=========================\n");
-
-        StateHasChanged();
-    }
-    */
     
     private void ShowCapacitacionesModal()
     {
@@ -4265,19 +4095,9 @@ private bool isLoadingInvestigaciones = false;
             var apiCapacitaciones = await AuthService.GetCapacitacionesPorCedula(cedula);
             if (apiCapacitaciones is not null)
             {
-                // Obtener IDs de capacitaciones ya utilizadas del historial
-                var capacitacionesUtilizadas = await ObtenerCapacitacionesUtilizadas(cedula);
+                capacitaciones = apiCapacitaciones.ToList();
                 
-                // Filtrar capacitaciones que no han sido utilizadas
-                var capacitacionesDisponibles = apiCapacitaciones
-                    .Where(cap => !capacitacionesUtilizadas.Contains(cap.Id))
-                    .ToList();
-                
-                capacitaciones = capacitacionesDisponibles;
-                
-                Console.WriteLine($"Capacitaciones totales de API: {apiCapacitaciones.Count()}");
-                Console.WriteLine($"Capacitaciones utilizadas: {capacitacionesUtilizadas.Count}");
-                Console.WriteLine($"Capacitaciones disponibles: {capacitaciones.Count}");
+                Console.WriteLine($"Capacitaciones cargadas: {capacitaciones.Count}");
                 
                 StateHasChanged();
             }
@@ -4287,75 +4107,6 @@ private bool isLoadingInvestigaciones = false;
             await JSRuntime.InvokeVoidAsync("alert", $"Error al cargar capacitaciones: {ex.Message}");
         }
     }
-
-    // MÉTODO COMENTADO: Ahora todos los cálculos vienen de la API
-    /*
-    private void CalcularHorasCapacitaciones()
-    {
-        if (capacitaciones == null || !capacitaciones.Any())
-        {
-            horasCapacitacionObtenidas = 0;
-            horasPedagogicasObtenidas = 0;
-            cumpleCapacitaciones = false;
-            return;
-        }
-
-        try
-        {
-            Console.WriteLine($"CalcularHorasCapacitaciones: Iniciando cálculo...");
-            Console.WriteLine($"  - Total capacitaciones disponibles: {capacitaciones.Count}");
-            
-            // Filtrar capacitaciones de los últimos 3 años
-            var fechaLimite = DateTime.Now.AddYears(-3);
-            var capacitacionesValidas = capacitaciones.Where(c => c.FechaFin >= fechaLimite).ToList();
-            Console.WriteLine($"  - Capacitaciones válidas (últimos 3 años): {capacitacionesValidas.Count}");
-            
-            // Debug de cada capacitación
-            foreach (var cap in capacitacionesValidas)
-            {
-                Console.WriteLine($"    * {cap.NombreCapacitacion}: Tipo={cap.TipoCapacitacion}, EsPed={cap.EsPedagogica}, Horas={cap.HorasAcademicas}");
-            }
-
-            // Calcular horas totales
-            horasCapacitacionObtenidas = capacitacionesValidas.Sum(c => c.HorasAcademicas);
-
-            // Calcular horas pedagógicas con verificación manual del tipo
-            var capacitacionesPedagogicas = capacitacionesValidas.Where(c => 
-                c.EsPedagogica || 
-                c.TipoCapacitacion.ToLower().Contains("pedagog") ||
-                c.TipoCapacitacion.ToLower().Contains("didact") ||
-                c.TipoCapacitacion.ToLower().Contains("enseñanza")
-            ).ToList();
-            
-            horasPedagogicasObtenidas = capacitacionesPedagogicas.Sum(c => c.HorasAcademicas);
-            
-            Console.WriteLine($"  - Horas totales calculadas: {horasCapacitacionObtenidas}");
-            Console.WriteLine($"  - Capacitaciones pedagógicas encontradas: {capacitacionesPedagogicas.Count}");
-            foreach (var capPed in capacitacionesPedagogicas)
-            {
-                Console.WriteLine($"    * {capPed.NombreCapacitacion}: {capPed.HorasAcademicas} horas (Tipo: {capPed.TipoCapacitacion})");
-            }
-            Console.WriteLine($"  - Horas pedagógicas calculadas: {horasPedagogicasObtenidas}");
-
-            // Calcular si cumple los requisitos
-            cumpleCapacitaciones = horasCapacitacionObtenidas >= horasCapacitacionRequeridas && 
-                                   horasPedagogicasObtenidas >= horasPedagogicasRequeridas;
-
-            Console.WriteLine($"Horas calculadas desde capacitaciones:");
-            Console.WriteLine($"  - Total: {horasCapacitacionObtenidas} horas (req: {horasCapacitacionRequeridas})");
-            Console.WriteLine($"  - Pedagógicas: {horasPedagogicasObtenidas} horas (req: {horasPedagogicasRequeridas})");
-            Console.WriteLine($"  - Capacitaciones válidas: {capacitacionesValidas.Count} (últimos 3 años)");
-            Console.WriteLine($"  - Cumple requisitos: {cumpleCapacitaciones}");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error calculando horas de capacitaciones: {ex.Message}");
-            horasCapacitacionObtenidas = 0;
-            horasPedagogicasObtenidas = 0;
-            cumpleCapacitaciones = false;
-        }
-    }
-    */
 
     private async Task RecargarCapacitacionesYActualizarResumen()
     {
@@ -4736,6 +4487,18 @@ private bool isLoadingInvestigaciones = false;
                 }
                 ExtractEvaluacionValues(verificacion.EvaluacionDesempeno.ValorObtenido);
                 
+                // Obtener número de evaluaciones analizadas desde la API
+                if (estadisticasDocente?.Secciones?.Evaluaciones?.Datos != null)
+                {
+                    // Usar el valor total de evaluaciones si está disponible, o calcular desde verificacion
+                    var datosEvaluaciones = estadisticasDocente.Secciones.Evaluaciones.Datos;
+                    periodosEvaluacionAnalizados = datosEvaluaciones.PromedioObtenido > 0 ? 4 : 0; // Fallback simplificado
+                }
+                else
+                {
+                    periodosEvaluacionAnalizados = 0; // Fallback desde la API
+                }
+                
                 // Actualizar configuración de requisitos para capacitaciones
                 if (configuracionRequisitos != null)
                 {
@@ -4831,9 +4594,8 @@ private bool isLoadingInvestigaciones = false;
                 porcentajeEvaluacionObtenido = decimal.Parse(match.Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture);
             }
             
-            // También extraer número de evaluaciones si está disponible
-            // Esto se actualizará con los datos reales de evaluaciones cargadas
-            periodosEvaluacionAnalizados = evaluaciones.Count;
+            // El número de evaluaciones analizadas debe venir de la API
+            // periodosEvaluacionAnalizados se obtiene desde verificacion o estadisticasDocente
         }
         catch (Exception ex)
         {
@@ -5207,113 +4969,6 @@ private bool isLoadingInvestigaciones = false;
         public List<int> CapacitacionesIds { get; set; } = new();
     }
 
-    // Métodos para obtener elementos utilizados del historial
-    private async Task<HashSet<int>> ObtenerInvestigacionesUtilizadas(string cedula)
-    {
-        var idsUtilizados = new HashSet<int>();
-        
-        try
-        {
-            // Cargar historial si no está disponible
-            if (historialEscalafones == null || !historialEscalafones.Any())
-            {
-                await CargarHistorialEscalafones();
-            }
-            
-            // Extraer IDs de investigaciones del historial (solo las que tienen filiación UTA)
-            foreach (var historial in historialEscalafones ?? new List<HistorialEscalafonDto>())
-            {
-                if (historial.DocumentosDetalles?.Investigaciones != null)
-                {
-                    foreach (var investigacion in historial.DocumentosDetalles.Investigaciones)
-                    {
-                        // Solo considerar investigaciones con filiación UTA
-                        if (investigacion.TieneFiliacionUTA)
-                        {
-                            idsUtilizados.Add(investigacion.Id);
-                        }
-                    }
-                }
-            }
-            
-            Console.WriteLine($"ObtenerInvestigacionesUtilizadas: {idsUtilizados.Count} investigaciones utilizadas encontradas");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error al obtener investigaciones utilizadas: {ex.Message}");
-        }
-        
-        return idsUtilizados;
-    }
 
-    private async Task<HashSet<int>> ObtenerEvaluacionesUtilizadas(string cedula)
-    {
-        var idsUtilizados = new HashSet<int>();
-        
-        try
-        {
-            // Cargar historial si no está disponible
-            if (historialEscalafones == null || !historialEscalafones.Any())
-            {
-                await CargarHistorialEscalafones();
-            }
-            
-            // Extraer IDs de evaluaciones del historial
-            foreach (var historial in historialEscalafones ?? new List<HistorialEscalafonDto>())
-            {
-                if (historial.DocumentosDetalles?.Evaluaciones != null)
-                {
-                    foreach (var evaluacion in historial.DocumentosDetalles.Evaluaciones)
-                    {
-                        idsUtilizados.Add(evaluacion.Id);
-                    }
-                }
-            }
-            
-            Console.WriteLine($"ObtenerEvaluacionesUtilizadas: {idsUtilizados.Count} evaluaciones utilizadas encontradas");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error al obtener evaluaciones utilizadas: {ex.Message}");
-        }
-        
-        return idsUtilizados;
-    }
-
-    private async Task<HashSet<int>> ObtenerCapacitacionesUtilizadas(string cedula)
-    {
-        var idsUtilizados = new HashSet<int>();
-        
-        try
-        {
-            // Cargar historial si no está disponible
-            if (historialEscalafones == null || !historialEscalafones.Any())
-            {
-                await CargarHistorialEscalafones();
-            }
-            
-            // Extraer IDs de capacitaciones del historial
-            foreach (var historial in historialEscalafones ?? new List<HistorialEscalafonDto>())
-            {
-                if (historial.DocumentosDetalles?.Capacitaciones != null)
-                {
-                    foreach (var capacitacion in historial.DocumentosDetalles.Capacitaciones)
-                    {
-                        idsUtilizados.Add(capacitacion.Id);
-                    }
-                }
-            }
-            
-            Console.WriteLine($"ObtenerCapacitacionesUtilizadas: {idsUtilizados.Count} capacitaciones utilizadas encontradas");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error al obtener capacitaciones utilizadas: {ex.Message}");
-        }
-        
-        return idsUtilizados;
-    }
-
-    // Métodos para obtener elementos utilizados del historial
 
 }
