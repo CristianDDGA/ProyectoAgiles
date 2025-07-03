@@ -11,9 +11,6 @@
 
 <PageTitle>Reportes de Ascensos Docentes - UTA</PageTitle>
 
-@* Carga el script de reportes *@
-<script src="~/js/reportes.js" defer></script>
-
 <div class="admin-dashboard">
     <!-- Título del Panel con botón de regreso -->
     <div class="dashboard-title-section">
@@ -216,6 +213,34 @@
         }
 
         await CargarDatos();
+        
+        // Verificar que las funciones JavaScript estén disponibles
+        await Task.Delay(500); // Esperar a que se cargue el script
+        await VerificarFuncionesJS();
+    }
+
+    private async Task VerificarFuncionesJS()
+    {
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("console.log", "[Blazor] Verificando funciones JavaScript...");
+            
+            // Verificar si las funciones existen
+            var mostrarVistaExiste = await JSRuntime.InvokeAsync<bool>("eval", "typeof window.mostrarVistaPrevia === 'function'");
+            var descargarPDFExiste = await JSRuntime.InvokeAsync<bool>("eval", "typeof window.descargarPDF === 'function'");
+            
+            Console.WriteLine($"[Blazor] mostrarVistaPrevia disponible: {mostrarVistaExiste}");
+            Console.WriteLine($"[Blazor] descargarPDF disponible: {descargarPDFExiste}");
+            
+            if (!mostrarVistaExiste || !descargarPDFExiste)
+            {
+                Console.WriteLine("[Blazor] ADVERTENCIA: Algunas funciones JavaScript no están disponibles");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[Blazor] Error verificando funciones JS: {ex.Message}");
+        }
     }
 
     private async Task CargarDatos()
@@ -325,10 +350,23 @@
     {
         try
         {
+            Console.WriteLine($"[Blazor] Solicitando vista previa para: {solicitud.DocenteNombre}");
+            
+            // Verificar que las funciones JS estén disponibles antes de llamarlas
+            var funcionDisponible = await JSRuntime.InvokeAsync<bool>("eval", "typeof window.mostrarVistaPrevia === 'function'");
+            
+            if (!funcionDisponible)
+            {
+                Console.WriteLine("[Blazor] ERROR: Función mostrarVistaPrevia no disponible");
+                await JSRuntime.InvokeVoidAsync("alert", "Error: Las funciones JavaScript no están cargadas. Recarga la página.");
+                return;
+            }
+            
             await ReportesService.MostrarVistaPrevia(solicitud);
         }
         catch (Exception ex)
         {
+            Console.WriteLine($"[Blazor] Error en MostrarVistaPrevia: {ex.Message}");
             await JSRuntime.InvokeVoidAsync("alert", $"Error al mostrar vista previa: {ex.Message}");
         }
     }
@@ -337,10 +375,23 @@
     {
         try
         {
+            Console.WriteLine($"[Blazor] Solicitando exportación PDF para: {solicitud.DocenteNombre}");
+            
+            // Verificar que las funciones JS estén disponibles antes de llamarlas
+            var funcionDisponible = await JSRuntime.InvokeAsync<bool>("eval", "typeof window.descargarPDF === 'function'");
+            
+            if (!funcionDisponible)
+            {
+                Console.WriteLine("[Blazor] ERROR: Función descargarPDF no disponible");
+                await JSRuntime.InvokeVoidAsync("alert", "Error: Las funciones JavaScript no están cargadas. Recarga la página.");
+                return;
+            }
+            
             await ReportesService.ExportarFichaPDFAsync(solicitud);
         }
         catch (Exception ex)
         {
+            Console.WriteLine($"[Blazor] Error en ExportarFichaPDF: {ex.Message}");
             await JSRuntime.InvokeVoidAsync("alert", $"Error al exportar PDF: {ex.Message}");
         }
     }

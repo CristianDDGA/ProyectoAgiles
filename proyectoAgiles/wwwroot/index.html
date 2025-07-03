@@ -29,6 +29,7 @@
     <script src="js/file-download.js"></script>
     <script src="js/notifications.js"></script>
     <script src="js/pdf-generator.js"></script>
+    <script src="js/reportes-simple.js"></script>
     <script>
         // Función para mostrar PDF en nueva pestaña o descargar
         window.showPdf = function(pdfDataUrl, fileName) {
@@ -70,6 +71,163 @@
                 return false;
             }
         };
+    </script>
+    
+    <!-- Script de reportes inline para asegurar carga -->
+    <script>
+        console.log('Cargando funciones de reportes...');
+        
+        window.mostrarVistaPrevia = function (datosJson) {
+            try {
+                console.log('Mostrando vista previa...', datosJson);
+                const datos = JSON.parse(datosJson);
+                
+                // Remover modal existente
+                const modalExistente = document.getElementById('modal-vista-previa');
+                if (modalExistente) modalExistente.remove();
+                
+                // Crear modal
+                const modalHTML = `
+                    <div id="modal-vista-previa" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9999; display: flex; align-items: center; justify-content: center;">
+                        <div style="background: white; border-radius: 10px; max-width: 90%; max-height: 90%; overflow: auto; position: relative; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+                            <div style="padding: 20px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center; background: #f8f9fa;">
+                                <h3 style="margin: 0; color: #dc3545;">Vista Previa - ${datos.docente.nombre}</h3>
+                                <button onclick="cerrarVistaPrevia()" style="background: #6c757d; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer;">✕ Cerrar</button>
+                            </div>
+                            <div style="padding: 20px; max-height: 60vh; overflow-y: auto;">
+                                <div style="max-width: 800px; font-family: Arial, sans-serif;">
+                                    <div style="text-align: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #dc3545;">
+                                        <h2 style="color: #dc3545; margin: 0;">FICHA DE ASCENSO DOCENTE</h2>
+                                        <p style="color: #6c757d; margin: 5px 0; font-size: 14px;">Universidad Técnica de Ambato</p>
+                                    </div>
+                                    
+                                    <div style="margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #dc3545;">
+                                        <h4 style="color: #dc3545; margin-top: 0; margin-bottom: 15px;">📋 Información Personal</h4>
+                                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 14px;">
+                                            <p style="margin: 5px 0;"><strong>Nombre:</strong> ${datos.docente.nombre}</p>
+                                            <p style="margin: 5px 0;"><strong>Cédula:</strong> ${datos.docente.cedula}</p>
+                                            <p style="margin: 5px 0;"><strong>Email:</strong> ${datos.docente.email}</p>
+                                            <p style="margin: 5px 0;"><strong>Teléfono:</strong> ${datos.docente.telefono}</p>
+                                            <p style="margin: 5px 0;"><strong>Facultad:</strong> ${datos.docente.facultad}</p>
+                                            <p style="margin: 5px 0;"><strong>Carrera:</strong> ${datos.docente.carrera}</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div style="margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #dc3545;">
+                                        <h4 style="color: #dc3545; margin-top: 0; margin-bottom: 15px;">🎓 Información de Escalafón</h4>
+                                        <div style="font-size: 14px;">
+                                            <p style="margin: 8px 0;"><strong>Promoción:</strong> ${datos.escalafon.nivelActual} → ${datos.escalafon.nivelSolicitado}</p>
+                                            <p style="margin: 8px 0;"><strong>Experiencia:</strong> ${datos.escalafon.anosExperiencia} años</p>
+                                            <p style="margin: 8px 0;"><strong>Estado:</strong> 
+                                                <span style="background: ${datos.escalafon.status === 'Aprobada' ? '#28a745' : '#ffc107'}; 
+                                                             color: ${datos.escalafon.status === 'Pendiente' ? '#000' : '#fff'}; 
+                                                             padding: 3px 8px; border-radius: 12px; font-size: 12px; font-weight: bold;">
+                                                    ${datos.escalafon.status}
+                                                </span>
+                                            </p>
+                                            <p style="margin: 8px 0;"><strong>Fecha de Solicitud:</strong> ${datos.escalafon.fechaSolicitud}</p>
+                                            <p style="margin: 8px 0;"><strong>Fecha de Aprobación:</strong> ${datos.escalafon.fechaAprobacion}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.insertAdjacentHTML('beforeend', modalHTML);
+                console.log('Modal creado exitosamente');
+                
+            } catch (error) {
+                console.error('Error al mostrar vista previa:', error);
+                alert('Error al mostrar la vista previa: ' + error.message);
+            }
+        };
+        
+        window.cerrarVistaPrevia = function() {
+            const modal = document.getElementById('modal-vista-previa');
+            if (modal) modal.remove();
+        };
+        
+        window.descargarPDF = function (datosJson, nombreArchivo) {
+            try {
+                console.log('Descargando PDF...', nombreArchivo);
+                const datos = JSON.parse(datosJson);
+                
+                const contenidoHTML = `
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>Ficha de Ascenso - ${datos.docente.nombre}</title>
+                        <style>
+                            body { font-family: Arial, sans-serif; margin: 20px; }
+                            .header { text-align: center; margin-bottom: 30px; border-bottom: 3px solid #dc3545; padding-bottom: 20px; }
+                            .seccion { margin-bottom: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 8px; }
+                            h1 { color: #dc3545; }
+                            h3 { color: #dc3545; border-bottom: 2px solid #dc3545; padding-bottom: 8px; }
+                            .campo { margin-bottom: 8px; }
+                            strong { color: #495057; }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="header">
+                            <h1>FICHA DE ASCENSO DOCENTE</h1>
+                            <h2>Universidad Técnica de Ambato</h2>
+                        </div>
+                        
+                        <div class="seccion">
+                            <h3>Información Personal</h3>
+                            <div class="campo"><strong>Nombre:</strong> ${datos.docente.nombre}</div>
+                            <div class="campo"><strong>Cédula:</strong> ${datos.docente.cedula}</div>
+                            <div class="campo"><strong>Email:</strong> ${datos.docente.email}</div>
+                            <div class="campo"><strong>Teléfono:</strong> ${datos.docente.telefono}</div>
+                            <div class="campo"><strong>Facultad:</strong> ${datos.docente.facultad}</div>
+                            <div class="campo"><strong>Carrera:</strong> ${datos.docente.carrera}</div>
+                        </div>
+                        
+                        <div class="seccion">
+                            <h3>Información de Escalafón</h3>
+                            <div class="campo"><strong>Nivel Actual:</strong> ${datos.escalafon.nivelActual}</div>
+                            <div class="campo"><strong>Nivel Solicitado:</strong> ${datos.escalafon.nivelSolicitado}</div>
+                            <div class="campo"><strong>Años de Experiencia:</strong> ${datos.escalafon.anosExperiencia} años</div>
+                            <div class="campo"><strong>Estado:</strong> ${datos.escalafon.status}</div>
+                            <div class="campo"><strong>Fecha de Solicitud:</strong> ${datos.escalafon.fechaSolicitud}</div>
+                            <div class="campo"><strong>Fecha de Aprobación:</strong> ${datos.escalafon.fechaAprobacion}</div>
+                        </div>
+                        
+                        <div class="seccion">
+                            <h3>Detalles Académicos</h3>
+                            <div class="campo"><strong>Títulos:</strong> ${datos.detalles.titulos}</div>
+                            <div class="campo"><strong>Publicaciones:</strong> ${datos.detalles.publicaciones}</div>
+                            <div class="campo"><strong>Proyectos:</strong> ${datos.detalles.proyectosInvestigacion}</div>
+                            <div class="campo"><strong>Capacitaciones:</strong> ${datos.detalles.capacitaciones}</div>
+                            <div class="campo"><strong>Observaciones:</strong> ${datos.detalles.observaciones}</div>
+                        </div>
+                        
+                        <div style="text-align: center; margin-top: 40px; font-size: 12px; color: #6c757d;">
+                            Documento generado el ${datos.fecha}<br>
+                            Sistema de Gestión Académica - Universidad Técnica de Ambato
+                        </div>
+                    </body>
+                    </html>
+                `;
+                
+                const ventana = window.open('', '_blank');
+                if (ventana) {
+                    ventana.document.write(contenidoHTML);
+                    ventana.document.close();
+                    setTimeout(() => ventana.print(), 1000);
+                } else {
+                    alert('Permite ventanas emergentes para descargar el PDF');
+                }
+                
+            } catch (error) {
+                console.error('Error al descargar PDF:', error);
+                alert('Error al generar el PDF: ' + error.message);
+            }
+        };
+        
+        console.log('Funciones de reportes cargadas exitosamente');
     </script>
     <script src="_framework/blazor.webassembly.js"></script>
 </body>

@@ -111,14 +111,21 @@ namespace proyectoAgiles.Services
         {
             try
             {
+                Console.WriteLine($"[ReportesService] Iniciando exportación PDF para: {solicitud.DocenteNombre}");
+                
                 var fichaData = GenerarDatosFicha(solicitud);
                 var json = JsonSerializer.Serialize(fichaData, new JsonSerializerOptions { WriteIndented = true });
                 
-                await _jsRuntime.InvokeVoidAsync("descargarPDF", json, $"Ficha_{solicitud.DocenteNombre}_{solicitud.DocenteCedula}.pdf");
+                var nombreArchivo = $"Ficha_{solicitud.DocenteNombre.Replace(" ", "_")}_{solicitud.DocenteCedula}.pdf";
+                Console.WriteLine($"[ReportesService] Nombre archivo: {nombreArchivo}");
+                
+                await _jsRuntime.InvokeVoidAsync("descargarPDF", json, nombreArchivo);
+                
+                Console.WriteLine("[ReportesService] Función JS de descarga invocada exitosamente");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error al exportar ficha: {ex.Message}");
+                Console.WriteLine($"[ReportesService] Error al exportar ficha: {ex.Message}");
                 await _jsRuntime.InvokeVoidAsync("alert", "Error al generar el PDF. Intente nuevamente.");
             }
         }
@@ -161,10 +168,24 @@ namespace proyectoAgiles.Services
 
         public async Task MostrarVistaPrevia(SolicitudEscalafonDto solicitud)
         {
-            var fichaData = GenerarDatosFicha(solicitud);
-            var json = JsonSerializer.Serialize(fichaData, new JsonSerializerOptions { WriteIndented = true });
-            
-            await _jsRuntime.InvokeVoidAsync("mostrarVistaPrevia", json);
+            try
+            {
+                Console.WriteLine($"[ReportesService] Iniciando vista previa para: {solicitud.DocenteNombre}");
+                
+                var fichaData = GenerarDatosFicha(solicitud);
+                var json = JsonSerializer.Serialize(fichaData, new JsonSerializerOptions { WriteIndented = true });
+                
+                Console.WriteLine($"[ReportesService] JSON generado: {json.Substring(0, Math.Min(100, json.Length))}...");
+                
+                await _jsRuntime.InvokeVoidAsync("mostrarVistaPrevia", json);
+                
+                Console.WriteLine("[ReportesService] Función JS invocada exitosamente");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ReportesService] Error en MostrarVistaPrevia: {ex.Message}");
+                await _jsRuntime.InvokeVoidAsync("alert", $"Error al mostrar vista previa: {ex.Message}");
+            }
         }
     }
 }
