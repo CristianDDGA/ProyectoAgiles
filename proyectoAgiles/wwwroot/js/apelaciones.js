@@ -15,7 +15,7 @@ window.apelacionesManager = {
                 
                 // Crear nuevo modal
                 const modalHtml = `
-                    <div class="modal fade" id="${modalId}" tabindex="-1" aria-labelledby="modalPdfApelacionLabel" aria-hidden="true">
+                    <div class="modal fade modal-pdf-apelacion" id="${modalId}" tabindex="-1" aria-labelledby="modalPdfApelacionLabel" aria-hidden="true">
                         <div class="modal-dialog modal-xl">
                             <div class="modal-content">
                                 <div class="modal-header bg-warning text-dark">
@@ -94,7 +94,7 @@ window.apelacionesManager = {
     
     // Mostrar modal de confirmación para aceptar apelación
     confirmarAceptarApelacion: function(solicitudId, nombreDocente) {
-        return new Promise((resolve) => {
+        return new Promise((resolve, reject) => {
             const modalId = 'modal-aceptar-apelacion';
             
             // Eliminar modal existente
@@ -104,8 +104,8 @@ window.apelacionesManager = {
             }
             
             const modalHtml = `
-                <div class="modal fade" id="${modalId}" tabindex="-1" aria-labelledby="modalAceptarApelacionLabel" aria-hidden="true">
-                    <div class="modal-dialog">
+                <div class="modal fade modal-apelacion" id="${modalId}" tabindex="-1" aria-labelledby="modalAceptarApelacionLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-lg">
                         <div class="modal-content">
                             <div class="modal-header bg-success text-white">
                                 <h5 class="modal-title" id="modalAceptarApelacionLabel">
@@ -114,16 +114,27 @@ window.apelacionesManager = {
                                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
                             <div class="modal-body">
-                                <div class="alert alert-info">
-                                    <i class="fas fa-info-circle"></i>
+                                <div class="alert alert-info mb-4">
+                                    <i class="fas fa-info-circle me-2"></i>
                                     <strong>Importante:</strong> Al aceptar esta apelación, la solicitud regresará al estado "Pendiente" 
                                     para ser reevaluada desde el inicio del proceso.
                                 </div>
-                                <p><strong>Docente:</strong> ${nombreDocente}</p>
+                                
                                 <div class="mb-3">
-                                    <label for="observacionesAceptacion" class="form-label">Observaciones (opcional):</label>
-                                    <textarea class="form-control" id="observacionesAceptacion" rows="3" 
-                                              placeholder="Ingrese las observaciones sobre la aceptación de la apelación..."></textarea>
+                                    <label class="form-label fw-bold">Docente:</label>
+                                    <p class="form-control-plaintext bg-light p-2 rounded">${nombreDocente}</p>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="observacionesAceptacion${solicitudId}" class="form-label fw-bold">
+                                        Observaciones sobre la aceptación:
+                                    </label>
+                                    <textarea class="form-control" id="observacionesAceptacion${solicitudId}" rows="4" 
+                                              placeholder="Ingrese las observaciones sobre por qué se acepta la apelación...">
+                                    </textarea>
+                                    <small class="form-text text-muted">
+                                        Estas observaciones quedarán registradas en el historial de la solicitud.
+                                    </small>
                                 </div>
                             </div>
                             <div class="modal-footer">
@@ -144,10 +155,17 @@ window.apelacionesManager = {
             modal.show();
             
             // Guardar el callback para procesar la aceptación
-            window.apelacionesManager._callbackAceptacion = resolve;
+            window.apelacionesManager._callbackAceptacion = (data) => {
+                resolve(data ? JSON.stringify(data) : null);
+            };
             
-            // Limpiar modal cuando se cierre
+            // Manejar cancelación
             document.getElementById(modalId).addEventListener('hidden.bs.modal', function () {
+                if (window.apelacionesManager._callbackAceptacion) {
+                    const callback = window.apelacionesManager._callbackAceptacion;
+                    window.apelacionesManager._callbackAceptacion = null;
+                    callback(null); // Enviar null en lugar de reject
+                }
                 this.remove();
             });
         });
@@ -155,7 +173,7 @@ window.apelacionesManager = {
     
     // Procesar aceptación de apelación
     procesarAceptacion: function(solicitudId) {
-        const observaciones = document.getElementById('observacionesAceptacion').value;
+        const observaciones = document.getElementById(`observacionesAceptacion${solicitudId}`).value;
         
         // Cerrar modal
         const modal = bootstrap.Modal.getInstance(document.getElementById('modal-aceptar-apelacion'));
@@ -163,9 +181,11 @@ window.apelacionesManager = {
         
         // Ejecutar callback con datos
         if (window.apelacionesManager._callbackAceptacion) {
-            window.apelacionesManager._callbackAceptacion({
+            const callback = window.apelacionesManager._callbackAceptacion;
+            window.apelacionesManager._callbackAceptacion = null;
+            callback({
                 solicitudId: solicitudId,
-                observaciones: observaciones,
+                observaciones: observaciones.trim(),
                 accion: 'aceptar'
             });
         }
@@ -173,7 +193,7 @@ window.apelacionesManager = {
     
     // Mostrar modal de confirmación para rechazar apelación
     confirmarRechazarApelacion: function(solicitudId, nombreDocente) {
-        return new Promise((resolve) => {
+        return new Promise((resolve, reject) => {
             const modalId = 'modal-rechazar-apelacion';
             
             // Eliminar modal existente
@@ -183,8 +203,8 @@ window.apelacionesManager = {
             }
             
             const modalHtml = `
-                <div class="modal fade" id="${modalId}" tabindex="-1" aria-labelledby="modalRechazarApelacionLabel" aria-hidden="true">
-                    <div class="modal-dialog">
+                <div class="modal fade modal-apelacion" id="${modalId}" tabindex="-1" aria-labelledby="modalRechazarApelacionLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-lg">
                         <div class="modal-content">
                             <div class="modal-header bg-danger text-white">
                                 <h5 class="modal-title" id="modalRechazarApelacionLabel">
@@ -193,17 +213,35 @@ window.apelacionesManager = {
                                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
                             <div class="modal-body">
-                                <div class="alert alert-warning">
-                                    <i class="fas fa-exclamation-triangle"></i>
+                                <div class="alert alert-warning mb-4">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
                                     <strong>Atención:</strong> Al rechazar esta apelación, la solicitud quedará en estado 
-                                    "Rechazado Definitivo" y el docente será notificado automáticamente.
+                                    "Rechazado Definitivo" y el docente será notificado automáticamente por correo electrónico.
                                 </div>
-                                <p><strong>Docente:</strong> ${nombreDocente}</p>
+                                
                                 <div class="mb-3">
-                                    <label for="motivoRechazo" class="form-label">Motivo del rechazo <span class="text-danger">*</span>:</label>
-                                    <textarea class="form-control" id="motivoRechazo" rows="4" 
-                                              placeholder="Ingrese el motivo detallado del rechazo de la apelación..." required></textarea>
-                                    <small class="form-text text-muted">Este motivo será enviado al docente por correo electrónico.</small>
+                                    <label class="form-label fw-bold">Docente:</label>
+                                    <p class="form-control-plaintext bg-light p-2 rounded">${nombreDocente}</p>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="motivoRechazo${solicitudId}" class="form-label fw-bold">
+                                        Motivo del rechazo <span class="text-danger">*</span>:
+                                    </label>
+                                    <textarea class="form-control" id="motivoRechazo${solicitudId}" rows="5" 
+                                              placeholder="Ingrese el motivo detallado del rechazo de la apelación..." required>
+                                    </textarea>
+                                    <small class="form-text text-muted">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        Este motivo será enviado al docente por correo electrónico y quedará registrado permanentemente.
+                                    </small>
+                                </div>
+                                
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="checkbox" id="confirmoRechazo${solicitudId}">
+                                    <label class="form-check-label" for="confirmoRechazo${solicitudId}">
+                                        <strong>Confirmo que he revisado la apelación y el motivo del rechazo es fundamentado</strong>
+                                    </label>
                                 </div>
                             </div>
                             <div class="modal-footer">
@@ -224,10 +262,17 @@ window.apelacionesManager = {
             modal.show();
             
             // Guardar el callback para procesar el rechazo
-            window.apelacionesManager._callbackRechazo = resolve;
+            window.apelacionesManager._callbackRechazo = (data) => {
+                resolve(data ? JSON.stringify(data) : null);
+            };
             
-            // Limpiar modal cuando se cierre
+            // Manejar cancelación
             document.getElementById(modalId).addEventListener('hidden.bs.modal', function () {
+                if (window.apelacionesManager._callbackRechazo) {
+                    const callback = window.apelacionesManager._callbackRechazo;
+                    window.apelacionesManager._callbackRechazo = null;
+                    callback(null); // Enviar null en lugar de reject
+                }
                 this.remove();
             });
         });
@@ -235,12 +280,33 @@ window.apelacionesManager = {
     
     // Procesar rechazo de apelación
     procesarRechazo: function(solicitudId) {
-        const motivo = document.getElementById('motivoRechazo').value;
+        const motivo = document.getElementById(`motivoRechazo${solicitudId}`).value;
+        const confirmado = document.getElementById(`confirmoRechazo${solicitudId}`).checked;
         
+        // Validaciones
         if (!motivo.trim()) {
             if (window.toastNotifications) {
                 window.toastNotifications.error('Error', 'Debe ingresar un motivo para el rechazo');
             }
+            // Resaltar el campo
+            document.getElementById(`motivoRechazo${solicitudId}`).classList.add('is-invalid');
+            return;
+        }
+        
+        if (!confirmado) {
+            if (window.toastNotifications) {
+                window.toastNotifications.error('Error', 'Debe confirmar que ha revisado la apelación');
+            }
+            // Resaltar el checkbox
+            document.getElementById(`confirmoRechazo${solicitudId}`).classList.add('is-invalid');
+            return;
+        }
+        
+        if (motivo.trim().length < 10) {
+            if (window.toastNotifications) {
+                window.toastNotifications.error('Error', 'El motivo del rechazo debe tener al menos 10 caracteres');
+            }
+            document.getElementById(`motivoRechazo${solicitudId}`).classList.add('is-invalid');
             return;
         }
         
@@ -250,9 +316,11 @@ window.apelacionesManager = {
         
         // Ejecutar callback con datos
         if (window.apelacionesManager._callbackRechazo) {
-            window.apelacionesManager._callbackRechazo({
+            const callback = window.apelacionesManager._callbackRechazo;
+            window.apelacionesManager._callbackRechazo = null;
+            callback({
                 solicitudId: solicitudId,
-                motivo: motivo,
+                motivo: motivo.trim(),
                 accion: 'rechazar'
             });
         }

@@ -1939,24 +1939,31 @@
     {
         try
         {
-            var confirmacion = await JSRuntime.InvokeAsync<bool>("confirm", 
-                $"¿Está seguro de que desea aceptar la apelación de {nombreDocente}?\n\n" +
-                "Al aceptar, la solicitud regresará al estado 'Pendiente' para ser reevaluada.");
+            // Mostrar modal de confirmación avanzado
+            var resultado = await JSRuntime.InvokeAsync<string>("apelacionesManager.confirmarAceptarApelacion", solicitudId, nombreDocente);
             
-            if (!confirmacion) return;
+            // Si el resultado es null o vacío, significa que el usuario canceló
+            if (string.IsNullOrEmpty(resultado))
+            {
+                return; // Cancelado por el usuario
+            }
             
-            // Solicitar observaciones opcionales
-            var observaciones = await JSRuntime.InvokeAsync<string>("prompt", 
-                "Ingrese observaciones sobre la aceptación (opcional):");
+            // Parsear el resultado JSON
+            var jsonResult = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(resultado);
+            var observaciones = jsonResult?.ContainsKey("observaciones") == true ? jsonResult["observaciones"]?.ToString() ?? "" : "";
             
-            await ProcesarAceptacionApelacion(solicitudId, observaciones ?? "");
+            await ProcesarAceptacionApelacion(solicitudId, observaciones);
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error al aceptar apelación: {ex.Message}");
-            await JSRuntime.InvokeVoidAsync("toastNotifications.error", 
-                "Error", 
-                "Ocurrió un error al aceptar la apelación.");
+            // Solo mostrar error si no es por cancelación
+            if (!ex.Message.Contains("Cancelado"))
+            {
+                await JSRuntime.InvokeVoidAsync("toastNotifications.error", 
+                    "Error", 
+                    "Ocurrió un error al procesar la aceptación de la apelación.");
+            }
         }
     }
     
@@ -1965,32 +1972,34 @@
     {
         try
         {
-            var confirmacion = await JSRuntime.InvokeAsync<bool>("confirm", 
-                $"¿Está seguro de que desea rechazar la apelación de {nombreDocente}?\n\n" +
-                "Al rechazar, la solicitud quedará en estado 'Rechazado Definitivo' y el docente será notificado.");
+            // Mostrar modal de confirmación avanzado
+            var resultado = await JSRuntime.InvokeAsync<string>("apelacionesManager.confirmarRechazarApelacion", solicitudId, nombreDocente);
             
-            if (!confirmacion) return;
-            
-            // Solicitar motivo del rechazo
-            var motivo = await JSRuntime.InvokeAsync<string>("prompt", 
-                "Ingrese el motivo del rechazo (requerido):");
-            
-            if (string.IsNullOrWhiteSpace(motivo))
+            // Si el resultado es null o vacío, significa que el usuario canceló
+            if (string.IsNullOrEmpty(resultado))
             {
-                await JSRuntime.InvokeVoidAsync("toastNotifications.warning", 
-                    "Motivo requerido", 
-                    "Debe ingresar un motivo para rechazar la apelación.");
-                return;
+                return; // Cancelado por el usuario
             }
             
-            await ProcesarRechazoApelacion(solicitudId, motivo);
+            // Parsear el resultado JSON
+            var jsonResult = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(resultado);
+            var motivo = jsonResult?.ContainsKey("motivo") == true ? jsonResult["motivo"]?.ToString() ?? "" : "";
+            
+            if (!string.IsNullOrWhiteSpace(motivo))
+            {
+                await ProcesarRechazoApelacion(solicitudId, motivo);
+            }
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error al rechazar apelación: {ex.Message}");
-            await JSRuntime.InvokeVoidAsync("toastNotifications.error", 
-                "Error", 
-                "Ocurrió un error al rechazar la apelación.");
+            // Solo mostrar error si no es por cancelación
+            if (!ex.Message.Contains("Cancelado"))
+            {
+                await JSRuntime.InvokeVoidAsync("toastNotifications.error", 
+                    "Error", 
+                    "Ocurrió un error al procesar el rechazo de la apelación.");
+            }
         }
     }
     
