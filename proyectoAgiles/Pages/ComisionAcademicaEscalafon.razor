@@ -109,10 +109,21 @@
             {
                 @foreach (var solicitud in filteredSolicitudes)
                 {
-                    <div class="solicitud-card @GetStatusClass(solicitud.Status)">
+                    var esApelacion = solicitud.Status == "PendienteComision" && solicitud.Observaciones.Contains("APELACIÓN DE SOLICITUD");
+                    var claseApelacion = esApelacion ? "solicitud-con-apelacion" : "";
+                    
+                    <div class="solicitud-card @GetStatusClass(solicitud.Status) @claseApelacion">
                         <div class="solicitud-header">
                             <div class="solicitud-info">
-                                <h4>@solicitud.DocenteNombre</h4>
+                                <h4>
+                                    @solicitud.DocenteNombre
+                                    @if (esApelacion)
+                                    {
+                                        <span class="badge bg-warning ms-2">
+                                            <i class="fas fa-exclamation-triangle"></i> APELACIÓN
+                                        </span>
+                                    }
+                                </h4>
                                 <p class="solicitud-cedula">
                                     <i class="fas fa-id-card"></i> @solicitud.DocenteCedula
                                 </p>
@@ -811,6 +822,22 @@
                     }
                 </div>
                 <div class="modal-footer">
+                    @* Botones para gestión de apelaciones *@
+                    @if (selectedSolicitud?.Status == "PendienteComision" && selectedSolicitud.Observaciones.Contains("APELACIÓN DE SOLICITUD"))
+                    {
+                        <div class="alert alert-warning w-100 mb-3">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <strong>Apelación Pendiente:</strong> Esta solicitud requiere una decisión sobre la apelación presentada.
+                        </div>
+                        <button type="button" class="btn btn-success me-2" @onclick="() => AceptarApelacion(selectedSolicitud.Id, selectedSolicitud.DocenteNombre)">
+                            <i class="fas fa-check-circle"></i> Aceptar Apelación
+                        </button>
+                        <button type="button" class="btn btn-danger me-2" @onclick="() => RechazarApelacion(selectedSolicitud.Id, selectedSolicitud.DocenteNombre)">
+                            <i class="fas fa-times-circle"></i> Rechazar Apelación
+                        </button>
+                    }
+                    
+                    @* Botones estándar según el estado *@
                     @if (selectedSolicitud?.Status == "Procesado")
                     {
                         <button type="button" class="btn btn-success" @onclick="() => FinalizarEscalafon(selectedSolicitud.Id)">
@@ -1424,7 +1451,7 @@
         }
     }
 
-    // Método para ver archivo de apelación en nueva pestaña
+    // Método para ver archivo de apelación en modal
     private async Task VerArchivoApelacion(int solicitudId, string nombreArchivo)
     {
         try
@@ -1439,17 +1466,17 @@
             if (response.IsSuccessStatusCode)
             {
                 var archivoBytes = await response.Content.ReadAsByteArrayAsync();
-                var contentType = response.Content.Headers.ContentType?.MediaType ?? "application/octet-stream";
+                var contentType = response.Content.Headers.ContentType?.MediaType ?? "application/pdf";
                 
                 var base64 = Convert.ToBase64String(archivoBytes);
                 var dataUrl = $"data:{contentType};base64,{base64}";
                 
-                // Abrir el archivo en una nueva pestaña
-                await JSRuntime.InvokeVoidAsync("open", dataUrl, "_blank");
+                // Mostrar PDF en modal usando la nueva función
+                await JSRuntime.InvokeVoidAsync("mostrarPdfApelacion", dataUrl, nombreArchivo);
                 
                 await JSRuntime.InvokeVoidAsync("toastNotifications.success", 
-                    "Archivo abierto", 
-                    "El archivo se ha abierto en una nueva pestaña.");
+                    "Archivo cargado", 
+                    "El archivo se ha cargado correctamente.");
             }
             else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
             {
@@ -1882,5 +1909,192 @@
         }
         
         return (textoFormateado, archivos);
+    }
+    
+    // Método para gestionar apelaciones (aceptar/rechazar)
+    private async Task GestionarApelacion(int solicitudId, string nombreDocente, string accion)
+    {
+        try
+        {
+            if (accion == "aceptar")
+            {
+                await AceptarApelacion(solicitudId, nombreDocente);
+            }
+            else if (accion == "rechazar")
+            {
+                await RechazarApelacion(solicitudId, nombreDocente);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al gestionar apelación: {ex.Message}");
+            await JSRuntime.InvokeVoidAsync("toastNotifications.error", 
+                "Error", 
+                "Ocurrió un error al procesar la apelación.");
+        }
+    }
+    
+    // Método para aceptar una apelación
+    private async Task AceptarApelacion(int solicitudId, string nombreDocente)
+    {
+        try
+        {
+            var confirmacion = await JSRuntime.InvokeAsync<bool>("confirm", 
+                $"¿Está seguro de que desea aceptar la apelación de {nombreDocente}?\n\n" +
+                "Al aceptar, la solicitud regresará al estado 'Pendiente' para ser reevaluada.");
+            
+            if (!confirmacion) return;
+            
+            // Solicitar observaciones opcionales
+            var observaciones = await JSRuntime.InvokeAsync<string>("prompt", 
+                "Ingrese observaciones sobre la aceptación (opcional):");
+            
+            await ProcesarAceptacionApelacion(solicitudId, observaciones ?? "");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al aceptar apelación: {ex.Message}");
+            await JSRuntime.InvokeVoidAsync("toastNotifications.error", 
+                "Error", 
+                "Ocurrió un error al aceptar la apelación.");
+        }
+    }
+    
+    // Método para rechazar una apelación
+    private async Task RechazarApelacion(int solicitudId, string nombreDocente)
+    {
+        try
+        {
+            var confirmacion = await JSRuntime.InvokeAsync<bool>("confirm", 
+                $"¿Está seguro de que desea rechazar la apelación de {nombreDocente}?\n\n" +
+                "Al rechazar, la solicitud quedará en estado 'Rechazado Definitivo' y el docente será notificado.");
+            
+            if (!confirmacion) return;
+            
+            // Solicitar motivo del rechazo
+            var motivo = await JSRuntime.InvokeAsync<string>("prompt", 
+                "Ingrese el motivo del rechazo (requerido):");
+            
+            if (string.IsNullOrWhiteSpace(motivo))
+            {
+                await JSRuntime.InvokeVoidAsync("toastNotifications.warning", 
+                    "Motivo requerido", 
+                    "Debe ingresar un motivo para rechazar la apelación.");
+                return;
+            }
+            
+            await ProcesarRechazoApelacion(solicitudId, motivo);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al rechazar apelación: {ex.Message}");
+            await JSRuntime.InvokeVoidAsync("toastNotifications.error", 
+                "Error", 
+                "Ocurrió un error al rechazar la apelación.");
+        }
+    }
+    
+    // Método para procesar aceptación de apelación
+    private async Task ProcesarAceptacionApelacion(int solicitudId, string observaciones)
+    {
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("toastNotifications.info", 
+                "Procesando", 
+                "Aceptando apelación...");
+
+            var usuario = UserSession.CurrentUser;
+            var aceptarDto = new 
+            {
+                AceptadoPor = usuario?.FullName ?? "Usuario",
+                ObservacionesAceptacion = observaciones ?? ""
+            };
+
+            var json = System.Text.Json.JsonSerializer.Serialize(aceptarDto);
+            var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+            
+            var response = await HttpClient.PostAsync($"/api/solicitudes-escalafon/{solicitudId}/apelacion/aceptar", content);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                await JSRuntime.InvokeVoidAsync("toastNotifications.success", 
+                    "Apelación Aceptada", 
+                    "La apelación ha sido aceptada. La solicitud regresará al estado pendiente para reevaluación.");
+                
+                // Actualizar la lista de solicitudes
+                await RefreshSolicitudes();
+                
+                // Cerrar modal si está abierto
+                if (selectedSolicitud != null)
+                {
+                    CloseDetailsModal();
+                }
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("toastNotifications.error", 
+                    "Error", 
+                    "No se pudo aceptar la apelación. Intente nuevamente.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al procesar aceptación: {ex.Message}");
+            await JSRuntime.InvokeVoidAsync("toastNotifications.error", 
+                "Error", 
+                "Ocurrió un error al aceptar la apelación.");
+        }
+    }
+    
+    // Método para procesar rechazo de apelación
+    private async Task ProcesarRechazoApelacion(int solicitudId, string motivo)
+    {
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("toastNotifications.info", 
+                "Procesando", 
+                "Rechazando apelación...");
+
+            var usuario = UserSession.CurrentUser;
+            var rechazarDto = new 
+            {
+                RechazadoPor = usuario?.FullName ?? "Usuario",
+                MotivoRechazoApelacion = motivo ?? ""
+            };
+
+            var json = System.Text.Json.JsonSerializer.Serialize(rechazarDto);
+            var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+            
+            var response = await HttpClient.PostAsync($"/api/solicitudes-escalafon/{solicitudId}/apelacion/rechazar", content);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                await JSRuntime.InvokeVoidAsync("toastNotifications.success", 
+                    "Apelación Rechazada", 
+                    "La apelación ha sido rechazada. El docente será notificado automáticamente.");
+                
+                // Actualizar la lista de solicitudes
+                await RefreshSolicitudes();
+                
+                // Cerrar modal si está abierto
+                if (selectedSolicitud != null)
+                {
+                    CloseDetailsModal();
+                }
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("toastNotifications.error", 
+                    "Error", 
+                    "No se pudo rechazar la apelación. Intente nuevamente.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al procesar rechazo: {ex.Message}");
+            await JSRuntime.InvokeVoidAsync("toastNotifications.error", 
+                "Error", 
+                "Ocurrió un error al rechazar la apelación.");
+        }
     }
 }
