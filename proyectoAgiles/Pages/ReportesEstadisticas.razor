@@ -1,0 +1,352 @@
+@page "/admin/reportes-estadisticas"
+@page "/admin/reports"
+@using ProyectoAgiles.Application.DTOs
+@using proyectoAgiles.Services
+@inject HttpClient Http
+@inject ReportesService ReportesService
+@inject IJSRuntime JSRuntime
+@inject NavigationManager Navigation
+@inject UserSessionService UserSession
+@layout proyectoAgiles.Layout.MainLayout
+
+<PageTitle>Reportes de Ascensos Docentes - UTA</PageTitle>
+
+@* Carga el script de reportes *@
+<script src="~/js/reportes.js" defer></script>
+
+<div class="admin-dashboard">
+    <!-- Título del Panel con botón de regreso -->
+    <div class="dashboard-title-section">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="dashboard-main-title">
+                    <i class="fas fa-chart-line me-3"></i>Reportes de Ascensos Docentes
+                </h1>
+                <p class="dashboard-subtitle">Análisis gerencial de promociones académicas - Universidad Técnica de Ambato</p>
+            </div>
+            <button class="btn btn-outline-light btn-lg" @onclick="VolverAlDashboard">
+                <i class="fas fa-arrow-left me-2"></i>Volver al Dashboard
+            </button>
+        </div>
+    </div>
+    
+    <!-- Tarjetas de Estadísticas -->
+    <div class="stats-section">
+        <h2 class="section-title">Estadísticas de Ascensos</h2>
+        <div class="row">
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="stat-card">
+                    <div class="stat-icon teachers">
+                        <i class="fas fa-graduation-cap"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 class="stat-number">@TotalAscensos</h3>
+                        <p class="stat-label">Total Ascensos</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="stat-card">
+                    <div class="stat-icon active">
+                        <i class="fas fa-level-up-alt"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 class="stat-number">@TiposPromocion.Count</h3>
+                        <p class="stat-label">Tipos de Promoción</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="stat-card">
+                    <div class="stat-icon pending">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 class="stat-number">@PromedioExperiencia</h3>
+                        <p class="stat-label">Promedio Años Exp.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="stat-card">
+                    <div class="stat-icon completed">
+                        <i class="fas fa-calendar-check"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 class="stat-number">@AscensosEsteAno</h3>
+                        <p class="stat-label">Ascensos @DateTime.Now.Year</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Sección de Filtros y Tabla -->
+    <div class="management-section">
+        <h2 class="section-title">Gestión de Reportes</h2>
+        
+        <!-- Filtros -->
+        <div class="filter-section mb-4">
+            <div class="row">
+                <div class="col-md-6">
+                    <label class="form-label">Filtrar por tipo de promoción:</label>
+                    <select class="form-select" @onchange="OnTipoPromocionChanged">
+                        <option value="">Todas las promociones</option>
+                        @foreach (var tipo in TiposPromocion)
+                        {
+                            <option value="@tipo">@tipo</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Filtrar por año:</label>
+                    <select class="form-select" @onchange="OnAnoChanged">
+                        <option value="">Todos los años</option>
+                        @foreach (var ano in Anos)
+                        {
+                            <option value="@ano">@ano</option>
+                        }
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tabla de Reportes -->
+        <div class="table-responsive">
+            <table class="table table-striped table-hover align-middle">
+                <thead class="table-dark">
+                    <tr>
+                        <th><i class="fas fa-user me-2"></i>Docente</th>
+                        <th><i class="fas fa-id-card me-2"></i>Cédula</th>
+                        <th><i class="fas fa-university me-2"></i>Facultad</th>
+                        <th><i class="fas fa-graduation-cap me-2"></i>Carrera</th>
+                        <th><i class="fas fa-level-up-alt me-2"></i>Promoción</th>
+                        <th><i class="fas fa-calendar me-2"></i>Fecha</th>
+                        <th><i class="fas fa-clock me-2"></i>Experiencia</th>
+                        <th><i class="fas fa-check-circle me-2"></i>Estado</th>
+                        <th><i class="fas fa-download me-2"></i>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (SolicitudesFiltradas.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="9" class="text-center py-4">
+                                <div class="empty-state">
+                                    <i class="fas fa-inbox fa-3x mb-3 text-muted"></i>
+                                    <h4>No hay registros disponibles</h4>
+                                    <p class="text-muted">@(isLoading ? "Cargando datos..." : "No se encontraron solicitudes de ascenso.")</p>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var s in SolicitudesFiltradas)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="user-avatar me-3">
+                                            @(s.DocenteNombre.Split(' ').FirstOrDefault()?.Substring(0, 1) ?? "U")
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold">@s.DocenteNombre</div>
+                                            <small class="text-muted">@s.DocenteEmail</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td><span class="badge bg-light text-dark">@s.DocenteCedula</span></td>
+                                <td>@(s.Facultad ?? "No especificado")</td>
+                                <td>@(s.Carrera ?? "No especificado")</td>
+                                <td>
+                                    <div class="promotion-info">
+                                        <small class="text-muted">@s.NivelActual</small>
+                                        <i class="fas fa-arrow-right mx-2 text-primary"></i>
+                                        <strong class="text-success">@s.NivelSolicitado</strong>
+                                    </div>
+                                </td>
+                                <td>@s.FechaSolicitud.ToString("dd/MM/yyyy")</td>
+                                <td>
+                                    <span class="badge bg-info">@s.AnosExperiencia años</span>
+                                </td>
+                                <td>
+                                    <span class="badge @GetStatusBadgeClass(s.Status)">@s.Status</span>
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <button class="btn btn-outline-info btn-sm" @onclick="() => MostrarVistaPrevia(s)" title="Ver Vista Previa">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn btn-outline-primary btn-sm" @onclick="() => ExportarFichaPDF(s)" title="Descargar PDF">
+                                            <i class="fas fa-file-pdf"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<SolicitudEscalafonDto> Solicitudes = new();
+    private List<SolicitudEscalafonDto> SolicitudesFiltradas = new();
+    private HashSet<string> TiposPromocion = new();
+    private HashSet<int> Anos = new();
+    private string TipoPromocionSeleccionado = string.Empty;
+    private string AnoSeleccionado = string.Empty;
+    private bool isLoading = true;
+    
+    // Propiedades calculadas para estadísticas
+    private int TotalAscensos => Solicitudes.Count;
+    private int PromedioExperiencia => Solicitudes.Any() ? (int)Solicitudes.Average(s => s.AnosExperiencia) : 0;
+    private int AscensosEsteAno => Solicitudes.Count(s => s.FechaSolicitud.Year == DateTime.Now.Year);
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Verificar autenticación
+        if (!UserSession.IsAuthenticated)
+        {
+            Navigation.NavigateTo("/login");
+            return;
+        }
+
+        await CargarDatos();
+    }
+
+    private async Task CargarDatos()
+    {
+        try
+        {
+            isLoading = true;
+            StateHasChanged();
+            
+            // Obtener TODAS las solicitudes (no solo aprobadas)
+            var todasSolicitudes = await ReportesService.ObtenerSolicitudesAsync();
+            
+            // Filtrar por solicitudes aprobadas y procesadas
+            Solicitudes = todasSolicitudes.Where(s => 
+                s.Status == "Aprobada" || 
+                s.Status == "Procesada" || 
+                s.Status == "Finalizada" ||
+                s.Status == "Completada").ToList();
+            
+            // Si no hay solicitudes aprobadas, mostrar todas para testing
+            if (Solicitudes.Count == 0)
+            {
+                Solicitudes = todasSolicitudes;
+            }
+            
+            // Inicializar filtros
+            TiposPromocion = Solicitudes.Select(s => $"{s.NivelActual} → {s.NivelSolicitado}").ToHashSet();
+            Anos = Solicitudes.Select(s => s.FechaSolicitud.Year).ToHashSet();
+            
+            // Mostrar todas las solicitudes inicialmente
+            SolicitudesFiltradas = Solicitudes;
+            
+            isLoading = false;
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            isLoading = false;
+            Console.WriteLine($"Error al cargar datos: {ex.Message}");
+            await JSRuntime.InvokeVoidAsync("console.error", $"Error al cargar datos: {ex.Message}");
+            StateHasChanged();
+        }
+    }
+
+    private void OnTipoPromocionChanged(ChangeEventArgs e)
+    {
+        TipoPromocionSeleccionado = e.Value?.ToString() ?? string.Empty;
+        AplicarFiltros();
+    }
+
+    private void OnAnoChanged(ChangeEventArgs e)
+    {
+        AnoSeleccionado = e.Value?.ToString() ?? string.Empty;
+        AplicarFiltros();
+    }
+
+    private void AplicarFiltros()
+    {
+        var solicitudesFiltradas = Solicitudes.AsEnumerable();
+
+        // Filtrar por tipo de promoción
+        if (!string.IsNullOrWhiteSpace(TipoPromocionSeleccionado))
+        {
+            solicitudesFiltradas = solicitudesFiltradas.Where(s => 
+                $"{s.NivelActual} → {s.NivelSolicitado}" == TipoPromocionSeleccionado);
+        }
+
+        // Filtrar por año
+        if (!string.IsNullOrWhiteSpace(AnoSeleccionado) && int.TryParse(AnoSeleccionado, out int ano))
+        {
+            solicitudesFiltradas = solicitudesFiltradas.Where(s => s.FechaSolicitud.Year == ano);
+        }
+
+        SolicitudesFiltradas = solicitudesFiltradas.ToList();
+        StateHasChanged();
+    }
+
+    private string GetStatusClass(string status)
+    {
+        return status switch
+        {
+            "Aprobada" => "bg-success",
+            "Procesada" => "bg-success",
+            "Finalizada" => "bg-success",
+            "Completada" => "bg-success",
+            "Rechazada" => "bg-danger",
+            "Pendiente" => "bg-warning text-dark",
+            _ => "bg-secondary"
+        };
+    }
+
+    private string GetStatusBadgeClass(string status)
+    {
+        return status switch
+        {
+            "Aprobada" => "bg-success",
+            "Procesada" => "bg-success",
+            "Finalizada" => "bg-success",
+            "Completada" => "bg-success",
+            "Rechazada" => "bg-danger",
+            "Pendiente" => "bg-warning text-dark",
+            _ => "bg-secondary"
+        };
+    }
+
+    private async Task MostrarVistaPrevia(SolicitudEscalafonDto solicitud)
+    {
+        try
+        {
+            await ReportesService.MostrarVistaPrevia(solicitud);
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error al mostrar vista previa: {ex.Message}");
+        }
+    }
+
+    private async Task ExportarFichaPDF(SolicitudEscalafonDto solicitud)
+    {
+        try
+        {
+            await ReportesService.ExportarFichaPDFAsync(solicitud);
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error al exportar PDF: {ex.Message}");
+        }
+    }
+
+    private void VolverAlDashboard()
+    {
+        Navigation.NavigateTo("/admin");
+    }
+}
