@@ -68,16 +68,16 @@
     font-weight: 700 !important;
     letter-spacing: 0.5px;
     text-transform: uppercase;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    background: linear-gradient(135deg, #722f37 0%, #5a252b 100%) !important;
     color: white !important;
-    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+    box-shadow: 0 8px 25px rgba(114, 47, 55, 0.3);
     border: none !important;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .nivel-badge-main:hover {
     transform: translateY(-2px);
-    box-shadow: 0 12px 35px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 12px 35px rgba(114, 47, 55, 0.4);
 }
 
 /* Sección de Acciones del Nivel */
