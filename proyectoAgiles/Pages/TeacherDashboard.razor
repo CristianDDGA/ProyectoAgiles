@@ -17,37 +17,47 @@
 
 <PageTitle>Panel de Docente - UTA</PageTitle>
 
-<div class="teacher-dashboard">    <!-- Sección de Nivel -->
-    <div class="nivel-section-container mb-4">
-        <div class="nivel-card">
-            <div class="nivel-content-horizontal">
-                <div class="nivel-title-section">
-                    <h5 class="nivel-title">
+<div class="teacher-dashboard">
+    <!-- Sección de Nivel - Diseño Mejorado para Pantalla Completa -->
+    <div class="nivel-section-fullwidth">
+        <div class="nivel-container">
+            <!-- Información del Nivel Actual -->
+            <div class="nivel-info-section">
+                <div class="nivel-header">
+                    <h4 class="nivel-title">
                         <i class="fas fa-graduation-cap"></i>
                         Nivel Académico Actual
-                    </h5>
+                    </h4>
                 </div>
-                  <div class="nivel-current-info">
-                    <div class="nivel-badge-container">
-                        <span class="nivel-badge">@UserSession.GetUserNivel()</span>
-                    </div>
+                <div class="nivel-badge-section">
+                    <span class="nivel-badge-main">@UserSession.GetUserNivel()</span>
                 </div>
-                
-                <div class="nivel-actions">
-                    <button class="btn btn-success nivel-btn" @onclick="ShowRequisitosModal">
-                        <i class="fas fa-arrow-up me-2"></i>
-                        @if (configuracionRequisitos != null)
-                        {
-                            <text>Ascender a @configuracionRequisitos.NivelObjetivo</text>
-                        }
-                        else
-                        {
-                            <text>Subir de Nivel</text>
-                        }
+            </div>
+
+            <!-- Acciones del Nivel -->
+            <div class="nivel-actions-section">
+                <div class="actions-grid">
+                    <button class="btn btn-success nivel-btn-primary" @onclick="ShowRequisitosModal">
+                        <div class="btn-content">
+                            <i class="fas fa-arrow-up"></i>
+                            <span class="btn-text">
+                                @if (configuracionRequisitos != null)
+                                {
+                                    <text>Ascender a @configuracionRequisitos.NivelObjetivo</text>
+                                }
+                                else
+                                {
+                                    <text>Subir de Nivel</text>
+                                }
+                            </span>
+                        </div>
                     </button>
-                    <button class="btn btn-info nivel-btn ms-2" @onclick="ShowHistorialModal">
-                        <i class="fas fa-history me-2"></i>
-                        Historial
+                    
+                    <button class="btn btn-info nivel-btn-secondary" @onclick="ShowHistorialModal">
+                        <div class="btn-content">
+                            <i class="fas fa-history"></i>
+                            <span class="btn-text">Ver Historial</span>
+                        </div>
                     </button>
                 </div>
             </div>
@@ -56,7 +66,7 @@
 
     @if (showRequisitosModal)
     {
-        <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,0.3);">
+        <div class="modal fade show d-block modal-backdrop-custom" tabindex="-1">
             <div class="modal-dialog modal-xl">
                 <div class="modal-content">
                     <div class="modal-header">
@@ -393,7 +403,7 @@
     <!-- Modal de Historial de Escalafones -->
     @if (showHistorialModal)
     {
-        <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,0.3);">
+        <div class="modal fade show d-block modal-backdrop-custom" tabindex="-1">
             <div class="modal-dialog modal-xl">
                 <div class="modal-content">
                     <div class="modal-header">
@@ -654,7 +664,7 @@
 
     @if (showInvestigacionesModal)
     {
-        <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,0.3);">
+        <div class="modal fade show d-block modal-backdrop-custom" tabindex="-1">
             <div class="modal-dialog modal-xl">
                 <div class="modal-content">
                     <div class="modal-header">
@@ -837,7 +847,7 @@
 
     @if (showAgregarModal)
     {
-        <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,0.3);">
+        <div class="modal fade show d-block modal-backdrop-custom" tabindex="-1">
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <div class="modal-header">
@@ -927,7 +937,7 @@
                                                 Archivo PDF
                                             </label>
                                             <div class="file-upload-container">
-                                                <div style="position: absolute; left: -10000px; top: -10000px; width: 1px; height: 1px; overflow: hidden; opacity: 0; z-index: -9999;">
+                                                <div class="file-input-hidden">
                                                     <InputFile OnChange="HandlePdfSelected" accept=".pdf" id="investigacion-file-input" />
                                                 </div>
                                                 <div class="file-upload-area" onclick="document.getElementById('investigacion-file-input').click();">
@@ -973,7 +983,7 @@
     }    @* Modal para Evaluaciones de Desempeño *@
     @if (showEvaluacionesModal)
     {
-        <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,0.3);">
+        <div class="modal fade show d-block modal-backdrop-custom" tabindex="-1">
             <div class="modal-dialog modal-xl">
                 <div class="modal-content">
                     <div class="modal-header">
@@ -1152,7 +1162,7 @@
     @* Modal para Capacitaciones DITIC *@
     @if (showCapacitacionesModal)
     {
-        <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,0.3);">
+        <div class="modal fade show d-block modal-backdrop-custom" tabindex="-1">
             <div class="modal-dialog modal-xl">
                 <div class="modal-content">
                     <div class="modal-header">
@@ -1353,7 +1363,7 @@
     @* Modal para Solicitudes *@
     @if (showSolicitudesModal)
     {
-        <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,0.3);">
+        <div class="modal fade show d-block modal-backdrop-custom" tabindex="-1">
             <div class="modal-dialog modal-xl">
                 <div class="modal-content">
                     <div class="modal-header">
@@ -1579,7 +1589,7 @@
     @* Modal para Detalle de Solicitud *@
     @if (showDetalleSolicitudModal && solicitudSeleccionada != null)
     {
-        <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,0.3);">
+        <div class="modal fade show d-block modal-backdrop-custom" tabindex="-1">
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <div class="modal-header">
@@ -1697,7 +1707,7 @@
     @* Modal para Apelación de Solicitud *@
     @if (showApelacionModal && solicitudParaApelar != null)
     {
-        <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,0.3);">
+        <div class="modal fade show d-block modal-backdrop-custom" tabindex="-1">
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <div class="modal-header bg-warning text-dark">
@@ -1825,7 +1835,7 @@
     @* Modal para Agregar/Editar Evaluaciones *@
     @if (showAgregarEvaluacionModal)
     {
-        <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,0.3);">
+        <div class="modal fade show d-block modal-backdrop-custom" tabindex="-1">
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <div class="modal-header">
@@ -1975,7 +1985,7 @@
                                                 Archivo PDF
                                             </label>
                                             <div class="file-upload-container">
-                                                <div style="position: absolute; left: -10000px; top: -10000px; width: 1px; height: 1px; overflow: hidden; opacity: 0; z-index: -9999;">
+                                                <div class="file-input-hidden">
                                                     <InputFile OnChange="HandleEvaluacionPdfSelected" accept=".pdf" id="evaluacion-file-input" />
                                                 </div>
                                                 <div class="file-upload-area" onclick="document.getElementById('evaluacion-file-input').click();">
@@ -2023,7 +2033,7 @@
     @* Modal para Agregar/Editar Capacitaciones *@
     @if (showAgregarCapacitacionModal)
     {
-        <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,0.3);">
+        <div class="modal fade show d-block modal-backdrop-custom" tabindex="-1">
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <div class="modal-header">
@@ -2193,7 +2203,7 @@
                                                 Certificado PDF
                                             </label>
                                             <div class="file-upload-container">
-                                                <div style="position: absolute; left: -10000px; top: -10000px; width: 1px; height: 1px; overflow: hidden; opacity: 0; z-index: -9999;">
+                                                <div class="file-input-hidden">
                                                     <InputFile OnChange="HandleCapacitacionPdfSelected" accept=".pdf" id="capacitacion-file-input" />
                                                 </div>
                                                 <div class="file-upload-area" onclick="document.getElementById('capacitacion-file-input').click();">
@@ -4774,133 +4784,3 @@ private bool isLoadingInvestigaciones = false;
     }
 
 }
-
-<style>
-    .info-card {
-        background: #f8f9fa;
-        border: 1px solid #e9ecef;
-        border-radius: 8px;
-        padding: 1rem;
-        margin-bottom: 1rem;
-        transition: all 0.3s ease;
-    }
-
-    .info-card:hover {
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        border-color: #007bff;
-    }
-
-    .info-label {
-        color: #495057;
-        font-weight: 600;
-        font-size: 0.875rem;
-        margin-bottom: 0.5rem;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-
-    .info-value {
-        color: #212529;
-        font-weight: 500;
-        margin-bottom: 0;
-        font-size: 1rem;
-    }
-
-    .modal-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border-radius: 0.375rem 0.375rem 0 0;
-    }
-
-    .modal-header .btn-close {
-        filter: invert(1);
-    }
-
-    .modal-title {
-        font-weight: 600;
-    }
-
-    .badge.fs-6 {
-        font-size: 0.9rem !important;
-        padding: 0.5rem 0.75rem;
-    }
-
-    .alert-light {
-        background-color: #f8f9fa;
-        border-color: #dee2e6;
-    }
-
-    .action-btn.cancel {
-        background: linear-gradient(135deg, #ff6b6b, #ee5a52);
-        color: white;
-        border: none;
-        padding: 0.5rem;
-        border-radius: 6px;
-        transition: all 0.3s ease;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 36px;
-        height: 36px;
-        margin-left: 0.25rem;
-    }
-
-    .action-btn.cancel:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
-        background: linear-gradient(135deg, #ff5252, #d32f2f);
-    }
-
-    .action-btn.cancel:active {
-        transform: translateY(0);
-    }
-
-    .action-btn.appeal {
-        background: linear-gradient(135deg, #ff9800, #f57c00);
-        color: white;
-        border: none;
-        padding: 0.5rem;
-        border-radius: 6px;
-        transition: all 0.3s ease;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 36px;
-        height: 36px;
-        margin-left: 0.25rem;
-    }
-
-    .action-btn.appeal:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(255, 152, 0, 0.3);
-        background: linear-gradient(135deg, #f57c00, #ef6c00);
-    }
-
-    .action-btn.appeal:active {
-        transform: translateY(0);
-    }
-
-    /* Estilos para el historial de escalafones */
-    .documentos-utilizados {
-        max-height: 200px;
-        overflow-y: auto;
-    }
-
-    .documentos-utilizados .badge {
-        font-size: 0.75rem;
-        max-width: 200px;
-        text-overflow: ellipsis;
-        overflow: hidden;
-        white-space: nowrap;
-        display: inline-block;
-    }
-
-    .card-header h6 {
-        color: #495057;
-        font-weight: 600;
-    }
-
-    .nivel-actions .btn + .btn {
-        margin-left: 0.5rem;
-    }
-</style>
