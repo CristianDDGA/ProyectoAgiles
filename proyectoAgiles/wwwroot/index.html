@@ -11,6 +11,9 @@
     <link href="proyectoAgiles.styles.css" rel="stylesheet" />
     <!-- Font Awesome para iconos -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="stylesheet" href="_content/Blazorise.Bootstrap/bootstrap.css" />
+    <script src="js/chart.js"></script>
+    <script src="_content/Blazorise.Charts/charts.js"></script>
 </head>
 
 <body>
@@ -81,28 +84,25 @@
             try {
                 console.log('Mostrando vista previa...', datosJson);
                 const datos = JSON.parse(datosJson);
-                
                 // Remover modal existente
                 const modalExistente = document.getElementById('modal-vista-previa');
                 if (modalExistente) modalExistente.remove();
-                
                 // Crear modal
                 const modalHTML = `
-                    <div id="modal-vista-previa" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9999; display: flex; align-items: center; justify-content: center;">
-                        <div style="background: white; border-radius: 10px; max-width: 90%; max-height: 90%; overflow: auto; position: relative; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
-                            <div style="padding: 20px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center; background: #f8f9fa;">
-                                <h3 style="margin: 0; color: #dc3545;">Vista Previa - ${datos.docente.nombre}</h3>
-                                <button onclick="cerrarVistaPrevia()" style="background: #6c757d; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer;">✕ Cerrar</button>
+                    <div id="modal-vista-previa" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.85); z-index: 9999; display: flex; align-items: center; justify-content: center;">
+                        <div style="background: #fff; border-radius: 16px; max-width: 90%; max-height: 90%; overflow: auto; position: relative; box-shadow: 0 4px 32px rgba(176,42,55,0.25); border: 3px solid #b02a37;">
+                            <div style="padding: 20px; border-bottom: 1px solid #b02a37; display: flex; justify-content: space-between; align-items: center; background: #f8f9fa; border-radius: 16px 16px 0 0;">
+                                <h3 style="margin: 0; color: #b02a37; font-weight: bold;">Vista Previa - ${datos.docente.nombre}</h3>
+                                <button onclick="cerrarVistaPrevia()" style="background: #b02a37; color: #fff; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: bold;">✕ Cerrar</button>
                             </div>
                             <div style="padding: 20px; max-height: 60vh; overflow-y: auto;">
                                 <div style="max-width: 800px; font-family: Arial, sans-serif;">
-                                    <div style="text-align: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #dc3545;">
-                                        <h2 style="color: #dc3545; margin: 0;">FICHA DE ASCENSO DOCENTE</h2>
-                                        <p style="color: #6c757d; margin: 5px 0; font-size: 14px;">Universidad Técnica de Ambato</p>
+                                    <div style="text-align: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #b02a37;">
+                                        <h2 style="color: #b02a37; margin: 0; font-weight: bold;">FICHA DE ASCENSO DOCENTE</h2>
+                                        <p style="color: #722f37; margin: 5px 0; font-size: 14px;">Universidad Técnica de Ambato</p>
                                     </div>
-                                    
-                                    <div style="margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #dc3545;">
-                                        <h4 style="color: #dc3545; margin-top: 0; margin-bottom: 15px;">📋 Información Personal</h4>
+                                    <div style="margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #b02a37;">
+                                        <h4 style="color: #b02a37; margin-top: 0; margin-bottom: 15px; font-weight: bold;">📋 Información Personal</h4>
                                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 14px;">
                                             <p style="margin: 5px 0;"><strong>Nombre:</strong> ${datos.docente.nombre}</p>
                                             <p style="margin: 5px 0;"><strong>Cédula:</strong> ${datos.docente.cedula}</p>
@@ -112,14 +112,13 @@
                                             <p style="margin: 5px 0;"><strong>Carrera:</strong> ${datos.docente.carrera}</p>
                                         </div>
                                     </div>
-                                    
-                                    <div style="margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #dc3545;">
-                                        <h4 style="color: #dc3545; margin-top: 0; margin-bottom: 15px;">🎓 Información de Escalafón</h4>
+                                    <div style="margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #b02a37;">
+                                        <h4 style="color: #b02a37; margin-top: 0; margin-bottom: 15px; font-weight: bold;">🎓 Información de Escalafón</h4>
                                         <div style="font-size: 14px;">
                                             <p style="margin: 8px 0;"><strong>Promoción:</strong> ${datos.escalafon.nivelActual} → ${datos.escalafon.nivelSolicitado}</p>
                                             <p style="margin: 8px 0;"><strong>Experiencia:</strong> ${datos.escalafon.anosExperiencia} años</p>
                                             <p style="margin: 8px 0;"><strong>Estado:</strong> 
-                                                <span style="background: ${datos.escalafon.status === 'Aprobada' ? '#28a745' : '#ffc107'}; 
+                                                <span style="background: ${datos.escalafon.status === 'Aprobada' ? '#28a745' : (datos.escalafon.status === 'Pendiente' ? '#ffc107' : '#b02a37')}; 
                                                              color: ${datos.escalafon.status === 'Pendiente' ? '#000' : '#fff'}; 
                                                              padding: 3px 8px; border-radius: 12px; font-size: 12px; font-weight: bold;">
                                                     ${datos.escalafon.status}
@@ -134,10 +133,8 @@
                         </div>
                     </div>
                 `;
-                
                 document.body.insertAdjacentHTML('beforeend', modalHTML);
                 console.log('Modal creado exitosamente');
-                
             } catch (error) {
                 console.error('Error al mostrar vista previa:', error);
                 alert('Error al mostrar la vista previa: ' + error.message);
@@ -160,13 +157,22 @@
                     <head>
                         <title>Ficha de Ascenso - ${datos.docente.nombre}</title>
                         <style>
-                            body { font-family: Arial, sans-serif; margin: 20px; }
-                            .header { text-align: center; margin-bottom: 30px; border-bottom: 3px solid #dc3545; padding-bottom: 20px; }
-                            .seccion { margin-bottom: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 8px; }
-                            h1 { color: #dc3545; }
-                            h3 { color: #dc3545; border-bottom: 2px solid #dc3545; padding-bottom: 8px; }
+                            body { font-family: Arial, sans-serif; margin: 20px; background: #fff; }
+                            .header { text-align: center; margin-bottom: 30px; border-bottom: 3px solid #b02a37; padding-bottom: 20px; }
+                            .seccion { margin-bottom: 20px; padding: 15px; border-left: 4px solid #b02a37; border-radius: 8px; background: #f8f9fa; }
+                            h1 { color: #b02a37; font-weight: bold; }
+                            h2 { color: #722f37; }
+                            h3 { color: #b02a37; border-bottom: 2px solid #b02a37; padding-bottom: 8px; font-weight: bold; }
                             .campo { margin-bottom: 8px; }
                             strong { color: #495057; }
+                            .badge-estado {
+                                background: #b02a37;
+                                color: #fff;
+                                padding: 3px 8px;
+                                border-radius: 12px;
+                                font-size: 12px;
+                                font-weight: bold;
+                            }
                         </style>
                     </head>
                     <body>
@@ -174,7 +180,6 @@
                             <h1>FICHA DE ASCENSO DOCENTE</h1>
                             <h2>Universidad Técnica de Ambato</h2>
                         </div>
-                        
                         <div class="seccion">
                             <h3>Información Personal</h3>
                             <div class="campo"><strong>Nombre:</strong> ${datos.docente.nombre}</div>
@@ -184,17 +189,15 @@
                             <div class="campo"><strong>Facultad:</strong> ${datos.docente.facultad}</div>
                             <div class="campo"><strong>Carrera:</strong> ${datos.docente.carrera}</div>
                         </div>
-                        
                         <div class="seccion">
                             <h3>Información de Escalafón</h3>
                             <div class="campo"><strong>Nivel Actual:</strong> ${datos.escalafon.nivelActual}</div>
                             <div class="campo"><strong>Nivel Solicitado:</strong> ${datos.escalafon.nivelSolicitado}</div>
                             <div class="campo"><strong>Años de Experiencia:</strong> ${datos.escalafon.anosExperiencia} años</div>
-                            <div class="campo"><strong>Estado:</strong> ${datos.escalafon.status}</div>
+                            <div class="campo"><strong>Estado:</strong> <span class="badge-estado">${datos.escalafon.status}</span></div>
                             <div class="campo"><strong>Fecha de Solicitud:</strong> ${datos.escalafon.fechaSolicitud}</div>
                             <div class="campo"><strong>Fecha de Aprobación:</strong> ${datos.escalafon.fechaAprobacion}</div>
                         </div>
-                        
                         <div class="seccion">
                             <h3>Detalles Académicos</h3>
                             <div class="campo"><strong>Títulos:</strong> ${datos.detalles.titulos}</div>
@@ -203,7 +206,6 @@
                             <div class="campo"><strong>Capacitaciones:</strong> ${datos.detalles.capacitaciones}</div>
                             <div class="campo"><strong>Observaciones:</strong> ${datos.detalles.observaciones}</div>
                         </div>
-                        
                         <div style="text-align: center; margin-top: 40px; font-size: 12px; color: #6c757d;">
                             Documento generado el ${datos.fecha}<br>
                             Sistema de Gestión Académica - Universidad Técnica de Ambato
@@ -229,6 +231,8 @@
         
         console.log('Funciones de reportes cargadas exitosamente');
     </script>
+    <!-- Blazorise Charts (solo el core, no requiere CSS adicional para charts) -->
+    <script src="_content/Blazorise.Charts/chart.js/chart.js"></script>
     <script src="_framework/blazor.webassembly.js"></script>
 </body>
 

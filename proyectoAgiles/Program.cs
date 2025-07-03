@@ -1,3 +1,5 @@
+using Blazorise;
+using Blazorise.Bootstrap;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using proyectoAgiles;
@@ -21,5 +23,11 @@ builder.Services.AddScoped<ReportesService>();
 
 // Leer la configuración del API desde appsettings.json
 builder.Configuration.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
+
+builder.Services.AddBlazorise(options =>
+{
+    options.Immediate = true;
+})
+.AddBootstrapProviders();
 
 await builder.Build().RunAsync();

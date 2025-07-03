@@ -6,6 +6,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="Blazorise" Version="1.4.5" />
+    <PackageReference Include="Blazorise.Bootstrap" Version="1.5.0" />
+    <PackageReference Include="Blazorise.Charts" Version="1.4.5" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="9.0.5" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="9.0.5" PrivateAssets="all" />
   </ItemGroup>
