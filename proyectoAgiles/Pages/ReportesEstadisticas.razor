@@ -76,6 +76,13 @@
                 </div>
             </div>
         </div>
+
+        <!-- Gráfico de barras de ejemplo con Blazorise Charts -->
+        <div class="row mb-4 justify-content-center">
+            <div class="col-12 d-flex justify-content-center">
+                <BarChart TItem="int" @ref="barChart" Style="width:100%; max-width:1000px; height:400px; margin:0 auto; background:#fff; border-radius:12px; box-shadow:0 2px 10px rgba(0,0,0,0.05); padding:2rem; display:flex; align-items:center; justify-content:center;" />
+            </div>
+        </div>
     </div>
     
     <!-- Sección de Filtros y Tabla -->
@@ -96,12 +103,12 @@
                     </select>
                 </div>
                 <div class="col-md-6">
-                    <label class="form-label">Filtrar por año:</label>
-                    <select class="form-select" @onchange="OnAnoChanged">
-                        <option value="">Todos los años</option>
-                        @foreach (var ano in Anos)
+                    <label class="form-label">Filtrar por ascenso:</label>
+                    <select class="form-select" @onchange="OnAscensoChanged">
+                        <option value="">Todos los ascensos</option>
+                        @foreach (var ascenso in TiposAscenso)
                         {
-                            <option value="@ano">@ano</option>
+                            <option value="@ascenso">@ascenso</option>
                         }
                     </select>
                 </div>
@@ -193,8 +200,10 @@
     private List<SolicitudEscalafonDto> Solicitudes = new();
     private List<SolicitudEscalafonDto> SolicitudesFiltradas = new();
     private HashSet<string> TiposPromocion = new();
+    private HashSet<string> TiposAscenso = new();
     private HashSet<int> Anos = new();
     private string TipoPromocionSeleccionado = string.Empty;
+    private string AscensoSeleccionado = string.Empty;
     private string AnoSeleccionado = string.Empty;
     private bool isLoading = true;
     
@@ -202,6 +211,13 @@
     private int TotalAscensos => Solicitudes.Count;
     private int PromedioExperiencia => Solicitudes.Any() ? (int)Solicitudes.Average(s => s.AnosExperiencia) : 0;
     private int AscensosEsteAno => Solicitudes.Count(s => s.FechaSolicitud.Year == DateTime.Now.Year);
+
+    private BarChart<int> barChart;
+    private BarChartOptions barChartOptions = new()
+    {
+        Responsive = true,
+        Plugins = new() { Legend = new() { Display = false } }
+    };
 
     protected override async Task OnInitializedAsync()
     {
@@ -217,6 +233,14 @@
         // Verificar que las funciones JavaScript estén disponibles
         await Task.Delay(500); // Esperar a que se cargue el script
         await VerificarFuncionesJS();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && barChart is not null && Solicitudes is not null && TiposPromocion is not null)
+        {
+            await SetupBarChart();
+        }
     }
 
     private async Task VerificarFuncionesJS()
@@ -250,31 +274,28 @@
             isLoading = true;
             StateHasChanged();
             
-            // Obtener TODAS las solicitudes (no solo aprobadas)
             var todasSolicitudes = await ReportesService.ObtenerSolicitudesAsync();
             
-            // Filtrar por solicitudes aprobadas y procesadas
-            Solicitudes = todasSolicitudes.Where(s => 
-                s.Status == "Aprobada" || 
-                s.Status == "Procesada" || 
-                s.Status == "Finalizada" ||
-                s.Status == "Completada").ToList();
+            // Mostrar todas las solicitudes (incluyendo pendientes)
+            Solicitudes = todasSolicitudes;
             
-            // Si no hay solicitudes aprobadas, mostrar todas para testing
-            if (Solicitudes.Count == 0)
-            {
-                Solicitudes = todasSolicitudes;
-            }
-            
-            // Inicializar filtros
             TiposPromocion = Solicitudes.Select(s => $"{s.NivelActual} → {s.NivelSolicitado}").ToHashSet();
+            
+            // Detectar automáticamente todos los ascensos únicos (no solo pendientes)
+            TiposAscenso = Solicitudes
+                .Where(s => s.NivelActual != s.NivelSolicitado)
+                .Select(s => $"{s.NivelActual} → {s.NivelSolicitado}")
+                .ToHashSet();
+            
             Anos = Solicitudes.Select(s => s.FechaSolicitud.Year).ToHashSet();
             
-            // Mostrar todas las solicitudes inicialmente
             SolicitudesFiltradas = Solicitudes;
             
             isLoading = false;
             StateHasChanged();
+            // Actualizar el gráfico después de cargar datos
+            if (barChart is not null)
+                await SetupBarChart();
         }
         catch (Exception ex)
         {
@@ -285,9 +306,42 @@
         }
     }
 
+    private async Task SetupBarChart()
+    {
+        if (barChart is null) return;
+        // Contar ascensos por estado SOLO de los filtrados
+        var estados = SolicitudesFiltradas
+            .GroupBy(s => s.Status)
+            .Select(g => new { Estado = g.Key, Cantidad = g.Count() })
+            .ToList();
+        var labels = estados.Select(e => e.Estado).ToList();
+        var data = estados.Select(e => e.Cantidad).ToList();
+        // Paleta de colores institucional: rojo, plomo, blanco, etc.
+        var colores = new List<string> { "#b02a37", "#e9ecef", "#722f37", "#ffffff", "#adb5bd" };
+        // Repetir colores si hay más estados
+        while (colores.Count < labels.Count)
+            colores.AddRange(colores);
+        var dataset = new BarChartDataset<int>
+        {
+            Label = "Ascensos por Estado",
+            Data = data,
+            BackgroundColor = colores.Take(labels.Count).ToList(),
+            BorderColor = colores.Take(labels.Count).ToList(),
+            BorderWidth = 1
+        };
+        await barChart.Clear();
+        await barChart.AddLabelsDatasetsAndUpdate(labels, dataset);
+    }
+
     private void OnTipoPromocionChanged(ChangeEventArgs e)
     {
         TipoPromocionSeleccionado = e.Value?.ToString() ?? string.Empty;
+        AplicarFiltros();
+    }
+
+    private void OnAscensoChanged(ChangeEventArgs e)
+    {
+        AscensoSeleccionado = e.Value?.ToString() ?? string.Empty;
         AplicarFiltros();
     }
 
@@ -308,6 +362,13 @@
                 $"{s.NivelActual} → {s.NivelSolicitado}" == TipoPromocionSeleccionado);
         }
 
+        // Filtrar por ascenso
+        if (!string.IsNullOrWhiteSpace(AscensoSeleccionado))
+        {
+            solicitudesFiltradas = solicitudesFiltradas.Where(s => 
+                $"{s.NivelActual} → {s.NivelSolicitado}" == AscensoSeleccionado);
+        }
+
         // Filtrar por año
         if (!string.IsNullOrWhiteSpace(AnoSeleccionado) && int.TryParse(AnoSeleccionado, out int ano))
         {
@@ -316,6 +377,8 @@
 
         SolicitudesFiltradas = solicitudesFiltradas.ToList();
         StateHasChanged();
+        // Actualizar el gráfico con los datos filtrados
+        _ = SetupBarChart();
     }
 
     private string GetStatusClass(string status)
