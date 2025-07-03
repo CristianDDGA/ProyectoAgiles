@@ -72,6 +72,15 @@
                     <p>Generar reportes detallados y análisis del sistema</p>
                 </div>
             </div>
+            <div class="col-lg-6 col-md-6 mb-4">
+                <div class="action-card" @onclick="NavigateToPeriodsManagement">
+                    <div class="action-icon">
+                        <i class="fas fa-calendar-alt"></i>
+                    </div>
+                    <h3>Gestión de Períodos</h3>
+                    <p>Administrar períodos de postulación para escalafón docente</p>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -263,6 +272,11 @@
     private void NavigateToReports()
     {
         Navigation.NavigateTo("/admin/reports");
+    }
+
+    private void NavigateToPeriodsManagement()
+    {
+        Navigation.NavigateTo("/admin/periodos");
     }
 
     private void NavigateToTalentoHumano()
