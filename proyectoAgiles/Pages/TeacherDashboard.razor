@@ -2657,35 +2657,80 @@ private bool isLoadingInvestigaciones = false;
             // Debug: Mostrar la cédula que se está usando
             Console.WriteLine($"Cargando investigaciones para cédula: {cedula}");
 
-            // Obtener investigaciones de la base de datos por cédula
-            var investigacionesApi = await AuthService.GetInvestigacionesPorCedula(cedula);
+            // Obtener investigaciones disponibles (no utilizadas) de la API
+            var response = await HttpClient.GetAsync($"/api/investigaciones/disponibles/{cedula}");
             
-            Console.WriteLine($"Investigaciones obtenidas de la API: {investigacionesApi?.Count ?? 0}");
-            
-            if (investigacionesApi == null || !investigacionesApi.Any())
+            if (response.IsSuccessStatusCode)
             {
-                investigaciones = new List<Investigacion>();
-                await JSRuntime.InvokeVoidAsync("console.log", $"No se encontraron investigaciones para la cédula: {cedula}");
-                return;
-            }
-              // Mapear de InvestigacionDto a nuestro modelo local
-            investigaciones = investigacionesApi.Select(inv => new Investigacion
-            {
-                Id = inv.Id,
-                Cedula = inv.Cedula,
-                Titulo = inv.Titulo,
-                Tipo = inv.Tipo,
-                RevistaOEditorial = inv.RevistaOEditorial,
-                Area = inv.CampoConocimiento, // Mapear CampoConocimiento a Area
-                Estado = DeterminarEstado(inv.FechaPublicacion), // Determinar estado basado en fecha
-                FechaInicio = inv.FechaPublicacion, // Usar FechaPublicacion como FechaInicio
-                FechaFin = null, // No hay fecha fin en la base de datos
-                Descripcion = inv.Observacion, // Mapear Observacion a Descripcion
-                Filiacion = inv.Filiacion,
-                TienePdf = inv.TienePdf // Verificar si tiene PDF
-            }).ToList();
+                var investigacionesApi = await response.Content.ReadFromJsonAsync<List<proyectoAgiles.Services.InvestigacionDto>>();
+                
+                Console.WriteLine($"Investigaciones disponibles obtenidas de la API: {investigacionesApi?.Count ?? 0}");
+                
+                if (investigacionesApi == null || !investigacionesApi.Any())
+                {
+                    investigaciones = new List<Investigacion>();
+                    await JSRuntime.InvokeVoidAsync("console.log", $"No se encontraron investigaciones disponibles para la cédula: {cedula}");
+                    return;
+                }
+                
+                // Mapear de InvestigacionDto a nuestro modelo local
+                investigaciones = investigacionesApi.Select(inv => new Investigacion
+                {
+                    Id = inv.Id,
+                    Cedula = inv.Cedula,
+                    Titulo = inv.Titulo,
+                    Tipo = inv.Tipo,
+                    RevistaOEditorial = inv.RevistaOEditorial,
+                    Area = inv.CampoConocimiento, // Mapear CampoConocimiento a Area
+                    Estado = DeterminarEstado(inv.FechaPublicacion), // Determinar estado basado en fecha
+                    FechaInicio = inv.FechaPublicacion, // Usar FechaPublicacion como FechaInicio
+                    FechaFin = null, // No hay fecha fin en la base de datos
+                    Descripcion = inv.Observacion, // Mapear Observacion a Descripcion
+                    Filiacion = inv.Filiacion,
+                    TienePdf = inv.TienePdf // Verificar si tiene PDF
+                }).ToList();
 
-            Console.WriteLine($"Investigaciones mapeadas: {investigaciones.Count}");
+                Console.WriteLine($"Investigaciones disponibles mapeadas: {investigaciones.Count}");
+            }
+            else
+            {
+                // Fallback: usar el método anterior si la nueva API no está disponible
+                Console.WriteLine("API de investigaciones disponibles no encontrada, usando método anterior");
+                var investigacionesApi = await AuthService.GetInvestigacionesPorCedula(cedula);
+                
+                if (investigacionesApi != null && investigacionesApi.Any())
+                {
+                    // Obtener IDs de investigaciones ya utilizadas del historial
+                    var investigacionesUtilizadas = await ObtenerInvestigacionesUtilizadas(cedula);
+                    
+                    // Filtrar investigaciones que no han sido utilizadas
+                    var investigacionesDisponibles = investigacionesApi
+                        .Where(inv => !investigacionesUtilizadas.Contains(inv.Id))
+                        .ToList();
+                    
+                    investigaciones = investigacionesDisponibles.Select(inv => new Investigacion
+                    {
+                        Id = inv.Id,
+                        Cedula = inv.Cedula,
+                        Titulo = inv.Titulo,
+                        Tipo = inv.Tipo,
+                        RevistaOEditorial = inv.RevistaOEditorial,
+                        Area = inv.CampoConocimiento,
+                        Estado = DeterminarEstado(inv.FechaPublicacion),
+                        FechaInicio = inv.FechaPublicacion,
+                        FechaFin = null,
+                        Descripcion = inv.Observacion,
+                        Filiacion = inv.Filiacion,
+                        TienePdf = inv.TienePdf
+                    }).ToList();
+                    
+                    Console.WriteLine($"Investigaciones filtradas (sin utilizadas): {investigaciones.Count}");
+                }
+                else
+                {
+                    investigaciones = new List<Investigacion>();
+                }
+            }
             
             // Actualizar resúmenes dinámicos para sincronizar con los datos cargados
             await ActualizarResumenesDinamicos();
@@ -2933,9 +2978,23 @@ private bool isLoadingInvestigaciones = false;
             var cedula = UserSession.CurrentUser.Cedula;
 
             // Importar evaluaciones usando AuthService
-            var apiEvaluaciones = await AuthService.GetEvaluacionesPorCedula(cedula);            if (apiEvaluaciones is not null && apiEvaluaciones.Any())
+            var apiEvaluaciones = await AuthService.GetEvaluacionesPorCedula(cedula);
+            
+            if (apiEvaluaciones is not null && apiEvaluaciones.Any())
             {
-                evaluaciones = apiEvaluaciones.ToList();
+                // Obtener IDs de evaluaciones ya utilizadas del historial
+                var evaluacionesUtilizadas = await ObtenerEvaluacionesUtilizadas(cedula);
+                
+                // Filtrar evaluaciones que no han sido utilizadas
+                var evaluacionesDisponibles = apiEvaluaciones
+                    .Where(eval => !evaluacionesUtilizadas.Contains(eval.Id))
+                    .ToList();
+                
+                evaluaciones = evaluacionesDisponibles;
+                
+                Console.WriteLine($"Evaluaciones totales de API: {apiEvaluaciones.Count()}");
+                Console.WriteLine($"Evaluaciones utilizadas: {evaluacionesUtilizadas.Count}");
+                Console.WriteLine($"Evaluaciones disponibles: {evaluaciones.Count}");
 
                 // Actualizar verificación del requisito 75%
                 await ActualizarVerificacionRequisito75();
@@ -2944,7 +3003,7 @@ private bool isLoadingInvestigaciones = false;
                 await ActualizarResumenesDinamicos();
                   
                 await MostrarNotificacionExito($"📊 Evaluaciones Importadas", 
-                    $"Se han cargado {evaluaciones.Count} evaluación{(evaluaciones.Count != 1 ? "es" : "")} desde la base de datos DAC.");
+                    $"Se han cargado {evaluaciones.Count} evaluación{(evaluaciones.Count != 1 ? "es" : "")} disponible{(evaluaciones.Count != 1 ? "s" : "")} desde la base de datos DAC.");
             }
             else
             {
@@ -3541,7 +3600,6 @@ private bool isLoadingInvestigaciones = false;
         StateHasChanged();
     }    private async Task SubirNivel()
     {
-        // Crear solicitud de escalafón en lugar de cambiar nivel directamente
         var cedula = UserSession.CurrentUser?.Cedula;
         var nivelActual = UserSession.CurrentUser?.Nivel;
         
@@ -3567,10 +3625,21 @@ private bool isLoadingInvestigaciones = false;
                 return;
             }
             
+            // Obtener requisitos desde la API para saber exactamente qué necesitamos
+            var requisitosApi = await AuthService.VerificarRequisitosEscalafonDinamico(cedula, nivelActual);
+            if (requisitosApi == null || !requisitosApi.CumpleTodosRequisitos)
+            {
+                await MostrarNotificacionError("Error", "No cumples todos los requisitos para ascender. Verifica los requisitos antes de continuar.");
+                return;
+            }
+            
+            // Seleccionar archivos más antiguos que cumplan los requisitos
+            var archivosSeleccionados = await SeleccionarArchivosParaEscalafon(cedula, requisitosApi);
+            
             // Obtener estadísticas del docente para completar la solicitud
             var estadisticas = await AuthService.ObtenerEstadisticasDocente(cedula);
             
-            // Crear la solicitud de escalafón con datos completos
+            // Crear la solicitud de escalafón con los archivos específicos seleccionados
             var createSolicitudDto = new proyectoAgiles.Services.CreateSolicitudEscalafonDto
             {
                 DocenteCedula = cedula,
@@ -3582,26 +3651,38 @@ private bool isLoadingInvestigaciones = false;
                 NivelActual = nivelActual,
                 NivelSolicitado = nivelSolicitado,
                 AnosExperiencia = ObtenerAnosExperiencia(estadisticas),
-                Publicaciones = GenerarResumenPublicaciones(estadisticas),
-                Capacitaciones = GenerarResumenCapacitaciones(estadisticas),
-                Observaciones = "Solicitud generada automáticamente desde el panel del docente"
+                Publicaciones = GenerarResumenPublicacionesSeleccionadas(archivosSeleccionados.Investigaciones),
+                Capacitaciones = GenerarResumenCapacitacionesSeleccionadas(archivosSeleccionados.Capacitaciones),
+                Observaciones = $"Solicitud generada automáticamente. Archivos seleccionados: {archivosSeleccionados.Investigaciones.Count} investigación(es), {archivosSeleccionados.Evaluaciones.Count} evaluación(es), {archivosSeleccionados.Capacitaciones.Count} capacitación(es)."
             };
 
             var response = await HttpClient.PostAsJsonAsync("/api/solicitudes-escalafon", createSolicitudDto);
 
             if (response.IsSuccessStatusCode)
             {
+                // Marcar los archivos seleccionados como utilizados
+                await MarcarArchivosComoUtilizados(archivosSeleccionados);
+                
                 // Cerrar el modal de requisitos
                 showRequisitosModal = false;
                 
-                // Mostrar notificación de éxito
+                // Mostrar notificación de éxito con detalles de los archivos seleccionados
+                var detallesArchivos = $"Se seleccionaron automáticamente los archivos más antiguos: " +
+                    $"{archivosSeleccionados.Investigaciones.Count} investigación(es), " +
+                    $"{archivosSeleccionados.Evaluaciones.Count} evaluación(es), " +
+                    $"{archivosSeleccionados.Capacitaciones.Count} capacitación(es).";
+                
                 await MostrarNotificacionExito(
                     "Solicitud Enviada", 
-                    $"Tu solicitud de escalafón de {nivelActual} a {nivelSolicitado} ha sido enviada exitosamente y está siendo revisada por la Comisión Académica."
+                    $"Tu solicitud de escalafón de {nivelActual} a {nivelSolicitado} ha sido enviada exitosamente. {detallesArchivos}"
                 );
 
                 // Limpiar la verificación de requisitos para forzar una nueva verificación
                 requisitosVerificacion = null;
+                requisitosEscalafonDinamicos = null;
+                
+                // Recargar los datos para reflejar los archivos ya utilizados
+                await CargarDatosActualizados();
             }
             else
             {
@@ -3613,6 +3694,31 @@ private bool isLoadingInvestigaciones = false;
         {
             await MostrarNotificacionError("Error", $"Error al crear la solicitud: {ex.Message}");
         }
+    }
+    
+    private string GenerarResumenPublicacionesSeleccionadas(List<InvestigacionSeleccionada> investigaciones)
+    {
+        if (!investigaciones.Any())
+            return "Sin publicaciones seleccionadas";
+
+        var totalObras = investigaciones.Count;
+        var obrasConUTA = investigaciones.Count(i => i.TieneFiliacionUTA);
+
+        return $"Seleccionadas automáticamente: {totalObras} obra(s). Con filiación UTA: {obrasConUTA} obra(s). " +
+               $"Fechas: {string.Join(", ", investigaciones.Take(3).Select(i => i.FechaPublicacion.ToString("yyyy")))}" +
+               (investigaciones.Count > 3 ? "..." : "");
+    }
+
+    private string GenerarResumenCapacitacionesSeleccionadas(List<CapacitacionSeleccionada> capacitaciones)
+    {
+        if (!capacitaciones.Any())
+            return "Sin capacitaciones seleccionadas";
+
+        var horasTotal = capacitaciones.Sum(c => c.HorasAcademicas);
+        var horasPedagogicas = capacitaciones.Where(c => c.EsPedagogica).Sum(c => c.HorasAcademicas);
+
+        return $"Seleccionadas automáticamente: {capacitaciones.Count} capacitación(es), " +
+               $"{horasTotal} horas totales. Horas pedagógicas: {horasPedagogicas} horas.";
     }
 
     // Métodos para notificaciones profesionales con toast
@@ -4157,7 +4263,20 @@ private bool isLoadingInvestigaciones = false;
             var apiCapacitaciones = await AuthService.GetCapacitacionesPorCedula(cedula);
             if (apiCapacitaciones is not null)
             {
-                capacitaciones = apiCapacitaciones.ToList();
+                // Obtener IDs de capacitaciones ya utilizadas del historial
+                var capacitacionesUtilizadas = await ObtenerCapacitacionesUtilizadas(cedula);
+                
+                // Filtrar capacitaciones que no han sido utilizadas
+                var capacitacionesDisponibles = apiCapacitaciones
+                    .Where(cap => !capacitacionesUtilizadas.Contains(cap.Id))
+                    .ToList();
+                
+                capacitaciones = capacitacionesDisponibles;
+                
+                Console.WriteLine($"Capacitaciones totales de API: {apiCapacitaciones.Count()}");
+                Console.WriteLine($"Capacitaciones utilizadas: {capacitacionesUtilizadas.Count}");
+                Console.WriteLine($"Capacitaciones disponibles: {capacitaciones.Count}");
+                
                 StateHasChanged();
             }
         }
@@ -4782,5 +4901,413 @@ private bool isLoadingInvestigaciones = false;
             Console.WriteLine($"Error al actualizar verificación requisito 75%: {ex.Message}");
         }
     }
+
+    // Métodos para selección inteligente de archivos
+    private async Task<ArchivosSeleccionados> SeleccionarArchivosParaEscalafon(string cedula, proyectoAgiles.Services.VerificacionRequisitosEscalafonDto requisitos)
+    {
+        var archivosSeleccionados = new ArchivosSeleccionados();
+        
+        try
+        {
+            // Seleccionar investigaciones más antiguas que cumplan el requisito
+            if (requisitos.ObrasRelevantes != null && !string.IsNullOrEmpty(requisitos.ObrasRelevantes.ValorRequerido))
+            {
+                if (int.TryParse(requisitos.ObrasRelevantes.ValorRequerido, out int investigacionesRequeridas))
+                {
+                    archivosSeleccionados.Investigaciones = await SeleccionarInvestigacionesMasAntiguas(cedula, investigacionesRequeridas);
+                }
+            }
+            
+            // Seleccionar evaluaciones más antiguas que cumplan el requisito
+            if (requisitos.EvaluacionDesempeno != null && !string.IsNullOrEmpty(requisitos.EvaluacionDesempeno.ValorRequerido))
+            {
+                var evaluacionesRequeridas = ObtenerNumeroEvaluacionesNecesarias(requisitos.EvaluacionDesempeno.ValorRequerido);
+                archivosSeleccionados.Evaluaciones = await SeleccionarEvaluacionesMasAntiguas(cedula, evaluacionesRequeridas);
+            }
+            
+            // Seleccionar capacitaciones más antiguas que cumplan el requisito
+            if (requisitos.Capacitacion != null && !string.IsNullOrEmpty(requisitos.Capacitacion.ValorRequerido))
+            {
+                if (int.TryParse(requisitos.Capacitacion.ValorRequerido, out int horasRequeridas))
+                {
+                    archivosSeleccionados.Capacitaciones = await SeleccionarCapacitacionesMasAntiguas(cedula, horasRequeridas);
+                }
+            }
+            
+            Console.WriteLine($"SeleccionarArchivosParaEscalafon: Archivos seleccionados para {cedula}");
+            Console.WriteLine($"  - Investigaciones: {archivosSeleccionados.Investigaciones.Count}");
+            Console.WriteLine($"  - Evaluaciones: {archivosSeleccionados.Evaluaciones.Count}");
+            Console.WriteLine($"  - Capacitaciones: {archivosSeleccionados.Capacitaciones.Count}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error en SeleccionarArchivosParaEscalafon: {ex.Message}");
+        }
+        
+        return archivosSeleccionados;
+    }
+    
+    private async Task<List<InvestigacionSeleccionada>> SeleccionarInvestigacionesMasAntiguas(string cedula, int cantidadRequerida)
+    {
+        var investigacionesSeleccionadas = new List<InvestigacionSeleccionada>();
+        
+        try
+        {
+            // Obtener todas las investigaciones no utilizadas, ordenadas por fecha más antigua
+            var response = await HttpClient.GetAsync($"/api/investigaciones/disponibles/{cedula}");
+            if (response.IsSuccessStatusCode)
+            {
+                var investigacionesDisponibles = await response.Content.ReadFromJsonAsync<List<Investigacion>>();
+                
+                if (investigacionesDisponibles != null)
+                {
+                    // Filtrar solo las que tienen filiación UTA y ordenar por fecha más antigua
+                    var investigacionesConUTA = investigacionesDisponibles
+                        .Where(i => !string.IsNullOrEmpty(i.Filiacion) && 
+                                   i.Filiacion.ToUpper().Contains("UTA"))
+                        .OrderBy(i => i.FechaInicio)
+                        .Take(cantidadRequerida)
+                        .ToList();
+                    
+                    foreach (var inv in investigacionesConUTA)
+                    {
+                        investigacionesSeleccionadas.Add(new InvestigacionSeleccionada
+                        {
+                            Id = inv.Id,
+                            Titulo = inv.Titulo,
+                            FechaPublicacion = inv.FechaInicio,
+                            Filiacion = inv.Filiacion,
+                            TieneFiliacionUTA = true
+                        });
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al seleccionar investigaciones: {ex.Message}");
+        }
+        
+        return investigacionesSeleccionadas;
+    }
+    
+    private async Task<List<EvaluacionSeleccionada>> SeleccionarEvaluacionesMasAntiguas(string cedula, int cantidadRequerida)
+    {
+        var evaluacionesSeleccionadas = new List<EvaluacionSeleccionada>();
+        
+        try
+        {
+            // Obtener todas las evaluaciones no utilizadas, ordenadas por fecha más antigua
+            var response = await HttpClient.GetAsync($"/api/evaluaciones/disponibles/{cedula}");
+            if (response.IsSuccessStatusCode)
+            {
+                var evaluacionesDisponibles = await response.Content.ReadFromJsonAsync<List<proyectoAgiles.Services.EvaluacionDesempenoDto>>();
+                
+                if (evaluacionesDisponibles != null)
+                {
+                    // Seleccionar las evaluaciones más antiguas con puntaje >= 75
+                    var evaluacionesValidas = evaluacionesDisponibles
+                        .Where(e => e.PuntajeObtenido >= 75)
+                        .OrderBy(e => e.Anio)
+                        .ThenBy(e => e.Semestre)
+                        .Take(cantidadRequerida)
+                        .ToList();
+                    
+                    foreach (var eval in evaluacionesValidas)
+                    {
+                        evaluacionesSeleccionadas.Add(new EvaluacionSeleccionada
+                        {
+                            Id = eval.Id,
+                            PeriodoAcademico = eval.PeriodoAcademico,
+                            Anio = eval.Anio,
+                            Semestre = eval.Semestre,
+                            Porcentaje = eval.PuntajeObtenido, // Usar PuntajeObtenido en lugar de Porcentaje
+                            FechaEvaluacion = new DateTime(eval.Anio, eval.Semestre <= 1 ? 6 : 12, 15) // Agregar día
+                        });
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al seleccionar evaluaciones: {ex.Message}");
+        }
+        
+        return evaluacionesSeleccionadas;
+    }
+    
+    private async Task<List<CapacitacionSeleccionada>> SeleccionarCapacitacionesMasAntiguas(string cedula, int horasRequeridas)
+    {
+        var capacitacionesSeleccionadas = new List<CapacitacionSeleccionada>();
+        
+        try
+        {
+            // Obtener todas las capacitaciones no utilizadas, ordenadas por fecha más antigua
+            var response = await HttpClient.GetAsync($"/api/capacitaciones/disponibles/{cedula}");
+            if (response.IsSuccessStatusCode)
+            {
+                var capacitacionesDisponibles = await response.Content.ReadFromJsonAsync<List<ProyectoAgiles.Application.DTOs.DiticDto>>();
+                
+                if (capacitacionesDisponibles != null)
+                {
+                    // Seleccionar capacitaciones más antiguas hasta cumplir las horas requeridas
+                    var capacitacionesOrdenadas = capacitacionesDisponibles
+                        .OrderBy(c => c.FechaInicio)
+                        .ToList();
+                    
+                    int horasAcumuladas = 0;
+                    foreach (var cap in capacitacionesOrdenadas)
+                    {
+                        if (horasAcumuladas >= horasRequeridas)
+                            break;
+                            
+                        capacitacionesSeleccionadas.Add(new CapacitacionSeleccionada
+                        {
+                            Id = cap.Id,
+                            NombreCurso = cap.NombreCapacitacion,
+                            HorasAcademicas = cap.HorasAcademicas,
+                            FechaInicio = cap.FechaInicio,
+                            EsPedagogica = cap.EsPedagogica
+                        });
+                        
+                        horasAcumuladas += cap.HorasAcademicas;
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al seleccionar capacitaciones: {ex.Message}");
+        }
+        
+        return capacitacionesSeleccionadas;
+    }
+    
+    private async Task MarcarArchivosComoUtilizados(ArchivosSeleccionados archivos)
+    {
+        try
+        {
+            var request = new MarcarArchivosUtilizadosRequest
+            {
+                InvestigacionesIds = archivos.Investigaciones.Select(i => i.Id).ToList(),
+                EvaluacionesIds = archivos.Evaluaciones.Select(e => e.Id).ToList(),
+                CapacitacionesIds = archivos.Capacitaciones.Select(c => c.Id).ToList()
+            };
+            
+            var response = await HttpClient.PostAsJsonAsync("/api/escalafon/marcar-utilizados", request);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                Console.WriteLine("Archivos marcados como utilizados exitosamente");
+            }
+            else
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"Error al marcar archivos como utilizados: {error}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error en MarcarArchivosComoUtilizados: {ex.Message}");
+        }
+    }
+    
+    private int ObtenerNumeroEvaluacionesNecesarias(string valorRequerido)
+    {
+        // Extraer número de evaluaciones necesarias del string de requisitos
+        // Ejemplo: "4 evaluaciones con 75% mínimo" -> 4
+        var match = System.Text.RegularExpressions.Regex.Match(valorRequerido, @"(\d+)");
+        if (match.Success)
+        {
+            return int.Parse(match.Groups[1].Value);
+        }
+        return 4; // Default fallback
+    }
+    
+    private async Task CargarDatosActualizados()
+    {
+        // Método para recargar todos los datos después de marcar archivos como utilizados
+        try
+        {
+            var cedula = UserSession.CurrentUser?.Cedula;
+            if (!string.IsNullOrEmpty(cedula))
+            {
+                // Recargar investigaciones
+                await LoadInvestigaciones();
+                
+                // Recargar evaluaciones si ya estaban cargadas
+                if (evaluaciones != null && evaluaciones.Any())
+                {
+                    await ImportarEvaluaciones();
+                }
+                
+                // Recargar capacitaciones si ya estaban cargadas
+                if (capacitaciones != null && capacitaciones.Any())
+                {
+                    await CargarCapacitaciones();
+                }
+                
+                // Recargar datos del dashboard
+                await LoadDashboardData();
+                
+                // Recargar historial
+                await CargarHistorialEscalafones();
+                
+                Console.WriteLine("CargarDatosActualizados: Todos los datos han sido recargados");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al recargar datos: {ex.Message}");
+        }
+    }
+
+    // Clases para la selección de archivos
+    public class ArchivosSeleccionados
+    {
+        public List<InvestigacionSeleccionada> Investigaciones { get; set; } = new();
+        public List<EvaluacionSeleccionada> Evaluaciones { get; set; } = new();
+        public List<CapacitacionSeleccionada> Capacitaciones { get; set; } = new();
+    }
+    
+    public class InvestigacionSeleccionada
+    {
+        public int Id { get; set; }
+        public string Titulo { get; set; } = string.Empty;
+        public DateTime FechaPublicacion { get; set; }
+        public string Filiacion { get; set; } = string.Empty;
+        public bool TieneFiliacionUTA { get; set; }
+    }
+    
+    public class EvaluacionSeleccionada
+    {
+        public int Id { get; set; }
+        public string PeriodoAcademico { get; set; } = string.Empty;
+        public int Anio { get; set; }
+        public int Semestre { get; set; }
+        public decimal Porcentaje { get; set; }
+        public DateTime FechaEvaluacion { get; set; }
+    }
+    
+    public class CapacitacionSeleccionada
+    {
+        public int Id { get; set; }
+        public string NombreCurso { get; set; } = string.Empty;
+        public int HorasAcademicas { get; set; }
+        public DateTime FechaInicio { get; set; }
+        public bool EsPedagogica { get; set; }
+    }
+    
+    public class MarcarArchivosUtilizadosRequest
+    {
+        public List<int> InvestigacionesIds { get; set; } = new();
+        public List<int> EvaluacionesIds { get; set; } = new();
+        public List<int> CapacitacionesIds { get; set; } = new();
+    }
+
+    // Métodos para obtener elementos utilizados del historial
+    private async Task<HashSet<int>> ObtenerInvestigacionesUtilizadas(string cedula)
+    {
+        var idsUtilizados = new HashSet<int>();
+        
+        try
+        {
+            // Cargar historial si no está disponible
+            if (historialEscalafones == null || !historialEscalafones.Any())
+            {
+                await CargarHistorialEscalafones();
+            }
+            
+            // Extraer IDs de investigaciones del historial
+            foreach (var historial in historialEscalafones ?? new List<HistorialEscalafonDto>())
+            {
+                if (historial.DocumentosDetalles?.Investigaciones != null)
+                {
+                    foreach (var investigacion in historial.DocumentosDetalles.Investigaciones)
+                    {
+                        idsUtilizados.Add(investigacion.Id);
+                    }
+                }
+            }
+            
+            Console.WriteLine($"ObtenerInvestigacionesUtilizadas: {idsUtilizados.Count} investigaciones utilizadas encontradas");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al obtener investigaciones utilizadas: {ex.Message}");
+        }
+        
+        return idsUtilizados;
+    }
+
+    private async Task<HashSet<int>> ObtenerEvaluacionesUtilizadas(string cedula)
+    {
+        var idsUtilizados = new HashSet<int>();
+        
+        try
+        {
+            // Cargar historial si no está disponible
+            if (historialEscalafones == null || !historialEscalafones.Any())
+            {
+                await CargarHistorialEscalafones();
+            }
+            
+            // Extraer IDs de evaluaciones del historial
+            foreach (var historial in historialEscalafones ?? new List<HistorialEscalafonDto>())
+            {
+                if (historial.DocumentosDetalles?.Evaluaciones != null)
+                {
+                    foreach (var evaluacion in historial.DocumentosDetalles.Evaluaciones)
+                    {
+                        idsUtilizados.Add(evaluacion.Id);
+                    }
+                }
+            }
+            
+            Console.WriteLine($"ObtenerEvaluacionesUtilizadas: {idsUtilizados.Count} evaluaciones utilizadas encontradas");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al obtener evaluaciones utilizadas: {ex.Message}");
+        }
+        
+        return idsUtilizados;
+    }
+
+    private async Task<HashSet<int>> ObtenerCapacitacionesUtilizadas(string cedula)
+    {
+        var idsUtilizados = new HashSet<int>();
+        
+        try
+        {
+            // Cargar historial si no está disponible
+            if (historialEscalafones == null || !historialEscalafones.Any())
+            {
+                await CargarHistorialEscalafones();
+            }
+            
+            // Extraer IDs de capacitaciones del historial
+            foreach (var historial in historialEscalafones ?? new List<HistorialEscalafonDto>())
+            {
+                if (historial.DocumentosDetalles?.Capacitaciones != null)
+                {
+                    foreach (var capacitacion in historial.DocumentosDetalles.Capacitaciones)
+                    {
+                        idsUtilizados.Add(capacitacion.Id);
+                    }
+                }
+            }
+            
+            Console.WriteLine($"ObtenerCapacitacionesUtilizadas: {idsUtilizados.Count} capacitaciones utilizadas encontradas");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al obtener capacitaciones utilizadas: {ex.Message}");
+        }
+        
+        return idsUtilizados;
+    }
+
+    // Métodos para obtener elementos utilizados del historial
 
 }
