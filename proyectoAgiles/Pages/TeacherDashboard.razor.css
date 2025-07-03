@@ -9,12 +9,12 @@
 
 /* Nueva Sección de Nivel - Diseño Full Width Mejorado */
 .nivel-section-fullwidth {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #722f37 0%, #8b3a42 100%);
     border-radius: 12px;
     padding: 2rem;
     margin-bottom: 2rem;
     color: white;
-    box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
+    box-shadow: 0 8px 32px rgba(114, 47, 55, 0.3);
     position: relative;
     overflow: hidden;
 }
@@ -126,23 +126,23 @@
 }
 
 .nivel-btn-primary {
-    background: rgba(40, 167, 69, 0.2);
-    border-color: rgba(40, 167, 69, 0.4);
+    background: rgba(139, 58, 66, 0.2);
+    border-color: rgba(139, 58, 66, 0.4);
 }
 
 .nivel-btn-primary:hover {
-    background: rgba(40, 167, 69, 0.3);
-    border-color: rgba(40, 167, 69, 0.6);
+    background: rgba(139, 58, 66, 0.3);
+    border-color: rgba(139, 58, 66, 0.6);
 }
 
 .nivel-btn-secondary {
-    background: rgba(23, 162, 184, 0.2);
-    border-color: rgba(23, 162, 184, 0.4);
+    background: rgba(157, 76, 86, 0.2);
+    border-color: rgba(157, 76, 86, 0.4);
 }
 
 .nivel-btn-secondary:hover {
-    background: rgba(23, 162, 184, 0.3);
-    border-color: rgba(23, 162, 184, 0.6);
+    background: rgba(157, 76, 86, 0.3);
+    border-color: rgba(157, 76, 86, 0.6);
 }
 
 .btn-content {
@@ -180,23 +180,23 @@
 }
 
 .nivel-btn-primary {
-    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+    background: linear-gradient(135deg, #8b3a42 0%, #722f37 100%);
 }
 
 .nivel-btn-secondary {
-    background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+    background: linear-gradient(135deg, #9d4c56 0%, #8b3a42 100%);
 }
 
 .nivel-btn-primary:hover {
     transform: translateY(-3px);
-    box-shadow: 0 12px 35px rgba(72, 187, 120, 0.3);
-    background: linear-gradient(135deg, #38a169 0%, #2f855a 100%);
+    box-shadow: 0 12px 35px rgba(139, 58, 66, 0.3);
+    background: linear-gradient(135deg, #722f37 0%, #5a252b 100%);
 }
 
 .nivel-btn-secondary:hover {
     transform: translateY(-3px);
-    box-shadow: 0 12px 35px rgba(66, 153, 225, 0.3);
-    background: linear-gradient(135deg, #3182ce 0%, #2c5282 100%);
+    box-shadow: 0 12px 35px rgba(157, 76, 86, 0.3);
+    background: linear-gradient(135deg, #8b3a42 0%, #722f37 100%);
 }
 
 .nivel-btn-primary:active,
