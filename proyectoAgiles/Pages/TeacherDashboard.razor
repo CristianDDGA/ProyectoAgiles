@@ -2920,7 +2920,7 @@ private bool isLoadingInvestigaciones = false;
             var cedula = UserSession.CurrentUser.Cedula;
 
             // Importar solo evaluaciones disponibles (no utilizadas en escalafones previos)
-            var response = await HttpClient.GetAsync($"/api/evaluaciones-desempeno/disponibles/{cedula}");
+            var response = await HttpClient.GetAsync($"/api/EvaluacionesDesempeno/disponibles/{cedula}");
             List<proyectoAgiles.Services.EvaluacionDesempenoDto>? apiEvaluaciones = null;
             
             if (response.IsSuccessStatusCode)
