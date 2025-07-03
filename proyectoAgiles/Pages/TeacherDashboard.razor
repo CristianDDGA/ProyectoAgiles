@@ -2721,7 +2721,8 @@ private bool isLoadingInvestigaciones = false;
                         FechaFin = null,
                         Descripcion = inv.Observacion,
                         Filiacion = inv.Filiacion,
-                        TienePdf = inv.TienePdf
+                        TienePdf = inv.TienePdf,
+                        TieneFiliacionUTA = !string.IsNullOrEmpty(inv.Filiacion) && inv.Filiacion.ToUpper().Contains("UTA")
                     }).ToList();
                     
                     Console.WriteLine($"Investigaciones filtradas (sin utilizadas): {investigaciones.Count}");
@@ -4040,6 +4041,7 @@ private bool isLoadingInvestigaciones = false;
         public string Descripcion { get; set; } = string.Empty; // Mapeado desde Observacion
         public string Filiacion { get; set; } = string.Empty;
         public bool TienePdf { get; set; } // Agregar propiedad para saber si tiene PDF
+        public bool TieneFiliacionUTA { get; set; } // Agregar propiedad para saber si tiene filiación UTA
     }    public class VerificacionRequisito75Dto
     {
         public string Cedula { get; set; } = string.Empty;
@@ -5218,14 +5220,18 @@ private bool isLoadingInvestigaciones = false;
                 await CargarHistorialEscalafones();
             }
             
-            // Extraer IDs de investigaciones del historial
+            // Extraer IDs de investigaciones del historial (solo las que tienen filiación UTA)
             foreach (var historial in historialEscalafones ?? new List<HistorialEscalafonDto>())
             {
                 if (historial.DocumentosDetalles?.Investigaciones != null)
                 {
                     foreach (var investigacion in historial.DocumentosDetalles.Investigaciones)
                     {
-                        idsUtilizados.Add(investigacion.Id);
+                        // Solo considerar investigaciones con filiación UTA
+                        if (investigacion.TieneFiliacionUTA)
+                        {
+                            idsUtilizados.Add(investigacion.Id);
+                        }
                     }
                 }
             }
