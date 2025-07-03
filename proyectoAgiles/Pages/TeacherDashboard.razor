@@ -4489,18 +4489,24 @@ private bool isLoadingInvestigaciones = false;
                     porcentajeEvaluacionRequerido = 75;
                     periodosEvaluacionRequeridos = 4;
                 }
-                ExtractEvaluacionValues(verificacion.EvaluacionDesempeno.ValorObtenido);
-                
-                // Obtener número de evaluaciones analizadas desde la API
+                // OBTENER LOS VALORES DIRECTAMENTE DESDE LA API EN LUGAR DE PARSEAR TEXTO
                 if (estadisticasDocente?.Secciones?.Evaluaciones?.Datos != null)
                 {
-                    // Usar el valor total de evaluaciones si está disponible, o calcular desde verificacion
+                    // Usar los valores que vienen directamente de estadisticasDocente (API)
                     var datosEvaluaciones = estadisticasDocente.Secciones.Evaluaciones.Datos;
-                    periodosEvaluacionAnalizados = datosEvaluaciones.PromedioObtenido > 0 ? 4 : 0; // Fallback simplificado
+                    porcentajeEvaluacionObtenido = datosEvaluaciones.PromedioObtenido;
+                    periodosEvaluacionAnalizados = datosEvaluaciones.EvaluacionesAnalizadas;
+                    
+                    Console.WriteLine("ActualizarResumenesDinamicos: Valores de evaluaciones obtenidos directamente de estadisticasDocente (API)");
+                    Console.WriteLine($"  - Porcentaje obtenido desde API: {porcentajeEvaluacionObtenido}%");
+                    Console.WriteLine($"  - Evaluaciones analizadas desde API: {periodosEvaluacionAnalizados}");
                 }
                 else
                 {
-                    periodosEvaluacionAnalizados = 0; // Fallback desde la API
+                    // Si no hay estadisticasDocente, usar verificacion como fallback
+                    Console.WriteLine("ActualizarResumenesDinamicos: Fallback - extrayendo valores de verificacion.EvaluacionDesempeno");
+                    ExtractEvaluacionValues(verificacion.EvaluacionDesempeno.ValorObtenido);
+                    periodosEvaluacionAnalizados = 4; // Fallback
                 }
                 
                 // Actualizar configuración de requisitos para capacitaciones
