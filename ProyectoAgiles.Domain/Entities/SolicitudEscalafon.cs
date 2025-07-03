@@ -146,4 +146,14 @@ public class SolicitudEscalafon : BaseEntity
     /// </summary>
     [StringLength(100)]
     public string? ProcesadoPor { get; set; }
+
+    /// <summary>
+    /// ID del período de postulación en el que se creó esta solicitud (nullable para compatibilidad con solicitudes existentes)
+    /// </summary>
+    public int? PeriodoPostulacionId { get; set; }
+
+    /// <summary>
+    /// Navegación al período de postulación
+    /// </summary>
+    public virtual PeriodoPostulacion? PeriodoPostulacion { get; set; }
 }
