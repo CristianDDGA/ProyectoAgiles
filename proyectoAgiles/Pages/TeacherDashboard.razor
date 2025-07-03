@@ -3921,44 +3921,37 @@ private bool isLoadingInvestigaciones = false;
     // Métodos auxiliares para generar resúmenes detallados de la solicitud
     private int ObtenerAnosExperiencia(EstadisticasDocenteResponse? estadisticas)
     {
+        // Mostrar solo el valor que viene de la API, sin cálculos locales
         if (estadisticas?.Secciones?.Experiencia?.Datos != null)
         {
             var datosExperiencia = estadisticas.Secciones.Experiencia.Datos;
             return (int)Math.Round(datosExperiencia.AñosObtenidos);
         }
-
-        // Como último recurso, retornar 0
         return 0;
     }
 
     private string GenerarResumenPublicaciones(EstadisticasDocenteResponse? estadisticas)
     {
+        // Mostrar solo el resumen que viene de la API, sin cálculos locales
         if (estadisticas?.Secciones?.Obras?.Datos == null)
             return "Sin publicaciones registradas";
 
-        var datos = estadisticas.Secciones.Obras.Datos;
-        var totalObras = datos.TotalObras;
-        var obrasConUTA = datos.ObrasConUTA;
-
-        if (totalObras == 0)
+        var detalles = estadisticas.Secciones.Obras.Datos.Detalles;
+        if (string.IsNullOrWhiteSpace(detalles))
             return "Sin publicaciones registradas";
-
-        return $"Total: {totalObras} obra(s) registrada(s). Con filiación UTA: {obrasConUTA} obra(s).";
+        return detalles;
     }
 
     private string GenerarResumenCapacitaciones(EstadisticasDocenteResponse? estadisticas)
     {
+        // Mostrar solo el resumen que viene de la API, sin cálculos locales
         if (estadisticas?.Secciones?.Capacitaciones?.Datos == null)
             return "Sin capacitaciones registradas";
 
-        var datos = estadisticas.Secciones.Capacitaciones.Datos;
-        var horasObtenidas = datos.HorasObtenidas;
-        var horasPedagogicas = datos.HorasPedagogicasObtenidas;
-
-        if (horasObtenidas == 0)
+        var detalles = estadisticas.Secciones.Capacitaciones.Datos.Detalles;
+        if (string.IsNullOrWhiteSpace(detalles))
             return "Sin capacitaciones registradas";
-
-        return $"Total: {horasObtenidas} horas de capacitación. Horas pedagógicas: {horasPedagogicas} horas.";
+        return detalles;
     }
 
     public class ClassItem

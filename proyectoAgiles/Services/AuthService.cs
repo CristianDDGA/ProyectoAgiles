@@ -409,7 +409,7 @@ namespace proyectoAgiles.Services
         {
             try
             {
-                var investigaciones = await GetInvestigacionesPorCedula(cedula);
+                var investigaciones = await GetInvestigacionesDisponiblesPorCedula(cedula);
                 
                 // Buscar investigaciones con filiación UTA
                 var investigacionesUTA = investigaciones.Where(i => 
@@ -561,6 +561,19 @@ namespace proyectoAgiles.Services
             catch (Exception ex)
             {
                 throw new Exception($"Error al obtener investigaciones: {ex.Message}");
+            }
+        }
+
+        public async Task<List<InvestigacionDto>> GetInvestigacionesDisponiblesPorCedula(string cedula)
+        {
+            try
+            {
+                var response = await _httpClient.GetFromJsonAsync<List<InvestigacionDto>>($"{_apiBaseUrl}/api/investigaciones/disponibles/{cedula}");
+                return response ?? new List<InvestigacionDto>();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error al obtener investigaciones disponibles: {ex.Message}");
             }
         }
 
@@ -737,10 +750,10 @@ namespace proyectoAgiles.Services
 
                 Console.WriteLine($"CrearEstadisticasDesdeVerificacionDinamica: {requisitosCumplidos}/{totalRequisitos} requisitos ({porcentaje:F1}%)");
 
-                // Obtener datos reales para las secciones
-                var investigaciones = await GetInvestigacionesPorCedula(cedula);
-                var evaluaciones = await GetEvaluacionesPorCedula(cedula);
-                var capacitaciones = await GetCapacitacionesPorCedula(cedula);
+                // Obtener datos reales SOLO de documentos disponibles (no utilizados previamente)
+                var investigaciones = await GetInvestigacionesDisponiblesPorCedula(cedula);
+                var evaluaciones = await GetEvaluacionesDisponiblesPorCedula(cedula);
+                var capacitaciones = await GetCapacitacionesDisponiblesPorCedula(cedula);
 
                 // Parsear valores con logs detallados
                 var añosExperiencia = ParsearAños(verificacion.Experiencia.ValorObtenido);
@@ -1296,6 +1309,19 @@ namespace proyectoAgiles.Services
             }
         }
 
+        public async Task<List<EvaluacionDesempenoDto>> GetEvaluacionesDisponiblesPorCedula(string cedula)
+        {
+            try
+            {
+                var response = await _httpClient.GetFromJsonAsync<List<EvaluacionDesempenoDto>>($"{_apiBaseUrl}/api/EvaluacionesDesempeno/disponibles/{cedula}");
+                return response ?? new List<EvaluacionDesempenoDto>();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error al obtener evaluaciones disponibles: {ex.Message}");
+            }
+        }
+
         public async Task<EvaluacionDesempenoDto> CrearEvaluacion(CreateEvaluacionDesempenoDto createDto)
         {
             try
@@ -1492,6 +1518,19 @@ namespace proyectoAgiles.Services
             catch (Exception ex)
             {
                 throw new Exception($"Error al obtener capacitaciones: {ex.Message}");
+            }
+        }
+
+        public async Task<List<ProyectoAgiles.Application.DTOs.DiticDto>> GetCapacitacionesDisponiblesPorCedula(string cedula)
+        {
+            try
+            {
+                var response = await _httpClient.GetFromJsonAsync<List<ProyectoAgiles.Application.DTOs.DiticDto>>($"{_apiBaseUrl}/api/ditic/disponibles/{cedula}");
+                return response ?? new List<ProyectoAgiles.Application.DTOs.DiticDto>();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error al obtener capacitaciones disponibles: {ex.Message}");
             }
         }        public async Task<ProyectoAgiles.Application.DTOs.DiticDto> CrearCapacitacion(ProyectoAgiles.Application.DTOs.CreateDiticDto createDto)
         {
@@ -1904,7 +1943,7 @@ namespace proyectoAgiles.Services
         {
             try
             {
-                var investigaciones = await GetInvestigacionesPorCedula(cedula);
+                var investigaciones = await GetInvestigacionesDisponiblesPorCedula(cedula);
                 
                 // Contar obras con filiación UTA
                 var investigacionesUTA = investigaciones.Where(i => 
@@ -1960,32 +1999,51 @@ namespace proyectoAgiles.Services
         {
             try
             {
-                var response = await _httpClient.GetAsync($"{_apiBaseUrl}/api/EvaluacionesDesempeno/verificar-requisito-75/{cedula}");
-                if (response.IsSuccessStatusCode)
-                {
-                    var verificacion = await response.Content.ReadFromJsonAsync<VerificacionRequisito75Dto>();
-                    if (verificacion != null)
-                    {
-                        var cumple = verificacion.CumpleRequisito && 
-                                   verificacion.EvaluacionesAnalizadas >= config.PeriodosEvaluacionRequeridos;
-                        
-                        return new RequisitoCumplimientoDto
-                        {
-                            Cumple = cumple,
-                            Mensaje = cumple 
-                                ? $"✅ Cumple evaluación: {verificacion.PorcentajePromedioUltimasCuatro:F1}% promedio en {verificacion.EvaluacionesAnalizadas} períodos"
-                                : $"❌ No cumple evaluación: {verificacion.PorcentajePromedioUltimasCuatro:F1}% promedio en {verificacion.EvaluacionesAnalizadas} períodos",
-                            ValorObtenido = $"{verificacion.PorcentajePromedioUltimasCuatro:F1}% promedio",
-                            ValorRequerido = $"{config.PorcentajeEvaluacionMinimo}% mínimo en últimos {config.PeriodosEvaluacionRequeridos} períodos"
-                        };
-                    }
-                }
+                // Obtener solo evaluaciones disponibles (no utilizadas)
+                var evaluaciones = await GetEvaluacionesDisponiblesPorCedula(cedula);
                 
+                if (!evaluaciones.Any())
+                {
+                    return new RequisitoCumplimientoDto
+                    {
+                        Cumple = false,
+                        Mensaje = "❌ No hay evaluaciones disponibles para verificar",
+                        ValorObtenido = "0 evaluaciones",
+                        ValorRequerido = $"{config.PorcentajeEvaluacionMinimo}% mínimo en últimos {config.PeriodosEvaluacionRequeridos} períodos"
+                    };
+                }
+
+                // Ordenar por año y semestre (más recientes primero)
+                var evaluacionesOrdenadas = evaluaciones
+                    .OrderByDescending(e => e.Anio)
+                    .ThenByDescending(e => e.Semestre)
+                    .Take(config.PeriodosEvaluacionRequeridos)
+                    .ToList();
+
+                if (evaluacionesOrdenadas.Count < config.PeriodosEvaluacionRequeridos)
+                {
+                    return new RequisitoCumplimientoDto
+                    {
+                        Cumple = false,
+                        Mensaje = $"❌ Insuficientes evaluaciones: {evaluacionesOrdenadas.Count}/{config.PeriodosEvaluacionRequeridos} períodos",
+                        ValorObtenido = $"{evaluacionesOrdenadas.Count} evaluaciones",
+                        ValorRequerido = $"{config.PorcentajeEvaluacionMinimo}% mínimo en últimos {config.PeriodosEvaluacionRequeridos} períodos"
+                    };
+                }
+
+                // Calcular el promedio de las evaluaciones consideradas
+                var promedioObtenido = evaluacionesOrdenadas.Average(e => 
+                    e.PuntajeMaximo > 0 ? (e.PuntajeObtenido / e.PuntajeMaximo) * 100 : 0);
+
+                var cumple = promedioObtenido >= config.PorcentajeEvaluacionMinimo;
+
                 return new RequisitoCumplimientoDto
                 {
-                    Cumple = false,
-                    Mensaje = "❌ No se pudo verificar las evaluaciones de desempeño",
-                    ValorObtenido = "No disponible",
+                    Cumple = cumple,
+                    Mensaje = cumple 
+                        ? $"✅ Cumple evaluación: {promedioObtenido:F1}% promedio en {evaluacionesOrdenadas.Count} períodos"
+                        : $"❌ No cumple evaluación: {promedioObtenido:F1}% promedio en {evaluacionesOrdenadas.Count} períodos",
+                    ValorObtenido = $"{promedioObtenido:F1}% promedio",
                     ValorRequerido = $"{config.PorcentajeEvaluacionMinimo}% mínimo en últimos {config.PeriodosEvaluacionRequeridos} períodos"
                 };
             }
@@ -2005,48 +2063,54 @@ namespace proyectoAgiles.Services
         {
             try
             {
-                var response = await _httpClient.GetAsync($"{_apiBaseUrl}/api/ditic/verificar-requisito/{cedula}");
-                if (response.IsSuccessStatusCode)
-                {
-                    var verificacion = await response.Content.ReadFromJsonAsync<VerificacionRequisitoDiticResponse>();
-                    if (verificacion != null)
-                    {
-                        var cumpleHoras = verificacion.HorasObtenidas >= config.HorasCapacitacionRequeridas;
-                        var cumplePedagogico = verificacion.HorasPedagogicasObtenidas >= config.HorasCapacitacionPedagogicas;
-                        var cumpleRequisito = (cumpleHoras && cumplePedagogico) || verificacion.TieneExencionAutoridad;
-
-                        string mensaje;
-                        if (verificacion.TieneExencionAutoridad)
-                        {
-                            mensaje = $"✅ Exento por autoridad: {verificacion.CargoAutoridad} ({verificacion.AñosComoAutoridad:F1} años)";
-                        }
-                        else if (cumpleRequisito)
-                        {
-                            mensaje = $"✅ Cumple capacitación: {verificacion.HorasObtenidas}h totales ({verificacion.HorasPedagogicasObtenidas}h pedagógicas)";
-                        }
-                        else
-                        {
-                            mensaje = $"❌ No cumple capacitación: {verificacion.HorasObtenidas}h totales ({verificacion.HorasPedagogicasObtenidas}h pedagógicas)";
-                        }
-
-                        return new RequisitoCumplimientoDto
-                        {
-                            Cumple = cumpleRequisito,
-                            Mensaje = mensaje,
-                            ValorObtenido = verificacion.TieneExencionAutoridad 
-                                ? $"Exento - {verificacion.CargoAutoridad}"
-                                : $"{verificacion.HorasObtenidas}h ({verificacion.HorasPedagogicasObtenidas}h pedagógicas)",
-                            ValorRequerido = $"{config.HorasCapacitacionRequeridas}h totales ({config.HorasCapacitacionPedagogicas}h pedagógicas mín.) en últimos 3 años"
-                        };
-                    }
-                }
+                // Obtener solo capacitaciones disponibles (no utilizadas)
+                var capacitaciones = await GetCapacitacionesDisponiblesPorCedula(cedula);
                 
+                if (!capacitaciones.Any())
+                {
+                    return new RequisitoCumplimientoDto
+                    {
+                        Cumple = false,
+                        Mensaje = "❌ No hay capacitaciones disponibles para verificar",
+                        ValorObtenido = "0 horas",
+                        ValorRequerido = $"{config.HorasCapacitacionRequeridas}h totales ({config.HorasCapacitacionPedagogicas}h pedagógicas)"
+                    };
+                }
+
+                // Filtrar capacitaciones de los últimos 3 años
+                var fechaLimite = DateTime.Now.AddYears(-3);
+                var capacitacionesRecientes = capacitaciones
+                    .Where(c => c.FechaInicio >= fechaLimite)
+                    .ToList();
+
+                // Calcular horas totales y pedagógicas
+                var horasTotales = capacitacionesRecientes.Sum(c => c.HorasAcademicas);
+                var horasPedagogicas = capacitacionesRecientes
+                    .Where(c => c.TipoCapacitacion.Contains("Pedagógica", StringComparison.OrdinalIgnoreCase) || 
+                               c.TipoCapacitacion.Contains("Didáctica", StringComparison.OrdinalIgnoreCase))
+                    .Sum(c => c.HorasAcademicas);
+
+                // Verificar si cumple los requisitos
+                var cumpleHoras = horasTotales >= config.HorasCapacitacionRequeridas;
+                var cumplePedagogicas = horasPedagogicas >= config.HorasCapacitacionPedagogicas;
+                var cumpleRequisito = cumpleHoras && cumplePedagogicas;
+
+                string mensaje;
+                if (cumpleRequisito)
+                {
+                    mensaje = $"✅ Cumple capacitación: {horasTotales}h totales ({horasPedagogicas}h pedagógicas)";
+                }
+                else
+                {
+                    mensaje = $"❌ No cumple capacitación: {horasTotales}h totales ({horasPedagogicas}h pedagógicas)";
+                }
+
                 return new RequisitoCumplimientoDto
                 {
-                    Cumple = false,
-                    Mensaje = "❌ No se pudo verificar las capacitaciones",
-                    ValorObtenido = "No disponible",
-                    ValorRequerido = $"{config.HorasCapacitacionRequeridas}h totales ({config.HorasCapacitacionPedagogicas}h pedagógicas mín.) en últimos 3 años"
+                    Cumple = cumpleRequisito,
+                    Mensaje = mensaje,
+                    ValorObtenido = $"{horasTotales}h totales ({horasPedagogicas}h pedagógicas)",
+                    ValorRequerido = $"{config.HorasCapacitacionRequeridas}h totales ({config.HorasCapacitacionPedagogicas}h pedagógicas)"
                 };
             }
             catch (Exception ex)
@@ -2056,7 +2120,7 @@ namespace proyectoAgiles.Services
                     Cumple = false,
                     Mensaje = $"❌ Error al verificar capacitación: {ex.Message}",
                     ValorObtenido = "Error",
-                    ValorRequerido = $"{config.HorasCapacitacionRequeridas}h totales ({config.HorasCapacitacionPedagogicas}h pedagógicas mín.) en últimos 3 años"
+                    ValorRequerido = $"{config.HorasCapacitacionRequeridas}h totales ({config.HorasCapacitacionPedagogicas}h pedagógicas)"
                 };
             }
         }
@@ -2068,7 +2132,7 @@ namespace proyectoAgiles.Services
                 // NOTA: Esta implementación calcula los meses de participación desde la investigación 
                 // con filiación UTA más antigua, asumiendo participación continua en proyectos
                 
-                var investigaciones = await GetInvestigacionesPorCedula(cedula);
+                var investigaciones = await GetInvestigacionesDisponiblesPorCedula(cedula);
                 
                 Console.WriteLine($"DEBUG VerificarProyectosInvestigacionDinamica:");
                 Console.WriteLine($"  - Total investigaciones: {investigaciones.Count}");
