@@ -15,6 +15,7 @@ public interface ISolicitudEscalafonService
     Task<bool> DeleteSolicitudAsync(int id);
     Task<bool> ExisteSolicitudPendienteAsync(string cedula);
     Task<bool> NotificarAprobacionAsync(int solicitudId);
+    Task<bool> NotificarRechazoAsync(int solicitudId, string motivoRechazo, string rechazadoPor, string nivelRechazo);
     Task<bool> FinalizarEscalafonAsync(int solicitudId);
     Task<SolicitudEscalafonDto> RechazarSolicitudAsync(int solicitudId, string motivoRechazo, string rechazadoPor, string nivelRechazo);
     Task<SolicitudEscalafonDto> CrearApelacionAsync(int solicitudOriginalId, string observacionesApelacion, string destinatario = "", List<IFormFile>? archivos = null);

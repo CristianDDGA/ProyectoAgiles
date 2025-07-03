@@ -390,4 +390,228 @@ public class EmailService : IEmailService
         </body>
         </html>";
     }
+
+    public async Task<bool> SendSolicitudAprobadaEmailAsync(string docenteEmail, string docenteNombre, string nivelActual, string nivelSolicitado, DateTime fechaSolicitud, DateTime fechaAprobacion, string observaciones = "")
+    {
+        try
+        {
+            var subject = "✅ Solicitud de Escalafón Aprobada - Universidad Técnica de Ambato";
+            var body = GenerateSolicitudAprobadaEmailBody(docenteNombre, nivelActual, nivelSolicitado, fechaSolicitud, fechaAprobacion, observaciones);
+            
+            return await SendEmailAsync(docenteEmail, subject, body, true);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error enviando correo de aprobación de solicitud: {ex.Message}");
+            return false;
+        }
+    }
+
+    public async Task<bool> SendSolicitudRechazadaEmailAsync(string docenteEmail, string docenteNombre, string nivelActual, string nivelSolicitado, DateTime fechaSolicitud, DateTime fechaRechazo, string motivoRechazo, string rechazadoPor, string nivelRechazo)
+    {
+        try
+        {
+            var subject = "❌ Solicitud de Escalafón Rechazada - Universidad Técnica de Ambato";
+            var body = GenerateSolicitudRechazadaEmailBody(docenteNombre, nivelActual, nivelSolicitado, fechaSolicitud, fechaRechazo, motivoRechazo, rechazadoPor, nivelRechazo);
+            
+            return await SendEmailAsync(docenteEmail, subject, body, true);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error enviando correo de rechazo de solicitud: {ex.Message}");
+            return false;
+        }
+    }
+
+    private string GenerateSolicitudAprobadaEmailBody(string docenteNombre, string nivelActual, string nivelSolicitado, DateTime fechaSolicitud, DateTime fechaAprobacion, string observaciones)
+    {
+        return $@"
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset='utf-8'>
+            <style>
+                .container {{ max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif; }}
+                .header {{ background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%); color: white; padding: 20px; text-align: center; }}
+                .content {{ padding: 20px; }}
+                .footer {{ background-color: #f8f9fa; padding: 15px; text-align: center; font-size: 12px; }}
+                .info-box {{ background-color: #e8f5e8; border-left: 4px solid #4CAF50; padding: 15px; margin: 15px 0; }}
+                .success-badge {{ background: #4CAF50; color: white; padding: 5px 10px; border-radius: 15px; }}
+                .highlight {{ background: #d4edda; color: #155724; padding: 10px; border-radius: 5px; margin: 10px 0; }}
+                .signature {{ margin-top: 30px; padding-top: 15px; border-top: 1px solid #eee; }}
+            </style>
+        </head>
+        <body>
+            <div class='container'>
+                <div class='header'>
+                    <h2>🎉 ¡Felicidades!</h2>
+                    <p>Su solicitud de escalafón ha sido <span class='success-badge'>APROBADA</span></p>
+                </div>
+                
+                <div class='content'>
+                    <h3>Estimado/a {docenteNombre},</h3>
+                    
+                    <p>Nos complace informarle que su solicitud de escalafón docente ha sido <strong>aprobada</strong> por la Comisión Académica de Escalafón.</p>
+                    
+                    <div class='info-box'>
+                        <h3>📋 Detalles de la solicitud:</h3>
+                        <ul>
+                            <li><strong>Nivel actual:</strong> {nivelActual}</li>
+                            <li><strong>Nivel aprobado:</strong> {nivelSolicitado}</li>
+                            <li><strong>Fecha de solicitud:</strong> {fechaSolicitud:dd/MM/yyyy}</li>
+                            <li><strong>Fecha de aprobación:</strong> {fechaAprobacion:dd/MM/yyyy}</li>
+                        </ul>
+                    </div>
+                    
+                    {(string.IsNullOrEmpty(observaciones) ? "" : $@"
+                    <div class='info-box'>
+                        <h3>📝 Observaciones:</h3>
+                        <p>{observaciones}</p>
+                    </div>
+                    ")}
+                    
+                    <div class='highlight'>
+                        <strong>🏆 ¡Felicitaciones por este logro académico!</strong><br>
+                        Su nueva categoría docente entrará en vigencia según los procedimientos establecidos por la institución.
+                    </div>
+                    
+                    <div class='info-box'>
+                        <h3>📞 Información de Contacto:</h3>
+                        <p>Si tiene alguna consulta sobre el proceso, puede contactar a:</p>
+                        <ul>
+                            <li><strong>Dirección de Talento Humano</strong></li>
+                            <li><strong>Teléfono:</strong> (03) 2848-487</li>
+                            <li><strong>Email:</strong> talentohumano@uta.edu.ec</li>
+                        </ul>
+                    </div>
+                    
+                    <div class='signature'>
+                        <p><strong>Fecha de notificación:</strong> {DateTime.Now:dd 'de' MMMM 'de' yyyy}</p>
+                        <p><strong>Hora:</strong> {DateTime.Now:HH:mm}</p>
+                    </div>
+                </div>
+                
+                <div class='footer'>
+                    <p><strong>Universidad Técnica de Ambato</strong></p>
+                    <p>Dirección de Talento Humano - Comisión Académica de Escalafón</p>
+                    <p>Este es un mensaje automatizado, por favor no responda a este correo.</p>
+                </div>
+            </div>
+        </body>
+        </html>";
+    }
+
+    private string GenerateSolicitudRechazadaEmailBody(string docenteNombre, string nivelActual, string nivelSolicitado, DateTime fechaSolicitud, DateTime fechaRechazo, string motivoRechazo, string rechazadoPor, string nivelRechazo)
+    {
+        var nivelTexto = nivelRechazo switch
+        {
+            "PresidenteComision" => "Presidente de la Comisión Académica",
+            "DireccionTalentoHumano" => "Dirección de Talento Humano",
+            "ComisionAcademica" => "Comisión Académica de Escalafón",
+            _ => "Administración"
+        };
+
+        return $@"
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset='utf-8'>
+            <style>
+                .container {{ max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif; }}
+                .header {{ background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%); color: white; padding: 20px; text-align: center; }}
+                .content {{ padding: 20px; }}
+                .footer {{ background-color: #f8f9fa; padding: 15px; text-align: center; font-size: 12px; }}
+                .info-box {{ background-color: #ffeaa7; border-left: 4px solid #fdcb6e; padding: 15px; margin: 15px 0; }}
+                .error-box {{ background-color: #ffebee; border-left: 4px solid #f44336; padding: 15px; margin: 15px 0; }}
+                .appeal-box {{ background-color: #e3f2fd; border-left: 4px solid #2196f3; padding: 15px; margin: 15px 0; }}
+                .warning {{ color: #d32f2f; font-weight: bold; }}
+                .signature {{ margin-top: 30px; padding-top: 15px; border-top: 1px solid #eee; }}
+            </style>
+        </head>
+        <body>
+            <div class='container'>
+                <div class='header'>
+                    <h2>❌ Solicitud de Escalafón Rechazada</h2>
+                    <p>Universidad Técnica de Ambato</p>
+                </div>
+                
+                <div class='content'>
+                    <h3>Estimado/a {docenteNombre},</h3>
+                    
+                    <p>Lamentamos informarle que su solicitud de escalafón docente ha sido <span class='warning'>rechazada</span> por <strong>{nivelTexto}</strong>.</p>
+                    
+                    <div class='info-box'>
+                        <h3>📋 Detalles de la solicitud:</h3>
+                        <ul>
+                            <li><strong>Nivel actual:</strong> {nivelActual}</li>
+                            <li><strong>Nivel solicitado:</strong> {nivelSolicitado}</li>
+                            <li><strong>Fecha de solicitud:</strong> {fechaSolicitud:dd/MM/yyyy}</li>
+                            <li><strong>Fecha de rechazo:</strong> {fechaRechazo:dd/MM/yyyy}</li>
+                            <li><strong>Rechazado por:</strong> {rechazadoPor}</li>
+                            <li><strong>Nivel de rechazo:</strong> {nivelTexto}</li>
+                        </ul>
+                    </div>
+                    
+                    <div class='error-box'>
+                        <h3>📝 Motivo del rechazo:</h3>
+                        <p>{motivoRechazo}</p>
+                    </div>
+                    
+                    <div class='appeal-box'>
+                        <h3>📢 Derecho de Apelación</h3>
+                        <p><strong>Usted tiene derecho a apelar esta decisión.</strong> Para presentar una apelación, siga estos pasos:</p>
+                        <ol>
+                            <li><strong>Ingrese a su dashboard</strong> en el sistema de escalafón docente</li>
+                            <li><strong>Vaya a la sección ""Mis Solicitudes""</strong></li>
+                            <li><strong>Busque la solicitud rechazada</strong> y haga clic en ""Ver detalles""</li>
+                            <li><strong>Presione el botón ""Apelar""</strong> que aparecerá en la interfaz</li>
+                            <li><strong>Complete el formulario de apelación</strong> con:
+                                <ul>
+                                    <li>Justificación detallada de su apelación</li>
+                                    <li>Documentación adicional que respalde su caso</li>
+                                    <li>Selección del destinatario de la apelación</li>
+                                </ul>
+                            </li>
+                            <li><strong>Adjunte los documentos necesarios</strong> que considere relevantes</li>
+                            <li><strong>Envíe la apelación</strong> para su revisión</li>
+                        </ol>
+                        
+                        <p><strong>📅 Tiempo para apelar:</strong> Puede presentar su apelación en cualquier momento desde su dashboard.</p>
+                        
+                        <p><strong>📋 Documentos recomendados para la apelación:</strong></p>
+                        <ul>
+                            <li>Documentos adicionales que respalden su solicitud</li>
+                            <li>Cartas de recomendación actualizadas</li>
+                            <li>Certificados o títulos adicionales</li>
+                            <li>Evidencia de experiencia docente o investigativa</li>
+                        </ul>
+                    </div>
+                    
+                    <div class='info-box'>
+                        <h3>📞 Información de Contacto:</h3>
+                        <p>Si tiene consultas sobre el proceso de apelación, puede contactar a:</p>
+                        <ul>
+                            <li><strong>Dirección de Talento Humano</strong></li>
+                            <li><strong>Teléfono:</strong> (03) 2848-487</li>
+                            <li><strong>Email:</strong> talentohumano@uta.edu.ec</li>
+                            <li><strong>Horario de atención:</strong> Lunes a Viernes, 8:00 AM - 5:00 PM</li>
+                        </ul>
+                    </div>
+                    
+                    <div class='signature'>
+                        <p><strong>Procesado por:</strong> {rechazadoPor}</p>
+                        <p><strong>Fecha de notificación:</strong> {DateTime.Now:dd 'de' MMMM 'de' yyyy}</p>
+                        <p><strong>Hora:</strong> {DateTime.Now:HH:mm}</p>
+                    </div>
+                </div>
+                
+                <div class='footer'>
+                    <p><strong>Universidad Técnica de Ambato</strong></p>
+                    <p>Dirección de Talento Humano - Comisión Académica de Escalafón</p>
+                    <p>Este es un mensaje automatizado, por favor no responda a este correo.</p>
+                </div>
+            </div>
+        </body>
+        </html>";
+    }
 }

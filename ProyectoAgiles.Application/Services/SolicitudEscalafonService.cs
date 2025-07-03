@@ -127,34 +127,68 @@ public class SolicitudEscalafonService : ISolicitudEscalafonService
             return false;
         }
 
-        var subject = "Notificación de Aprobación - Solicitud de Escalafón";
-        var body = $@"
-            <html>
-            <body>
-                <h2>Estimado/a {solicitud.DocenteNombre},</h2>
-                <p>Nos complace informarle que su solicitud de escalafón ha sido <strong>APROBADA</strong> por la Comisión Académica.</p>
-                
-                <h3>Detalles de la solicitud:</h3>
-                <ul>
-                    <li><strong>Nivel actual:</strong> {solicitud.NivelActual}</li>
-                    <li><strong>Nivel solicitado:</strong> {solicitud.NivelSolicitado}</li>
-                    <li><strong>Fecha de solicitud:</strong> {solicitud.FechaSolicitud:dd/MM/yyyy}</li>
-                    <li><strong>Fecha de aprobación:</strong> {solicitud.FechaAprobacion:dd/MM/yyyy}</li>
-                </ul>
-                
-                {(string.IsNullOrEmpty(solicitud.Observaciones) ? "" : $"<p><strong>Observaciones:</strong> {solicitud.Observaciones}</p>")}
-                
-                <p>Felicitaciones por este logro académico. Su nueva categoría entrará en vigencia según los procedimientos establecidos por la institución.</p>
-                
-                <p>Si tiene alguna consulta, no dude en contactarnos.</p>
-                
-                <p>Atentamente,<br>
-                Comisión Académica<br>
-                Universidad</p>
-            </body>
-            </html>";
+        // Verificar que la solicitud tenga un email válido
+        if (string.IsNullOrEmpty(solicitud.DocenteEmail))
+        {
+            return false;
+        }
 
-        return await _emailService.SendAdminNotificationEmailAsync(solicitud.DocenteEmail, subject, body, true);
+        try
+        {
+            // Usar el nuevo método específico para solicitudes aprobadas
+            return await _emailService.SendSolicitudAprobadaEmailAsync(
+                solicitud.DocenteEmail,
+                solicitud.DocenteNombre,
+                solicitud.NivelActual,
+                solicitud.NivelSolicitado,
+                solicitud.FechaSolicitud,
+                solicitud.FechaAprobacion ?? DateTime.Now,
+                solicitud.Observaciones ?? ""
+            );
+        }
+        catch (Exception ex)
+        {
+            // Log error but don't fail the main process
+            Console.WriteLine($"Error enviando correo de aprobación: {ex.Message}");
+            return false;
+        }
+    }
+
+    public async Task<bool> NotificarRechazoAsync(int solicitudId, string motivoRechazo, string rechazadoPor, string nivelRechazo)
+    {
+        var solicitud = await _repository.GetByIdAsync(solicitudId);
+        if (solicitud == null)
+        {
+            return false;
+        }
+
+        // Verificar que la solicitud tenga un email válido
+        if (string.IsNullOrEmpty(solicitud.DocenteEmail))
+        {
+            return false;
+        }
+
+        try
+        {
+            // Usar el nuevo método específico para solicitudes rechazadas
+            return await _emailService.SendSolicitudRechazadaEmailAsync(
+                solicitud.DocenteEmail,
+                solicitud.DocenteNombre,
+                solicitud.NivelActual,
+                solicitud.NivelSolicitado,
+                solicitud.FechaSolicitud,
+                DateTime.Now,
+                motivoRechazo,
+                rechazadoPor,
+                nivelRechazo
+            );
+        }
+        catch (Exception ex)
+        {
+            // Log error but don't fail the main process
+            Console.WriteLine($"Error enviando correo de rechazo: {ex.Message}");
+            return false;
+        }
     }
 
     public async Task<bool> FinalizarEscalafonAsync(int solicitudId)
@@ -378,82 +412,18 @@ public class SolicitudEscalafonService : ISolicitudEscalafonService
     {
         try
         {
-            var nivelTexto = nivelRechazo switch
-            {
-                "PresidenteComision" => "Presidente de la Comisión Académica",
-                "DireccionTalentoHumano" => "Dirección de Talento Humano",
-                "ComisionAcademica" => "Comisión Académica de Escalafón",
-                _ => "Administración"
-            };
-
-            var subject = $"Solicitud de Escalafón Rechazada - {nivelTexto}";
-            var body = $@"
-            <html>
-            <head>
-                <style>
-                    body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
-                    .header {{ background-color: #d32f2f; color: white; padding: 20px; text-align: center; }}
-                    .content {{ padding: 20px; }}
-                    .details {{ background-color: #f5f5f5; padding: 15px; margin: 15px 0; border-radius: 5px; }}
-                    .footer {{ background-color: #f0f0f0; padding: 15px; text-align: center; font-size: 12px; }}
-                    .warning {{ color: #d32f2f; font-weight: bold; }}
-                    .appeal-info {{ background-color: #e3f2fd; padding: 15px; margin: 15px 0; border-left: 4px solid #2196f3; }}
-                </style>
-            </head>
-            <body>
-                <div class='header'>
-                    <h2>🚫 Solicitud de Escalafón Rechazada</h2>
-                </div>
-                
-                <div class='content'>
-                    <h3>Estimado/a {solicitud.DocenteNombre},</h3>
-                    
-                    <p>Lamentamos informarle que su solicitud de escalafón ha sido <span class='warning'>RECHAZADA</span> por <strong>{nivelTexto}</strong>.</p>
-                    
-                    <div class='details'>
-                        <h4>📋 Detalles de la solicitud:</h4>
-                        <ul>
-                            <li><strong>Número de solicitud:</strong> #{solicitud.Id}</li>
-                            <li><strong>Nivel actual:</strong> {solicitud.NivelActual}</li>
-                            <li><strong>Nivel solicitado:</strong> {solicitud.NivelSolicitado}</li>
-                            <li><strong>Fecha de solicitud:</strong> {solicitud.FechaSolicitud:dd/MM/yyyy}</li>
-                            <li><strong>Fecha de rechazo:</strong> {solicitud.FechaRechazo:dd/MM/yyyy HH:mm}</li>
-                            <li><strong>Rechazado por:</strong> {rechazadoPor}</li>
-                            <li><strong>Nivel de rechazo:</strong> {nivelTexto}</li>
-                        </ul>
-                    </div>
-                    
-                    <div class='details'>
-                        <h4>📝 Motivo del rechazo:</h4>
-                        <p><em>{solicitud.MotivoRechazo}</em></p>
-                    </div>
-                    
-                    <div class='appeal-info'>
-                        <h4>📢 Derecho de Apelación</h4>
-                        <p>Usted tiene derecho a apelar esta decisión. Para ello:</p>
-                        <ol>
-                            <li>Ingrese a su dashboard en el sistema</li>
-                            <li>Vaya a la sección ""Mis Solicitudes""</li>
-                            <li>Busque la solicitud rechazada</li>
-                            <li>Haga clic en el botón ""Apelar""</li>
-                            <li>Proporcione la documentación adicional o justificación necesaria</li>
-                        </ol>
-                        <p><strong>Nota:</strong> Puede presentar su apelación en cualquier momento desde su dashboard.</p>
-                    </div>
-                    
-                    <p>Si tiene alguna consulta sobre este proceso, no dude en contactarnos.</p>
-                </div>
-                
-                <div class='footer'>
-                    <p>Atentamente,<br>
-                    <strong>Sistema de Escalafón Docente</strong><br>
-                    Universidad Técnica de Ambato<br>
-                    📧 escalafon@uta.edu.ec | 📞 03-2848487</p>
-                </div>
-            </body>
-            </html>";
-
-            await _emailService.SendEmailAsync(solicitud.DocenteEmail, subject, body);
+            // Usar el nuevo método específico para solicitudes rechazadas
+            await _emailService.SendSolicitudRechazadaEmailAsync(
+                solicitud.DocenteEmail,
+                solicitud.DocenteNombre,
+                solicitud.NivelActual,
+                solicitud.NivelSolicitado,
+                solicitud.FechaSolicitud,
+                solicitud.FechaRechazo ?? DateTime.Now,
+                solicitud.MotivoRechazo ?? "Sin motivo especificado",
+                rechazadoPor,
+                nivelRechazo
+            );
         }
         catch (Exception ex)
         {

@@ -1372,10 +1372,36 @@
                 }
                 else
                 {
-                    // Si es rechazado, mostrar notificación (podrías implementar un endpoint similar para rechazos)
-                    await JSRuntime.InvokeVoidAsync("toastNotifications.success", 
-                        "Solicitud Rechazada", 
-                        $"La solicitud ha sido rechazada. Se debería notificar a {solicitud.DocenteEmail}");
+                    // Si es rechazado, enviar notificación por correo
+                    try
+                    {
+                        var notificarRechazoDto = new
+                        {
+                            MotivoRechazo = "Solicitud rechazada por el Presidente de la Comisión Académica",
+                            RechazadoPor = "Presidente de la Comisión Académica",
+                            NivelRechazo = "PresidenteComision"
+                        };
+                        
+                        var emailResponse = await HttpClient.PostAsJsonAsync($"/api/solicitudes-escalafon/{solicitudId}/notificar-rechazo", notificarRechazoDto);
+                        if (emailResponse.IsSuccessStatusCode)
+                        {
+                            await JSRuntime.InvokeVoidAsync("toastNotifications.success", 
+                                "Solicitud Rechazada y Notificada", 
+                                $"La solicitud ha sido rechazada y se ha enviado la notificación por correo a {solicitud.DocenteEmail}");
+                        }
+                        else
+                        {
+                            await JSRuntime.InvokeVoidAsync("toastNotifications.warning", 
+                                "Solicitud Rechazada", 
+                                "La solicitud ha sido rechazada, pero no se pudo enviar el correo de notificación.");
+                        }
+                    }
+                    catch (Exception emailEx)
+                    {
+                        await JSRuntime.InvokeVoidAsync("toastNotifications.warning", 
+                            "Solicitud Rechazada", 
+                            $"La solicitud ha sido rechazada, pero hubo un error enviando el correo: {emailEx.Message}");
+                    }
                 }
                 
                 // Actualizar la lista de solicitudes

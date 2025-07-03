@@ -180,4 +180,120 @@ public class MockEmailService : IEmailService
             return false;
         }
     }
+
+    public async Task<bool> SendSolicitudAprobadaEmailAsync(string docenteEmail, string docenteNombre, string nivelActual, string nivelSolicitado, DateTime fechaSolicitud, DateTime fechaAprobacion, string observaciones = "")
+    {
+        try
+        {
+            Console.WriteLine("=".PadRight(80, '='));
+            Console.WriteLine("EMAIL SIMULADO - SOLICITUD APROBADA");
+            Console.WriteLine("=".PadRight(80, '='));
+            Console.WriteLine($"Para: {docenteEmail}");
+            Console.WriteLine($"Docente: {docenteNombre}");
+            Console.WriteLine($"Nivel actual: {nivelActual}");
+            Console.WriteLine($"Nivel aprobado: {nivelSolicitado}");
+            Console.WriteLine($"Fecha solicitud: {fechaSolicitud:dd/MM/yyyy}");
+            Console.WriteLine($"Fecha aprobación: {fechaAprobacion:dd/MM/yyyy}");
+            Console.WriteLine("=".PadRight(80, '='));
+            Console.WriteLine("ASUNTO: ✅ Solicitud de Escalafón Aprobada - Universidad Técnica de Ambato");
+            Console.WriteLine();
+            Console.WriteLine($"Estimado/a {docenteNombre},");
+            Console.WriteLine();
+            Console.WriteLine("¡Felicidades! Su solicitud de escalafón ha sido APROBADA por la Comisión Académica.");
+            Console.WriteLine();
+            Console.WriteLine("DETALLES:");
+            Console.WriteLine($"• Nivel actual: {nivelActual}");
+            Console.WriteLine($"• Nivel aprobado: {nivelSolicitado}");
+            Console.WriteLine($"• Fecha de solicitud: {fechaSolicitud:dd/MM/yyyy}");
+            Console.WriteLine($"• Fecha de aprobación: {fechaAprobacion:dd/MM/yyyy}");
+            Console.WriteLine();
+            if (!string.IsNullOrEmpty(observaciones))
+            {
+                Console.WriteLine("OBSERVACIONES:");
+                Console.WriteLine($"{observaciones}");
+                Console.WriteLine();
+            }
+            Console.WriteLine("Su nueva categoría docente entrará en vigencia según los procedimientos establecidos.");
+            Console.WriteLine();
+            Console.WriteLine("Atentamente,");
+            Console.WriteLine("Comisión Académica de Escalafón");
+            Console.WriteLine("Universidad Técnica de Ambato");
+            Console.WriteLine("=".PadRight(80, '='));
+
+            await Task.Delay(100);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error en MockEmailService (Aprobación Solicitud): {ex.Message}");
+            return false;
+        }
+    }
+
+    public async Task<bool> SendSolicitudRechazadaEmailAsync(string docenteEmail, string docenteNombre, string nivelActual, string nivelSolicitado, DateTime fechaSolicitud, DateTime fechaRechazo, string motivoRechazo, string rechazadoPor, string nivelRechazo)
+    {
+        try
+        {
+            var nivelTexto = nivelRechazo switch
+            {
+                "PresidenteComision" => "Presidente de la Comisión Académica",
+                "DireccionTalentoHumano" => "Dirección de Talento Humano",
+                "ComisionAcademica" => "Comisión Académica de Escalafón",
+                _ => "Administración"
+            };
+
+            Console.WriteLine("=".PadRight(80, '='));
+            Console.WriteLine("EMAIL SIMULADO - SOLICITUD RECHAZADA");
+            Console.WriteLine("=".PadRight(80, '='));
+            Console.WriteLine($"Para: {docenteEmail}");
+            Console.WriteLine($"Docente: {docenteNombre}");
+            Console.WriteLine($"Nivel actual: {nivelActual}");
+            Console.WriteLine($"Nivel solicitado: {nivelSolicitado}");
+            Console.WriteLine($"Fecha solicitud: {fechaSolicitud:dd/MM/yyyy}");
+            Console.WriteLine($"Fecha rechazo: {fechaRechazo:dd/MM/yyyy}");
+            Console.WriteLine($"Rechazado por: {rechazadoPor} ({nivelTexto})");
+            Console.WriteLine("=".PadRight(80, '='));
+            Console.WriteLine("ASUNTO: ❌ Solicitud de Escalafón Rechazada - Universidad Técnica de Ambato");
+            Console.WriteLine();
+            Console.WriteLine($"Estimado/a {docenteNombre},");
+            Console.WriteLine();
+            Console.WriteLine($"Su solicitud de escalafón ha sido rechazada por {nivelTexto}.");
+            Console.WriteLine();
+            Console.WriteLine("DETALLES:");
+            Console.WriteLine($"• Nivel actual: {nivelActual}");
+            Console.WriteLine($"• Nivel solicitado: {nivelSolicitado}");
+            Console.WriteLine($"• Fecha de solicitud: {fechaSolicitud:dd/MM/yyyy}");
+            Console.WriteLine($"• Fecha de rechazo: {fechaRechazo:dd/MM/yyyy}");
+            Console.WriteLine($"• Rechazado por: {rechazadoPor}");
+            Console.WriteLine($"• Nivel de rechazo: {nivelTexto}");
+            Console.WriteLine();
+            Console.WriteLine("MOTIVO DEL RECHAZO:");
+            Console.WriteLine($"{motivoRechazo}");
+            Console.WriteLine();
+            Console.WriteLine("📢 DERECHO DE APELACIÓN:");
+            Console.WriteLine("Usted tiene derecho a apelar esta decisión. Para ello:");
+            Console.WriteLine("1. Ingrese a su dashboard en el sistema");
+            Console.WriteLine("2. Vaya a la sección 'Mis Solicitudes'");
+            Console.WriteLine("3. Busque la solicitud rechazada");
+            Console.WriteLine("4. Haga clic en el botón 'Apelar'");
+            Console.WriteLine("5. Complete el formulario con documentación adicional");
+            Console.WriteLine();
+            Console.WriteLine("Puede presentar su apelación en cualquier momento desde su dashboard.");
+            Console.WriteLine();
+            Console.WriteLine("Para consultas: talentohumano@uta.edu.ec | (03) 2848-487");
+            Console.WriteLine();
+            Console.WriteLine("Atentamente,");
+            Console.WriteLine("Comisión Académica de Escalafón");
+            Console.WriteLine("Universidad Técnica de Ambato");
+            Console.WriteLine("=".PadRight(80, '='));
+
+            await Task.Delay(100);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error en MockEmailService (Rechazo Solicitud): {ex.Message}");
+            return false;
+        }
+    }
 }

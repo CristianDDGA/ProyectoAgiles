@@ -148,3 +148,10 @@ public class RechazarApelacionDto
     public string RechazadoPor { get; set; } = string.Empty;
     public string MotivoRechazoApelacion { get; set; } = string.Empty;
 }
+
+public class NotificarRechazoDto
+{
+    public string MotivoRechazo { get; set; } = string.Empty;
+    public string RechazadoPor { get; set; } = string.Empty;
+    public string NivelRechazo { get; set; } = string.Empty;
+}

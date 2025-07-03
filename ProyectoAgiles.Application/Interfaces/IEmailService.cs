@@ -7,4 +7,6 @@ public interface IEmailService
     Task<bool> SendAdminNotificationEmailAsync(string email, string subject, string body, bool isHtml = true);
     Task<bool> SendApelacionRechazoEmailAsync(string docenteEmail, string docenteNombre, string motivoRechazo, string rechazadoPor);
     Task<bool> SendApelacionAceptadaEmailAsync(string docenteEmail, string docenteNombre, string observaciones, string aceptadoPor);
+    Task<bool> SendSolicitudAprobadaEmailAsync(string docenteEmail, string docenteNombre, string nivelActual, string nivelSolicitado, DateTime fechaSolicitud, DateTime fechaAprobacion, string observaciones = "");
+    Task<bool> SendSolicitudRechazadaEmailAsync(string docenteEmail, string docenteNombre, string nivelActual, string nivelSolicitado, DateTime fechaSolicitud, DateTime fechaRechazo, string motivoRechazo, string rechazadoPor, string nivelRechazo);
 }
