@@ -14,15 +14,18 @@ public class SolicitudesEscalafonController : ControllerBase
     private readonly ISolicitudEscalafonService _solicitudService;
     private readonly ILogger<SolicitudesEscalafonController> _logger;
     private readonly IWebHostEnvironment _webHostEnvironment;
+    private readonly IEmailService _emailService;
 
     public SolicitudesEscalafonController(
         ISolicitudEscalafonService solicitudService,
         ILogger<SolicitudesEscalafonController> logger,
-        IWebHostEnvironment webHostEnvironment)
+        IWebHostEnvironment webHostEnvironment,
+        IEmailService emailService)
     {
         _solicitudService = solicitudService;
         _logger = logger;
         _webHostEnvironment = webHostEnvironment;
+        _emailService = emailService;
     }
 
     /// <summary>
@@ -442,6 +445,23 @@ public class SolicitudesEscalafonController : ControllerBase
 
             var solicitudActualizada = await _solicitudService.UpdateSolicitudStatusAsync(updateDto);
             
+            // Enviar notificación por correo al docente
+            try
+            {
+                await _emailService.SendApelacionAceptadaEmailAsync(
+                    solicitud.DocenteEmail, 
+                    solicitud.DocenteNombre, 
+                    aceptarDto.ObservacionesAceptacion,
+                    aceptarDto.AceptadoPor);
+                    
+                _logger.LogInformation("Notificación de aceptación de apelación enviada para solicitud {Id}", id);
+            }
+            catch (Exception emailEx)
+            {
+                _logger.LogWarning(emailEx, "Error al enviar notificación de aceptación de apelación para solicitud {Id}", id);
+                // No fallar la operación por problemas de email
+            }
+            
             _logger.LogInformation("Apelación aceptada para solicitud {Id} por {Usuario}", id, aceptarDto.AceptadoPor);
             
             return Ok(solicitudActualizada);
@@ -487,8 +507,12 @@ public class SolicitudesEscalafonController : ControllerBase
             // Enviar notificación por correo al docente
             try
             {
-                // Aquí puedes agregar la lógica de envío de correo específica para rechazo de apelación
-                // await _emailService.EnviarNotificacionRechazoApelacionAsync(solicitud);
+                await _emailService.SendApelacionRechazoEmailAsync(
+                    solicitud.DocenteEmail, 
+                    solicitud.DocenteNombre, 
+                    rechazarDto.MotivoRechazoApelacion,
+                    rechazarDto.RechazadoPor);
+                    
                 _logger.LogInformation("Notificación de rechazo de apelación enviada para solicitud {Id}", id);
             }
             catch (Exception emailEx)

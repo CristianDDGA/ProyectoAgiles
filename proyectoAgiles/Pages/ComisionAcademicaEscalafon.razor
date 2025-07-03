@@ -2028,7 +2028,7 @@
             {
                 await JSRuntime.InvokeVoidAsync("toastNotifications.success", 
                     "Apelación Aceptada", 
-                    "La apelación ha sido aceptada. La solicitud regresará al estado pendiente para reevaluación.");
+                    "La apelación ha sido aceptada. La solicitud regresará al estado pendiente para reevaluación. Se ha enviado una notificación por correo al docente.");
                 
                 // Actualizar la lista de solicitudes
                 await RefreshSolicitudes();
@@ -2080,7 +2080,7 @@
             {
                 await JSRuntime.InvokeVoidAsync("toastNotifications.success", 
                     "Apelación Rechazada", 
-                    "La apelación ha sido rechazada. El docente será notificado automáticamente.");
+                    "La apelación ha sido rechazada definitivamente. Se ha enviado una notificación por correo electrónico al docente con el motivo del rechazo.");
                 
                 // Actualizar la lista de solicitudes
                 await RefreshSolicitudes();

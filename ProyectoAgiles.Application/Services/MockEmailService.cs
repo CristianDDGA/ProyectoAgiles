@@ -101,4 +101,83 @@ public class MockEmailService : IEmailService
             return false;
         }
     }
+
+    public async Task<bool> SendApelacionRechazoEmailAsync(string docenteEmail, string docenteNombre, string motivoRechazo, string rechazadoPor)
+    {
+        try
+        {
+            Console.WriteLine("=".PadRight(80, '='));
+            Console.WriteLine("📧 EMAIL SIMULADO - APELACIÓN RECHAZADA");
+            Console.WriteLine("=".PadRight(80, '='));
+            Console.WriteLine($"Para: {docenteEmail}");
+            Console.WriteLine($"Docente: {docenteNombre}");
+            Console.WriteLine($"Rechazada por: {rechazadoPor}");
+            Console.WriteLine($"Fecha: {DateTime.Now:dd/MM/yyyy HH:mm}");
+            Console.WriteLine("=".PadRight(80, '='));
+            Console.WriteLine("ASUNTO: Resolución de Apelación - Universidad Técnica de Ambato");
+            Console.WriteLine();
+            Console.WriteLine($"Estimado/a {docenteNombre},");
+            Console.WriteLine();
+            Console.WriteLine("Su apelación ha sido RECHAZADA por la Comisión Académica de Escalafón.");
+            Console.WriteLine();
+            Console.WriteLine("MOTIVO DEL RECHAZO:");
+            Console.WriteLine($"{motivoRechazo}");
+            Console.WriteLine();
+            Console.WriteLine("Su solicitud queda en estado 'Rechazado Definitivo'.");
+            Console.WriteLine();
+            Console.WriteLine("Atentamente,");
+            Console.WriteLine("Comisión Académica de Escalafón");
+            Console.WriteLine("Universidad Técnica de Ambato");
+            Console.WriteLine("=".PadRight(80, '='));
+
+            await Task.Delay(100);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error en MockEmailService (Rechazo Apelación): {ex.Message}");
+            return false;
+        }
+    }
+
+    public async Task<bool> SendApelacionAceptadaEmailAsync(string docenteEmail, string docenteNombre, string observaciones, string aceptadoPor)
+    {
+        try
+        {
+            Console.WriteLine("=".PadRight(80, '='));
+            Console.WriteLine("📧 EMAIL SIMULADO - APELACIÓN ACEPTADA");
+            Console.WriteLine("=".PadRight(80, '='));
+            Console.WriteLine($"Para: {docenteEmail}");
+            Console.WriteLine($"Docente: {docenteNombre}");
+            Console.WriteLine($"Aceptada por: {aceptadoPor}");
+            Console.WriteLine($"Fecha: {DateTime.Now:dd/MM/yyyy HH:mm}");
+            Console.WriteLine("=".PadRight(80, '='));
+            Console.WriteLine("ASUNTO: Apelación Aceptada - Universidad Técnica de Ambato");
+            Console.WriteLine();
+            Console.WriteLine($"Estimado/a {docenteNombre},");
+            Console.WriteLine();
+            Console.WriteLine("¡Su apelación ha sido ACEPTADA por la Comisión Académica de Escalafón!");
+            Console.WriteLine();
+            Console.WriteLine("Su solicitud regresará al estado 'Pendiente' para ser reevaluada.");
+            Console.WriteLine();
+            if (!string.IsNullOrEmpty(observaciones))
+            {
+                Console.WriteLine("OBSERVACIONES:");
+                Console.WriteLine($"{observaciones}");
+                Console.WriteLine();
+            }
+            Console.WriteLine("Atentamente,");
+            Console.WriteLine("Comisión Académica de Escalafón");
+            Console.WriteLine("Universidad Técnica de Ambato");
+            Console.WriteLine("=".PadRight(80, '='));
+
+            await Task.Delay(100);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error en MockEmailService (Aceptación Apelación): {ex.Message}");
+            return false;
+        }
+    }
 }
