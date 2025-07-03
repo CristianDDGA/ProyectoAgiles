@@ -2085,10 +2085,26 @@ namespace proyectoAgiles.Services
 
                 // Calcular horas totales y pedagógicas
                 var horasTotales = capacitacionesRecientes.Sum(c => c.HorasAcademicas);
+                
+                // Log detallado para debugging
+                Console.WriteLine($"DEBUG VerificarCapacitacionDinamica - Calculando horas pedagógicas:");
+                foreach (var cap in capacitacionesRecientes)
+                {
+                    Console.WriteLine($"  - '{cap.NombreCapacitacion}' | Tipo: '{cap.TipoCapacitacion}' | EsPedagogica: {cap.EsPedagogica} | Horas: {cap.HorasAcademicas}");
+                }
+                
                 var horasPedagogicas = capacitacionesRecientes
-                    .Where(c => c.TipoCapacitacion.Contains("Pedagógica", StringComparison.OrdinalIgnoreCase) || 
-                               c.TipoCapacitacion.Contains("Didáctica", StringComparison.OrdinalIgnoreCase))
+                    .Where(c => c.EsPedagogica || 
+                               c.TipoCapacitacion.Contains("Pedagogica", StringComparison.OrdinalIgnoreCase) || 
+                               c.TipoCapacitacion.Contains("Didáctica", StringComparison.OrdinalIgnoreCase) ||
+                               c.TipoCapacitacion.Contains("Docencia", StringComparison.OrdinalIgnoreCase))
                     .Sum(c => c.HorasAcademicas);
+                    
+                Console.WriteLine($"DEBUG VerificarCapacitacionDinamica - Resultado:");
+                Console.WriteLine($"  - Horas totales: {horasTotales}");
+                Console.WriteLine($"  - Horas pedagógicas: {horasPedagogicas}");
+                Console.WriteLine($"  - Capacitaciones pedagógicas encontradas: {capacitacionesRecientes.Count(c => c.EsPedagogica)}");
+                Console.WriteLine($"  - Capacitaciones con tipo pedagógico en nombre: {capacitacionesRecientes.Count(c => c.TipoCapacitacion.Contains("Pedagógica", StringComparison.OrdinalIgnoreCase))}");
 
                 // Verificar si cumple los requisitos
                 var cumpleHoras = horasTotales >= config.HorasCapacitacionRequeridas;
