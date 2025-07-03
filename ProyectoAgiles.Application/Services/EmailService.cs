@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Mail;
 using Microsoft.Extensions.Configuration;
 using ProyectoAgiles.Application.Interfaces;
+using ProyectoAgiles.Application.DTOs;
 
 namespace ProyectoAgiles.Application.Services;
 
@@ -613,5 +614,63 @@ public class EmailService : IEmailService
             </div>
         </body>
         </html>";
+    }
+
+    public async Task<bool> EnviarNotificacionAprobacionAsync(NotificacionCorreoDto notificacion)
+    {
+        try
+        {
+            var asunto = $"Solicitud de Escalafón Aprobada - {notificacion.NivelSolicitado}";
+            var cuerpo = $"Estimado/a {notificacion.DocenteNombre},\n\nSu solicitud de escalafón ha sido aprobada.\n\nNivel solicitado: {notificacion.NivelSolicitado}\nFecha de solicitud: {notificacion.FechaSolicitud:dd/MM/yyyy}";
+            
+            return await SendEmailAsync(
+                notificacion.DocenteEmail,
+                asunto,
+                cuerpo,
+                true
+            );
+        }
+        catch (Exception ex)
+        {
+            // Log del error
+            Console.WriteLine($"Error al enviar notificación de aprobación: {ex.Message}");
+            return false;
+        }
+    }
+
+    public async Task<bool> EnviarNotificacionRechazoAsync(NotificacionCorreoDto notificacion)
+    {
+        try
+        {
+            var asunto = $"Solicitud de Escalafón Rechazada - {notificacion.NivelSolicitado}";
+            var cuerpo = $"Estimado/a {notificacion.DocenteNombre},\n\nSu solicitud de escalafón ha sido rechazada.\n\nNivel solicitado: {notificacion.NivelSolicitado}\nFecha de solicitud: {notificacion.FechaSolicitud:dd/MM/yyyy}\nMotivo: {notificacion.MotivoRechazo}";
+            
+            return await SendEmailAsync(
+                notificacion.DocenteEmail,
+                asunto,
+                cuerpo,
+                true
+            );
+        }
+        catch (Exception ex)
+        {
+            // Log del error
+            Console.WriteLine($"Error al enviar notificación de rechazo: {ex.Message}");
+            return false;
+        }
+    }
+
+    public async Task<bool> EnviarNotificacionGeneralAsync(string destinatario, string asunto, string cuerpo)
+    {
+        try
+        {
+            return await SendEmailAsync(destinatario, asunto, cuerpo, true);
+        }
+        catch (Exception ex)
+        {
+            // Log del error
+            Console.WriteLine($"Error al enviar notificación general: {ex.Message}");
+            return false;
+        }
     }
 }

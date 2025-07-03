@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Configuration;
 using ProyectoAgiles.Application.Interfaces;
+using ProyectoAgiles.Application.DTOs;
 
 namespace ProyectoAgiles.Application.Services;
 
@@ -293,6 +294,103 @@ public class MockEmailService : IEmailService
         catch (Exception ex)
         {
             Console.WriteLine($"Error en MockEmailService (Rechazo Solicitud): {ex.Message}");
+            return false;
+        }
+    }
+
+    public async Task<bool> EnviarNotificacionAprobacionAsync(NotificacionCorreoDto notificacion)
+    {
+        try
+        {
+            Console.WriteLine("=".PadRight(80, '='));
+            Console.WriteLine("📧 EMAIL SIMULADO - NOTIFICACIÓN DE APROBACIÓN");
+            Console.WriteLine("=".PadRight(80, '='));
+            Console.WriteLine($"Para: {notificacion.DocenteEmail}");
+            Console.WriteLine($"Nombre: {notificacion.DocenteNombre}");
+            Console.WriteLine($"Nivel Solicitado: {notificacion.NivelSolicitado}");
+            Console.WriteLine($"Fecha Solicitud: {notificacion.FechaSolicitud:dd/MM/yyyy}");
+            Console.WriteLine($"Fecha: {DateTime.Now:dd/MM/yyyy HH:mm}");
+            Console.WriteLine("=".PadRight(80, '='));
+            Console.WriteLine("ASUNTO: Solicitud de Escalafón Aprobada");
+            Console.WriteLine();
+            Console.WriteLine($"Estimado/a {notificacion.DocenteNombre},");
+            Console.WriteLine();
+            Console.WriteLine("Su solicitud de escalafón ha sido APROBADA.");
+            Console.WriteLine($"Nivel solicitado: {notificacion.NivelSolicitado}");
+            Console.WriteLine($"Fecha de solicitud: {notificacion.FechaSolicitud:dd/MM/yyyy}");
+            Console.WriteLine("=".PadRight(80, '='));
+            Console.WriteLine("✅ Notificación de aprobación enviada correctamente");
+            Console.WriteLine("=".PadRight(80, '='));
+
+            await Task.Delay(100);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error en MockEmailService (Notificación Aprobación): {ex.Message}");
+            return false;
+        }
+    }
+
+    public async Task<bool> EnviarNotificacionRechazoAsync(NotificacionCorreoDto notificacion)
+    {
+        try
+        {
+            Console.WriteLine("=".PadRight(80, '='));
+            Console.WriteLine("📧 EMAIL SIMULADO - NOTIFICACIÓN DE RECHAZO");
+            Console.WriteLine("=".PadRight(80, '='));
+            Console.WriteLine($"Para: {notificacion.DocenteEmail}");
+            Console.WriteLine($"Nombre: {notificacion.DocenteNombre}");
+            Console.WriteLine($"Nivel Solicitado: {notificacion.NivelSolicitado}");
+            Console.WriteLine($"Fecha Solicitud: {notificacion.FechaSolicitud:dd/MM/yyyy}");
+            Console.WriteLine($"Motivo Rechazo: {notificacion.MotivoRechazo}");
+            Console.WriteLine($"Fecha: {DateTime.Now:dd/MM/yyyy HH:mm}");
+            Console.WriteLine("=".PadRight(80, '='));
+            Console.WriteLine("ASUNTO: Solicitud de Escalafón Rechazada");
+            Console.WriteLine();
+            Console.WriteLine($"Estimado/a {notificacion.DocenteNombre},");
+            Console.WriteLine();
+            Console.WriteLine("Su solicitud de escalafón ha sido RECHAZADA.");
+            Console.WriteLine($"Nivel solicitado: {notificacion.NivelSolicitado}");
+            Console.WriteLine($"Fecha de solicitud: {notificacion.FechaSolicitud:dd/MM/yyyy}");
+            Console.WriteLine($"Motivo: {notificacion.MotivoRechazo}");
+            Console.WriteLine("=".PadRight(80, '='));
+            Console.WriteLine("❌ Notificación de rechazo enviada correctamente");
+            Console.WriteLine("=".PadRight(80, '='));
+
+            await Task.Delay(100);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error en MockEmailService (Notificación Rechazo): {ex.Message}");
+            return false;
+        }
+    }
+
+    public async Task<bool> EnviarNotificacionGeneralAsync(string destinatario, string asunto, string cuerpo)
+    {
+        try
+        {
+            Console.WriteLine("=".PadRight(80, '='));
+            Console.WriteLine("📧 EMAIL SIMULADO - NOTIFICACIÓN GENERAL");
+            Console.WriteLine("=".PadRight(80, '='));
+            Console.WriteLine($"Para: {destinatario}");
+            Console.WriteLine($"Asunto: {asunto}");
+            Console.WriteLine($"Fecha: {DateTime.Now:dd/MM/yyyy HH:mm}");
+            Console.WriteLine("=".PadRight(80, '='));
+            Console.WriteLine("CONTENIDO:");
+            Console.WriteLine($"{cuerpo}");
+            Console.WriteLine("=".PadRight(80, '='));
+            Console.WriteLine("📨 Notificación general enviada correctamente");
+            Console.WriteLine("=".PadRight(80, '='));
+
+            await Task.Delay(100);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error en MockEmailService (Notificación General): {ex.Message}");
             return false;
         }
     }
