@@ -467,6 +467,41 @@ namespace ProyectoAgiles.Infrastructure.Migrations
                     b.ToTable("PasswordResetTokens");
                 });
 
+            modelBuilder.Entity("ProyectoAgiles.Domain.Entities.PeriodoPostulacion", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Activo")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<string>("Descripcion")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime>("FechaCreacion")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("FechaFin")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("FechaInicio")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Activo");
+
+                    b.HasIndex("FechaInicio", "FechaFin");
+
+                    b.ToTable("PeriodosPostulacion");
+                });
+
             modelBuilder.Entity("ProyectoAgiles.Domain.Entities.SolicitudEscalafon", b =>
                 {
                     b.Property<int>("Id")
@@ -555,6 +590,9 @@ namespace ProyectoAgiles.Infrastructure.Migrations
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
 
+                    b.Property<int?>("PeriodoPostulacionId")
+                        .HasColumnType("int");
+
                     b.Property<string>("ProcesadoPor")
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
@@ -584,6 +622,8 @@ namespace ProyectoAgiles.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("DocenteCedula");
+
+                    b.HasIndex("PeriodoPostulacionId");
 
                     b.HasIndex("Status");
 
@@ -739,6 +779,21 @@ namespace ProyectoAgiles.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("ProyectoAgiles.Domain.Entities.SolicitudEscalafon", b =>
+                {
+                    b.HasOne("ProyectoAgiles.Domain.Entities.PeriodoPostulacion", "PeriodoPostulacion")
+                        .WithMany("Solicitudes")
+                        .HasForeignKey("PeriodoPostulacionId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("PeriodoPostulacion");
+                });
+
+            modelBuilder.Entity("ProyectoAgiles.Domain.Entities.PeriodoPostulacion", b =>
+                {
+                    b.Navigation("Solicitudes");
                 });
 #pragma warning restore 612, 618
         }

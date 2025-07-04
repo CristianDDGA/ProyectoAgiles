@@ -82,6 +82,7 @@ builder.Services.AddScoped<IEvaluacionDesempenoRepository, EvaluacionDesempenoRe
 builder.Services.AddScoped<IDiticRepository, DiticRepository>();
 builder.Services.AddScoped<ISolicitudEscalafonRepository, SolicitudEscalafonRepository>();
 builder.Services.AddScoped<IArchivosUtilizadosRepository, ArchivosUtilizadosRepository>();
+builder.Services.AddScoped<IPeriodoPostulacionRepository, PeriodoPostulacionRepository>();
 
 // Servicio para manejo de archivos
 builder.Services.AddScoped<IFileService, FileService>();
@@ -97,6 +98,7 @@ builder.Services.AddScoped<IEvaluacionDesempenoService, EvaluacionDesempenoServi
 builder.Services.AddScoped<IDiticService, DiticService>();
 builder.Services.AddScoped<ISolicitudEscalafonService, SolicitudEscalafonService>();
 builder.Services.AddScoped<IArchivosUtilizadosService, ProyectoAgiles.Infrastructure.Services.ArchivosUtilizadosInfrastructureService>();
+builder.Services.AddScoped<IPeriodoPostulacionService, PeriodoPostulacionService>();
 
 // Configuración de CORS
 builder.Services.AddCors(options =>
@@ -161,6 +163,9 @@ if (app.Environment.IsProduction())
 
 app.UseHttpsRedirection();
 app.UseCors("AllowBlazorApp");
+
+// Configurar archivos estáticos para servir archivos de apelación
+app.UseStaticFiles();
 
 app.UseRouting();
 app.UseAuthorization();

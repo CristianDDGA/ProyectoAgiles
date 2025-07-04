@@ -1295,3 +1295,94 @@ body, html {
 .modal-body .professional-table thead:active {
     cursor: grabbing;
 }
+
+/* Estilos para la sección de apelaciones */
+.apelacion-section {
+    border-left: 4px solid #ffc107;
+    background-color: #fffbf0;
+    padding: 1.5rem;
+    margin-top: 1rem;
+    border-radius: 0.5rem;
+}
+
+.apelacion-section h6 {
+    color: #856404;
+    margin-bottom: 1rem;
+}
+
+.archivos-apelacion {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.archivo-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    background-color: #f8f9fa;
+    border-radius: 0.25rem;
+    border: 1px solid #e9ecef;
+}
+
+.archivo-nombre {
+    font-weight: 500;
+    color: #495057;
+}
+
+.archivo-tamaño {
+    color: #6c757d;
+    font-size: 0.875rem;
+}
+
+.archivo-item .btn {
+    margin-left: auto;
+}
+
+.archivo-item i.fas.fa-file-pdf {
+    color: #dc3545;
+    font-size: 1.1rem;
+}
+
+/* Badges para estados de apelación */
+.badge.bg-warning.text-dark {
+    background-color: #ffc107 !important;
+    color: #212529 !important;
+}
+
+.badge.bg-success {
+    background-color: #198754 !important;
+}
+
+.badge.bg-danger {
+    background-color: #dc3545 !important;
+}
+
+.badge.bg-secondary {
+    background-color: #6c757d !important;
+}
+
+/* Alertas para apelaciones */
+.alert {
+    border-radius: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.alert i {
+    margin-right: 0.5rem;
+}
+
+/* Responsive para archivos de apelación */
+@media (max-width: 768px) {
+    .archivo-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem;
+    }
+    
+    .archivo-item .btn {
+        margin-left: 0;
+        align-self: flex-end;
+    }
+}

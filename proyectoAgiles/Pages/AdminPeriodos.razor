@@ -1,0 +1,682 @@
+@page "/admin/periodos"
+@using proyectoAgiles.Services
+@using System.Text.Json
+@inject proyectoAgiles.Services.PeriodoPostulacionService PeriodoService
+@inject IJSRuntime JSRuntime
+@inject UserSessionService UserSession
+@inject NavigationManager Navigation
+
+<PageTitle>Gestión de Períodos de Postulación</PageTitle>
+
+<div class="manage-teachers-page">
+    <!-- Header de la página igual al de ManageTeachers -->
+    <div class="page-header">
+        <div class="header-content">
+            <div class="header-text">
+                <h1 class="page-title">
+                    <div class="title-icon-wrapper">
+                        <i class="fas fa-calendar-alt"></i>
+                        <div class="icon-decoration"></div>
+                    </div>
+                    Gestión de Períodos de Postulación
+                </h1>
+            </div>
+            <div class="header-actions">
+                <button @onclick="GoBackToDashboard" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i>
+                    Volver al Dashboard
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="manage-teachers-container">
+        <div class="row">
+            <div class="col-12">
+            <!-- Action Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <p class="text-muted mb-0">Administrar períodos para solicitudes de escalafón docente</p>
+                </div>
+                <button class="btn btn-primary" @onclick="ShowCreateModal">
+                    <i class="fas fa-plus me-2"></i>
+                    Nuevo Período
+                </button>
+            </div>
+
+            <!-- Período Activo Actual -->
+            @if (periodoActivo != null)
+            {
+                <div class="alert alert-success border-0 shadow-sm mb-4">
+                    <div class="d-flex align-items-center">
+                        <div class="me-3">
+                            <i class="fas fa-calendar-check fa-2x text-success"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <h5 class="alert-heading mb-1">Período Activo</h5>
+                            <p class="mb-1">
+                                <strong>@periodoActivo.FechaInicio.ToString("dd/MM/yyyy")</strong> - 
+                                <strong>@periodoActivo.FechaFin.ToString("dd/MM/yyyy")</strong>
+                            </p>
+                            @if (!string.IsNullOrEmpty(periodoActivo.Descripcion))
+                            {
+                                <small class="text-muted">@periodoActivo.Descripcion</small>
+                            }
+                        </div>
+                        <div>
+                            <span class="badge bg-success fs-6">
+                                @periodoActivo.DiasRestantes día(s) restante(s)
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-warning border-0 shadow-sm mb-4">
+                    <div class="d-flex align-items-center">
+                        <div class="me-3">
+                            <i class="fas fa-exclamation-triangle fa-2x text-warning"></i>
+                        </div>
+                        <div>
+                            <h5 class="alert-heading mb-1">Sin Período Activo</h5>
+                            <p class="mb-0">Actualmente no hay un período de postulación activo. Los docentes no pueden crear solicitudes de escalafón.</p>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <!-- Lista de Períodos -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-list me-2"></i>
+                        Todos los Períodos
+                    </h5>
+                </div>
+                <div class="card-body">
+                    @if (isLoading)
+                    {
+                        <div class="text-center py-5">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Cargando...</span>
+                            </div>
+                            <p class="mt-3">Cargando períodos...</p>
+                        </div>
+                    }
+                    else if (periodos?.Any() == true)
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Estado</th>
+                                        <th>Fecha Inicio</th>
+                                        <th>Fecha Fin</th>
+                                        <th>Descripción</th>
+                                        <th>Días Restantes</th>
+                                        <th>Creado</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var periodo in periodos.OrderByDescending(p => p.FechaCreacion))
+                                    {
+                                        <tr class="@(periodo.Activo ? "table-success" : "")">
+                                            <td>
+                                                <span class="badge @GetEstadoBadgeClass(periodo)">
+                                                    <i class="fas @GetEstadoIcon(periodo) me-1"></i>
+                                                    @periodo.EstadoPeriodo
+                                                </span>
+                                            </td>
+                                            <td>@periodo.FechaInicio.ToString("dd/MM/yyyy")</td>
+                                            <td>@periodo.FechaFin.ToString("dd/MM/yyyy")</td>
+                                            <td>
+                                                @if (!string.IsNullOrEmpty(periodo.Descripcion))
+                                                {
+                                                    <span>@periodo.Descripcion</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">Sin descripción</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                @if (periodo.DiasRestantes > 0)
+                                                {
+                                                    <span class="text-success">@periodo.DiasRestantes día(s)</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">Finalizado</span>
+                                                }
+                                            </td>
+                                            <td>@periodo.FechaCreacion.ToString("dd/MM/yyyy")</td>
+                                            <td>
+                                                <div class="btn-group" role="group">
+                                                    @if (!periodo.Activo && periodo.DiasRestantes > 0)
+                                                    {
+                                                        <button class="btn btn-sm btn-outline-success" 
+                                                                @onclick="() => ActivatePeriod(periodo.Id)"
+                                                                title="Activar período">
+                                                            <i class="fas fa-play"></i>
+                                                        </button>
+                                                    }
+                                                    @if (periodo.Activo)
+                                                    {
+                                                        <button class="btn btn-sm btn-outline-warning" 
+                                                                @onclick="() => DeactivatePeriod(periodo.Id)"
+                                                                title="Desactivar período">
+                                                            <i class="fas fa-pause"></i>
+                                                        </button>
+                                                    }
+                                                    <button class="btn btn-sm btn-outline-primary" 
+                                                            @onclick="() => EditPeriod(periodo)"
+                                                            title="Editar período">
+                                                        <i class="fas fa-edit"></i>
+                                                    </button>
+                                                    <button class="btn btn-sm btn-outline-danger" 
+                                                            @onclick="() => DeletePeriod(periodo.Id)"
+                                                            title="Eliminar período">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-5">
+                            <i class="fas fa-calendar-alt fa-3x text-muted mb-3"></i>
+                            <h5>No hay períodos registrados</h5>
+                            <p class="text-muted">Crea el primer período de postulación para habilitar las solicitudes de escalafón.</p>
+                            <button class="btn btn-primary" @onclick="ShowCreateModal">
+                                <i class="fas fa-plus me-2"></i>
+                                Crear Primer Período
+                            </button>
+                        </div>
+                    }
+                </div>
+            </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Crear/Editar Período -->
+@if (showModal)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas @(isEditing ? "fa-edit" : "fa-plus") me-2"></i>
+                        @(isEditing ? "Editar" : "Crear") Período de Postulación
+                    </h5>
+                    <button type="button" class="btn-close" @onclick="CloseModal"></button>
+                </div>
+                <div class="modal-body">
+                    <form class="row g-3">
+                        <div class="col-md-6">
+                            <label for="fechaInicio" class="form-label">
+                                <i class="fas fa-calendar-alt me-1"></i>
+                                Fecha de Inicio *
+                            </label>
+                            <input type="date" class="form-control" id="fechaInicio" @bind="formModel.FechaInicio" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label for="fechaFin" class="form-label">
+                                <i class="fas fa-calendar-check me-1"></i>
+                                Fecha de Fin *
+                            </label>
+                            <input type="date" class="form-control" id="fechaFin" @bind="formModel.FechaFin" required />
+                        </div>
+                        <div class="col-12">
+                            <label for="descripcion" class="form-label">
+                                <i class="fas fa-align-left me-1"></i>
+                                Descripción
+                            </label>
+                            <textarea class="form-control" id="descripcion" rows="3" 
+                                      @bind="formModel.Descripcion" 
+                                      placeholder="Descripción opcional del período..."></textarea>
+                        </div>
+                        <div class="col-12">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" role="switch" id="activo" 
+                                       checked="@formModel.Activo" 
+                                       @onchange="OnActivoChanged" />
+                                <label class="form-check-label" for="activo">
+                                    <i class="fas @(formModel.Activo ? "fa-toggle-on text-success" : "fa-toggle-off text-muted") me-1"></i>
+                                    Activar período inmediatamente
+                                </label>
+                                <div class="form-text">
+                                    @if (formModel.Activo)
+                                    {
+                                        <span class="text-success">
+                                            <i class="fas fa-check-circle me-1"></i>
+                                            Este período se activará inmediatamente y estará disponible para crear solicitudes.
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">
+                                            El período se creará en estado inactivo. Podrás activarlo manualmente después.
+                                        </span>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                    
+                    @if (!string.IsNullOrEmpty(validationMessage))
+                    {
+                        <div class="alert alert-danger mt-3">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            @validationMessage
+                        </div>
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CloseModal">
+                        <i class="fas fa-times me-1"></i>
+                        Cancelar
+                    </button>
+                    <button type="button" class="btn btn-primary" @onclick="SavePeriod" disabled="@isSaving">
+                        @if (isSaving)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                        }
+                        else
+                        {
+                            <i class="fas @(isEditing ? "fa-save" : "fa-plus") me-1"></i>
+                        }
+                        @(isEditing ? "Actualizar" : "Crear") Período
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<PeriodoPostulacionDto>? periodos;
+    private PeriodoPostulacionDto? periodoActivo;
+    private bool isLoading = true;
+    private bool showModal = false;
+    private bool isEditing = false;
+    private bool isSaving = false;
+    private string validationMessage = string.Empty;
+    private int editingId = 0;
+
+    private FormModel formModel = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Verificar que el usuario sea administrador
+        await UserSession.InitializeAsync();
+        if (UserSession.CurrentUser?.UserType != 1)
+        {
+            Navigation.NavigateTo("/");
+            return;
+        }
+
+        await LoadPeriods();
+    }
+
+    private async Task LoadPeriods()
+    {
+        isLoading = true;
+        StateHasChanged();
+
+        try
+        {
+            var result = await PeriodoService.GetAllPeriodsAsync();
+            if (result.Success && result.Data != null)
+            {
+                periodos = result.Data.ToList();
+                periodoActivo = periodos.FirstOrDefault(p => p.Activo && p.DiasRestantes > 0);
+            }
+            else
+            {
+                await ShowNotification("Error", result.Message ?? "No se pudieron cargar los períodos", "error");
+                periodos = new List<PeriodoPostulacionDto>();
+            }
+        }
+        catch (Exception ex)
+        {
+            await ShowNotification("Error", $"Error de conexión: {ex.Message}", "error");
+            periodos = new List<PeriodoPostulacionDto>();
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void ShowCreateModal()
+    {
+        isEditing = false;
+        editingId = 0;
+        formModel = new FormModel
+        {
+            FechaInicio = DateTime.Today.AddDays(1),
+            FechaFin = DateTime.Today.AddDays(30),
+            Activo = false
+        };
+        validationMessage = string.Empty;
+        showModal = true;
+    }
+
+    private void EditPeriod(PeriodoPostulacionDto periodo)
+    {
+        isEditing = true;
+        editingId = periodo.Id;
+        formModel = new FormModel
+        {
+            FechaInicio = periodo.FechaInicio,
+            FechaFin = periodo.FechaFin,
+            Descripcion = periodo.Descripcion,
+            Activo = periodo.Activo
+        };
+        validationMessage = string.Empty;
+        showModal = true;
+    }
+
+    private void CloseModal()
+    {
+        showModal = false;
+        validationMessage = string.Empty;
+    }
+
+    private async Task SavePeriod()
+    {
+        if (!ValidateForm())
+            return;
+
+        isSaving = true;
+        StateHasChanged();
+
+        try
+        {
+            // Debug: Mostrar los valores del formulario con más detalle
+            await JSRuntime.InvokeVoidAsync("console.log", $"=== GUARDANDO PERÍODO ===");
+            await JSRuntime.InvokeVoidAsync("console.log", $"Modo: {(isEditing ? "EDITAR" : "CREAR")}");
+            await JSRuntime.InvokeVoidAsync("console.log", $"formModel.Activo: {formModel.Activo}");
+            await JSRuntime.InvokeVoidAsync("console.log", $"FechaInicio: {formModel.FechaInicio}");
+            await JSRuntime.InvokeVoidAsync("console.log", $"FechaFin: {formModel.FechaFin}");
+            
+            ApiResponse<PeriodoPostulacionDto> result;
+
+            if (isEditing)
+            {
+                var updateDto = new UpdatePeriodoPostulacionDto
+                {
+                    FechaInicio = formModel.FechaInicio,
+                    FechaFin = formModel.FechaFin,
+                    Descripcion = formModel.Descripcion
+                };
+                
+                await JSRuntime.InvokeVoidAsync("console.log", $"UpdateDto JSON: {System.Text.Json.JsonSerializer.Serialize(updateDto)}");
+                result = await PeriodoService.UpdatePeriodAsync(editingId, updateDto);
+                
+                // Si se cambió el estado activo en la edición, activar/desactivar por separado
+                var currentPeriod = periodos?.FirstOrDefault(p => p.Id == editingId);
+                if (currentPeriod != null && currentPeriod.Activo != formModel.Activo)
+                {
+                    await JSRuntime.InvokeVoidAsync("console.log", $"Cambiando estado activo de {currentPeriod.Activo} a {formModel.Activo}");
+                    
+                    if (formModel.Activo)
+                    {
+                        // Activar el período
+                        var activateResult = await PeriodoService.ActivatePeriodAsync(editingId);
+                        if (!activateResult.Success)
+                        {
+                            await JSRuntime.InvokeVoidAsync("console.error", $"Error activando período: {activateResult.Message}");
+                        }
+                    }
+                    else
+                    {
+                        // Desactivar el período específico
+                        var deactivateResult = await PeriodoService.DeactivatePeriodAsync(editingId);
+                        if (!deactivateResult.Success)
+                        {
+                            await JSRuntime.InvokeVoidAsync("console.error", $"Error desactivando período: {deactivateResult.Message}");
+                        }
+                    }
+                }
+            }
+            else
+            {
+                var createDto = new CreatePeriodoPostulacionDto
+                {
+                    FechaInicio = formModel.FechaInicio,
+                    FechaFin = formModel.FechaFin,
+                    Descripcion = formModel.Descripcion,
+                    ActivarInmediatamente = formModel.Activo
+                };
+                
+                await JSRuntime.InvokeVoidAsync("console.log", $"CreateDto JSON: {System.Text.Json.JsonSerializer.Serialize(createDto)}");
+                result = await PeriodoService.CreatePeriodAsync(createDto);
+            }
+
+            // Debug: Mostrar la respuesta del backend
+            await JSRuntime.InvokeVoidAsync("console.log", $"=== RESPUESTA DEL BACKEND ===");
+            await JSRuntime.InvokeVoidAsync("console.log", $"Success: {result.Success}");
+            await JSRuntime.InvokeVoidAsync("console.log", $"Message: {result.Message}");
+            if (result.Data != null)
+            {
+                await JSRuntime.InvokeVoidAsync("console.log", $"Data.Activo: {result.Data.Activo}");
+                await JSRuntime.InvokeVoidAsync("console.log", $"Data JSON: {System.Text.Json.JsonSerializer.Serialize(result.Data)}");
+            }
+            if (result.Errors != null && result.Errors.Any())
+            {
+                await JSRuntime.InvokeVoidAsync("console.log", $"Errors: {string.Join(", ", result.Errors)}");
+            }
+
+            if (result.Success)
+            {
+                await ShowNotification(
+                    "Éxito", 
+                    isEditing ? "Período actualizado correctamente" : "Período creado correctamente", 
+                    "success"
+                );
+                CloseModal();
+                await LoadPeriods();
+            }
+            else
+            {
+                validationMessage = result.Message ?? "Error al guardar el período";
+                if (result.Errors?.Any() == true)
+                {
+                    validationMessage += ": " + string.Join(", ", result.Errors);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            validationMessage = $"Error de conexión: {ex.Message}";
+            await JSRuntime.InvokeVoidAsync("console.error", $"Error guardando período: {ex.Message}");
+        }
+        finally
+        {
+            isSaving = false;
+            StateHasChanged();
+        }
+    }
+
+    private bool ValidateForm()
+    {
+        validationMessage = string.Empty;
+
+        if (formModel.FechaInicio >= formModel.FechaFin)
+        {
+            validationMessage = "La fecha de inicio debe ser anterior a la fecha de fin";
+            return false;
+        }
+
+        if (formModel.FechaFin <= DateTime.Today)
+        {
+            validationMessage = "La fecha de fin debe ser posterior a hoy";
+            return false;
+        }
+
+        return true;
+    }
+
+    private async Task ActivatePeriod(int id)
+    {
+        var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", 
+            "¿Está seguro de activar este período? Esto desactivará cualquier período activo actual.");
+
+        if (!confirmed) return;
+
+        try
+        {
+            var result = await PeriodoService.ActivatePeriodAsync(id);
+            if (result.Success)
+            {
+                await ShowNotification("Éxito", "Período activado correctamente", "success");
+                await LoadPeriods();
+            }
+            else
+            {
+                await ShowNotification("Error", result.Message ?? "No se pudo activar el período", "error");
+            }
+        }
+        catch (Exception ex)
+        {
+            await ShowNotification("Error", $"Error de conexión: {ex.Message}", "error");
+        }
+    }
+
+    private async Task DeactivatePeriod(int id)
+    {
+        var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", 
+            "¿Está seguro de desactivar este período? Los docentes no podrán crear nuevas solicitudes.");
+
+        if (!confirmed) return;
+
+        try
+        {
+            var result = await PeriodoService.DeactivatePeriodAsync(id);
+            if (result.Success)
+            {
+                await ShowNotification("Éxito", "Período desactivado correctamente", "success");
+                await LoadPeriods();
+            }
+            else
+            {
+                await ShowNotification("Error", result.Message ?? "No se pudo desactivar el período", "error");
+            }
+        }
+        catch (Exception ex)
+        {
+            await ShowNotification("Error", $"Error de conexión: {ex.Message}", "error");
+        }
+    }
+
+    private async Task DeletePeriod(int id)
+    {
+        var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", 
+            "¿Está seguro de eliminar este período? Esta acción no se puede deshacer.");
+
+        if (!confirmed) return;
+
+        try
+        {
+            var result = await PeriodoService.DeletePeriodAsync(id);
+            if (result.Success)
+            {
+                await ShowNotification("Éxito", "Período eliminado correctamente", "success");
+                await LoadPeriods();
+            }
+            else
+            {
+                await ShowNotification("Error", result.Message ?? "No se pudo eliminar el período", "error");
+            }
+        }
+        catch (Exception ex)
+        {
+            await ShowNotification("Error", $"Error de conexión: {ex.Message}", "error");
+        }
+    }
+
+    private string GetEstadoBadgeClass(PeriodoPostulacionDto periodo)
+    {
+        return periodo.EstadoPeriodo switch
+        {
+            "Activo" => "bg-success",
+            "Próximamente" => "bg-info",
+            "Finalizado" => "bg-secondary",
+            "Inactivo" => "bg-warning text-dark",
+            _ => "bg-secondary"
+        };
+    }
+
+    private string GetEstadoIcon(PeriodoPostulacionDto periodo)
+    {
+        return periodo.EstadoPeriodo switch
+        {
+            "Activo" => "fa-play",
+            "Próximamente" => "fa-clock",
+            "Finalizado" => "fa-stop",
+            "Inactivo" => "fa-pause",
+            _ => "fa-question"
+        };
+    }
+
+    private async Task ShowNotification(string title, string message, string type)
+    {
+        await JSRuntime.InvokeVoidAsync("toastNotifications.info", title, message);
+    }
+
+    private void GoBackToDashboard()
+    {
+        Navigation.NavigateTo("/admin");
+    }
+
+    private void OnActivoChanged(ChangeEventArgs e)
+    {
+        try
+        {
+            var previousValue = formModel.Activo;
+            
+            // Manejo seguro del valor del checkbox
+            if (e.Value != null)
+            {
+                formModel.Activo = Convert.ToBoolean(e.Value);
+            }
+            else
+            {
+                formModel.Activo = false;
+            }
+            
+            // Debug: Mostrar el valor en la consola con más detalle
+            JSRuntime.InvokeVoidAsync("console.log", $"OnActivoChanged - Anterior: {previousValue}, Nuevo: {formModel.Activo}, e.Value: {e.Value}");
+            
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            // En caso de error, establecer valor por defecto
+            formModel.Activo = false;
+            JSRuntime.InvokeVoidAsync("console.error", $"Error en OnActivoChanged: {ex.Message}");
+            StateHasChanged();
+        }
+    }
+
+    // Modelo para el formulario
+    private class FormModel
+    {
+        public DateTime FechaInicio { get; set; } = DateTime.Today.AddDays(1);
+        public DateTime FechaFin { get; set; } = DateTime.Today.AddDays(30);
+        public string? Descripcion { get; set; }
+        public bool Activo { get; set; } = false;
+    }
+}

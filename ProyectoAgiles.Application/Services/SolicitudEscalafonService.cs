@@ -14,19 +14,27 @@ public class SolicitudEscalafonService : ISolicitudEscalafonService
     private readonly IEmailService _emailService;
     private readonly IUserRepository _userRepository;
     private readonly IArchivosUtilizadosService _archivosUtilizadosService;
+    private readonly IPeriodoPostulacionRepository _periodoRepository;
+    private readonly IFileService _fileService;
+
 
     public SolicitudEscalafonService(
-        ISolicitudEscalafonRepository repository, 
-        IMapper mapper, 
+        ISolicitudEscalafonRepository repository,
+        IMapper mapper,
         IEmailService emailService,
         IUserRepository userRepository,
-        IArchivosUtilizadosService archivosUtilizadosService)
+        IArchivosUtilizadosService archivosUtilizadosService,
+        IPeriodoPostulacionRepository periodoRepository,
+        IFileService fileService)
     {
         _repository = repository;
         _mapper = mapper;
         _emailService = emailService;
         _userRepository = userRepository;
         _archivosUtilizadosService = archivosUtilizadosService;
+        _periodoRepository = periodoRepository;
+        _fileService = fileService;
+
     }
 
     public async Task<IEnumerable<SolicitudEscalafonDto>> GetAllSolicitudesAsync()
@@ -60,6 +68,17 @@ public class SolicitudEscalafonService : ISolicitudEscalafonService
 
     public async Task<SolicitudEscalafonDto> CreateSolicitudAsync(CreateSolicitudEscalafonDto createDto)
     {
+        // Verificar si hay un período de postulación activo
+        var periodoActivo = await _periodoRepository.GetActivePeriodAsync();
+        if (periodoActivo == null || !periodoActivo.EstaActivo)
+        {
+            var mensaje = periodoActivo == null
+                ? "No hay un período de postulación activo en este momento."
+                : GetPeriodMessage(periodoActivo);
+
+            throw new InvalidOperationException(mensaje);
+        }
+
         // Verificar si ya existe una solicitud pendiente para este docente
         var existePendiente = await _repository.ExistePendienteByCedulaAsync(createDto.DocenteCedula);
         if (existePendiente)
@@ -71,6 +90,8 @@ public class SolicitudEscalafonService : ISolicitudEscalafonService
         solicitud.FechaSolicitud = DateTime.Now;
         solicitud.Status = "Pendiente";
         solicitud.CreatedAt = DateTime.UtcNow;
+        // Asignar el período activo a la solicitud
+        solicitud.PeriodoPostulacionId = periodoActivo.Id;
 
         var createdSolicitud = await _repository.AddAsync(solicitud);
         return _mapper.Map<SolicitudEscalafonDto>(createdSolicitud);
@@ -127,34 +148,68 @@ public class SolicitudEscalafonService : ISolicitudEscalafonService
             return false;
         }
 
-        var subject = "Notificación de Aprobación - Solicitud de Escalafón";
-        var body = $@"
-            <html>
-            <body>
-                <h2>Estimado/a {solicitud.DocenteNombre},</h2>
-                <p>Nos complace informarle que su solicitud de escalafón ha sido <strong>APROBADA</strong> por la Comisión Académica.</p>
-                
-                <h3>Detalles de la solicitud:</h3>
-                <ul>
-                    <li><strong>Nivel actual:</strong> {solicitud.NivelActual}</li>
-                    <li><strong>Nivel solicitado:</strong> {solicitud.NivelSolicitado}</li>
-                    <li><strong>Fecha de solicitud:</strong> {solicitud.FechaSolicitud:dd/MM/yyyy}</li>
-                    <li><strong>Fecha de aprobación:</strong> {solicitud.FechaAprobacion:dd/MM/yyyy}</li>
-                </ul>
-                
-                {(string.IsNullOrEmpty(solicitud.Observaciones) ? "" : $"<p><strong>Observaciones:</strong> {solicitud.Observaciones}</p>")}
-                
-                <p>Felicitaciones por este logro académico. Su nueva categoría entrará en vigencia según los procedimientos establecidos por la institución.</p>
-                
-                <p>Si tiene alguna consulta, no dude en contactarnos.</p>
-                
-                <p>Atentamente,<br>
-                Comisión Académica<br>
-                Universidad</p>
-            </body>
-            </html>";
+        // Verificar que la solicitud tenga un email válido
+        if (string.IsNullOrEmpty(solicitud.DocenteEmail))
+        {
+            return false;
+        }
 
-        return await _emailService.SendAdminNotificationEmailAsync(solicitud.DocenteEmail, subject, body, true);
+        try
+        {
+            // Usar el nuevo método específico para solicitudes aprobadas
+            return await _emailService.SendSolicitudAprobadaEmailAsync(
+                solicitud.DocenteEmail,
+                solicitud.DocenteNombre,
+                solicitud.NivelActual,
+                solicitud.NivelSolicitado,
+                solicitud.FechaSolicitud,
+                solicitud.FechaAprobacion ?? DateTime.Now,
+                solicitud.Observaciones ?? ""
+            );
+        }
+        catch (Exception ex)
+        {
+            // Log error but don't fail the main process
+            Console.WriteLine($"Error enviando correo de aprobación: {ex.Message}");
+            return false;
+        }
+    }
+
+    public async Task<bool> NotificarRechazoAsync(int solicitudId, string motivoRechazo, string rechazadoPor, string nivelRechazo)
+    {
+        var solicitud = await _repository.GetByIdAsync(solicitudId);
+        if (solicitud == null)
+        {
+            return false;
+        }
+
+        // Verificar que la solicitud tenga un email válido
+        if (string.IsNullOrEmpty(solicitud.DocenteEmail))
+        {
+            return false;
+        }
+
+        try
+        {
+            // Usar el nuevo método específico para solicitudes rechazadas
+            return await _emailService.SendSolicitudRechazadaEmailAsync(
+                solicitud.DocenteEmail,
+                solicitud.DocenteNombre,
+                solicitud.NivelActual,
+                solicitud.NivelSolicitado,
+                solicitud.FechaSolicitud,
+                DateTime.Now,
+                motivoRechazo,
+                rechazadoPor,
+                nivelRechazo
+            );
+        }
+        catch (Exception ex)
+        {
+            // Log error but don't fail the main process
+            Console.WriteLine($"Error enviando correo de rechazo: {ex.Message}");
+            return false;
+        }
     }
 
     public async Task<bool> FinalizarEscalafonAsync(int solicitudId)
@@ -235,7 +290,7 @@ public class SolicitudEscalafonService : ISolicitudEscalafonService
                 </html>";
 
             await _emailService.SendAdminNotificationEmailAsync(solicitud.DocenteEmail, subject, body, true);
-            
+
             return true;
         }
         catch (Exception)
@@ -361,6 +416,12 @@ public class SolicitudEscalafonService : ISolicitudEscalafonService
 
         var nuevaSolicitud = await _repository.AddAsync(solicitudApelacion);
 
+        // Guardar archivos de apelación si existen
+        if (archivos?.Any() == true)
+        {
+            await GuardarArchivosApelacionAsync(nuevaSolicitud.Id, archivos);
+        }
+
         // Marcar la solicitud original como apelada
         solicitudOriginal.Observaciones = $"{solicitudOriginal.Observaciones}\n\nAPELADA: Nueva solicitud #{nuevaSolicitud.Id}";
         await _repository.UpdateAsync(solicitudOriginal);
@@ -378,82 +439,18 @@ public class SolicitudEscalafonService : ISolicitudEscalafonService
     {
         try
         {
-            var nivelTexto = nivelRechazo switch
-            {
-                "PresidenteComision" => "Presidente de la Comisión Académica",
-                "DireccionTalentoHumano" => "Dirección de Talento Humano",
-                "ComisionAcademica" => "Comisión Académica de Escalafón",
-                _ => "Administración"
-            };
-
-            var subject = $"Solicitud de Escalafón Rechazada - {nivelTexto}";
-            var body = $@"
-            <html>
-            <head>
-                <style>
-                    body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
-                    .header {{ background-color: #d32f2f; color: white; padding: 20px; text-align: center; }}
-                    .content {{ padding: 20px; }}
-                    .details {{ background-color: #f5f5f5; padding: 15px; margin: 15px 0; border-radius: 5px; }}
-                    .footer {{ background-color: #f0f0f0; padding: 15px; text-align: center; font-size: 12px; }}
-                    .warning {{ color: #d32f2f; font-weight: bold; }}
-                    .appeal-info {{ background-color: #e3f2fd; padding: 15px; margin: 15px 0; border-left: 4px solid #2196f3; }}
-                </style>
-            </head>
-            <body>
-                <div class='header'>
-                    <h2>🚫 Solicitud de Escalafón Rechazada</h2>
-                </div>
-                
-                <div class='content'>
-                    <h3>Estimado/a {solicitud.DocenteNombre},</h3>
-                    
-                    <p>Lamentamos informarle que su solicitud de escalafón ha sido <span class='warning'>RECHAZADA</span> por <strong>{nivelTexto}</strong>.</p>
-                    
-                    <div class='details'>
-                        <h4>📋 Detalles de la solicitud:</h4>
-                        <ul>
-                            <li><strong>Número de solicitud:</strong> #{solicitud.Id}</li>
-                            <li><strong>Nivel actual:</strong> {solicitud.NivelActual}</li>
-                            <li><strong>Nivel solicitado:</strong> {solicitud.NivelSolicitado}</li>
-                            <li><strong>Fecha de solicitud:</strong> {solicitud.FechaSolicitud:dd/MM/yyyy}</li>
-                            <li><strong>Fecha de rechazo:</strong> {solicitud.FechaRechazo:dd/MM/yyyy HH:mm}</li>
-                            <li><strong>Rechazado por:</strong> {rechazadoPor}</li>
-                            <li><strong>Nivel de rechazo:</strong> {nivelTexto}</li>
-                        </ul>
-                    </div>
-                    
-                    <div class='details'>
-                        <h4>📝 Motivo del rechazo:</h4>
-                        <p><em>{solicitud.MotivoRechazo}</em></p>
-                    </div>
-                    
-                    <div class='appeal-info'>
-                        <h4>📢 Derecho de Apelación</h4>
-                        <p>Usted tiene derecho a apelar esta decisión. Para ello:</p>
-                        <ol>
-                            <li>Ingrese a su dashboard en el sistema</li>
-                            <li>Vaya a la sección ""Mis Solicitudes""</li>
-                            <li>Busque la solicitud rechazada</li>
-                            <li>Haga clic en el botón ""Apelar""</li>
-                            <li>Proporcione la documentación adicional o justificación necesaria</li>
-                        </ol>
-                        <p><strong>Nota:</strong> Puede presentar su apelación en cualquier momento desde su dashboard.</p>
-                    </div>
-                    
-                    <p>Si tiene alguna consulta sobre este proceso, no dude en contactarnos.</p>
-                </div>
-                
-                <div class='footer'>
-                    <p>Atentamente,<br>
-                    <strong>Sistema de Escalafón Docente</strong><br>
-                    Universidad Técnica de Ambato<br>
-                    📧 escalafon@uta.edu.ec | 📞 03-2848487</p>
-                </div>
-            </body>
-            </html>";
-
-            await _emailService.SendEmailAsync(solicitud.DocenteEmail, subject, body);
+            // Usar el nuevo método específico para solicitudes rechazadas
+            await _emailService.SendSolicitudRechazadaEmailAsync(
+                solicitud.DocenteEmail,
+                solicitud.DocenteNombre,
+                solicitud.NivelActual,
+                solicitud.NivelSolicitado,
+                solicitud.FechaSolicitud,
+                solicitud.FechaRechazo ?? DateTime.Now,
+                solicitud.MotivoRechazo ?? "Sin motivo especificado",
+                rechazadoPor,
+                nivelRechazo
+            );
         }
         catch (Exception ex)
         {
@@ -558,18 +555,18 @@ public class SolicitudEscalafonService : ISolicitudEscalafonService
         try
         {
             Console.WriteLine($"[HISTORIAL] Obteniendo historial para cédula: {cedula}");
-            
+
             // Obtener todas las solicitudes finalizadas del docente
             var solicitudesFinalizadas = await _repository.GetHistorialEscalafonAsync(cedula);
-            
+
             Console.WriteLine($"[HISTORIAL] Solicitudes encontradas: {solicitudesFinalizadas.Count()}");
-            
+
             var historialList = new List<HistorialEscalafonDto>();
-            
+
             foreach (var solicitud in solicitudesFinalizadas)
             {
                 Console.WriteLine($"[HISTORIAL] Procesando solicitud ID: {solicitud.Id}, Estado: {solicitud.Status}, Nivel: {solicitud.NivelActual} -> {solicitud.NivelSolicitado}");
-                
+
                 var historial = new HistorialEscalafonDto
                 {
                     Id = solicitud.Id,
@@ -582,12 +579,12 @@ public class SolicitudEscalafonService : ISolicitudEscalafonService
                     ObservacionesFinales = solicitud.Observaciones ?? "Escalafón completado exitosamente",
                     AprobadoPor = solicitud.ProcesadoPor ?? "Comisión Académica de Escalafón"
                 };
-                
+
                 historialList.Add(historial);
             }
-            
+
             Console.WriteLine($"[HISTORIAL] Historial final: {historialList.Count} registros para cédula {cedula}");
-            
+
             return historialList.OrderByDescending(h => h.FechaPromocion);
         }
         catch (Exception ex)
@@ -602,22 +599,22 @@ public class SolicitudEscalafonService : ISolicitudEscalafonService
         try
         {
             Console.WriteLine($"[HISTORIAL] Obteniendo documentos utilizados para solicitud {solicitudId}");
-            
+
             // Obtener documentos reales utilizados específicamente en esta solicitud
             var archivosUtilizados = await _archivosUtilizadosService.ObtenerArchivosPorSolicitud(solicitudId);
-            
+
             Console.WriteLine($"[HISTORIAL] Archivos encontrados para solicitud {solicitudId}: {archivosUtilizados.Count}");
-            
+
             // Filtrar duplicados por tipo de recurso y ID de recurso
             var archivosUnicos = archivosUtilizados
                 .GroupBy(a => new { a.TipoRecurso, a.RecursoId })
                 .Select(g => g.OrderBy(a => a.FechaUtilizacion).First())
                 .ToList();
-            
+
             Console.WriteLine($"[HISTORIAL] Archivos únicos después de eliminar duplicados: {archivosUnicos.Count}");
-            
+
             var documentos = new List<string>();
-            
+
             foreach (var archivo in archivosUnicos)
             {
                 var icono = archivo.TipoRecurso switch
@@ -627,21 +624,21 @@ public class SolicitudEscalafonService : ISolicitudEscalafonService
                     "Capacitacion" => "🎓",
                     _ => "📄"
                 };
-                
-                var descripcion = !string.IsNullOrEmpty(archivo.Descripcion) 
-                    ? archivo.Descripcion 
+
+                var descripcion = !string.IsNullOrEmpty(archivo.Descripcion)
+                    ? archivo.Descripcion
                     : archivo.TituloRecurso;
-                
+
                 documentos.Add($"{icono} {archivo.TipoRecurso}: {descripcion}");
                 Console.WriteLine($"[HISTORIAL] Documento: {archivo.TipoRecurso} - {descripcion}");
             }
-            
+
             if (!documentos.Any())
             {
                 Console.WriteLine($"[HISTORIAL] No se encontraron documentos para solicitud {solicitudId}, usando documentos por defecto");
                 return new List<string> { "📄 Documentos académicos utilizados en la promoción" };
             }
-            
+
             return documentos;
         }
         catch (Exception ex)
@@ -775,7 +772,7 @@ public class SolicitudEscalafonService : ISolicitudEscalafonService
                 InvestigacionesConUTA = documentosDetallados.Investigaciones.Count(i => i.TieneFiliacionUTA),
                 TotalHorasCapacitacion = documentosDetallados.Capacitaciones.Sum(c => c.HorasAcademicas),
                 HorasPedagogicas = documentosDetallados.Capacitaciones.Where(c => c.EsPedagogica).Sum(c => c.HorasAcademicas),
-                PromedioEvaluaciones = documentosDetallados.Evaluaciones.Count > 0 ? 
+                PromedioEvaluaciones = documentosDetallados.Evaluaciones.Count > 0 ?
                     documentosDetallados.Evaluaciones.Average(e => e.Porcentaje) : 0,
                 PeriodosEvaluados = documentosDetallados.Evaluaciones.Count,
                 CumpleTodosRequisitos = true
@@ -800,25 +797,25 @@ public class SolicitudEscalafonService : ISolicitudEscalafonService
         try
         {
             Console.WriteLine($"[DOCUMENTOS] Obteniendo documentos detallados reales para solicitud {solicitudId}");
-            
+
             // Obtener archivos utilizados reales de la base de datos
             var archivosUtilizados = await _archivosUtilizadosService.ObtenerArchivosPorSolicitud(solicitudId);
-            
+
             // Filtrar duplicados por tipo de recurso y ID de recurso
             var archivosUnicos = archivosUtilizados
                 .GroupBy(a => new { a.TipoRecurso, a.RecursoId })
                 .Select(g => g.OrderBy(a => a.FechaUtilizacion).First())
                 .ToList();
-            
+
             Console.WriteLine($"[DOCUMENTOS] Archivos únicos después de eliminar duplicados: {archivosUnicos.Count}");
-            
+
             var documentosDetallados = new DocumentosDetallados();
-            
+
             // Agrupar por tipo de recurso (ya sin duplicados)
             var investigaciones = archivosUnicos.Where(a => a.TipoRecurso == "Investigacion").ToList();
             var evaluaciones = archivosUnicos.Where(a => a.TipoRecurso == "EvaluacionDesempeno").ToList();
             var capacitaciones = archivosUnicos.Where(a => a.TipoRecurso == "Capacitacion").ToList();
-            
+
             // Mapear investigaciones
             documentosDetallados.Investigaciones = investigaciones.Select(inv => new InvestigacionUtilizada
             {
@@ -830,7 +827,7 @@ public class SolicitudEscalafonService : ISolicitudEscalafonService
                 Filiacion = "Universidad Técnica de Ambato",
                 TieneFiliacionUTA = true
             }).ToList();
-            
+
             // Mapear evaluaciones
             documentosDetallados.Evaluaciones = evaluaciones.Select(eval => new EvaluacionUtilizada
             {
@@ -843,7 +840,7 @@ public class SolicitudEscalafonService : ISolicitudEscalafonService
                 Porcentaje = (decimal)ExtractPuntajeFromDescription(eval.Descripcion), // Corregido: porcentaje sin multiplicar por 100
                 Estado = "Completada"
             }).ToList();
-            
+
             // Mapear capacitaciones
             documentosDetallados.Capacitaciones = capacitaciones.Select(cap => new CapacitacionUtilizada
             {
@@ -856,7 +853,7 @@ public class SolicitudEscalafonService : ISolicitudEscalafonService
                 Tipo = "Presencial",
                 EsPedagogica = true
             }).ToList();
-            
+
             // Calcular verificación de requisitos con datos reales
             documentosDetallados.VerificacionRequisitos = new VerificacionRequisitos
             {
@@ -864,16 +861,16 @@ public class SolicitudEscalafonService : ISolicitudEscalafonService
                 InvestigacionesConUTA = documentosDetallados.Investigaciones.Count(i => i.TieneFiliacionUTA),
                 TotalHorasCapacitacion = documentosDetallados.Capacitaciones.Sum(c => c.HorasAcademicas),
                 HorasPedagogicas = documentosDetallados.Capacitaciones.Where(c => c.EsPedagogica).Sum(c => c.HorasAcademicas),
-                PromedioEvaluaciones = documentosDetallados.Evaluaciones.Count > 0 ? 
+                PromedioEvaluaciones = documentosDetallados.Evaluaciones.Count > 0 ?
                     documentosDetallados.Evaluaciones.Average(e => e.Porcentaje) : 0,
                 PeriodosEvaluados = documentosDetallados.Evaluaciones.Count,
-                CumpleTodosRequisitos = documentosDetallados.Investigaciones.Count >= 2 && 
+                CumpleTodosRequisitos = documentosDetallados.Investigaciones.Count >= 2 &&
                                       documentosDetallados.Evaluaciones.Count >= 3 &&
                                       documentosDetallados.Capacitaciones.Sum(c => c.HorasAcademicas) >= 80
             };
-            
+
             Console.WriteLine($"[DOCUMENTOS] Documentos reales procesados - Inv: {documentosDetallados.Investigaciones.Count}, Eval: {documentosDetallados.Evaluaciones.Count}, Cap: {documentosDetallados.Capacitaciones.Count}");
-            
+
             return documentosDetallados;
         }
         catch (Exception ex)
@@ -889,7 +886,7 @@ public class SolicitudEscalafonService : ISolicitudEscalafonService
     private string ExtractPeriodoFromDescription(string? descripcion)
     {
         if (string.IsNullOrEmpty(descripcion)) return "N/A";
-        
+
         // Buscar patrón como "2024-1" o "2023-2"
         var match = System.Text.RegularExpressions.Regex.Match(descripcion, @"(\d{4})-?(\d)?");
         if (match.Success)
@@ -898,11 +895,11 @@ public class SolicitudEscalafonService : ISolicitudEscalafonService
         }
         return "N/A";
     }
-    
+
     private int ExtractAnioFromDescription(string? descripcion)
     {
         if (string.IsNullOrEmpty(descripcion)) return DateTime.Now.Year;
-        
+
         var match = System.Text.RegularExpressions.Regex.Match(descripcion, @"(\d{4})");
         if (match.Success && int.TryParse(match.Groups[1].Value, out int anio))
         {
@@ -910,11 +907,11 @@ public class SolicitudEscalafonService : ISolicitudEscalafonService
         }
         return DateTime.Now.Year;
     }
-    
+
     private int ExtractSemestreFromDescription(string? descripcion)
     {
         if (string.IsNullOrEmpty(descripcion)) return 1;
-        
+
         var match = System.Text.RegularExpressions.Regex.Match(descripcion, @"\d{4}-(\d)");
         if (match.Success && int.TryParse(match.Groups[1].Value, out int semestre))
         {
@@ -922,24 +919,24 @@ public class SolicitudEscalafonService : ISolicitudEscalafonService
         }
         return 1;
     }
-    
+
     private double ExtractPuntajeFromDescription(string? descripcion)
     {
         if (string.IsNullOrEmpty(descripcion)) return 0;
-        
+
         Console.WriteLine($"[DEBUG] Extrayendo puntaje de: '{descripcion}'");
-        
+
         // Buscar patrón como "85.5%" o "90,0%" o "78,200%"
         var match = System.Text.RegularExpressions.Regex.Match(descripcion, @"(\d+[,.]?\d*)%");
         if (match.Success)
         {
             var puntajeStr = match.Groups[1].Value.Replace(",", ".");
             Console.WriteLine($"[DEBUG] String extraído: '{puntajeStr}'");
-            
+
             if (double.TryParse(puntajeStr, System.Globalization.CultureInfo.InvariantCulture, out double puntaje))
             {
                 Console.WriteLine($"[DEBUG] Valor parseado: {puntaje}");
-                
+
                 // Si el valor es mayor a 100, probablemente viene con demasiados decimales (ej: 78200 en lugar de 78.2)
                 // En ese caso dividir entre 1000
                 if (puntaje > 100)
@@ -953,24 +950,83 @@ public class SolicitudEscalafonService : ISolicitudEscalafonService
         Console.WriteLine($"[DEBUG] No se pudo extraer puntaje, retornando 0");
         return 0;
     }
-    
+
     private int EstimarHorasCapacitacion(string? descripcion)
     {
         if (string.IsNullOrEmpty(descripcion)) return 20;
-        
+
         // Buscar patrón como "40 horas" o números en la descripción
         var match = System.Text.RegularExpressions.Regex.Match(descripcion, @"(\d+)\s*horas?");
         if (match.Success && int.TryParse(match.Groups[1].Value, out int horas))
         {
             return horas;
         }
-        
+
         // Estimación básica según el tipo de capacitación
         if (descripcion.ToLower().Contains("metodolog")) return 40;
         if (descripcion.ToLower().Contains("tecnolog")) return 30;
         if (descripcion.ToLower().Contains("evaluacion")) return 25;
         if (descripcion.ToLower().Contains("investigacion")) return 35;
-        
+
         return 20; // Valor por defecto
     }
+
+    private static string GetPeriodMessage(PeriodoPostulacion period)
+    {
+        var now = DateTime.UtcNow;
+        
+        if (now < period.FechaInicio)
+        {
+            var diasHastaInicio = (period.FechaInicio.Date - now.Date).Days;
+            return $"El período de postulación iniciará en {diasHastaInicio} días ({period.FechaInicio:dd/MM/yyyy}).";
+        }
+        
+        if (now > period.FechaFin)
+        {
+            var diasDesdeFin = (now.Date - period.FechaFin.Date).Days;
+            return $"El período de postulación finalizó hace {diasDesdeFin} días ({period.FechaFin:dd/MM/yyyy}).";
+        }
+        
+        if (!period.Activo)
+        {
+            return "Hay un período configurado pero no está activo. Contacte al administrador.";
+        }
+        
+        return $"Período de postulación activo. Quedan {period.DiasRestantes} días (hasta el {period.FechaFin:dd/MM/yyyy}).";
+    }
+
+
+
+    /// <summary>
+    /// Guarda los archivos de apelación en el servidor
+    /// </summary>
+    private async Task GuardarArchivosApelacionAsync(int solicitudId, List<IFormFile> archivos)
+    {
+        try
+        {
+            foreach (var archivo in archivos)
+            {
+                if (archivo != null && archivo.Length > 0)
+                {
+                    // Leer el archivo como bytes
+                    using var memoryStream = new MemoryStream();
+                    await archivo.CopyToAsync(memoryStream);
+                    var fileBytes = memoryStream.ToArray();
+
+                    // Usar el FileService para guardar el archivo con una carpeta específica para apelaciones
+                    var carpetaApelacion = $"uploads/apelaciones/{solicitudId}";
+                    var rutaGuardada = await _fileService.SaveFileWithOriginalNameAsync(fileBytes, archivo.FileName, archivo.ContentType, carpetaApelacion);
+                    
+                    Console.WriteLine($"Archivo de apelación guardado: {rutaGuardada}");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            // Log del error pero no fallar el proceso principal
+            Console.WriteLine($"Error guardando archivos de apelación: {ex.Message}");
+            throw new Exception($"Error al guardar archivos de apelación: {ex.Message}");
+        }
+    }
+
 }

@@ -4,7 +4,7 @@
 @using System.Net.Http.Json
 @using Microsoft.AspNetCore.Components.Forms
 @using System.Reflection
-@using proyectoAgiles.Services
+@using Frontend = proyectoAgiles.Services
 @using static proyectoAgiles.Services.AuthService
 @using ProyectoAgiles.Application.DTOs
 @using ProyectoAgiles.Domain.Entities
@@ -14,10 +14,38 @@
 @inject UserSessionService UserSession
 @inject IJSRuntime JSRuntime
 @inject HttpClient HttpClient
+@inject proyectoAgiles.Services.PeriodoPostulacionService PeriodoService
 
 <PageTitle>Panel de Docente - UTA</PageTitle>
 
 <div class="teacher-dashboard">
+    <!-- Alerta de Estado del Período de Postulación -->
+    @if (!isLoadingPeriodo && periodoInfo is not null && periodoInfo.PeriodoActivo is not null)
+    {
+        <div class="alert @GetPeriodoAlertClass() mb-4" role="alert">
+            <div class="d-flex align-items-center">
+                <i class="fas @GetPeriodoIconClass() me-3"></i>
+                <div class="flex-grow-1">
+                    <h6 class="alert-heading mb-1">@GetPeriodoTitulo()</h6>
+                    <p class="mb-0">@periodoInfo.Mensaje</p>
+                    @if (periodoInfo.PuedeCrearSolicitud && periodoInfo.DiasRestantes > 0)
+                    {
+                        <small class="text-muted">
+                            @if (periodoInfo.DiasRestantes == 1)
+                            {
+                                <strong>¡Último día para postular!</strong>
+                            }
+                            else
+                            {
+                                <strong>@periodoInfo.DiasRestantes días restantes</strong>
+                            }
+                        </small>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+    
     <!-- Sección de Nivel - Diseño Mejorado para Pantalla Completa -->
     <div class="nivel-section-fullwidth">
         <div class="nivel-container">
@@ -371,17 +399,46 @@
                         }
                         else if (requisitosEscalafonDinamicos.CumpleTodosRequisitos)
                         {
-                            <button class="btn btn-success me-2" @onclick="SubirNivel">
-                                <i class="fas fa-arrow-up me-1"></i>
-                                @if (configuracionRequisitos != null)
-                                {
-                                    <text>Ascender a @configuracionRequisitos.NivelObjetivo</text>
-                                }
-                                else
-                                {
-                                    <text>Subir de nivel</text>
-                                }
-                            </button>
+                            @if (puedePostularse)
+                            {
+                                <button class="btn btn-success me-2" @onclick="SubirNivel">
+                                    <i class="fas fa-arrow-up me-1"></i>
+                                    @if (configuracionRequisitos != null)
+                                        {
+                                            <text>Ascender a @configuracionRequisitos.NivelObjetivo</text>
+                                        }
+                                        else
+                                        {
+                                            <text>Subir de nivel</text>
+                                        }
+                                    </button>
+                            }
+                            else
+                            {
+                                <button class="btn btn-warning me-2" disabled title="No hay período de postulación activo">
+                                    <i class="fas fa-calendar-times me-1"></i>
+                                    @if (configuracionRequisitos != null)
+                                    {
+                                        <text>Ascender a @configuracionRequisitos.NivelObjetivo</text>
+                                    }
+                                    else
+                                    {
+                                        <text>Subir de nivel</text>
+                                    }
+                                </button>
+                                <div class="alert alert-warning mt-2">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    <strong>Período de postulación requerido:</strong> 
+                                    @if (periodoInfo is not null && !string.IsNullOrEmpty(periodoInfo.Mensaje))
+                                    {
+                                        <span>@periodoInfo.Mensaje</span>
+                                    }
+                                    else
+                                    {
+                                        <span>Actualmente no hay un período de postulación activo. Las solicitudes de ascenso solo pueden realizarse durante los períodos habilitados.</span>
+                                    }
+                                </div>
+                            }
                             <button class="btn btn-outline-primary" @onclick="VerificarRequisitos">
                                 <i class="fas fa-refresh me-1"></i>
                                 Verificar nuevamente
@@ -2392,7 +2449,13 @@
 </div>
 
 
-@code {    private bool showRequisitosModal = false;
+@code {    
+    // Variables para el período de postulación
+    private proyectoAgiles.Services.PeriodoInfoFrontendDto? periodoInfo = null;
+    private bool isLoadingPeriodo = false;
+    private bool puedePostularse = false;
+    
+    private bool showRequisitosModal = false;
     private bool showHistorialModal = false;
     private EstadisticasDocenteResponse? estadisticasDocente = null;
     private bool showInvestigacionesModal = false;
@@ -2537,6 +2600,9 @@ private bool isLoadingInvestigaciones = false;
         CargarConfiguracionRequisitos();
 
         await LoadDashboardData();
+        
+        // Cargar información del período de postulación
+        await CargarInformacionPeriodo();
     }
 
     private void CargarConfiguracionRequisitos()
@@ -2578,7 +2644,57 @@ private bool isLoadingInvestigaciones = false;
             Console.WriteLine($"Error cargando estadísticas: {ex.Message}");
             await MostrarNotificacionError("Error al cargar datos", "Hubo un problema al cargar las estadísticas del dashboard.");
         }
-    }private void NavigateToInvestigaciones()
+    }
+
+    private async Task CargarInformacionPeriodo()
+    {
+        try
+        {
+            isLoadingPeriodo = true;
+            StateHasChanged();
+            
+            Console.WriteLine("CargarInformacionPeriodo: Iniciando carga del período...");
+            var response = await PeriodoService.GetActivePeriodInfoAsync();
+            
+            Console.WriteLine($"CargarInformacionPeriodo: Response.Success = {response.Success}");
+            Console.WriteLine($"CargarInformacionPeriodo: Response.Message = {response.Message}");
+            
+            if (response.Success && response.Data != null)
+            {
+                periodoInfo = response.Data;
+                puedePostularse = periodoInfo.HayPeriodoActivo;
+                
+                Console.WriteLine($"Período cargado exitosamente:");
+                Console.WriteLine($"- HayPeriodoActivo: {periodoInfo.HayPeriodoActivo}");
+                Console.WriteLine($"- PuedeCrearSolicitud: {periodoInfo.PuedeCrearSolicitud}");
+                Console.WriteLine($"- Mensaje: {periodoInfo.Mensaje}");
+                Console.WriteLine($"- DiasRestantes: {periodoInfo.DiasRestantes}");
+                Console.WriteLine($"- EstadoPeriodo: {periodoInfo.EstadoPeriodo}");
+                Console.WriteLine($"- FechaInicio: {periodoInfo.FechaInicio}");
+                Console.WriteLine($"- FechaFin: {periodoInfo.FechaFin}");
+            }
+            else
+            {
+                Console.WriteLine($"Error cargando período: {response.Message}");
+                periodoInfo = null;
+                puedePostularse = false;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error cargando información del período: {ex.Message}");
+            Console.WriteLine($"StackTrace: {ex.StackTrace}");
+            periodoInfo = null;
+            puedePostularse = false;
+        }
+        finally
+        {
+            isLoadingPeriodo = false;
+            StateHasChanged();
+        }
+    }
+
+    private void NavigateToInvestigaciones()
     {
         showInvestigacionesModal = true;
         // No cargar automáticamente - solo mostrar tabla vacía
@@ -3552,6 +3668,18 @@ private bool isLoadingInvestigaciones = false;
             return;
         }
 
+        // Validar período de postulación antes de continuar
+        if (!puedePostularse)
+        {
+            string mensaje = "No se puede crear la solicitud porque no hay un período de postulación activo.";
+            if (periodoInfo is not null && !string.IsNullOrEmpty(periodoInfo.Mensaje))
+            {
+                mensaje = periodoInfo.Mensaje;
+            }
+            await MostrarNotificacionError("Período no válido", mensaje);
+            return;
+        }
+
         try
         {
             // Usar el nivel objetivo de la configuración de requisitos (viene de la API)
@@ -3835,7 +3963,11 @@ private bool isLoadingInvestigaciones = false;
         await MostrarNotificacionAdvertencia("⚠️ Confirmar Apelación", 
             $"¿Está seguro de que desea apelar la solicitud #{solicitudParaApelar.Id}? Esta acción creará una nueva solicitud de apelación que será enviada a la Comisión Académica de Escalafón.");
         
-        var confirmacion = await JSRuntime.InvokeAsync<bool>("confirm", "¿Continuar con la apelación?");
+        var confirmacion = await JSRuntime.InvokeAsync<bool>("toastNotifications.confirm", 
+            "Confirmar Apelación", 
+            $"¿Está seguro de que desea continuar con la apelación de la solicitud #{solicitudParaApelar.Id}?<br><br>Esta acción creará una nueva solicitud que será enviada a la <strong>Comisión Académica de Escalafón</strong>.",
+            "Continuar con Apelación",
+            "Cancelar");
         
         if (!confirmacion) return;
 
@@ -4937,7 +5069,7 @@ private bool isLoadingInvestigaciones = false;
             Console.WriteLine($"Error al recargar datos: {ex.Message}");
         }
     }
-
+    
     // Clases para la selección de archivos
     public class ArchivosSeleccionados
     {
@@ -4981,6 +5113,45 @@ private bool isLoadingInvestigaciones = false;
         public List<int> CapacitacionesIds { get; set; } = new();
     }
 
+    // Métodos auxiliares para el período de postulación
+    private string GetPeriodoAlertClass()
+    {
+        if (periodoInfo is null) return "alert-secondary";
+        
+        if (periodoInfo.PuedeCrearSolicitud)
+        {
+            return periodoInfo.DiasRestantes <= 3 ? "alert-warning" : "alert-success";
+        }
+        
+        return "alert-danger";
+    }
+    
+    private string GetPeriodoIconClass()
+    {
+        if (periodoInfo is null) return "fa-info-circle";
+        
+        if (periodoInfo.PuedeCrearSolicitud)
+        {
+            return periodoInfo.DiasRestantes <= 3 ? "fa-exclamation-triangle" : "fa-calendar-check";
+        }
+        
+        return "fa-calendar-times";
+    }
+    
+    private string GetPeriodoTitulo()
+    {
+        if (periodoInfo is null) return "Sin período activo";
+        
+        if (periodoInfo.PuedeCrearSolicitud)
+        {
+            if (periodoInfo.DiasRestantes <= 3)
+                return "⚠️ Período de postulación por cerrar";
+            else
+                return "✅ Período de postulación activo";
+        }
+        
+        return "❌ Período de postulación cerrado";
+    }
 
 
 }

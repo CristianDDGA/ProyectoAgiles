@@ -1,0 +1,391 @@
+@using System.Text.Json
+@inject HttpClient HttpClient
+@inject IJSRuntime JSRuntime
+
+<div class="periodo-info-container">
+    @if (isLoading)
+    {
+        <div class="periodo-loading">
+            <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+            <span>Verificando período de postulación...</span>
+        </div>
+    }
+    else if (periodoInfo != null)
+    {
+        <div class="card periodo-card @(GetCardClass())">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-auto">
+                        <div class="periodo-icon">
+                            <i class="fas @(GetIconClass())"></i>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <h6 class="periodo-title mb-1">@GetTituloEstado()</h6>
+                        <p class="periodo-message mb-2">@periodoInfo.Mensaje</p>
+                        
+                        @if (periodoInfo.PeriodoActivo != null)
+                        {
+                            <div class="periodo-details">
+                                @if (periodoInfo.PuedeCrearSolicitud)
+                                {
+                                    <span class="badge bg-success me-2">
+                                        <i class="fas fa-calendar-check me-1"></i>
+                                        @periodoInfo.DiasRestantes día(s) restante(s)
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning text-dark me-2">
+                                        <i class="fas fa-calendar-times me-1"></i>
+                                        Período cerrado
+                                    </span>
+                                }
+                                
+                                <small class="text-muted">
+                                    Hasta: @periodoInfo.PeriodoActivo.FechaFin.ToString("dd/MM/yyyy")
+                                </small>
+                            </div>
+                        }
+                    </div>
+                    
+                    @if (showStatusChange)
+                    {
+                        <div class="col-auto">
+                            <button class="btn btn-sm btn-outline-primary" @onclick="RefreshPeriodInfo">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info mb-3">
+            <i class="fas fa-info-circle me-2"></i>
+            <strong>Sin información de período:</strong> No se pudo obtener información sobre el período de postulación actual.
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public EventCallback<bool> OnPeriodStatusChanged { get; set; }
+    [Parameter] public EventCallback OnPeriodInfoUpdated { get; set; }
+    [Parameter] public bool ShowStatusChange { get; set; } = true;
+    
+    private bool isLoading = false;
+    private PeriodoInfoDto? periodoInfo;
+    private bool showStatusChange => ShowStatusChange;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadPeriodInfo();
+    }
+
+    private async Task LoadPeriodInfo()
+    {
+        isLoading = true;
+        StateHasChanged();
+        
+        try
+        {
+            var response = await HttpClient.GetAsync("/api/PeriodosPostulacion/active-info");
+            
+            if (response.IsSuccessStatusCode)
+            {
+                var jsonResponse = await response.Content.ReadAsStringAsync();
+                var apiResponse = JsonSerializer.Deserialize<ApiResponse<PeriodoInfoDto>>(
+                    jsonResponse, 
+                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                
+                if (apiResponse?.Success == true && apiResponse.Data != null)
+                {
+                    periodoInfo = apiResponse.Data;
+                    
+                    // Debug: Mostrar información detallada del período
+                    await JSRuntime.InvokeVoidAsync("console.log", "=== INFORMACIÓN DEL PERÍODO ===");
+                    await JSRuntime.InvokeVoidAsync("console.log", $"PeriodoActivo: {periodoInfo.PeriodoActivo != null}");
+                    await JSRuntime.InvokeVoidAsync("console.log", $"PuedeCrearSolicitud: {periodoInfo.PuedeCrearSolicitud}");
+                    await JSRuntime.InvokeVoidAsync("console.log", $"DiasRestantes: {periodoInfo.DiasRestantes}");
+                    await JSRuntime.InvokeVoidAsync("console.log", $"Mensaje: {periodoInfo.Mensaje}");
+                    if (periodoInfo.PeriodoActivo != null)
+                    {
+                        await JSRuntime.InvokeVoidAsync("console.log", $"Período ID: {periodoInfo.PeriodoActivo.Id}");
+                        await JSRuntime.InvokeVoidAsync("console.log", $"Período Activo (campo): {periodoInfo.PeriodoActivo.Activo}");
+                        await JSRuntime.InvokeVoidAsync("console.log", $"FechaInicio: {periodoInfo.PeriodoActivo.FechaInicio}");
+                        await JSRuntime.InvokeVoidAsync("console.log", $"FechaFin: {periodoInfo.PeriodoActivo.FechaFin}");
+                        await JSRuntime.InvokeVoidAsync("console.log", $"EstadoPeriodo: {periodoInfo.PeriodoActivo.EstadoPeriodo}");
+                    }
+                    
+                    // Debug adicional: mostrar qué título y clase se calculará
+                    var titulo = GetTituloEstado();
+                    var cardClass = GetCardClass();
+                    var iconClass = GetIconClass();
+                    await JSRuntime.InvokeVoidAsync("console.log", $"Título calculado: {titulo}");
+                    await JSRuntime.InvokeVoidAsync("console.log", $"Clase de card: {cardClass}");
+                    await JSRuntime.InvokeVoidAsync("console.log", $"Clase de icono: {iconClass}");
+                    await JSRuntime.InvokeVoidAsync("console.log", "===============================");
+                    
+                    // Notificar al componente padre sobre el estado del período
+                    if (OnPeriodStatusChanged.HasDelegate)
+                    {
+                        await OnPeriodStatusChanged.InvokeAsync(periodoInfo.PuedeCrearSolicitud);
+                    }
+                    
+                    // Notificar que la información se actualizó
+                    if (OnPeriodInfoUpdated.HasDelegate)
+                    {
+                        await OnPeriodInfoUpdated.InvokeAsync();
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("console.error", $"Error cargando información del período: {ex.Message}");
+            // En caso de error, asumir que no se puede crear solicitud
+            if (OnPeriodStatusChanged.HasDelegate)
+            {
+                await OnPeriodStatusChanged.InvokeAsync(false);
+            }
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    public async Task RefreshPeriodInfo()
+    {
+        await LoadPeriodInfo();
+    }
+
+    public PeriodoInfoDto? GetPeriodoInfo()
+    {
+        return periodoInfo;
+    }
+
+    public bool CanCreateSolicitud()
+    {
+        return periodoInfo?.PuedeCrearSolicitud ?? false;
+    }
+
+    private string GetCardClass()
+    {
+        // Verificar si hay información de período
+        if (periodoInfo?.PeriodoActivo != null)
+        {
+            // Si el período está marcado como activo en el backend
+            if (periodoInfo.PeriodoActivo.Activo)
+            {
+                if (periodoInfo.PuedeCrearSolicitud == true)
+                {
+                    return "border-success"; // Verde - puede crear solicitud
+                }
+                else
+                {
+                    if (periodoInfo.DiasRestantes > 0)
+                    {
+                        return "border-info"; // Azul - período activo pero restringido
+                    }
+                    else
+                    {
+                        return "border-warning"; // Amarillo - período finalizado
+                    }
+                }
+            }
+            else
+            {
+                return "border-secondary"; // Gris - período inactivo
+            }
+        }
+        
+        // También verificar si hay días restantes aunque no tengamos PeriodoActivo
+        if (periodoInfo != null && periodoInfo.DiasRestantes > 0)
+        {
+            return "border-info"; // Azul - hay algún período detectado
+        }
+        
+        return "border-secondary"; // Gris - sin período
+    }
+
+    private string GetIconClass()
+    {
+        // Verificar si hay información de período
+        if (periodoInfo?.PeriodoActivo != null)
+        {
+            // Si el período está marcado como activo en el backend
+            if (periodoInfo.PeriodoActivo.Activo)
+            {
+                if (periodoInfo.PuedeCrearSolicitud == true)
+                {
+                    return "fa-calendar-check text-success"; // Verde - puede crear solicitud
+                }
+                else
+                {
+                    if (periodoInfo.DiasRestantes > 0)
+                    {
+                        return "fa-calendar-alt text-info"; // Azul - período activo pero restringido
+                    }
+                    else
+                    {
+                        return "fa-calendar-times text-warning"; // Amarillo - período finalizado
+                    }
+                }
+            }
+            else
+            {
+                return "fa-calendar-alt text-secondary"; // Gris - período inactivo
+            }
+        }
+        
+        // También verificar si hay días restantes aunque no tengamos PeriodoActivo
+        if (periodoInfo != null && periodoInfo.DiasRestantes > 0)
+        {
+            return "fa-calendar-alt text-info"; // Azul - hay algún período detectado
+        }
+        
+        return "fa-calendar-alt text-secondary"; // Gris - sin período
+    }
+
+    private string GetTituloEstado()
+    {
+        // Verificar si hay información de período y si el período tiene el campo Activo = true
+        if (periodoInfo?.PeriodoActivo != null)
+        {
+            // Verificar si el período está marcado como activo en el backend
+            if (periodoInfo.PeriodoActivo.Activo)
+            {
+                if (periodoInfo.PuedeCrearSolicitud == true)
+                {
+                    return "Período de Postulación Activo";
+                }
+                else
+                {
+                    // El período está activo pero no se puede crear solicitud
+                    // Verificar por días restantes o estado del período
+                    if (periodoInfo.DiasRestantes > 0)
+                    {
+                        return "Período de Postulación Activo (Restringido)";
+                    }
+                    else
+                    {
+                        return "Período de Postulación Finalizado";
+                    }
+                }
+            }
+            else
+            {
+                // El período existe pero no está activo
+                return "Período de Postulación Inactivo";
+            }
+        }
+        
+        // También verificar si hay días restantes aunque no tengamos PeriodoActivo
+        if (periodoInfo != null && periodoInfo.DiasRestantes > 0)
+        {
+            return "Período de Postulación Detectado";
+        }
+        
+        return "Sin Período Activo";
+    }
+
+    // DTOs para la respuesta de la API
+    public class ApiResponse<T>
+    {
+        public bool Success { get; set; }
+        public string? Message { get; set; }
+        public T? Data { get; set; }
+        public List<string>? Errors { get; set; }
+    }
+
+    public class PeriodoInfoDto
+    {
+        public PeriodoPostulacionDto? PeriodoActivo { get; set; }
+        public bool PuedeCrearSolicitud { get; set; }
+        public string Mensaje { get; set; } = string.Empty;
+        public int DiasRestantes { get; set; }
+    }
+
+    public class PeriodoPostulacionDto
+    {
+        public int Id { get; set; }
+        public DateTime FechaInicio { get; set; }
+        public DateTime FechaFin { get; set; }
+        public bool Activo { get; set; }
+        public string? Descripcion { get; set; }
+        public DateTime FechaCreacion { get; set; }
+        public string EstadoPeriodo { get; set; } = string.Empty;
+        public int DiasRestantes { get; set; }
+    }
+}
+
+<style>
+    .periodo-info-container {
+        margin-bottom: 1rem;
+    }
+
+    .periodo-card {
+        transition: all 0.3s ease;
+    }
+
+    .periodo-card:hover {
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    .periodo-icon {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background: rgba(var(--bs-primary-rgb), 0.1);
+        font-size: 1.2rem;
+    }
+
+    .periodo-title {
+        font-weight: 600;
+        color: var(--bs-primary);
+    }
+
+    .periodo-message {
+        color: var(--bs-body-color);
+        font-size: 0.9rem;
+    }
+
+    .periodo-details {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .periodo-loading {
+        display: flex;
+        align-items: center;
+        padding: 1rem;
+        background: var(--bs-light);
+        border-radius: 0.5rem;
+        color: var(--bs-body-color);
+    }
+
+    .border-success {
+        border-left: 4px solid var(--bs-success) !important;
+    }
+
+    .border-info {
+        border-left: 4px solid var(--bs-info) !important;
+    }
+
+    .border-warning {
+        border-left: 4px solid var(--bs-warning) !important;
+    }
+
+    .border-secondary {
+        border-left: 4px solid var(--bs-secondary) !important;
+    }
+</style>
