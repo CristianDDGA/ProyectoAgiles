@@ -366,7 +366,7 @@ public class SolicitudesEscalafonController : ControllerBase
     /// <summary>
     /// Obtiene un archivo de apelación para visualizar en el navegador
     /// </summary>
-    [HttpGet("archivo/{id:int}/{nombreArchivo}")]
+    [HttpGet("{id}/apelacion/archivo/{nombreArchivo}")]
     public async Task<IActionResult> ObtenerArchivoApelacion(int id, string nombreArchivo)
     {
         try
@@ -387,6 +387,19 @@ public class SolicitudesEscalafonController : ControllerBase
             var archivoPath = Path.Combine(uploadsPath, nombreArchivo);
 
             _logger.LogInformation("Buscando archivo en ruta: {ArchivoPath}", archivoPath);
+            _logger.LogInformation("Directorio base: {WebRootPath}", _webHostEnvironment.WebRootPath);
+            _logger.LogInformation("Directorio de apelaciones: {UploadsPath}", uploadsPath);
+
+            // Verificar que el directorio existe
+            if (!Directory.Exists(uploadsPath))
+            {
+                _logger.LogWarning("Directorio no encontrado: {UploadsPath}", uploadsPath);
+                return NotFound($"Directorio de apelaciones no encontrado para la solicitud {id}");
+            }
+
+            // Listar archivos en el directorio para debugging
+            var archivosEnDirectorio = Directory.GetFiles(uploadsPath);
+            _logger.LogInformation("Archivos en directorio {UploadsPath}: {Archivos}", uploadsPath, string.Join(", ", archivosEnDirectorio.Select(Path.GetFileName)));
 
             // Verificar que el archivo existe
             if (!System.IO.File.Exists(archivoPath))

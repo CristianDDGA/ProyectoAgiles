@@ -28,6 +28,10 @@ public class SolicitudEscalafonDto
     public string? MotivoRechazo { get; set; }
     public string? MotivoRechazoConsejo { get; set; }
     public string? ProcesadoPor { get; set; }
+    
+    // Información de Apelación
+    public ApelacionInfoDto? ApelacionInfo { get; set; }
+    public bool TieneApelacion => ApelacionInfo != null;
 }
 
 public class CreateSolicitudEscalafonDto
@@ -154,4 +158,27 @@ public class NotificarRechazoDto
     public string MotivoRechazo { get; set; } = string.Empty;
     public string RechazadoPor { get; set; } = string.Empty;
     public string NivelRechazo { get; set; } = string.Empty;
+}
+
+public class ApelacionInfoDto
+{
+    public int SolicitudId { get; set; }
+    public string ObservacionesApelacion { get; set; } = string.Empty;
+    public DateTime FechaApelacion { get; set; }
+    public string Destinatario { get; set; } = string.Empty;
+    public List<ArchivoApelacionDto> Archivos { get; set; } = new();
+    public string EstadoApelacion { get; set; } = string.Empty; // "Pendiente", "Aceptada", "Rechazada"
+    public string? MotivoRechazoApelacion { get; set; }
+    public string? ObservacionesAceptacion { get; set; }
+    public DateTime? FechaResolucion { get; set; }
+    public string? ResueltoPor { get; set; }
+}
+
+public class ArchivoApelacionDto
+{
+    public string NombreArchivo { get; set; } = string.Empty;
+    public string RutaArchivo { get; set; } = string.Empty;
+    public long TamanoArchivo { get; set; }
+    public string TipoArchivo { get; set; } = string.Empty;
+    public DateTime FechaSubida { get; set; }
 }

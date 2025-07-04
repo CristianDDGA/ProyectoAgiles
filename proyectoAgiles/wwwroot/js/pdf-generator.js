@@ -177,3 +177,109 @@ window.downloadPDF = function(htmlContent, fileName = 'informe.pdf') {
         alert('Error al descargar el archivo.');
     }
 };
+
+// Función para mostrar PDFs en el navegador
+window.showPdf = function(pdfDataUrl, fileName = 'archivo.pdf') {
+    try {
+        // Intentar abrir en una nueva pestaña
+        const newWindow = window.open('', '_blank');
+        
+        if (newWindow) {
+            newWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>${fileName}</title>
+                    <style>
+                        body { 
+                            margin: 0; 
+                            padding: 0; 
+                            background-color: #2c2c2c;
+                            display: flex;
+                            justify-content: center;
+                            align-items: center;
+                            min-height: 100vh;
+                        }
+                        iframe { 
+                            width: 100%; 
+                            height: 100vh; 
+                            border: none;
+                            background-color: white;
+                            border-radius: 8px;
+                            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+                        }
+                        .pdf-container {
+                            width: 95%;
+                            height: 95vh;
+                            background-color: white;
+                            border-radius: 8px;
+                            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="pdf-container">
+                        <iframe src="${pdfDataUrl}" type="application/pdf"></iframe>
+                    </div>
+                </body>
+                </html>
+            `);
+            newWindow.document.close();
+            return true;
+        } else {
+            // Si no se puede abrir una nueva pestaña, descargar el archivo
+            return downloadPdfFile(pdfDataUrl, fileName);
+        }
+    } catch (error) {
+        console.error('Error al mostrar PDF:', error);
+        // En caso de error, intentar descargar
+        return downloadPdfFile(pdfDataUrl, fileName);
+    }
+};
+
+// Función auxiliar para descargar archivos PDF
+function downloadPdfFile(pdfDataUrl, fileName) {
+    try {
+        const link = document.createElement('a');
+        link.href = pdfDataUrl;
+        link.download = fileName;
+        link.style.display = 'none';
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        return false; // Indica que se descargó en lugar de mostrarse
+    } catch (error) {
+        console.error('Error al descargar PDF:', error);
+        return false;
+    }
+}
+
+// Función para manejar archivos de apelación específicamente
+window.viewApelacionFile = function(solicitudId, fileName) {
+    fetch(`/api/solicitudes-escalafon/${solicitudId}/apelacion/archivo/${fileName}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.blob();
+        })
+        .then(blob => {
+            const fileUrl = URL.createObjectURL(blob);
+            const newWindow = window.open(fileUrl, '_blank');
+            
+            if (!newWindow) {
+                // Si no se puede abrir en nueva pestaña, descargar
+                const link = document.createElement('a');
+                link.href = fileUrl;
+                link.download = fileName;
+                link.click();
+                URL.revokeObjectURL(fileUrl);
+            }
+        })
+        .catch(error => {
+            console.error('Error al cargar archivo de apelación:', error);
+            alert('Error al cargar el archivo. Por favor, intente nuevamente.');
+        });
+};

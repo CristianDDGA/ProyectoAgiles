@@ -14,19 +14,22 @@ public class SolicitudEscalafonService : ISolicitudEscalafonService
     private readonly IEmailService _emailService;
     private readonly IUserRepository _userRepository;
     private readonly IArchivosUtilizadosService _archivosUtilizadosService;
+    private readonly IFileService _fileService;
 
     public SolicitudEscalafonService(
         ISolicitudEscalafonRepository repository, 
         IMapper mapper, 
         IEmailService emailService,
         IUserRepository userRepository,
-        IArchivosUtilizadosService archivosUtilizadosService)
+        IArchivosUtilizadosService archivosUtilizadosService,
+        IFileService fileService)
     {
         _repository = repository;
         _mapper = mapper;
         _emailService = emailService;
         _userRepository = userRepository;
         _archivosUtilizadosService = archivosUtilizadosService;
+        _fileService = fileService;
     }
 
     public async Task<IEnumerable<SolicitudEscalafonDto>> GetAllSolicitudesAsync()
@@ -394,6 +397,12 @@ public class SolicitudEscalafonService : ISolicitudEscalafonService
         };
 
         var nuevaSolicitud = await _repository.AddAsync(solicitudApelacion);
+
+        // Guardar archivos de apelación si existen
+        if (archivos?.Any() == true)
+        {
+            await GuardarArchivosApelacionAsync(nuevaSolicitud.Id, archivos);
+        }
 
         // Marcar la solicitud original como apelada
         solicitudOriginal.Observaciones = $"{solicitudOriginal.Observaciones}\n\nAPELADA: Nueva solicitud #{nuevaSolicitud.Id}";
@@ -942,5 +951,37 @@ public class SolicitudEscalafonService : ISolicitudEscalafonService
         if (descripcion.ToLower().Contains("investigacion")) return 35;
         
         return 20; // Valor por defecto
+    }
+
+    /// <summary>
+    /// Guarda los archivos de apelación en el servidor
+    /// </summary>
+    private async Task GuardarArchivosApelacionAsync(int solicitudId, List<IFormFile> archivos)
+    {
+        try
+        {
+            foreach (var archivo in archivos)
+            {
+                if (archivo != null && archivo.Length > 0)
+                {
+                    // Leer el archivo como bytes
+                    using var memoryStream = new MemoryStream();
+                    await archivo.CopyToAsync(memoryStream);
+                    var fileBytes = memoryStream.ToArray();
+
+                    // Usar el FileService para guardar el archivo con una carpeta específica para apelaciones
+                    var carpetaApelacion = $"uploads/apelaciones/{solicitudId}";
+                    var rutaGuardada = await _fileService.SaveFileWithOriginalNameAsync(fileBytes, archivo.FileName, archivo.ContentType, carpetaApelacion);
+                    
+                    Console.WriteLine($"Archivo de apelación guardado: {rutaGuardada}");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            // Log del error pero no fallar el proceso principal
+            Console.WriteLine($"Error guardando archivos de apelación: {ex.Message}");
+            throw new Exception($"Error al guardar archivos de apelación: {ex.Message}");
+        }
     }
 }
