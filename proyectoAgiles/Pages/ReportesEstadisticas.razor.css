@@ -259,13 +259,30 @@
     opacity: 0.95;
 }
 
-/* Ajuste de ancho y centrado de la página */
-.admin-dashboard {
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: 20px 10px 40px 10px;
-    min-height: 100vh;
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+/* Ajuste para que las secciones ocupen todo el ancho */
+.admin-dashboard,
+.stats-section,
+.management-section {
+    max-width: none !important;
+    width: 100vw !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+
+.stats-section, .management-section {
+    padding-left: 2vw !important;
+    padding-right: 2vw !important;
+}
+
+@media (max-width: 768px) {
+    .stats-section, .management-section {
+        padding-left: 0.5vw !important;
+        padding-right: 0.5vw !important;
+    }
 }
 
 /* Responsive Design */
@@ -382,4 +399,10 @@
 .btn-outline-light:hover {
     background-color: rgba(255, 255, 255, 0.2);
     border-color: rgba(255, 255, 255, 0.3);
+}
+
+body, html {
+    background: #f8f9fa;
+    width: 100vw;
+    overflow-x: hidden;
 }
