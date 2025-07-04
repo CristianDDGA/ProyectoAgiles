@@ -1,3 +1,5 @@
+using Blazorise;
+using Blazorise.Bootstrap;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using proyectoAgiles;
@@ -17,9 +19,19 @@ builder.Services.AddScoped(sp =>
 // Configuración de API y servicios
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<UserSessionService>();
+
+builder.Services.AddScoped<ReportesService>();
+
 builder.Services.AddScoped<PeriodoPostulacionService>();
+
 
 // Leer la configuración del API desde appsettings.json
 builder.Configuration.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
+
+builder.Services.AddBlazorise(options =>
+{
+    options.Immediate = true;
+})
+.AddBootstrapProviders();
 
 await builder.Build().RunAsync();
