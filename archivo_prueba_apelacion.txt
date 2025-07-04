@@ -1,0 +1,6 @@
+Este es un archivo de prueba para verificar el funcionamiento del sistema de archivos de apelación.
+
+Este archivo simula un documento adjunto a una apelación de escalafón docente.
+
+Fecha: 2025-07-04
+Prueba: Verificación de guardado y recuperación de archivos

@@ -3963,7 +3963,11 @@ private bool isLoadingInvestigaciones = false;
         await MostrarNotificacionAdvertencia("⚠️ Confirmar Apelación", 
             $"¿Está seguro de que desea apelar la solicitud #{solicitudParaApelar.Id}? Esta acción creará una nueva solicitud de apelación que será enviada a la Comisión Académica de Escalafón.");
         
-        var confirmacion = await JSRuntime.InvokeAsync<bool>("confirm", "¿Continuar con la apelación?");
+        var confirmacion = await JSRuntime.InvokeAsync<bool>("toastNotifications.confirm", 
+            "Confirmar Apelación", 
+            $"¿Está seguro de que desea continuar con la apelación de la solicitud #{solicitudParaApelar.Id}?<br><br>Esta acción creará una nueva solicitud que será enviada a la <strong>Comisión Académica de Escalafón</strong>.",
+            "Continuar con Apelación",
+            "Cancelar");
         
         if (!confirmacion) return;
 

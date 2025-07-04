@@ -164,6 +164,9 @@ if (app.Environment.IsProduction())
 app.UseHttpsRedirection();
 app.UseCors("AllowBlazorApp");
 
+// Configurar archivos estáticos para servir archivos de apelación
+app.UseStaticFiles();
+
 app.UseRouting();
 app.UseAuthorization();
 app.MapControllers();

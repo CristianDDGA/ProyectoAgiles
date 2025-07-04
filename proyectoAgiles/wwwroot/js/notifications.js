@@ -96,7 +96,70 @@ window.toastNotifications = {
         setTimeout(() => {
             this.warning('Advertencia', 'Esta es una notificación de advertencia con mejor visibilidad.');
         }, 3000);
-    }
+    },
+
+    // Función para mostrar confirmación con modal
+    confirm: function(title, message, confirmText = 'Continuar', cancelText = 'Cancelar') {
+        return new Promise((resolve) => {
+            // Crear el modal de confirmación
+            const modal = document.createElement('div');
+            modal.className = 'confirmation-modal-overlay';
+            modal.innerHTML = `
+                <div class="confirmation-modal">
+                    <div class="confirmation-header">
+                        <div class="confirmation-icon">
+                            <i class="fas fa-question-circle"></i>
+                        </div>
+                        <h4 class="confirmation-title">${title}</h4>
+                    </div>
+                    <div class="confirmation-body">
+                        <div class="confirmation-message">${message}</div>
+                    </div>
+                    <div class="confirmation-actions">
+                        <button class="btn-cancel" onclick="toastNotifications.closeConfirm(this, false)">
+                            <i class="fas fa-times"></i>
+                            ${cancelText}
+                        </button>
+                        <button class="btn-confirm" onclick="toastNotifications.closeConfirm(this, true)">
+                            <i class="fas fa-check"></i>
+                            ${confirmText}
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            // Agregar al body
+            document.body.appendChild(modal);
+            
+            // Guardar el resolver para usarlo en closeConfirm
+            modal._resolve = resolve;
+
+            // Mostrar con animación
+            setTimeout(() => {
+                modal.classList.add('show');
+            }, 10);
+
+            // Cerrar con Escape
+            const handleEscape = (e) => {
+                if (e.key === 'Escape') {
+                    document.removeEventListener('keydown', handleEscape);
+                    this.closeConfirm(modal.querySelector('.btn-cancel'), false);
+                }
+            };
+            document.addEventListener('keydown', handleEscape);
+        });
+    },
+
+    closeConfirm: function(element, result) {
+        const modal = element.closest('.confirmation-modal-overlay');
+        if (modal && modal._resolve) {
+            modal.classList.remove('show');
+            setTimeout(() => {
+                modal._resolve(result);
+                document.body.removeChild(modal);
+            }, 300);
+        }
+    },
 };
 
 console.log('toastNotifications inicializado:', window.toastNotifications);
