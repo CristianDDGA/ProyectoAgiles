@@ -371,7 +371,10 @@ public class SolicitudesEscalafonController : ControllerBase
     {
         try
         {
-            _logger.LogInformation("Solicitando archivo de apelación: {NombreArchivo} para solicitud {Id}", nombreArchivo, id);
+            // Decodificar el nombre del archivo por si viene URL encoded
+            var decodedFileName = System.Web.HttpUtility.UrlDecode(nombreArchivo);
+            
+            _logger.LogInformation("Solicitando archivo de apelación: {NombreArchivo} para solicitud {Id}", decodedFileName, id);
             _logger.LogInformation("WebRootPath: {WebRootPath}", _webHostEnvironment.WebRootPath);
 
             // Verificar que la solicitud existe
@@ -384,7 +387,7 @@ public class SolicitudesEscalafonController : ControllerBase
 
             // Construir la ruta del archivo
             var uploadsPath = Path.Combine(_webHostEnvironment.WebRootPath, "uploads", "apelaciones", id.ToString());
-            var archivoPath = Path.Combine(uploadsPath, nombreArchivo);
+            var archivoPath = Path.Combine(uploadsPath, decodedFileName);
 
             _logger.LogInformation("Buscando archivo en ruta: {ArchivoPath}", archivoPath);
             _logger.LogInformation("Directorio base: {WebRootPath}", _webHostEnvironment.WebRootPath);
@@ -405,26 +408,30 @@ public class SolicitudesEscalafonController : ControllerBase
             if (!System.IO.File.Exists(archivoPath))
             {
                 _logger.LogWarning("Archivo no encontrado: {ArchivoPath}", archivoPath);
-                return NotFound($"Archivo '{nombreArchivo}' no encontrado para la solicitud {id}");
+                return NotFound($"Archivo '{decodedFileName}' no encontrado para la solicitud {id}");
             }
 
             // Leer el archivo
             var archivoBytes = await System.IO.File.ReadAllBytesAsync(archivoPath);
             
             // Determinar el tipo de contenido basado en la extensión
-            var contentType = GetContentType(nombreArchivo);
+            var contentType = GetContentType(decodedFileName);
             
             _logger.LogInformation("Archivo encontrado. Tamaño: {Tamaño} bytes, Tipo: {ContentType}", archivoBytes.Length, contentType);
 
             // Configurar headers para visualización en línea (no descarga)
-            Response.Headers.Append("Content-Disposition", $"inline; filename=\"{nombreArchivo}\"");
+            // Escapar caracteres especiales en el nombre del archivo para el header
+            var safeFileName = System.Text.Encoding.ASCII.GetString(
+                System.Text.Encoding.ASCII.GetBytes(decodedFileName.Replace('í', 'i').Replace('ñ', 'n').Replace('á', 'a').Replace('é', 'e').Replace('ó', 'o').Replace('ú', 'u')));
+            
+            Response.Headers.Append("Content-Disposition", $"inline; filename=\"{safeFileName}\"");
             Response.Headers.Append("X-Content-Type-Options", "nosniff");
             
             return File(archivoBytes, contentType);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error al obtener archivo de apelación {NombreArchivo} para solicitud {Id}", nombreArchivo, id);
+            _logger.LogError(ex, "Error al obtener archivo de apelación {NombreArchivo} para solicitud {Id}", System.Web.HttpUtility.UrlDecode(nombreArchivo), id);
             return StatusCode(500, $"Error al obtener el archivo: {ex.Message}");
         }
     }

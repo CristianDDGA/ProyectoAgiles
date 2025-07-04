@@ -1643,7 +1643,8 @@
     {
         try
         {
-            var response = await HttpClient.GetAsync($"/api/solicitudes-escalafon/{solicitudId}/apelacion/archivo/{nombreArchivo}");
+            var encodedFileName = System.Web.HttpUtility.UrlEncode(nombreArchivo);
+            var response = await HttpClient.GetAsync($"/api/solicitudes-escalafon/{solicitudId}/apelacion/archivo/{encodedFileName}");
             
             if (response.IsSuccessStatusCode)
             {
