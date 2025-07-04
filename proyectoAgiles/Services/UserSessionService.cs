@@ -117,5 +117,14 @@ namespace proyectoAgiles.Services
                 Console.WriteLine($"Error al refrescar datos del usuario: {ex.Message}");
             }
         }
+
+        public async Task<UserDto?> GetCurrentUserAsync()
+        {
+            if (!_isInitialized)
+            {
+                await InitializeAsync();
+            }
+            return _currentUser;
+        }
     }
 }

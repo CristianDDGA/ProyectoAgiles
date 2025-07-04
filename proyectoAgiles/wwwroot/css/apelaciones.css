@@ -1,0 +1,280 @@
+/* Estilos para modales de apelaciones */
+.modal-apelacion .modal-dialog {
+    max-width: 600px;
+}
+
+.modal-apelacion .modal-content {
+    border-radius: 10px;
+    border: none;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.modal-apelacion .modal-header {
+    border-bottom: none;
+    padding: 1.5rem;
+    border-radius: 10px 10px 0 0;
+}
+
+.modal-apelacion .modal-body {
+    padding: 2rem;
+}
+
+.modal-apelacion .modal-footer {
+    border-top: none;
+    padding: 1.5rem;
+    border-radius: 0 0 10px 10px;
+}
+
+.modal-apelacion .form-control {
+    border-radius: 8px;
+    border: 2px solid #e9ecef;
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+}
+
+.modal-apelacion .form-control:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.modal-apelacion .form-control.is-invalid {
+    border-color: #dc3545;
+    animation: shake 0.5s ease-in-out;
+}
+
+.modal-apelacion .form-check-input.is-invalid {
+    border-color: #dc3545;
+}
+
+.modal-apelacion .form-control-plaintext {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 0.75rem 1rem;
+    font-weight: 500;
+    color: #495057;
+}
+
+.modal-apelacion .alert {
+    border-radius: 8px;
+    border: none;
+    padding: 1rem 1.25rem;
+}
+
+.modal-apelacion .alert-info {
+    background-color: #e7f3ff;
+    color: #0c5460;
+}
+
+.modal-apelacion .alert-warning {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.modal-apelacion .btn {
+    border-radius: 6px;
+    padding: 0.5rem 1.5rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.modal-apelacion .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.modal-apelacion .btn-success {
+    background-color: #28a745;
+    border-color: #28a745;
+}
+
+.modal-apelacion .btn-success:hover {
+    background-color: #218838;
+    border-color: #1e7e34;
+}
+
+.modal-apelacion .btn-danger {
+    background-color: #dc3545;
+    border-color: #dc3545;
+}
+
+.modal-apelacion .btn-danger:hover {
+    background-color: #c82333;
+    border-color: #bd2130;
+}
+
+.modal-apelacion .form-check {
+    padding: 0.75rem 1rem;
+    background-color: #f8f9fa;
+    border-radius: 6px;
+    border: 1px solid #dee2e6;
+}
+
+.modal-apelacion .form-check-input {
+    margin-top: 0.25rem;
+}
+
+.modal-apelacion .form-check-label {
+    color: #495057;
+    cursor: pointer;
+}
+
+/* Animación para campos con error */
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+
+/* PDF Modal específico */
+.modal-pdf-apelacion .modal-dialog {
+    max-width: 90vw;
+    max-height: 90vh;
+}
+
+.modal-pdf-apelacion .modal-content {
+    height: 90vh;
+}
+
+.modal-pdf-apelacion .modal-body {
+    padding: 0;
+    height: calc(90vh - 120px);
+}
+
+.modal-pdf-apelacion .pdf-container {
+    height: 100%;
+    overflow: auto;
+}
+
+.modal-pdf-apelacion .pdf-container iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+/* Mejoras visuales para el estado de apelación */
+.apelacion-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: linear-gradient(45deg, #fff3cd, #ffeaa7);
+    border: 1px solid #ffd32a;
+    border-radius: 6px;
+    color: #856404;
+    font-weight: 600;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.apelacion-badge i {
+    font-size: 1rem;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
+}
+
+/* Estilos para archivos adjuntos */
+.archivos-adjuntos {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+.archivos-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+    font-weight: 600;
+    color: #495057;
+}
+
+.archivos-lista {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.archivo-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    background-color: white;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    margin-bottom: 0.5rem;
+}
+
+.archivo-item:last-child {
+    margin-bottom: 0;
+}
+
+.archivo-nombre {
+    flex-grow: 1;
+    font-weight: 500;
+    color: #495057;
+}
+
+.archivo-item .btn {
+    padding: 0.25rem 0.75rem;
+    font-size: 0.875rem;
+}
+
+/* Indicadores de estado en la tabla */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-badge.apelacion-pendiente {
+    background-color: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffd32a;
+}
+
+.status-badge.apelacion-pendiente::before {
+    content: "⚠️";
+    margin-right: 0.25rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .modal-apelacion .modal-dialog {
+        max-width: 95vw;
+        margin: 0.5rem;
+    }
+    
+    .modal-apelacion .modal-body {
+        padding: 1.5rem;
+    }
+    
+    .modal-pdf-apelacion .modal-dialog {
+        max-width: 95vw;
+        max-height: 95vh;
+        margin: 0.5rem;
+    }
+    
+    .modal-pdf-apelacion .modal-content {
+        height: 95vh;
+    }
+    
+    .modal-pdf-apelacion .modal-body {
+        height: calc(95vh - 100px);
+    }
+}

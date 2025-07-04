@@ -770,10 +770,124 @@
                                 </table>
                             </div>
                         </div>
+
+                        <!-- Información de Apelación -->
+                        @if (selectedSolicitud?.TieneApelacion == true)
+                        {
+                            <div class="details-section apelacion-section">
+                                <h6><i class="fas fa-exclamation-triangle text-warning"></i> Información de Apelación</h6>
+                                
+                                @if (selectedSolicitud.ApelacionInfo?.EstadoApelacion == "Pendiente")
+                                {
+                                    <div class="alert alert-warning" role="alert">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                        <strong>Apelación Pendiente:</strong> Esta solicitud requiere una decisión sobre la apelación presentada.
+                                    </div>
+                                }
+                                else if (selectedSolicitud.ApelacionInfo?.EstadoApelacion == "Aceptada")
+                                {
+                                    <div class="alert alert-success" role="alert">
+                                        <i class="fas fa-check-circle"></i>
+                                        <strong>Apelación Aceptada:</strong> La apelación ha sido aceptada y la solicitud está siendo reevaluada.
+                                    </div>
+                                }
+                                else if (selectedSolicitud.ApelacionInfo?.EstadoApelacion == "Rechazada")
+                                {
+                                    <div class="alert alert-danger" role="alert">
+                                        <i class="fas fa-times-circle"></i>
+                                        <strong>Apelación Rechazada:</strong> La apelación ha sido rechazada.
+                                    </div>
+                                }
+
+                                <div class="table-responsive">
+                                    <table class="table table-striped">
+                                        <tbody>
+                                            <tr>
+                                                <td><strong>Estado:</strong></td>
+                                                <td>
+                                                    <span class="badge @GetApelacionStatusClass(selectedSolicitud.ApelacionInfo?.EstadoApelacion)">
+                                                        @selectedSolicitud.ApelacionInfo?.EstadoApelacion
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Fecha de Apelación:</strong></td>
+                                                <td>@selectedSolicitud.ApelacionInfo?.FechaApelacion.ToString("dd/MM/yyyy HH:mm")</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Destinatario:</strong></td>
+                                                <td>@selectedSolicitud.ApelacionInfo?.Destinatario</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Observaciones:</strong></td>
+                                                <td>@selectedSolicitud.ApelacionInfo?.ObservacionesApelacion</td>
+                                            </tr>
+                                            @if (selectedSolicitud.ApelacionInfo?.Archivos?.Any() == true)
+                                            {
+                                                <tr>
+                                                    <td><strong>Archivos Adjuntos:</strong></td>
+                                                    <td>
+                                                        <div class="archivos-apelacion">
+                                                            @foreach (var archivo in selectedSolicitud.ApelacionInfo.Archivos)
+                                                            {
+                                                                <div class="archivo-item">
+                                                                    <i class="fas fa-file-pdf text-danger"></i>
+                                                                    <span class="archivo-nombre">@archivo.NombreArchivo</span>
+                                                                    <span class="archivo-tamaño">(@FormatFileSize(archivo.TamanoArchivo))</span>
+                                                                    <button class="btn btn-sm btn-outline-primary ms-2" 
+                                                                            @onclick="() => VerArchivoApelacion(selectedSolicitud.Id, archivo.NombreArchivo)"
+                                                                            title="Ver archivo">
+                                                                        <i class="fas fa-eye"></i> Ver
+                                                                    </button>
+                                                                </div>
+                                                            }
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            }
+                                            @if (selectedSolicitud.ApelacionInfo?.FechaResolucion.HasValue == true)
+                                            {
+                                                <tr>
+                                                    <td><strong>Fecha de Resolución:</strong></td>
+                                                    <td>@selectedSolicitud.ApelacionInfo.FechaResolucion.Value.ToString("dd/MM/yyyy HH:mm")</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Resuelto Por:</strong></td>
+                                                    <td>@selectedSolicitud.ApelacionInfo.ResueltoPor</td>
+                                                </tr>
+                                            }
+                                            @if (!string.IsNullOrEmpty(selectedSolicitud.ApelacionInfo?.MotivoRechazoApelacion))
+                                            {
+                                                <tr>
+                                                    <td><strong>Motivo de Rechazo de Apelación:</strong></td>
+                                                    <td>@selectedSolicitud.ApelacionInfo.MotivoRechazoApelacion</td>
+                                                </tr>
+                                            }
+                                            @if (!string.IsNullOrEmpty(selectedSolicitud.ApelacionInfo?.ObservacionesAceptacion))
+                                            {
+                                                <tr>
+                                                    <td><strong>Observaciones de Aceptación:</strong></td>
+                                                    <td>@selectedSolicitud.ApelacionInfo.ObservacionesAceptacion</td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        }
                     }
                 </div>
                 <div class="modal-footer">
-                    @if (selectedSolicitud?.Status == "Pendiente")
+                    @if (selectedSolicitud?.TieneApelacion == true && selectedSolicitud.ApelacionInfo?.EstadoApelacion == "Pendiente")
+                    {
+                        <button type="button" class="btn btn-success" @onclick="() => AceptarApelacion(selectedSolicitud.Id)">
+                            <i class="fas fa-check"></i> Aceptar Apelación
+                        </button>
+                        <button type="button" class="btn btn-danger" @onclick="() => RechazarApelacion(selectedSolicitud.Id)">
+                            <i class="fas fa-times"></i> Rechazar Apelación
+                        </button>
+                    }
+                    else if (selectedSolicitud?.Status == "Pendiente")
                     {
                         <button type="button" class="btn btn-success" @onclick="() => AprobarSolicitud(selectedSolicitud.Id)">
                             <i class="fas fa-check"></i> Aprobar
@@ -812,6 +926,35 @@
                         <i class="fas fa-times"></i> Rechazar
                     </button>
                     <button type="button" class="btn btn-secondary" @onclick="CloseRejectModal">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop fade show"></div>
+}
+
+<!-- Modal de Rechazo de Apelación -->
+@if (showRechazarApelacionModal)
+{
+    <div class="modal fade show" style="display: block;" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Rechazar Apelación</h5>
+                    <button type="button" class="btn-close" @onclick="CloseRechazarApelacionModal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>¿Está seguro que desea rechazar esta apelación?</p>
+                    <div class="mb-3">
+                        <label class="form-label">Motivo del rechazo de la apelación:</label>
+                        <textarea class="form-control" rows="3" @bind="motivoRechazoApelacion" placeholder="Ingrese el motivo del rechazo de la apelación..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" @onclick="ConfirmarRechazoApelacion">
+                        <i class="fas fa-times"></i> Rechazar Apelación
+                    </button>
+                    <button type="button" class="btn btn-secondary" @onclick="CloseRechazarApelacionModal">Cancelar</button>
                 </div>
             </div>
         </div>
@@ -890,7 +1033,27 @@
                         FechaRechazo = dto.FechaRechazo,
                         Status = dto.Status,
                         Observaciones = dto.Observaciones ?? "",
-                        MotivoRechazo = dto.MotivoRechazo ?? ""
+                        MotivoRechazo = dto.MotivoRechazo ?? "",
+                        ApelacionInfo = dto.ApelacionInfo != null ? new ApelacionInfo
+                        {
+                            SolicitudId = dto.ApelacionInfo.SolicitudId,
+                            ObservacionesApelacion = dto.ApelacionInfo.ObservacionesApelacion,
+                            FechaApelacion = dto.ApelacionInfo.FechaApelacion,
+                            Destinatario = dto.ApelacionInfo.Destinatario,
+                            EstadoApelacion = dto.ApelacionInfo.EstadoApelacion,
+                            MotivoRechazoApelacion = dto.ApelacionInfo.MotivoRechazoApelacion,
+                            ObservacionesAceptacion = dto.ApelacionInfo.ObservacionesAceptacion,
+                            FechaResolucion = dto.ApelacionInfo.FechaResolucion,
+                            ResueltoPor = dto.ApelacionInfo.ResueltoPor,
+                            Archivos = dto.ApelacionInfo.Archivos?.Select(a => new ArchivoApelacion
+                            {
+                                NombreArchivo = a.NombreArchivo,
+                                RutaArchivo = a.RutaArchivo,
+                                TamanoArchivo = a.TamanoArchivo,
+                                TipoArchivo = a.TipoArchivo,
+                                FechaSubida = a.FechaSubida
+                            }).ToList() ?? new List<ArchivoApelacion>()
+                        } : null
                     }).ToList();
                 }
                 else
@@ -1372,10 +1535,36 @@
                 }
                 else
                 {
-                    // Si es rechazado, mostrar notificación (podrías implementar un endpoint similar para rechazos)
-                    await JSRuntime.InvokeVoidAsync("toastNotifications.success", 
-                        "Solicitud Rechazada", 
-                        $"La solicitud ha sido rechazada. Se debería notificar a {solicitud.DocenteEmail}");
+                    // Si es rechazado, enviar notificación por correo
+                    try
+                    {
+                        var notificarRechazoDto = new
+                        {
+                            MotivoRechazo = "Solicitud rechazada por el Presidente de la Comisión Académica",
+                            RechazadoPor = "Presidente de la Comisión Académica",
+                            NivelRechazo = "PresidenteComision"
+                        };
+                        
+                        var emailResponse = await HttpClient.PostAsJsonAsync($"/api/solicitudes-escalafon/{solicitudId}/notificar-rechazo", notificarRechazoDto);
+                        if (emailResponse.IsSuccessStatusCode)
+                        {
+                            await JSRuntime.InvokeVoidAsync("toastNotifications.success", 
+                                "Solicitud Rechazada y Notificada", 
+                                $"La solicitud ha sido rechazada y se ha enviado la notificación por correo a {solicitud.DocenteEmail}");
+                        }
+                        else
+                        {
+                            await JSRuntime.InvokeVoidAsync("toastNotifications.warning", 
+                                "Solicitud Rechazada", 
+                                "La solicitud ha sido rechazada, pero no se pudo enviar el correo de notificación.");
+                        }
+                    }
+                    catch (Exception emailEx)
+                    {
+                        await JSRuntime.InvokeVoidAsync("toastNotifications.warning", 
+                            "Solicitud Rechazada", 
+                            $"La solicitud ha sido rechazada, pero hubo un error enviando el correo: {emailEx.Message}");
+                    }
                 }
                 
                 // Actualizar la lista de solicitudes
@@ -1419,5 +1608,202 @@
         public string Status { get; set; } = "";
         public string Observaciones { get; set; } = "";
         public string MotivoRechazo { get; set; } = "";
+        
+        // Información de Apelación
+        public ApelacionInfo? ApelacionInfo { get; set; }
+        public bool TieneApelacion => ApelacionInfo != null && 
+                                      !string.IsNullOrEmpty(ApelacionInfo.ObservacionesApelacion);
+    }
+    
+    public class ApelacionInfo
+    {
+        public int SolicitudId { get; set; }
+        public string ObservacionesApelacion { get; set; } = string.Empty;
+        public DateTime FechaApelacion { get; set; }
+        public string Destinatario { get; set; } = string.Empty;
+        public List<ArchivoApelacion> Archivos { get; set; } = new();
+        public string EstadoApelacion { get; set; } = string.Empty;
+        public string? MotivoRechazoApelacion { get; set; }
+        public string? ObservacionesAceptacion { get; set; }
+        public DateTime? FechaResolucion { get; set; }
+        public string? ResueltoPor { get; set; }
+    }
+    
+    public class ArchivoApelacion
+    {
+        public string NombreArchivo { get; set; } = string.Empty;
+        public string RutaArchivo { get; set; } = string.Empty;
+        public long TamanoArchivo { get; set; }
+        public string TipoArchivo { get; set; } = string.Empty;
+        public DateTime FechaSubida { get; set; }
+    }
+
+    // Métodos para manejar apelaciones
+    private async Task VerArchivoApelacion(int solicitudId, string nombreArchivo)
+    {
+        try
+        {
+            var encodedFileName = System.Web.HttpUtility.UrlEncode(nombreArchivo);
+            var response = await HttpClient.GetAsync($"/api/solicitudes-escalafon/{solicitudId}/apelacion/archivo/{encodedFileName}");
+            
+            if (response.IsSuccessStatusCode)
+            {
+                var fileBytes = await response.Content.ReadAsByteArrayAsync();
+                
+                if (fileBytes?.Length > 0)
+                {
+                    var base64 = Convert.ToBase64String(fileBytes);
+                    var fileDataUrl = $"data:application/pdf;base64,{base64}";
+                    
+                    // Usar la función JavaScript para mostrar el PDF
+                    var success = await JSRuntime.InvokeAsync<bool>("showPdf", fileDataUrl, nombreArchivo);
+                    
+                    if (!success)
+                    {
+                        await JSRuntime.InvokeVoidAsync("toastNotifications.success", 
+                            "Archivo descargado", 
+                            "El archivo se ha descargado a tu carpeta de descargas.");
+                    }
+                }
+                else
+                {
+                    await JSRuntime.InvokeVoidAsync("toastNotifications.error", 
+                        "Archivo no disponible", 
+                        "No se pudo obtener el contenido del archivo.");
+                }
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("toastNotifications.error", 
+                    "Archivo no encontrado", 
+                    "El archivo solicitado no se encontró en el servidor.");
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("toastNotifications.error", 
+                "Error", 
+                $"Error al obtener el archivo: {ex.Message}");
+        }
+    }
+    
+    private async Task AceptarApelacion(int solicitudId)
+    {
+        try
+        {
+            var aceptarDto = new
+            {
+                AceptadoPor = "Presidente de la Comisión Académica",
+                ObservacionesAceptacion = "Apelación aceptada por el Presidente de la Comisión Académica"
+            };
+
+            var response = await HttpClient.PostAsJsonAsync($"/api/solicitudes-escalafon/{solicitudId}/apelacion/aceptar", aceptarDto);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                await JSRuntime.InvokeVoidAsync("toastNotifications.success", 
+                    "Apelación Aceptada", 
+                    "La apelación ha sido aceptada. La solicitud será reevaluada.");
+                
+                await LoadSolicitudes();
+                CloseDetailsModal();
+            }
+            else
+            {
+                var errorMessage = await response.Content.ReadAsStringAsync();
+                await JSRuntime.InvokeVoidAsync("toastNotifications.error", 
+                    "Error", 
+                    $"No se pudo aceptar la apelación: {errorMessage}");
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("toastNotifications.error", 
+                "Error", 
+                $"Error al aceptar la apelación: {ex.Message}");
+        }
+    }
+    
+    private string motivoRechazoApelacion = "";
+    private bool showRechazarApelacionModal = false;
+    private int selectedApelacionSolicitudId = 0;
+    
+    private void RechazarApelacion(int solicitudId)
+    {
+        selectedApelacionSolicitudId = solicitudId;
+        motivoRechazoApelacion = "";
+        showRechazarApelacionModal = true;
+    }
+    
+    private async Task ConfirmarRechazoApelacion()
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(motivoRechazoApelacion))
+            {
+                await JSRuntime.InvokeVoidAsync("toastNotifications.warning", 
+                    "Motivo Requerido", 
+                    "Debe proporcionar un motivo para rechazar la apelación.");
+                return;
+            }
+
+            var rechazarDto = new
+            {
+                RechazadoPor = "Presidente de la Comisión Académica",
+                MotivoRechazoApelacion = motivoRechazoApelacion
+            };
+
+            var response = await HttpClient.PostAsJsonAsync($"/api/solicitudes-escalafon/{selectedApelacionSolicitudId}/apelacion/rechazar", rechazarDto);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                await JSRuntime.InvokeVoidAsync("toastNotifications.success", 
+                    "Apelación Rechazada", 
+                    "La apelación ha sido rechazada. Se ha enviado un email al docente con el motivo del rechazo.");
+                
+                await LoadSolicitudes();
+                CloseRechazarApelacionModal();
+                CloseDetailsModal();
+            }
+            else
+            {
+                var errorMessage = await response.Content.ReadAsStringAsync();
+                await JSRuntime.InvokeVoidAsync("toastNotifications.error", 
+                    "Error", 
+                    $"No se pudo rechazar la apelación: {errorMessage}");
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("toastNotifications.error", 
+                "Error", 
+                $"Error al rechazar la apelación: {ex.Message}");
+        }
+    }
+    
+    private void CloseRechazarApelacionModal()
+    {
+        showRechazarApelacionModal = false;
+        motivoRechazoApelacion = "";
+        selectedApelacionSolicitudId = 0;
+    }
+    
+    private string GetApelacionStatusClass(string? estado)
+    {
+        return estado switch
+        {
+            "Pendiente" => "bg-warning text-dark",
+            "Aceptada" => "bg-success",
+            "Rechazada" => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+    
+    private string FormatFileSize(long bytes)
+    {
+        if (bytes < 1024) return $"{bytes} B";
+        if (bytes < 1024 * 1024) return $"{bytes / 1024.0:F1} KB";
+        if (bytes < 1024 * 1024 * 1024) return $"{bytes / (1024.0 * 1024.0):F1} MB";
+        return $"{bytes / (1024.0 * 1024.0 * 1024.0):F1} GB";
     }
 }

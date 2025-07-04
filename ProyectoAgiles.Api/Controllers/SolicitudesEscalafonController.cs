@@ -14,15 +14,18 @@ public class SolicitudesEscalafonController : ControllerBase
     private readonly ISolicitudEscalafonService _solicitudService;
     private readonly ILogger<SolicitudesEscalafonController> _logger;
     private readonly IWebHostEnvironment _webHostEnvironment;
+    private readonly IEmailService _emailService;
 
     public SolicitudesEscalafonController(
         ISolicitudEscalafonService solicitudService,
         ILogger<SolicitudesEscalafonController> logger,
-        IWebHostEnvironment webHostEnvironment)
+        IWebHostEnvironment webHostEnvironment,
+        IEmailService emailService)
     {
         _solicitudService = solicitudService;
         _logger = logger;
         _webHostEnvironment = webHostEnvironment;
+        _emailService = emailService;
     }
 
     /// <summary>
@@ -259,11 +262,33 @@ public class SolicitudesEscalafonController : ControllerBase
             {
                 return BadRequest("No se pudo enviar la notificación. Verifique que la solicitud exista y tenga un email válido.");
             }
-            return Ok(new { mensaje = "Notificación enviada exitosamente" });
+            return Ok(new { mensaje = "Notificación de aprobación enviada exitosamente" });
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error al notificar aprobación para solicitud {Id}", id);
+            return StatusCode(500, "Error interno del servidor");
+        }
+    }
+
+    /// <summary>
+    /// Notifica por correo electrónico el rechazo de una solicitud
+    /// </summary>
+    [HttpPost("{id}/notificar-rechazo")]
+    public async Task<ActionResult> NotificarRechazo(int id, [FromBody] NotificarRechazoDto notificarDto)
+    {
+        try
+        {
+            var resultado = await _solicitudService.NotificarRechazoAsync(id, notificarDto.MotivoRechazo, notificarDto.RechazadoPor, notificarDto.NivelRechazo);
+            if (!resultado)
+            {
+                return BadRequest("No se pudo enviar la notificación. Verifique que la solicitud exista y tenga un email válido.");
+            }
+            return Ok(new { mensaje = "Notificación de rechazo enviada exitosamente" });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al notificar rechazo para solicitud {Id}", id);
             return StatusCode(500, "Error interno del servidor");
         }
     }
@@ -341,12 +366,15 @@ public class SolicitudesEscalafonController : ControllerBase
     /// <summary>
     /// Obtiene un archivo de apelación para visualizar en el navegador
     /// </summary>
-    [HttpGet("archivo/{id:int}/{nombreArchivo}")]
+    [HttpGet("{id}/apelacion/archivo/{nombreArchivo}")]
     public async Task<IActionResult> ObtenerArchivoApelacion(int id, string nombreArchivo)
     {
         try
         {
-            _logger.LogInformation("Solicitando archivo de apelación: {NombreArchivo} para solicitud {Id}", nombreArchivo, id);
+            // Decodificar el nombre del archivo por si viene URL encoded
+            var decodedFileName = System.Web.HttpUtility.UrlDecode(nombreArchivo);
+            
+            _logger.LogInformation("Solicitando archivo de apelación: {NombreArchivo} para solicitud {Id}", decodedFileName, id);
             _logger.LogInformation("WebRootPath: {WebRootPath}", _webHostEnvironment.WebRootPath);
 
             // Verificar que la solicitud existe
@@ -359,34 +387,51 @@ public class SolicitudesEscalafonController : ControllerBase
 
             // Construir la ruta del archivo
             var uploadsPath = Path.Combine(_webHostEnvironment.WebRootPath, "uploads", "apelaciones", id.ToString());
-            var archivoPath = Path.Combine(uploadsPath, nombreArchivo);
+            var archivoPath = Path.Combine(uploadsPath, decodedFileName);
 
             _logger.LogInformation("Buscando archivo en ruta: {ArchivoPath}", archivoPath);
+            _logger.LogInformation("Directorio base: {WebRootPath}", _webHostEnvironment.WebRootPath);
+            _logger.LogInformation("Directorio de apelaciones: {UploadsPath}", uploadsPath);
+
+            // Verificar que el directorio existe
+            if (!Directory.Exists(uploadsPath))
+            {
+                _logger.LogWarning("Directorio no encontrado: {UploadsPath}", uploadsPath);
+                return NotFound($"Directorio de apelaciones no encontrado para la solicitud {id}");
+            }
+
+            // Listar archivos en el directorio para debugging
+            var archivosEnDirectorio = Directory.GetFiles(uploadsPath);
+            _logger.LogInformation("Archivos en directorio {UploadsPath}: {Archivos}", uploadsPath, string.Join(", ", archivosEnDirectorio.Select(Path.GetFileName)));
 
             // Verificar que el archivo existe
             if (!System.IO.File.Exists(archivoPath))
             {
                 _logger.LogWarning("Archivo no encontrado: {ArchivoPath}", archivoPath);
-                return NotFound($"Archivo '{nombreArchivo}' no encontrado para la solicitud {id}");
+                return NotFound($"Archivo '{decodedFileName}' no encontrado para la solicitud {id}");
             }
 
             // Leer el archivo
             var archivoBytes = await System.IO.File.ReadAllBytesAsync(archivoPath);
             
             // Determinar el tipo de contenido basado en la extensión
-            var contentType = GetContentType(nombreArchivo);
+            var contentType = GetContentType(decodedFileName);
             
             _logger.LogInformation("Archivo encontrado. Tamaño: {Tamaño} bytes, Tipo: {ContentType}", archivoBytes.Length, contentType);
 
             // Configurar headers para visualización en línea (no descarga)
-            Response.Headers.Append("Content-Disposition", $"inline; filename=\"{nombreArchivo}\"");
+            // Escapar caracteres especiales en el nombre del archivo para el header
+            var safeFileName = System.Text.Encoding.ASCII.GetString(
+                System.Text.Encoding.ASCII.GetBytes(decodedFileName.Replace('í', 'i').Replace('ñ', 'n').Replace('á', 'a').Replace('é', 'e').Replace('ó', 'o').Replace('ú', 'u')));
+            
+            Response.Headers.Append("Content-Disposition", $"inline; filename=\"{safeFileName}\"");
             Response.Headers.Append("X-Content-Type-Options", "nosniff");
             
             return File(archivoBytes, contentType);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error al obtener archivo de apelación {NombreArchivo} para solicitud {Id}", nombreArchivo, id);
+            _logger.LogError(ex, "Error al obtener archivo de apelación {NombreArchivo} para solicitud {Id}", System.Web.HttpUtility.UrlDecode(nombreArchivo), id);
             return StatusCode(500, $"Error al obtener el archivo: {ex.Message}");
         }
     }
@@ -442,6 +487,23 @@ public class SolicitudesEscalafonController : ControllerBase
 
             var solicitudActualizada = await _solicitudService.UpdateSolicitudStatusAsync(updateDto);
             
+            // Enviar notificación por correo al docente
+            try
+            {
+                await _emailService.SendApelacionAceptadaEmailAsync(
+                    solicitud.DocenteEmail, 
+                    solicitud.DocenteNombre, 
+                    aceptarDto.ObservacionesAceptacion,
+                    aceptarDto.AceptadoPor);
+                    
+                _logger.LogInformation("Notificación de aceptación de apelación enviada para solicitud {Id}", id);
+            }
+            catch (Exception emailEx)
+            {
+                _logger.LogWarning(emailEx, "Error al enviar notificación de aceptación de apelación para solicitud {Id}", id);
+                // No fallar la operación por problemas de email
+            }
+            
             _logger.LogInformation("Apelación aceptada para solicitud {Id} por {Usuario}", id, aceptarDto.AceptadoPor);
             
             return Ok(solicitudActualizada);
@@ -487,8 +549,12 @@ public class SolicitudesEscalafonController : ControllerBase
             // Enviar notificación por correo al docente
             try
             {
-                // Aquí puedes agregar la lógica de envío de correo específica para rechazo de apelación
-                // await _emailService.EnviarNotificacionRechazoApelacionAsync(solicitud);
+                await _emailService.SendApelacionRechazoEmailAsync(
+                    solicitud.DocenteEmail, 
+                    solicitud.DocenteNombre, 
+                    rechazarDto.MotivoRechazoApelacion,
+                    rechazarDto.RechazadoPor);
+                    
                 _logger.LogInformation("Notificación de rechazo de apelación enviada para solicitud {Id}", id);
             }
             catch (Exception emailEx)
